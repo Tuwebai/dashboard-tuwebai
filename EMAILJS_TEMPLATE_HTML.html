@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{subject}}</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background: #f8fafc; 
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: white; 
+        }
+        .header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            padding: 40px 30px; 
+            text-align: center; 
+        }
+        .header h1 { 
+            color: white; 
+            margin: 0; 
+            font-size: 28px; 
+            font-weight: 300; 
+        }
+        .header p { 
+            color: rgba(255,255,255,0.9); 
+            margin: 10px 0 0 0; 
+            font-size: 16px; 
+        }
+        .content { 
+            padding: 40px 30px; 
+        }
+        .card { 
+            background: #f8f9fa; 
+            border-radius: 12px; 
+            padding: 25px; 
+            margin: 20px 0; 
+            border-left: 4px solid {{priority_color}}; 
+        }
+        .field { 
+            margin-bottom: 20px; 
+        }
+        .field-label { 
+            font-weight: 600; 
+            color: #374151; 
+            margin-bottom: 5px; 
+            font-size: 14px; 
+        }
+        .field-value { 
+            color: #6b7280; 
+            line-height: 1.6; 
+        }
+        .priority-badge { 
+            display: inline-block; 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            background: {{priority_color}}; 
+            color: white; 
+        }
+        .message-box { 
+            background: white; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 8px; 
+            padding: 20px; 
+            margin-top: 10px; 
+        }
+        .footer { 
+            background: #1f2937; 
+            color: white; 
+            padding: 30px; 
+            text-align: center; 
+        }
+        .logo { 
+            font-size: 24px; 
+            font-weight: bold; 
+            color: #667eea; 
+        }
+        .action-btn { 
+            display: inline-block; 
+            background: #667eea; 
+            color: white; 
+            padding: 12px 24px; 
+            text-decoration: none; 
+            border-radius: 6px; 
+            margin-top: 20px; 
+            font-weight: 500; 
+        }
+        .next-steps { 
+            background: #dbeafe; 
+            border: 1px solid #93c5fd; 
+            border-radius: 12px; 
+            padding: 25px; 
+            margin: 20px 0; 
+        }
+        .step { 
+            display: flex; 
+            align-items: center; 
+            margin-bottom: 15px; 
+        }
+        .step-number { 
+            background: #667eea; 
+            color: white; 
+            width: 24px; 
+            height: 24px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 12px; 
+            font-weight: bold; 
+            margin-right: 15px; 
+        }
+        .contact-info { 
+            background: #f3f4f6; 
+            border-radius: 8px; 
+            padding: 20px; 
+            margin: 20px 0; 
+            text-align: center; 
+        }
+        .admin-signature { 
+            background: #f3f4f6; 
+            border-radius: 8px; 
+            padding: 15px; 
+            margin-top: 15px; 
+        }
+        .admin-avatar { 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%; 
+            background: #667eea; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: white; 
+            font-weight: bold; 
+            margin-right: 10px; 
+        }
+        .ticket-id { 
+            background: #1f2937; 
+            color: white; 
+            padding: 8px 16px; 
+            border-radius: 6px; 
+            font-family: monospace; 
+            font-size: 14px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header según el tipo de email -->
+        {{#if_eq email_type "support_ticket"}}
+        <div class="header">
+            <h1>🎫 Nuevo Ticket de Soporte</h1>
+            <p>Se ha creado un nuevo ticket que requiere tu atención</p>
+        </div>
+        {{/if_eq}}
+        
+        {{#if_eq email_type "ticket_confirmation"}}
+        <div class="header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+            <h1>✅ Ticket Recibido</h1>
+            <p>Hemos recibido tu consulta y la estamos procesando</p>
+        </div>
+        {{/if_eq}}
+        
+        {{#if_eq email_type "ticket_response"}}
+        <div class="header" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+            <h1>💬 Respuesta a tu Ticket</h1>
+            <p>Hemos respondido a tu consulta de soporte</p>
+        </div>
+        {{/if_eq}}
+        
+        <div class="content">
+            <!-- Contenido para nuevo ticket (admin) -->
+            {{#if_eq email_type "support_ticket"}}
+            <div class="card">
+                <div class="field">
+                    <div class="field-label">📧 Cliente</div>
+                    <div class="field-value">{{client_email}}</div>
+                </div>
+                
+                <div class="field">
+                    <div class="field-label">📝 Asunto</div>
+                    <div class="field-value">{{ticket_subject}}</div>
+                </div>
+                
+                <div class="field">
+                    <div class="field-label">💬 Mensaje</div>
+                    <div class="message-box">{{ticket_message}}</div>
+                </div>
+                
+                <div class="field">
+                    <div class="field-label">⚡ Prioridad</div>
+                    <div class="field-value">
+                        <span class="priority-badge">{{ticket_priority}}</span>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <div class="field-label">📅 Fecha de Creación</div>
+                    <div class="field-value">{{ticket_date}}</div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="https://tuweb-ai.com/admin/support" class="action-btn">Ver en Panel de Admin</a>
+            </div>
+            {{/if_eq}}
+            
+            <!-- Contenido para confirmación (cliente) -->
+            {{#if_eq email_type "ticket_confirmation"}}
+            <div class="card" style="background: #ecfdf5; border-color: #a7f3d0;">
+                <h3 style="margin: 0 0 15px 0; color: #065f46;">¡Gracias por contactarnos!</h3>
+                <p style="margin: 0; color: #047857; line-height: 1.6;">
+                    Hemos recibido tu ticket de soporte y nuestro equipo lo está revisando. 
+                    Te responderemos lo antes posible con una solución personalizada.
+                </p>
+            </div>
+            
+            <div class="card">
+                <h3 style="margin: 0 0 20px 0; color: #1f2937;">Detalles del Ticket</h3>
+                
+                <div class="field">
+                    <div class="field-label">🆔 ID del Ticket</div>
+                    <div class="field-value">
+                        <span class="ticket-id">{{ticket_id}}</span>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <div class="field-label">📝 Asunto</div>
+                    <div class="field-value">{{ticket_subject}}</div>
+                </div>
+                
+                <div class="field">
+                    <div class="field-label">⚡ Prioridad</div>
+                    <div class="field-value">
+                        <span class="priority-badge">{{ticket_priority}}</span>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <div class="field-label">📅 Fecha de Creación</div>
+                    <div class="field-value">{{ticket_date}}</div>
+                </div>
+            </div>
+            
+            <div class="next-steps">
+                <h3 style="margin: 0 0 20px 0; color: #1e40af;">¿Qué sigue?</h3>
+                
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <strong>Revisión del Equipo</strong><br>
+                        <span style="color: #6b7280; font-size: 14px;">Nuestro equipo técnico revisará tu consulta</span>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div>
+                        <strong>Respuesta Personalizada</strong><br>
+                        <span style="color: #6b7280; font-size: 14px;">Te enviaremos una respuesta detallada por email</span>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div>
+                        <strong>Seguimiento</strong><br>
+                        <span style="color: #6b7280; font-size: 14px;">Puedes hacer seguimiento desde tu panel de cliente</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="contact-info">
+                <h4 style="margin: 0 0 15px 0; color: #374151;">¿Necesitas ayuda urgente?</h4>
+                <p style="margin: 5px 0; color: #6b7280;">
+                    📧 <strong>Email:</strong> {{support_email}}<br>
+                    📞 <strong>Teléfono:</strong> +5493571416044<br>
+                    🕒 <strong>Horarios:</strong> Lunes a Viernes 9:00 - 18:00
+                </p>
+            </div>
+            {{/if_eq}}
+            
+            <!-- Contenido para respuesta (cliente) -->
+            {{#if_eq email_type "ticket_response"}}
+            <div class="card" style="background: #eff6ff; border-color: #bfdbfe;">
+                <h3 style="margin: 0 0 15px 0; color: #1e40af;">¡Tu ticket ha sido respondido!</h3>
+                <p style="margin: 0; color: #1e40af; line-height: 1.6;">
+                    Nuestro equipo de soporte ha revisado tu consulta y te ha enviado una respuesta detallada.
+                </p>
+            </div>
+            
+            <div class="card">
+                <h3 style="margin: 0 0 20px 0; color: #1f2937;">Información del Ticket</h3>
+                
+                <div class="field">
+                    <div class="field-label">🆔 ID del Ticket</div>
+                    <div class="field-value">
+                        <span class="ticket-id">{{ticket_id}}</span>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <div class="field-label">📝 Asunto</div>
+                    <div class="field-value">{{ticket_subject}}</div>
+                </div>
+                
+                <div class="field">
+                    <div class="field-label">📅 Fecha de Respuesta</div>
+                    <div class="field-value">{{response_date}}</div>
+                </div>
+            </div>
+            
+            <div class="message-box">
+                <h4 style="margin: 0 0 15px 0; color: #1f2937;">Respuesta del Equipo de Soporte</h4>
+                <div style="line-height: 1.6; color: #374151;">{{admin_response}}</div>
+                
+                <div class="admin-signature">
+                    <div style="display: flex; align-items: center;">
+                        <div class="admin-avatar">{{admin_name}}</div>
+                        <div>
+                            <strong style="color: #1f2937;">{{admin_name}}</strong><br>
+                            <span style="color: #6b7280; font-size: 14px;">Equipo de Soporte TuWebAI</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="https://tuweb-ai.com/support" class="action-btn">Ver en Mi Panel</a>
+            </div>
+            
+            <div class="contact-info">
+                <h4 style="margin: 0 0 15px 0; color: #374151;">¿Necesitas más ayuda?</h4>
+                <p style="margin: 5px 0; color: #6b7280;">
+                    📧 <strong>Email:</strong> {{support_email}}<br>
+                    📞 <strong>Teléfono:</strong> +5493571416044
+                </p>
+            </div>
+            {{/if_eq}}
+        </div>
+        
+        <div class="footer">
+            <div class="logo">TuWebAI</div>
+            <p>Sistema de Soporte Técnico</p>
+            <p style="font-size: 12px; opacity: 0.8;">Este es un email automático del sistema de soporte</p>
+        </div>
+    </div>
+</body>
+</html> 
