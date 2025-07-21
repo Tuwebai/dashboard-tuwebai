@@ -16,7 +16,9 @@ import {
   where, 
   orderBy,
   serverTimestamp,
-  deleteDoc
+  deleteDoc,
+  setDoc,
+  getDocs
 } from 'firebase/firestore';
 import { 
   Users, 
@@ -107,6 +109,7 @@ export default function RealTimeCollaboration({ projectId }: { projectId: string
   useEffect(() => {
     if (!user || !projectId) return;
 
+    let connectionLost = false;
     // Update user presence
     const updatePresence = async () => {
       try {
@@ -124,18 +127,26 @@ export default function RealTimeCollaboration({ projectId }: { projectId: string
         });
       } catch (error) {
         // Create presence document if it doesn't exist
-        const presenceRef = doc(firestore, 'userPresence', user.email);
-        await updateDoc(presenceRef, {
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          isOnline: true,
-          lastSeen: serverTimestamp(),
-          currentPage: 'collaboration',
-          isTyping: false,
-          status: 'available',
-          projectId
-        });
+        try {
+          const presenceRef = doc(firestore, 'userPresence', user.email);
+          await setDoc(presenceRef, {
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            isOnline: true,
+            lastSeen: serverTimestamp(),
+            currentPage: 'collaboration',
+            isTyping: false,
+            status: 'available',
+            projectId
+          });
+        } catch (err) {
+          toast({
+            title: 'Error de presencia',
+            description: 'No se pudo actualizar tu presencia en tiempo real.',
+            variant: 'destructive'
+          });
+        }
       }
     };
 
@@ -153,9 +164,23 @@ export default function RealTimeCollaboration({ projectId }: { projectId: string
         id: doc.id,
         ...doc.data()
       })) as UserPresence[];
-      
       setOnlineUsers(users);
       setSessionStats(prev => ({ ...prev, totalParticipants: users.length }));
+      if (connectionLost) {
+        toast({
+          title: 'Conexión restablecida',
+          description: 'Te has reconectado a la colaboración en tiempo real.',
+          variant: 'default'
+        });
+        connectionLost = false;
+      }
+    }, (error) => {
+      toast({
+        title: 'Conexión perdida',
+        description: 'Se perdió la conexión en tiempo real. Intentando reconectar...',
+        variant: 'destructive'
+      });
+      connectionLost = true;
     });
 
     // Cleanup on unmount
@@ -163,7 +188,7 @@ export default function RealTimeCollaboration({ projectId }: { projectId: string
       if (presenceRef.current) {
         presenceRef.current();
       }
-      // Set user as offline
+      // Set user as offline y elimina cursor
       if (user) {
         const presenceRef = doc(firestore, 'userPresence', user.email);
         updateDoc(presenceRef, {
@@ -171,6 +196,9 @@ export default function RealTimeCollaboration({ projectId }: { projectId: string
           lastSeen: serverTimestamp(),
           status: 'offline'
         });
+        // Eliminar cursor
+        const cursorRef = doc(firestore, 'cursorPositions', user.email);
+        deleteDoc(cursorRef).catch(() => {});
       }
     };
   }, [user, projectId]);
@@ -189,7 +217,7 @@ export default function RealTimeCollaboration({ projectId }: { projectId: string
           where('isActive', '==', true)
         );
 
-        const sessionSnap = await sessionQuery.get();
+        const sessionSnap = await getDocs(sessionQuery);
         
         if (sessionSnap.empty) {
           // Create new session
@@ -250,22 +278,33 @@ export default function RealTimeCollaboration({ projectId }: { projectId: string
       const cursorData: CursorPosition = {
         userId: user.email,
         userName: user.name,
-        userRole: user.role,
+        userRole: user.role === 'admin' ? 'admin' : 'client',
         x: e.clientX,
         y: e.clientY,
         timestamp: new Date().toISOString(),
         color: user.role === 'admin' ? '#ef4444' : '#3b82f6'
       };
-
       // Update cursor position in Firestore
       const cursorRef = doc(firestore, 'cursorPositions', user.email);
-      updateDoc(cursorRef, cursorData);
+      updateDoc(cursorRef, cursorData as any).catch(() => {
+        // Si no existe, lo crea
+        setDoc(cursorRef, cursorData as any).catch(() => {
+          toast({
+            title: 'Error de cursor',
+            description: 'No se pudo actualizar tu cursor en tiempo real.',
+            variant: 'destructive'
+          });
+        });
+      });
     };
 
     document.addEventListener('mousemove', updateCursorPosition);
 
     return () => {
       document.removeEventListener('mousemove', updateCursorPosition);
+      // Eliminar cursor al dejar de compartir
+      const cursorRef = doc(firestore, 'cursorPositions', user.email);
+      deleteDoc(cursorRef).catch(() => {});
     };
   }, [isCursorSharing, user]);
 
@@ -281,6 +320,12 @@ export default function RealTimeCollaboration({ projectId }: { projectId: string
     const unsubscribe = onSnapshot(cursorQuery, (snapshot) => {
       const cursors = snapshot.docs.map(doc => doc.data() as CursorPosition);
       setCursorPositions(cursors);
+    }, (error) => {
+      toast({
+        title: 'Error de cursores',
+        description: 'No se pueden mostrar los cursores en tiempo real.',
+        variant: 'destructive'
+      });
     });
 
     return unsubscribe;

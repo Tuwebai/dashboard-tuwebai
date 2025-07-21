@@ -35,6 +35,8 @@ import { exportProjects, exportCompleteReport } from '@/utils/exportUtils';
 import { ErrorMessage } from '@/components/ErrorBoundary';
 import { SectionLoading } from '@/components/LoadingSpinner';
 import { useDebounce } from '@/hooks/usePerformance';
+import { firestore } from '@/lib/firebase';
+import { doc, deleteDoc } from 'firebase/firestore';
 
 export default function ProjectsPage() {
   const { projects, loading, error, refreshData, user } = useApp();
@@ -50,10 +52,15 @@ export default function ProjectsPage() {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Actualizar proyectos filtrados cuando cambien los proyectos
+  // Mostrar solo proyectos del cliente, o todos si es admin
+  const visibleProjects = user.role === 'admin'
+    ? projects
+    : projects.filter(p => p.ownerEmail === user.email);
+
+  // Actualizar proyectos filtrados cuando cambien los proyectos o el usuario
   useEffect(() => {
-    setFilteredProjects(projects);
-  }, [projects]);
+    setFilteredProjects(visibleProjects);
+  }, [projects, user]);
 
   // Función para calcular progreso del proyecto
   const calculateProjectProgress = (project: any) => {
@@ -139,13 +146,24 @@ export default function ProjectsPage() {
 
   // Función para eliminar proyecto
   const handleDeleteProject = async (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+    if (user.role !== 'admin' && project.ownerEmail !== user.email) {
+      toast({
+        title: 'Sin permisos',
+        description: 'Solo el dueño o un admin puede borrar este proyecto.',
+        variant: 'destructive'
+      });
+      return;
+    }
     if (confirm('¿Estás seguro de que quieres eliminar este proyecto? Esta acción no se puede deshacer.')) {
       try {
-        // Aquí se llamaría a la función de eliminar del contexto
+        await deleteDoc(doc(firestore, 'projects', projectId));
         toast({
           title: 'Proyecto eliminado',
           description: 'El proyecto ha sido eliminado correctamente.'
         });
+        await refreshData();
       } catch (error) {
         toast({
           title: 'Error',

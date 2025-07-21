@@ -76,7 +76,10 @@ export default function Login() {
           </p>
         </div>
 
-        <Card className="bg-card border-border shadow-card">
+        <div className="relative">
+          {/* Fondo azul eléctrico borroso */}
+          <div className="absolute inset-0 bg-[#00CCFF] rounded-lg blur-xl opacity-30 -z-10"></div>
+          <Card className="bg-card border-border shadow-card relative z-10">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">Iniciar Sesión</CardTitle>
             <CardDescription>
@@ -160,6 +163,7 @@ export default function Login() {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );

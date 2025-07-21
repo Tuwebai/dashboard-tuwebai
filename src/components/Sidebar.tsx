@@ -127,28 +127,28 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="h-screen w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col justify-between">
+    <aside className="h-screen w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col justify-between lg:w-64 md:w-56 sm:w-48">
       <div>
         {/* Logo y usuario */}
-        <div className="flex flex-col items-center gap-4 p-6 border-b border-zinc-800">
+        <div className="flex flex-col items-center gap-4 p-4 sm:p-6 border-b border-zinc-800">
           {/* Logo TuWebAI */}
           <Logo size="lg" showText={true} />
           
           {/* Información del usuario */}
           <div className="flex flex-col items-center gap-2">
-            <div className="h-12 w-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-2xl font-bold text-white">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold text-white">
               {user?.name?.charAt(0).toUpperCase()}
             </div>
             <div className="text-center">
-              <div className="font-semibold text-white truncate max-w-[180px]">{user?.name}</div>
-              <div className="text-xs text-zinc-400 truncate max-w-[180px]">{user?.email}</div>
+              <div className="font-semibold text-white truncate max-w-[140px] sm:max-w-[180px] text-sm sm:text-base">{user?.name}</div>
+              <div className="text-xs text-zinc-400 truncate max-w-[140px] sm:max-w-[180px]">{user?.email}</div>
             </div>
           </div>
         </div>
         {/* Menú según rol */}
         {user?.role === 'admin' ? (
           // Menú completo para admin con todas las funcionalidades avanzadas
-          <nav className="flex flex-col gap-1 p-4 overflow-y-auto max-h-[calc(100vh-200px)]">
+          <nav className="flex flex-col gap-1 p-3 sm:p-4 overflow-y-auto max-h-[calc(100vh-200px)]">
             {/* Sección Principal */}
             <div className="mb-4">
               <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-4 py-2 mb-2">Principal</div>
@@ -196,7 +196,7 @@ export default function Sidebar() {
           </nav>
         ) : (
           // Menú solo para clientes
-          <nav className="flex flex-col gap-1 p-4">
+          <nav className="flex flex-col gap-1 p-3 sm:p-4">
             {navItem('/dashboard', <Home className="h-5 w-5" />, 'Dashboard')}
             {navItem('/proyectos', <FolderKanban className="h-5 w-5" />, 'Proyectos')}
             {navItem('/notificaciones', <Bell className="h-5 w-5" />, 'Notificaciones')}

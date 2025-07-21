@@ -17,7 +17,7 @@ import { uploadFile } from '@/lib/storage';
 import { Phone, AtSign, Info, Bell, BellOff, Image, File, Users, Edit2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 // Tipos extendidos y robustos para chats y usuarios
 interface UserParticipant {
@@ -928,13 +928,9 @@ export default function ChatPage() {
                         {mutedChats[chat.id] ? <BellOff className="w-4 h-4 mr-2" /> : <Bell className="w-4 h-4 mr-2" />}
                         {mutedChats[chat.id] ? 'Desilenciar' : 'Silenciar'}
                       </ContextMenuItem>
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger>
-                          <Palette className="w-4 h-4 mr-2" /> Tema de color
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuSub>
+                      <DropdownMenuItem onClick={() => handleToggleMute(chat)}>
+                        <Palette className="w-4 h-4 mr-2" /> Tema de color
+                      </DropdownMenuItem>
                     </ContextMenuContent>
                   </ContextMenu>
                 );
@@ -1111,13 +1107,9 @@ export default function ChatPage() {
                         {mutedChats[chat.id] ? <BellOff className="w-4 h-4 mr-2" /> : <Bell className="w-4 h-4 mr-2" />}
                         {mutedChats[chat.id] ? 'Desilenciar' : 'Silenciar'}
                       </ContextMenuItem>
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger>
-                          <Palette className="w-4 h-4 mr-2" /> Tema de color
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuSub>
+                      <DropdownMenuItem onClick={() => handleToggleMute(chat)}>
+                        <Palette className="w-4 h-4 mr-2" /> Tema de color
+                      </DropdownMenuItem>
                     </ContextMenuContent>
                   </ContextMenu>
                 );
@@ -1222,13 +1214,9 @@ export default function ChatPage() {
                         <Ban className="w-4 h-4 mr-2" /> Bloquear usuario
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger>
-                          <Palette className="w-4 h-4 mr-2" /> Tema de color
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuSub>
+                      <DropdownMenuItem onClick={() => handleToggleMute(selectedChat)}>
+                        <Palette className="w-4 h-4 mr-2" /> Tema de color
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleDeleteChat(selectedChat?.id)} className="text-destructive">
                         <Trash2 className="w-4 h-4 mr-2 text-destructive" /> Eliminar chat
                       </DropdownMenuItem>

@@ -35,7 +35,8 @@ import {
   where,
   doc,
   updateDoc,
-  deleteDoc
+  deleteDoc,
+  limit
 } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -88,14 +89,16 @@ export default function CollaborativeComments({
   // Load comments
   useEffect(() => {
     if (!projectId) return;
+    setIsLoading(true);
 
     const commentsRef = collection(firestore, 'comments');
     const q = query(
       commentsRef,
       where('projectId', '==', projectId),
-      where('phaseKey', '==', phaseKey || ''),
+      phaseKey ? where('phaseKey', '==', phaseKey) : where('phaseKey', 'in', [phaseKey || '', null]),
       where('parentId', '==', null),
-      orderBy('timestamp', 'desc')
+      orderBy('timestamp', 'desc'),
+      limit(20) // paginación básica
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -105,6 +108,13 @@ export default function CollaborativeComments({
       });
       setComments(commentsData);
       setIsLoading(false);
+    }, (error) => {
+      setIsLoading(false);
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar los comentarios.',
+        variant: 'destructive'
+      });
     });
 
     return () => unsubscribe();
@@ -147,8 +157,30 @@ export default function CollaborativeComments({
 
   // Add comment
   const addComment = async () => {
-    if (!newComment.trim() || !user) return;
-
+    if (!user) {
+      toast({
+        title: 'Inicia sesión',
+        description: 'Debes iniciar sesión para comentar.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    if (!newComment.trim()) {
+      toast({
+        title: 'Comentario vacío',
+        description: 'No puedes enviar un comentario vacío.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    if (comments.some(c => c.text.trim() === newComment.trim() && c.authorId === user.uid)) {
+      toast({
+        title: 'Comentario duplicado',
+        description: 'Ya enviaste este comentario.',
+        variant: 'destructive'
+      });
+      return;
+    }
     try {
       const commentsRef = collection(firestore, 'comments');
       const commentData = {
@@ -165,18 +197,16 @@ export default function CollaborativeComments({
         mentions: extractMentions(newComment),
         isEdited: false
       };
-
       const docRef = await addDoc(commentsRef, commentData);
-      
       if (onCommentAdded) {
         onCommentAdded({ id: docRef.id, ...commentData } as Comment);
       }
-
       setNewComment('');
       setReplyTo(null);
       toast({
         title: 'Comentario agregado',
-        description: 'Tu comentario ha sido publicado.'
+        description: 'Tu comentario ha sido publicado.',
+        variant: 'success'
       });
     } catch (error) {
       console.error('Error adding comment:', error);
@@ -462,7 +492,11 @@ export default function CollaborativeComments({
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div className="animate-pulse rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div className="ml-4 space-y-2">
+              <div className="h-4 w-40 bg-muted/30 rounded animate-pulse" />
+              <div className="h-4 w-32 bg-muted/20 rounded animate-pulse" />
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -683,7 +683,7 @@ export default function NotificationSystem() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 bg-card border border-border">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total</p>
@@ -695,7 +695,7 @@ export default function NotificationSystem() {
         </Card>
         
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 bg-card border border-border">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">No leídas</p>
@@ -707,7 +707,7 @@ export default function NotificationSystem() {
         </Card>
         
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 bg-card border border-border">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Leídas</p>
@@ -719,7 +719,7 @@ export default function NotificationSystem() {
         </Card>
         
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 bg-card border border-border">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Ancladas</p>
@@ -731,7 +731,7 @@ export default function NotificationSystem() {
         </Card>
         
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 bg-card border border-border">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Archivadas</p>
@@ -745,7 +745,7 @@ export default function NotificationSystem() {
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-4">
+        <CardContent className="p-4 bg-card border border-border">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <Search className="h-4 w-4 text-muted-foreground" />
@@ -851,14 +851,14 @@ export default function NotificationSystem() {
                 </p>
               </CardContent>
             </Card>
-          ) : (
-            <div className="space-y-4">
+          ) : null}
+          {filteredNotifications.length > 0 && (
+            <div className="space-y-4 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900"
+                 style={{ maxHeight: '400px', minHeight: '120px', overscrollBehavior: 'contain' }}>
               {filteredNotifications.map((notification) => (
                 <Card 
                   key={notification.id} 
-                  className={`transition-all hover:shadow-lg ${
-                    !notification.isRead ? 'border-l-4 border-l-blue-500 bg-blue-50/50' : ''
-                  } ${notification.isPinned ? 'border-l-4 border-l-purple-500 bg-purple-50/50' : ''}`}
+                  className={`bg-card border border-border transition-all hover:shadow-lg ${notification.isPinned ? 'ring-2 ring-purple-500' : ''}`}
                   onClick={() => handleNotificationClick(notification)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -869,7 +869,7 @@ export default function NotificationSystem() {
                   role="button"
                   tabIndex={0}
                 >
-                  <CardContent className="p-4">
+                  <CardContent className="p-4 bg-card border border-border">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3 flex-1">
                         <div className="mt-1">
@@ -944,7 +944,7 @@ export default function NotificationSystem() {
 
       {/* Settings Modal */}
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl bg-card border border-border shadow-card">
           <DialogHeader>
             <DialogTitle>Configuración de Notificaciones</DialogTitle>
             <DialogDescription>
@@ -1113,7 +1113,7 @@ export default function NotificationSystem() {
 
       {/* Create Notification Modal */}
       <Dialog open={false} onOpenChange={() => {}}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md bg-card border border-border shadow-card">
           <DialogHeader>
             <DialogTitle>Crear Notificación</DialogTitle>
             <DialogDescription>

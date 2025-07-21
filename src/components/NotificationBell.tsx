@@ -295,7 +295,7 @@ export default function NotificationBell() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-96 max-w-[90vw] p-0 shadow-xl border border-border bg-background z-[100]">
+      <PopoverContent align="end" className="bg-[#181824] border border-[#23263a] shadow-2xl text-white w-full max-w-xs sm:max-w-md md:max-w-lg rounded-xl p-0 sm:p-2">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
@@ -330,8 +330,8 @@ export default function NotificationBell() {
           </div>
         </div>
         
-        <ScrollArea className="max-h-96">
-          <div className="p-2">
+        <ScrollArea>
+          <div className="p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900" style={{ maxHeight: '320px' }}>
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Bell className="h-12 w-12 text-muted-foreground mb-3" />
@@ -342,9 +342,9 @@ export default function NotificationBell() {
               notifications.map((notification, index) => (
                 <div key={notification.id}>
                   <div
-                    className={`flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors ${
-                      !notification.isRead ? 'bg-primary/5 border-l-2 border-primary' : ''
-                    } ${notification.isPinned ? 'bg-yellow-50 border-l-2 border-yellow-500' : ''}`}
+                    className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                      !notification.isRead ? 'ring-2 ring-primary' : ''
+                    } ${notification.isPinned ? 'ring-2 ring-yellow-500' : ''}`}
                     onClick={() => handleNotificationClick(notification)}
                   >
                     <div className="flex-shrink-0 mt-1">

@@ -47,13 +47,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="h-screen bg-background flex">
       {/* Desktop sidebar */}
-      <div className="hidden lg:block">
+      <div className="hidden md:block">
         <Sidebar />
       </div>
 
       {/* Mobile sidebar overlay */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
+        <div className="md:hidden fixed inset-0 z-50 flex">
           <div 
             className="fixed inset-0 bg-black/50" 
             onClick={() => setIsMobileMenuOpen(false)}

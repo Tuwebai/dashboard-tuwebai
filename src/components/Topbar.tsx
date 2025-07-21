@@ -51,7 +51,7 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
   }, [user]);
 
   return (
-    <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6">
+    <header className="h-14 sm:h-16 bg-card border-b border-border flex items-center justify-between px-4 sm:px-6">
       <div className="flex items-center gap-4">
         {/* Mobile menu button */}
         {showMobileMenu && (
@@ -59,25 +59,25 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
             variant="ghost"
             size="sm"
             onClick={onMenuClick}
-            className="lg:hidden"
+            className="md:hidden"
           >
             <Menu className="h-5 w-5" />
           </Button>
         )}
 
         {/* Search */}
-        <div className="relative max-w-md w-full">
+        <div className="relative max-w-xs sm:max-w-md w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar proyectos..."
-            className="pl-10 bg-input border-border"
+            className="pl-10 bg-input border-border text-sm sm:text-base"
           />
         </div>
       </div>
 
       <div className="flex items-center gap-4">
         {/* Stats */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden sm:flex items-center gap-4">
           <div className="text-sm">
             <span className="text-muted-foreground">Proyectos: </span>
             <Badge variant="secondary" className="bg-primary/10 text-primary">
@@ -100,14 +100,14 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
         <NotificationBell />
 
         {/* User info */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-4">
           {/* Eliminar nombre y correo, dejar solo avatar y badge si es admin */}
           {user.role === 'admin' && (
             <span className="ml-2 px-2 py-0.5 rounded bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-bold uppercase">ADMIN</span>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Avatar className="h-10 w-10 cursor-pointer border-2 border-primary">
+              <Avatar className="h-8 w-8 sm:h-10 sm:w-10 cursor-pointer border-2 border-primary">
                 {user?.photoURL ? (
                   <AvatarImage src={user.photoURL} alt={user.name} />
                 ) : (

@@ -26,8 +26,7 @@ import {
   TrendingUp,
   Users,
   FileText,
-  Send,
-  MessageCircle
+  Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -73,10 +72,7 @@ export default function Dashboard() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [realTimeProjects, setRealTimeProjects] = useState<Project[]>([]);
-  const [showUserInfoPanel, setShowUserInfoPanel] = useState(false);
-  // Estado para mostrar el panel de info del admin
-  const [showAdminInfoPanel, setShowAdminInfoPanel] = useState(false);
-  const [adminUser, setAdminUser] = useState<any>(null);
+
 
   // Escuchar cambios en tiempo real de los proyectos del usuario
   useEffect(() => {
@@ -100,14 +96,7 @@ export default function Dashboard() {
     };
   }, [user, projects]);
 
-  // Cargar datos del admin
-  useEffect(() => {
-    const fetchAdmin = async () => {
-      const snap = await getDocs(query(collection(firestore, 'users'), where('role', '==', 'admin')));
-      if (!snap.empty) setAdminUser({ id: snap.docs[0].id, ...snap.docs[0].data() });
-    };
-    fetchAdmin();
-  }, []);
+
 
   const handleComentarioChange = (projectId: string, faseKey: string, value: string) => {
     setComentarioInput(prev => ({ ...prev, [`${projectId}-${faseKey}`]: value }));
@@ -203,28 +192,18 @@ export default function Dashboard() {
   const userProjects = realTimeProjects.filter(p => p.ownerEmail === user?.email);
 
   return (
-    <div className="p-6 space-y-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Bienvenido, {user?.name || user?.email}</p>
-      </div>
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setShowUserInfoPanel(true)}>
-          <Avatar className="h-10 w-10">
-            <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
-            {user?.photoURL && <AvatarImage src={user.photoURL} alt={user.name} />}
-          </Avatar>
-          <span className="font-semibold hidden md:block">{user?.name}</span>
-          {/* Ícono de chat para abrir info del admin */}
-          <Button variant="ghost" size="icon" onClick={e => { e.stopPropagation(); setShowAdminInfoPanel(true); }}>
-            <MessageCircle className="h-5 w-5" />
-          </Button>
         </div>
+
       </div>
 
       {/* Estadísticas rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-card border-border">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Card className="bg-gradient-card border-border transition-all duration-200 hover:scale-105 hover:shadow-2xl">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
@@ -235,7 +214,7 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-card border-border">
+        <Card className="bg-gradient-card border-border transition-all duration-200 hover:scale-105 hover:shadow-2xl">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-green-400" />
@@ -248,7 +227,7 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-card border-border">
+        <Card className="bg-gradient-card border-border transition-all duration-200 hover:scale-105 hover:shadow-2xl">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-500" />
@@ -261,7 +240,7 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-card border-border">
+        <Card className="bg-gradient-card border-border transition-all duration-200 hover:scale-105 hover:shadow-2xl">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-blue-400" />
@@ -281,16 +260,16 @@ export default function Dashboard() {
 
       {/* Vista de proyectos */}
       {userProjects.length === 0 ? (
-        <Card className="bg-muted/20 border-border">
-          <CardContent className="p-12 text-center">
+        <Card className="bg-muted/20 border-border transition-all duration-200 hover:scale-105 hover:shadow-2xl">
+                          <CardContent className="p-6 sm:p-12 text-center">
       <div className="space-y-4">
-              <div className="text-6xl">🚀</div>
-              <h3 className="text-xl font-semibold">No tienes proyectos aún</h3>
-              <p className="text-muted-foreground">
+              <div className="text-4xl sm:text-6xl">🚀</div>
+              <h3 className="text-lg sm:text-xl font-semibold">No tienes proyectos aún</h3>
+              <p className="text-muted-foreground text-sm sm:text-base">
                 Comienza creando tu primer proyecto web y verás el progreso en tiempo real.
               </p>
               <Button 
-                className="bg-gradient-primary hover:opacity-90 transition-opacity"
+                className="btn-gradient-electric transition-all duration-200 hover:scale-105 hover:shadow-lg"
                 onClick={() => navigate('/proyectos/nuevo')}
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -306,27 +285,34 @@ export default function Dashboard() {
             const status = getProjectStatus(project);
             
             return (
-              <Card key={project.id} className="bg-background border-border hover:border-primary/30 transition-all">
+              <Card
+                key={project.id}
+                className="relative bg-[#181824]/80 backdrop-blur-md border border-[#23263a] rounded-2xl shadow-2xl hover:scale-[1.02] hover:shadow-3xl transition-all overflow-hidden"
+              >
+                {/* Barra superior de gradiente animado */}
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-gradient-x rounded-t-2xl" />
                 <CardHeader>
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <CardTitle className="text-2xl font-bold">{project.name}</CardTitle>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                        <CardTitle className="text-xl sm:text-2xl font-bold">{project.name}</CardTitle>
+                        <div className="flex flex-wrap gap-2">
                         <Badge className={getStatusColor(status)}>{status}</Badge>
                         <Badge variant="outline">{project.type}</Badge>
+                        </div>
                       </div>
-                      <p className="text-muted-foreground">{project.description}</p>
+                      <p className="text-muted-foreground text-sm sm:text-base">{project.description}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleViewProject(project)}
+                        className="btn-gradient-electric transition-all duration-200 hover:scale-105 hover:shadow-lg"
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         Ver Detalles
                       </Button>
-
           </div>
       </div>
 
@@ -336,28 +322,49 @@ export default function Dashboard() {
                       <span>Progreso general</span>
                       <span>{Math.round(progress)}%</span>
                     </div>
-                    <Progress value={progress} className="h-2" />
+                    <Progress value={progress} className="h-2 progress-gradient-electric" />
                   </div>
                 </CardHeader>
                 
                 <CardContent>
-                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                      {(project.fases || []).map((fase: ProjectPhase) => {
                        const faseConfig = FASES.find(f => f.key === fase.key);
                       return (
-                        <Card key={fase.key} className="bg-muted/10 border border-border hover:border-primary/20 transition-all">
+                        <Card
+                          key={fase.key}
+                          className={`relative bg-[#181824]/80 backdrop-blur-md border border-[#23263a] rounded-2xl shadow-2xl hover:scale-[1.02] hover:shadow-3xl transition-all overflow-hidden`}
+                        >
+                          {/* Barra superior de gradiente animado según estado */}
+                          <div className={`absolute top-0 left-0 w-full h-1.5 rounded-t-2xl animate-gradient-x ${
+                            fase.estado === 'Terminado'
+                              ? 'bg-gradient-to-r from-green-400 via-blue-500 to-blue-700'
+                              : fase.estado === 'En Progreso'
+                              ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500'
+                              : 'bg-gradient-to-r from-gray-500 via-blue-500 to-blue-700'
+                          }`} />
                           <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
                               <CardTitle className="text-base font-semibold flex items-center gap-2">
+                                {/* Icono animado según estado */}
+                                {fase.estado === 'Terminado' && (
+                                  <svg className="w-6 h-6 text-green-400 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                )}
+                                {fase.estado === 'En Progreso' && (
+                                  <svg className="w-6 h-6 text-blue-400 animate-spin-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" className="opacity-75" /></svg>
+                                )}
+                                {fase.estado === 'Pendiente' && (
+                                  <svg className="w-6 h-6 text-gray-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" /></svg>
+                                )}
                                 <span>{faseConfig?.icon}</span>
                                 {faseConfig?.label}
                               </CardTitle>
                               <Badge 
                                 variant="outline" 
                                 className={
-                                  fase.estado === 'Terminado' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                  fase.estado === 'En Progreso' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                  'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                                  fase.estado === 'Terminado' ? 'bg-gradient-gold text-[#181824] border-none' :
+                                  fase.estado === 'En Progreso' ? 'bg-gradient-electric text-white border-none' :
+                                  'bg-gradient-to-r from-[#a259ff] to-[#23263a] text-white border-none'
                                 }
                               >
                                 {fase.estado || 'Pendiente'}
@@ -407,6 +414,7 @@ export default function Dashboard() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => setComentarioInput(prev => ({ ...prev, [`${project.id}-${fase.key}`]: '' }))}
+                                  className="btn-gradient-electric transition-all duration-200 hover:scale-105 hover:shadow-lg"
                                 >
                                   <MessageSquare className="h-3 w-3 mr-1" />
                                   Comentar
@@ -479,7 +487,7 @@ export default function Dashboard() {
 
       {/* Modal de detalle del proyecto */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto mx-4 bg-[#10111a]/95 backdrop-blur-xl border border-[#23263a] shadow-2xl rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">{selectedProject?.name}</DialogTitle>
             <DialogDescription>{selectedProject?.description}</DialogDescription>
@@ -521,7 +529,7 @@ export default function Dashboard() {
                    {(selectedProject.fases || []).map((fase: ProjectPhase, index: number) => {
                      const faseConfig = FASES.find(f => f.key === fase.key);
                     return (
-                      <Card key={fase.key} className="bg-muted/10 border-border">
+                      <Card key={fase.key} className="bg-muted/10 border-border transition-all duration-200 hover:scale-105 hover:shadow-2xl">
                         <CardHeader>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -539,9 +547,9 @@ export default function Dashboard() {
                             <Badge 
                               variant="outline" 
                               className={
-                                fase.estado === 'Terminado' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                fase.estado === 'En Progreso' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                                fase.estado === 'Terminado' ? 'bg-gradient-gold text-[#181824] border-none' :
+                                fase.estado === 'En Progreso' ? 'bg-gradient-electric text-white border-none' :
+                                'bg-gradient-to-r from-[#a259ff] to-[#23263a] text-white border-none'
                               }
                             >
                               {fase.estado || 'Pendiente'}
@@ -557,6 +565,7 @@ export default function Dashboard() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setComentarioInput(prev => ({ ...prev, [`${selectedProject.id}-${fase.key}`]: '' }))}
+                                className="btn-gradient-electric transition-all duration-200 hover:scale-105 hover:shadow-lg"
                     >
                                 <MessageSquare className="h-4 w-4 mr-2" />
                                 Agregar comentario
@@ -641,90 +650,7 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
-      <AnimatePresence>
-        {showUserInfoPanel && user && (
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed inset-0 z-50 flex justify-end md:items-stretch items-end md:items-end"
-            style={{ pointerEvents: 'auto' }}
-            onClick={() => setShowUserInfoPanel(false)}
-          >
-            <div
-              className="bg-card w-full h-full max-w-sm md:max-w-sm shadow-2xl flex flex-col md:rounded-none rounded-t-2xl md:h-full md:rounded-l-2xl"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between p-4 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-16 w-16">
-                    <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
-                    {user.photoURL && <AvatarImage src={user.photoURL} alt={user.name} />}
-                  </Avatar>
-                  <div>
-                    <div className="font-bold text-lg">{user.name}</div>
-                    <div className="text-xs text-muted-foreground">{user.email}</div>
-                  </div>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => setShowUserInfoPanel(false)}>
-                  ×
-                </Button>
-              </div>
-              <div className="p-4 space-y-2">
-                {user.phone && <div><span className="font-semibold">Teléfono:</span> {user.phone}</div>}
-                {user.bio && <div><span className="font-semibold">Bio:</span> {user.bio}</div>}
-                {user.company && <div><span className="font-semibold">Empresa:</span> {user.company}</div>}
-                {user.position && <div><span className="font-semibold">Cargo:</span> {user.position}</div>}
-                <div><span className="font-semibold">Rol:</span> {user.role}</div>
-                <div><span className="font-semibold">Registrado:</span> {new Date(user.createdAt || Date.now()).toLocaleDateString('es-ES')}</div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-        {/* Panel de info del admin */}
-        {showAdminInfoPanel && adminUser && (
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed inset-0 z-50 flex justify-end md:items-stretch items-end md:items-end"
-            style={{ pointerEvents: 'auto' }}
-            onClick={() => setShowAdminInfoPanel(false)}
-          >
-            <div
-              className="bg-card w-full h-full max-w-sm md:max-w-sm shadow-2xl flex flex-col md:rounded-none rounded-t-2xl md:h-full md:rounded-l-2xl"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between p-4 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-16 w-16">
-                    {adminUser.photoURL ? (
-                      <AvatarImage src={adminUser.photoURL} alt={adminUser.name || 'Admin'} />
-                    ) : (
-                      <AvatarFallback>{adminUser.name?.charAt(0) || 'A'}</AvatarFallback>
-                    )}
-                  </Avatar>
-                  <div>
-                    <div className="font-bold text-lg">{adminUser.name}</div>
-                    <div className="text-xs text-muted-foreground">{adminUser.email}</div>
-                  </div>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => setShowAdminInfoPanel(false)}>
-                  ×
-                </Button>
-              </div>
-              <div className="p-4 space-y-2">
-                {adminUser.phone && <div><span className="font-semibold">Teléfono:</span> {adminUser.phone}</div>}
-                {adminUser.bio && <div><span className="font-semibold">Bio:</span> {adminUser.bio}</div>}
-                {adminUser.company && <div><span className="font-semibold">Empresa:</span> {adminUser.company}</div>}
-                {adminUser.position && <div><span className="font-semibold">Cargo:</span> {adminUser.position}</div>}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
     </div>
   );
 }

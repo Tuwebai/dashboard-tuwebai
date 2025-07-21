@@ -43,7 +43,8 @@ import {
   where,
   doc,
   updateDoc,
-  deleteDoc
+  deleteDoc,
+  limit
 } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -119,13 +120,15 @@ export default function SharedTasks({
   // Load tasks
   useEffect(() => {
     if (!projectId) return;
+    setIsLoading(true);
 
     const tasksRef = collection(firestore, 'tasks');
     const q = query(
       tasksRef,
       where('projectId', '==', projectId),
       where('phaseKey', '==', phaseKey || ''),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'desc'),
+      limit(20) // paginación básica
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -135,6 +138,13 @@ export default function SharedTasks({
       });
       setTasks(tasksData);
       setIsLoading(false);
+    }, (error) => {
+      setIsLoading(false);
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar las tareas.',
+        variant: 'destructive'
+      });
     });
 
     return () => unsubscribe();
@@ -217,7 +227,8 @@ export default function SharedTasks({
 
       toast({
         title: 'Tarea creada',
-        description: 'La tarea ha sido creada exitosamente.'
+        description: 'La tarea ha sido creada exitosamente.',
+        variant: 'default'
       });
     } catch (error) {
       console.error('Error adding task:', error);
@@ -254,7 +265,8 @@ export default function SharedTasks({
 
       toast({
         title: 'Tarea actualizada',
-        description: `La tarea ha sido marcada como ${status === 'completed' ? 'completada' : status}.`
+        description: `La tarea ha sido marcada como ${status === 'completed' ? 'completada' : status}.`,
+        variant: 'default'
       });
     } catch (error) {
       console.error('Error updating task:', error);
@@ -268,13 +280,32 @@ export default function SharedTasks({
 
   // Delete task
   const deleteTask = async (taskId: string) => {
+    if (!user) {
+      toast({
+        title: 'Inicia sesión',
+        description: 'Debes iniciar sesión para borrar tareas.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    if (user.role !== 'admin' && task.assignedBy !== user.uid) {
+      toast({
+        title: 'Sin permisos',
+        description: 'Solo el creador o un admin puede borrar esta tarea.',
+        variant: 'destructive'
+      });
+      return;
+    }
     if (!confirm('¿Estás seguro de que quieres eliminar esta tarea?')) return;
 
     try {
       await deleteDoc(doc(firestore, 'tasks', taskId));
       toast({
         title: 'Tarea eliminada',
-        description: 'La tarea ha sido eliminada.'
+        description: 'La tarea ha sido eliminada.',
+        variant: 'default'
       });
     } catch (error) {
       console.error('Error deleting task:', error);
@@ -353,8 +384,16 @@ export default function SharedTasks({
     return (
       <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <div className="flex flex-col gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 animate-pulse">
+                <div className="h-8 w-8 bg-muted/30 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-1/2 bg-muted/20 rounded" />
+                  <div className="h-3 w-1/3 bg-muted/10 rounded" />
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -496,8 +535,7 @@ export default function SharedTasks({
               <p className="text-sm text-muted-foreground">
                 {tasks.length === 0 
                   ? 'Crea la primera tarea para comenzar'
-                  : 'No se encontraron tareas con los filtros aplicados'
-                }
+                  : 'No se encontraron tareas con los filtros aplicados'}
               </p>
             </CardContent>
           </Card>
@@ -513,6 +551,7 @@ export default function SharedTasks({
                         size="sm"
                         onClick={() => updateTaskStatus(task.id, task.status === 'completed' ? 'pending' : 'completed')}
                         className="h-6 w-6 p-0"
+                        disabled={user?.role !== 'admin' && task.assignedBy !== user?.uid}
                       >
                         {task.status === 'completed' ? (
                           <CheckSquare className="h-4 w-4 text-green-500" />
@@ -575,11 +614,12 @@ export default function SharedTasks({
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowTaskDetails(task)}
+                      disabled={user?.role !== 'admin' && task.assignedBy !== user?.uid}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
                     
-                    {(task.assignedBy === user?.uid || user?.role === 'admin') && (
+                    {(user?.role === 'admin' || task.assignedBy === user?.uid) && (
                       <Button
                         variant="ghost"
                         size="sm"
