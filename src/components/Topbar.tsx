@@ -19,6 +19,7 @@ import NotificationBell from './NotificationBell';
 import { useEffect, useState } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface TopbarProps {
   onMenuClick?: () => void;
@@ -55,19 +56,33 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
       <div className="flex items-center gap-4">
         {/* Mobile menu button */}
         {showMobileMenu && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onMenuClick}
-            className="md:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onMenuClick}
+                  className="md:hidden"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Menú</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
 
         {/* Search */}
         <div className="relative max-w-xs sm:max-w-md w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>Buscar</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <Input
             placeholder="Buscar proyectos..."
             className="pl-10 bg-input border-border text-sm sm:text-base"
@@ -87,14 +102,21 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
         </div>
 
         {/* Chat */}
-        <Button variant="ghost" size="sm" className="relative" onClick={() => navigate('/chat')}>
-          <MessageCircle className="h-5 w-5" />
-          {unreadChats > 0 && (
-            <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs">
-              {unreadChats > 99 ? '99+' : unreadChats}
-            </Badge>
-          )}
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" className="relative" onClick={() => navigate('/chat')}>
+                <MessageCircle className="h-5 w-5" />
+                {unreadChats > 0 && (
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs">
+                    {unreadChats > 99 ? '99+' : unreadChats}
+                  </Badge>
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Chat</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
         {/* Notifications */}
         <NotificationBell />

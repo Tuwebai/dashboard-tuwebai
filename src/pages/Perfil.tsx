@@ -244,7 +244,7 @@ export default function Perfil() {
   if (!user) return null;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-8">
+    <div className="p-2 sm:p-4 md:p-6 max-w-4xl mx-auto space-y-4 sm:space-y-6 md:space-y-8 max-w-full overflow-x-hidden">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -256,7 +256,7 @@ export default function Perfil() {
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-8">
         {/* Columna izquierda - Información básica */}
         <div className="lg:col-span-2 space-y-6">
           {/* Información personal */}

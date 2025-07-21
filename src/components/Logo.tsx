@@ -4,9 +4,10 @@ interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showText?: boolean;
   className?: string;
+  glow?: boolean;
 }
 
-export default function Logo({ size = 'md', showText = true, className = '' }: LogoProps) {
+export default function Logo({ size = 'md', showText = true, className = '', glow = true }: LogoProps) {
   const sizeClasses = {
     sm: 'w-6 h-6',
     md: 'w-8 h-8',
@@ -26,7 +27,7 @@ export default function Logo({ size = 'md', showText = true, className = '' }: L
       <img 
         src="/logoweb.jpg" 
         alt="TuWebAI Logo" 
-        className={`${sizeClasses[size]} object-contain`}
+        className={`${sizeClasses[size]} object-contain ${glow ? 'animate-avatar-glow' : ''}`}
       />
       
       {showText && (

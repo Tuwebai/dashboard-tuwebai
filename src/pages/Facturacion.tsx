@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { firestore } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { Navigate } from 'react-router-dom';
-import { Download, CreditCard, Calendar, FileText, TrendingUp, AlertCircle, Plus, ExternalLink } from 'lucide-react';
+import { Download, CreditCard, Calendar, FileText, TrendingUp, AlertCircle, Plus, ExternalLink, CheckCircle, Star, Zap, Globe, Users, Shield } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { PAYMENT_TYPES, formatCurrency } from '@/lib/mercadopago';
 import { getUserPayments, createMercadoPagoPreference, Payment } from '@/lib/paymentService';
@@ -122,6 +122,63 @@ export default function Facturacion() {
     }
   };
 
+  const PLANES = [
+    {
+      key: 'basico',
+      nombre: 'Plan Básico',
+      precio: 299000,
+      currency: 'ARS',
+      descripcion: 'Ideal para empresas pequeñas que inician su presencia digital',
+      popular: false,
+      features: [
+        'Sitio web de 5 páginas',
+        'Optimización SEO básica',
+        'Diseño responsive',
+        'Formulario de contacto',
+        'Integración con redes sociales',
+        'Soporte técnico por 3 meses',
+      ],
+      icon: Star,
+    },
+    {
+      key: 'profesional',
+      nombre: 'Plan Profesional',
+      precio: 499000,
+      currency: 'ARS',
+      descripcion: 'Perfecto para empresas en crecimiento que buscan destacar',
+      popular: true,
+      features: [
+        'Sitio web de 10 páginas',
+        'Estrategia SEO completa',
+        'Blog integrado con CMS',
+        'Panel de administración',
+        'Email marketing (hasta 1,000 suscriptores)',
+        'Integraciones con CRM',
+        'Soporte técnico prioritario',
+      ],
+      icon: Zap,
+    },
+    {
+      key: 'enterprise',
+      nombre: 'Plan Enterprise',
+      precio: 0,
+      currency: 'ARS',
+      descripcion: 'Para empresas con necesidades específicas y a gran escala',
+      popular: false,
+      features: [
+        'Sitio web con páginas ilimitadas',
+        'Estrategia digital completa',
+        'SEO avanzado y SEM',
+        'Automatización de marketing',
+        'Desarrollos a medida',
+        'Integraciones avanzadas',
+        'Soporte técnico 24/7',
+        'Gerente de cuenta dedicado',
+      ],
+      icon: Globe,
+    },
+  ];
+
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -130,62 +187,12 @@ export default function Facturacion() {
           <p className="text-muted-foreground">Gestiona tus pagos y descarga facturas</p>
         </div>
         <div className="flex items-center gap-2">
-          <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Nuevo Pago
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Crear Nuevo Pago</DialogTitle>
-              </DialogHeader>
-              <Tabs defaultValue="website" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="website">Sitio Web</TabsTrigger>
-                  <TabsTrigger value="ecommerce">E-commerce</TabsTrigger>
-                  <TabsTrigger value="custom">Personalizado</TabsTrigger>
-                </TabsList>
-                
-                {Object.entries(PAYMENT_TYPES).map(([key, paymentType]) => (
-                  <TabsContent key={key} value={key} className="space-y-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          {paymentType.name}
-                          <span className="text-2xl font-bold text-primary">
-                            {formatCurrency(paymentType.price, paymentType.currency)}
-                          </span>
-                        </CardTitle>
-                        <CardDescription>{paymentType.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          <h4 className="font-semibold">Incluye:</h4>
-                          <ul className="space-y-2">
-                            {paymentType.features.map((feature, index) => (
-                              <li key={index} className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-primary rounded-full"></div>
-                                {feature}
-                              </li>
-                            ))}
-                          </ul>
-                          <Button 
-                            className="w-full mt-4"
-                            onClick={() => handleCreatePayment(key)}
-                            disabled={processingPayment}
-                          >
-                            {processingPayment ? 'Procesando...' : 'Pagar con Mercado Pago'}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                ))}
-              </Tabs>
-            </DialogContent>
-          </Dialog>
+           <Button
+             onClick={() => window.location.href = 'https://tuweb-ai.com/#pricing'}
+           >
+             <Plus className="h-4 w-4 mr-2" />
+             Nuevo Pago
+           </Button>
         </div>
       </div>
 
@@ -254,7 +261,7 @@ export default function Facturacion() {
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No hay pagos registrados</h3>
               <p className="text-muted-foreground mb-4">Cuando realices tu primer pago, aparecerá aquí.</p>
-              <Button onClick={() => setIsPaymentModalOpen(true)}>
+              <Button onClick={() => window.location.href = 'https://tuweb-ai.com/#pricing'}>
                 <Plus className="h-4 w-4 mr-2" />
                 Crear Primer Pago
               </Button>

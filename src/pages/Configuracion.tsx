@@ -31,6 +31,7 @@ import {
   Lock,
   Unlock
 } from 'lucide-react';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 export default function Configuracion() {
   const { user } = useApp();
@@ -320,15 +321,29 @@ export default function Configuracion() {
           <p className="text-muted-foreground">Personaliza tu experiencia en la plataforma</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExportSettings}>
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" onClick={handleExportSettings}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Descargar</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <Label htmlFor="import-settings" className="cursor-pointer">
-            <Button variant="outline">
-              <Upload className="h-4 w-4 mr-2" />
-              Importar
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Importar
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Subir</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </Label>
           <input
             id="import-settings"
@@ -337,10 +352,17 @@ export default function Configuracion() {
             onChange={handleImportSettings}
             className="hidden"
           />
-          <Button variant="outline" onClick={handleResetSettings}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Restablecer
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" onClick={handleResetSettings}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Restablecer
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Restablecer</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
@@ -349,16 +371,22 @@ export default function Configuracion() {
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
-            <Button
-              key={tab.id}
-              variant={activeTab === tab.id ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab(tab.id)}
-              className="flex items-center gap-2"
-            >
-              <Icon className="h-4 w-4" />
-              {tab.label}
-            </Button>
+            <TooltipProvider key={tab.id}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={activeTab === tab.id ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setActiveTab(tab.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {tab.label}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{tab.label.split(' ')[0]}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           );
         })}
       </div>

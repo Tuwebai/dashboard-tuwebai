@@ -60,6 +60,15 @@ h1, .text-3xl, .text-2xl, .font-bold, .font-semibold {
   animation: avatar-glow 2s infinite alternate;
 }
 
+.card, .popover, .menu, .list-item, .dropdown, .tooltip, .button, .hover-card, .select, .tab, .badge {
+  transition: box-shadow 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.card:hover, .popover:hover, .menu:hover, .list-item:hover, .dropdown:hover, .tooltip:hover, .button:hover, .hover-card:hover, .select:hover, .tab:hover, .badge:hover {
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25), 0 1.5px 6px 0 rgba(80,80,255,0.10);
+  transform: scale(1.03);
+  z-index: 2;
+}
+
 @layer base {
   :root {
     /* TuWeb.ai Theme - Colores actualizados con fondo gradiente */
@@ -188,4 +197,17 @@ h1, .text-3xl, .text-2xl, .font-bold, .font-semibold {
     min-height: 100vh;
     @apply text-foreground;
   }
+}
+
+.bg-gradient-secondary {
+  background: linear-gradient(135deg, #181824 60%, #23263a 100%);
+}
+.bg-gradient-gold {
+  background: linear-gradient(90deg, #ffe259 0%, #ffa751 100%);
+}
+.bg-gradient-neon {
+  background: linear-gradient(90deg, #00ffb4 0%, #00cfff 100%);
+}
+.bg-gradient-danger {
+  background: linear-gradient(90deg, #ff5858 0%, #f09819 100%);
 }

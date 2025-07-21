@@ -148,7 +148,7 @@ export default function Soporte() {
   const ticketsCerrados = tickets.filter(t => t.estado === 'cerrado').length;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-2 sm:p-4 md:p-6 max-w-6xl mx-auto space-y-4 sm:space-y-6 md:space-y-8 max-w-full overflow-x-hidden">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Soporte Técnico</h1>
@@ -161,7 +161,7 @@ export default function Soporte() {
       </div>
 
       {/* Métricas de tickets */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6">
         <Card className="bg-gradient-card border-border">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">

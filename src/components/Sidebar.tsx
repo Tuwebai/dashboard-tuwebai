@@ -31,6 +31,7 @@ import Logo from './Logo';
 import { useEffect, useState } from 'react';
 import { firestore } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 export default function Sidebar() {
   const { user, logout } = useApp();
@@ -78,7 +79,12 @@ export default function Sidebar() {
         ${isActive ? 'bg-gradient-to-r from-blue-700 to-purple-700 text-white shadow' : 'text-zinc-200 hover:bg-zinc-800 hover:text-white'}`
       }
     >
-      {icon}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>{icon}</TooltipTrigger>
+          <TooltipContent>{label.split(' ')[0]}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <span className="truncate flex-1">{label}</span>
       <div className="flex items-center gap-1 ml-auto">
         {count !== undefined && (
@@ -108,7 +114,12 @@ export default function Sidebar() {
         className={`flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition-colors text-base w-full
         ${isActive ? 'bg-gradient-to-r from-blue-700 to-purple-700 text-white shadow' : 'text-zinc-200 hover:bg-zinc-800 hover:text-white'}`}
       >
-        {icon}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>{icon}</TooltipTrigger>
+            <TooltipContent>{label.split(' ')[0]}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <span className="truncate flex-1">{label}</span>
         <div className="flex items-center gap-1 ml-auto">
           {count !== undefined && (
@@ -214,7 +225,14 @@ export default function Sidebar() {
           variant="ghost"
           className="w-full justify-start text-zinc-400 hover:bg-red-600 hover:text-white transition-colors"
         >
-          <LogOut className="h-5 w-5 mr-3" />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <LogOut className="h-5 w-5 mr-3" />
+              </TooltipTrigger>
+              <TooltipContent>Salir</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           Cerrar Sesión
         </Button>
       </div>

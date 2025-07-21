@@ -37,6 +37,8 @@ import { SectionLoading } from '@/components/LoadingSpinner';
 import { useDebounce } from '@/hooks/usePerformance';
 import { firestore } from '@/lib/firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import ProyectosNuevoModal from './ProyectosNuevo';
 
 export default function ProjectsPage() {
   const { projects, loading, error, refreshData, user } = useApp();
@@ -49,6 +51,7 @@ export default function ProjectsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<string>('updatedAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [showNuevoModal, setShowNuevoModal] = useState(false);
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -202,7 +205,7 @@ export default function ProjectsPage() {
             <Download className="h-4 w-4 mr-2" />
             Exportar Reporte
           </Button>
-          <Button onClick={() => navigate('/proyectos/nuevo')}>
+          <Button onClick={() => setShowNuevoModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Nuevo Proyecto
           </Button>
@@ -267,7 +270,7 @@ export default function ProjectsPage() {
               }
             </p>
             {projects.length === 0 && (
-              <Button onClick={() => navigate('/proyectos/nuevo')}>
+              <Button onClick={() => setShowNuevoModal(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Crear primer proyecto
               </Button>
@@ -293,28 +296,55 @@ export default function ProjectsPage() {
                       </p>
                     </div>
                     <div className="flex gap-1 ml-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewProject(project)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(`/proyectos/${project.id}/editar`)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteProject(project.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewProject(project)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Ver detalles</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => navigate(`/proyectos/${project.id}/editar`)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Editar proyecto</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteProject(project.id)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Eliminar proyecto</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </div>
                 </CardHeader>
@@ -518,6 +548,14 @@ export default function ProjectsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ProyectosNuevoModal
+        open={showNuevoModal}
+        onClose={() => {
+          setShowNuevoModal(false);
+          refreshData();
+        }}
+      />
     </div>
   );
 }

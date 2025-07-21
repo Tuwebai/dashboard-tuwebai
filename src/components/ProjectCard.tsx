@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { 
   MoreVertical, 
   Eye, 
@@ -78,28 +79,56 @@ export default function ProjectCard({ project, onView, onEdit, onDelete }: Proje
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Más</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-popover border-border">
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onView(project); }}>
-                <Eye className="h-4 w-4 mr-2" />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Eye className="h-4 w-4 mr-2" />
+                    </TooltipTrigger>
+                    <TooltipContent>Ver</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 Ver detalles
               </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(project); }}>
-                <Edit className="h-4 w-4 mr-2" />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Edit className="h-4 w-4 mr-2" />
+                    </TooltipTrigger>
+                    <TooltipContent>Editar</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 Editar
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
                 className="text-destructive"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    </TooltipTrigger>
+                    <TooltipContent>Eliminar</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 Eliminar
               </DropdownMenuItem>
             </DropdownMenuContent>

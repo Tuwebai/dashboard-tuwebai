@@ -192,7 +192,7 @@ export default function Dashboard() {
   const userProjects = realTimeProjects.filter(p => p.ownerEmail === user?.email);
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
+    <div className="p-2 sm:p-4 md:p-6 space-y-4 sm:space-y-6 md:space-y-8 max-w-full overflow-x-hidden">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
@@ -202,7 +202,7 @@ export default function Dashboard() {
       </div>
 
       {/* Estadísticas rápidas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
         <Card className="bg-gradient-card border-border transition-all duration-200 hover:scale-105 hover:shadow-2xl">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -487,7 +487,7 @@ export default function Dashboard() {
 
       {/* Modal de detalle del proyecto */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto mx-4 bg-[#10111a]/95 backdrop-blur-xl border border-[#23263a] shadow-2xl rounded-2xl">
+        <DialogContent className="w-full max-w-[98vw] sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 bg-[#10111a]/95 backdrop-blur-xl border border-[#23263a] shadow-2xl rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">{selectedProject?.name}</DialogTitle>
             <DialogDescription>{selectedProject?.description}</DialogDescription>

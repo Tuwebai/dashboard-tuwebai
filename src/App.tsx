@@ -63,7 +63,7 @@ function AppRoutes() {
         {/* Rutas protegidas - disponibles para admin y cliente */}
         <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout><Dashboard /></DashboardLayout></ProtectedRoute>} />
         <Route path="/proyectos" element={<ProtectedRoute><DashboardLayout><ProjectsPage /></DashboardLayout></ProtectedRoute>} />
-        <Route path="/proyectos/nuevo" element={<ProtectedRoute><DashboardLayout><ProyectosNuevo /></DashboardLayout></ProtectedRoute>} />
+        <Route path="/proyectos/nuevo" element={<Navigate to="/proyectos" replace />} />
         <Route path="/proyectos/:projectId/colaboracion" element={<ProtectedRoute><DashboardLayout><CollaborationPage /></DashboardLayout></ProtectedRoute>} />
         <Route path="/notificaciones" element={<ProtectedRoute><DashboardLayout><NotificationsPage /></DashboardLayout></ProtectedRoute>} />
         <Route path="/perfil" element={<ProtectedRoute><DashboardLayout><Perfil /></DashboardLayout></ProtectedRoute>} />

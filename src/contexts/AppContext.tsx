@@ -22,6 +22,7 @@ import {
 } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, User as FirebaseUser, updateProfile, signInWithPopup, GoogleAuthProvider, AuthProvider } from 'firebase/auth';
 import { initializeChatData, initializeCommentsData, initializeTasksData, initializeAdminSystemData, cleanSimulatedData } from '@/utils/initializeData';
+import { toast as toastGlobal } from '@/hooks/use-toast';
 
 export interface Project {
   id: string;
@@ -261,6 +262,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setUser(userData);
       setIsAuthenticated(true);
           setError(null);
+
+          // Mostrar toast de bienvenida solo una vez por sesión
+          if (!localStorage.getItem('tuwebai_welcome_back')) {
+            toastGlobal({
+              title: '¡Bienvenido de nuevo!',
+              description: 'Tu sesión sigue activa. Puedes continuar gestionando tus proyectos.'
+            });
+            localStorage.setItem('tuwebai_welcome_back', '1');
+          }
 
           // Inicializar datos del admin si el usuario es admin
           if (userData.role === 'admin') {
@@ -596,6 +606,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       await signOut(auth);
       clearCache();
+      localStorage.removeItem('tuwebai_welcome_back');
     } catch (error) {
       console.error('Logout error:', error);
       setError('Error al cerrar sesión');

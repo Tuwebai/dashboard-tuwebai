@@ -33,6 +33,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface CollaborationToolsProps {
   projectId: string;
@@ -301,69 +302,111 @@ export default function CollaborationTools({
         <CardContent className="space-y-4">
           {/* Call Controls */}
           <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              variant={isVoiceActive ? "default" : "outline"}
-              size="sm"
-              onClick={toggleVoiceCall}
-              className={isVoiceActive ? "bg-green-500 hover:bg-green-600" : ""}
-            >
-              {isVoiceActive ? <Phone className="h-4 w-4 mr-2" /> : <Phone className="h-4 w-4 mr-2" />}
-              {isVoiceActive ? "Colgar" : "Llamada"}
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={isVoiceActive ? "default" : "outline"}
+                    size="sm"
+                    onClick={toggleVoiceCall}
+                    className={isVoiceActive ? "bg-green-500 hover:bg-green-600" : ""}
+                  >
+                    {isVoiceActive ? <Phone className="h-4 w-4 mr-2" /> : <Phone className="h-4 w-4 mr-2" />}
+                    {isVoiceActive ? "Colgar" : "Llamada"}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{isVoiceActive ? "Colgar" : "Llamar"}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             
-            <Button
-              variant={isVideoActive ? "default" : "outline"}
-              size="sm"
-              onClick={toggleVideoCall}
-              className={isVideoActive ? "bg-blue-500 hover:bg-blue-600" : ""}
-            >
-              {isVideoActive ? <VideoOff className="h-4 w-4 mr-2" /> : <Video className="h-4 w-4 mr-2" />}
-              {isVideoActive ? "Colgar Video" : "Video"}
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={isVideoActive ? "default" : "outline"}
+                    size="sm"
+                    onClick={toggleVideoCall}
+                    className={isVideoActive ? "bg-blue-500 hover:bg-blue-600" : ""}
+                  >
+                    {isVideoActive ? <VideoOff className="h-4 w-4 mr-2" /> : <Video className="h-4 w-4 mr-2" />}
+                    {isVideoActive ? "Colgar Video" : "Video"}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{isVideoActive ? "Colgar" : "Video"}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             
-            <Button
-              variant={isScreenSharing ? "default" : "outline"}
-              size="sm"
-              onClick={toggleScreenSharing}
-              disabled={!isCallActive}
-              className={isScreenSharing ? "bg-purple-500 hover:bg-purple-600" : ""}
-            >
-              <ScreenShare className="h-4 w-4 mr-2" />
-              {isScreenSharing ? "Detener" : "Pantalla"}
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={isScreenSharing ? "default" : "outline"}
+                    size="sm"
+                    onClick={toggleScreenSharing}
+                    disabled={!isCallActive}
+                    className={isScreenSharing ? "bg-purple-500 hover:bg-purple-600" : ""}
+                  >
+                    <ScreenShare className="h-4 w-4 mr-2" />
+                    {isScreenSharing ? "Detener" : "Pantalla"}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{isScreenSharing ? "Detener" : "Pantalla"}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             
-            <Button
-              variant={isCursorSharing ? "default" : "outline"}
-              size="sm"
-              onClick={toggleCursorSharing}
-              className={isCursorSharing ? "bg-orange-500 hover:bg-orange-600" : ""}
-            >
-              {isCursorSharing ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
-              Cursor
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={isCursorSharing ? "default" : "outline"}
+                    size="sm"
+                    onClick={toggleCursorSharing}
+                    className={isCursorSharing ? "bg-orange-500 hover:bg-orange-600" : ""}
+                  >
+                    {isCursorSharing ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
+                    Cursor
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Cursor</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
           {/* Audio/Video Controls */}
           {(isVoiceActive || isVideoActive) && (
             <div className="flex items-center gap-2 flex-wrap">
-              <Button
-                variant={isMuted ? "destructive" : "outline"}
-                size="sm"
-                onClick={toggleMute}
-              >
-                {isMuted ? <MicOff className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
-                {isMuted ? "Activar" : "Silenciar"}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={isMuted ? "destructive" : "outline"}
+                      size="sm"
+                      onClick={toggleMute}
+                    >
+                      {isMuted ? <MicOff className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
+                      {isMuted ? "Activar" : "Silenciar"}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{isMuted ? "Activar" : "Silenciar"}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               
               {isVideoActive && (
-                <Button
-                  variant={isVideoOff ? "destructive" : "outline"}
-                  size="sm"
-                  onClick={toggleVideo}
-                >
-                  {isVideoOff ? <Video className="h-4 w-4 mr-2" /> : <VideoOff className="h-4 w-4 mr-2" />}
-                  {isVideoOff ? "Activar" : "Desactivar"}
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={isVideoOff ? "destructive" : "outline"}
+                        size="sm"
+                        onClick={toggleVideo}
+                      >
+                        {isVideoOff ? <Video className="h-4 w-4 mr-2" /> : <VideoOff className="h-4 w-4 mr-2" />}
+                        {isVideoOff ? "Activar" : "Desactivar"}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{isVideoOff ? "Activar" : "Desactivar"}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
               
               <div className="flex items-center gap-2">
@@ -384,14 +427,21 @@ export default function CollaborationTools({
           {/* Voice Recording */}
           {isVoiceActive && (
             <div className="flex items-center gap-2">
-              <Button
-                variant={isRecording ? "destructive" : "outline"}
-                size="sm"
-                onClick={isRecording ? stopRecording : startRecording}
-              >
-                {isRecording ? <CheckCircle className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
-                {isRecording ? `Detener (${formatTime(recordingTime)})` : "Grabar"}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={isRecording ? "destructive" : "outline"}
+                      size="sm"
+                      onClick={isRecording ? stopRecording : startRecording}
+                    >
+                      {isRecording ? <CheckCircle className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
+                      {isRecording ? `Detener (${formatTime(recordingTime)})` : "Grabar"}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{isRecording ? "Detener" : "Grabar"}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               
               {isRecording && (
                 <div className="flex items-center gap-2">

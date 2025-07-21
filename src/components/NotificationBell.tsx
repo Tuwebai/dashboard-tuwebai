@@ -17,7 +17,8 @@ import {
   where, 
   orderBy,
   serverTimestamp,
-  limit
+  limit,
+  deleteDoc
 } from 'firebase/firestore';
 import { 
   Bell, 
@@ -42,6 +43,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Notification {
   id: string;
@@ -165,22 +167,18 @@ export default function NotificationBell() {
     }
   };
 
-  // Archive notification
-  const archiveNotification = async (notificationId: string) => {
+  // Borrar notificación
+  const deleteNotification = async (notificationId: string) => {
     try {
-      const notificationRef = doc(firestore, 'notifications', notificationId);
-      await updateDoc(notificationRef, {
-        isArchived: true
-      });
-
+      await deleteDoc(doc(firestore, 'notifications', notificationId));
       toast({
-        title: 'Notificación archivada',
-        description: 'La notificación ha sido movida al archivo'
+        title: 'Notificación eliminada',
+        description: 'La notificación ha sido eliminada.'
       });
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'No se pudo archivar la notificación',
+        description: 'No se pudo eliminar la notificación.',
         variant: 'destructive'
       });
     }
@@ -296,152 +294,189 @@ export default function NotificationBell() {
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="bg-[#181824] border border-[#23263a] shadow-2xl text-white w-full max-w-xs sm:max-w-md md:max-w-lg rounded-xl p-0 sm:p-2">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            <span className="font-semibold text-lg">Notificaciones</span>
-            {unreadCount > 0 && (
-              <Badge variant="destructive" className="text-xs">
-                {unreadCount} nueva{unreadCount !== 1 ? 's' : ''}
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={markAllAsRead}
-                className="h-8 px-2 text-xs"
-              >
-                <Check className="h-3 w-3 mr-1" />
-                Marcar todas
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/notificaciones')}
-              className="h-8 px-2 text-xs"
-            >
-              <Settings className="h-3 w-3 mr-1" />
-              Ver todas
-            </Button>
-          </div>
-        </div>
-        
-        <ScrollArea>
-          <div className="p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900" style={{ maxHeight: '320px' }}>
-            {notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <Bell className="h-12 w-12 text-muted-foreground mb-3" />
-                <p className="text-muted-foreground text-sm mb-1">Sin notificaciones</p>
-                <p className="text-muted-foreground text-xs">Te notificaremos cuando haya novedades</p>
-              </div>
-            ) : (
-              notifications.map((notification, index) => (
-                <div key={notification.id}>
-                  <div
-                    className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                      !notification.isRead ? 'ring-2 ring-primary' : ''
-                    } ${notification.isPinned ? 'ring-2 ring-yellow-500' : ''}`}
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <div className="flex-shrink-0 mt-1">
-                      {getTypeIcon(notification.type)}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <h4 className="font-medium text-sm leading-tight">
-                          {notification.title}
-                        </h4>
-                        <div className="flex items-center gap-1">
-                          {notification.isPinned && (
-                            <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                          )}
-                          <Badge 
-                            variant="secondary" 
-                            className={`text-xs ${getPriorityColor(notification.priority)}`}
-                          >
-                            {notification.priority}
-                          </Badge>
-                        </div>
-                      </div>
-                      
-                      <p className="text-xs text-muted-foreground mb-2 leading-relaxed">
-                        {notification.message}
-                      </p>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          <span>{formatTimeAgo(notification.createdAt)}</span>
-                          {notification.senderName && (
-                            <>
-                              <span>•</span>
-                              <span>{notification.senderName}</span>
-                            </>
-                          )}
-                        </div>
-                        
-                        <div className="flex items-center gap-1">
-                          {notification.actions && notification.actions.length > 0 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const action = notification.actions![0];
-                                if (action.url) {
-                                  window.open(action.url, '_blank');
-                                }
-                              }}
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              archiveNotification(notification.id);
-                            }}
-                          >
-                            <Archive className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {index < notifications.length - 1 && (
-                    <Separator className="my-2" />
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </ScrollArea>
-        
-        {notifications.length > 0 && (
-          <div className="p-3 border-t border-border bg-muted/20">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Mostrando {notifications.length} de {notifications.length} notificaciones</span>
+        <TooltipProvider>
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              <span className="font-semibold text-lg">Notificaciones</span>
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="text-xs">
+                  {unreadCount} nueva{unreadCount !== 1 ? 's' : ''}
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={markAllAsRead}
+                  className="h-8 px-2 text-xs"
+                >
+                  <Check className="h-3 w-3 mr-1" />
+                  Marcar todas
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/notificaciones')}
-                className="h-6 px-2 text-xs"
+                className="h-8 px-2 text-xs"
               >
+                <Settings className="h-3 w-3 mr-1" />
                 Ver todas
               </Button>
             </div>
           </div>
-        )}
+          
+          <ScrollArea>
+            <div className="p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900" style={{ maxHeight: '320px' }}>
+              {notifications.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Bell className="h-12 w-12 text-muted-foreground mb-3" />
+                  <p className="text-muted-foreground text-sm mb-1">Sin notificaciones</p>
+                  <p className="text-muted-foreground text-xs">Te notificaremos cuando haya novedades</p>
+                </div>
+              ) : (
+                notifications.map((notification, index) => (
+                  <div key={notification.id}>
+                    <div
+                      className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                        !notification.isRead ? 'ring-2 ring-primary' : ''
+                      } ${notification.isPinned ? 'ring-2 ring-yellow-500' : ''}`}
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <div className="flex-shrink-0 mt-1">
+                        {getTypeIcon(notification.type)}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h4 className="font-medium text-sm leading-tight">
+                            {notification.title}
+                          </h4>
+                          <div className="flex items-center gap-1">
+                            {notification.isPinned && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                                </TooltipTrigger>
+                                <TooltipContent>Anclada</TooltipContent>
+                              </Tooltip>
+                            )}
+                            <Badge 
+                              variant="secondary" 
+                              className={`text-xs ${getPriorityColor(notification.priority)}`}
+                            >
+                              {notification.priority}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <p className="text-xs text-muted-foreground mb-2 leading-relaxed">
+                          {notification.message}
+                        </p>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>{formatTimeAgo(notification.createdAt)}</span>
+                            {notification.senderName && (
+                              <>
+                                <span>•</span>
+                                <span>{notification.senderName}</span>
+                              </>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-1">
+                            {notification.actions && notification.actions.length > 0 && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      let url = '/notificaciones';
+                                      if (notification.type === 'payment' || notification.category === 'billing') url = '/facturacion';
+                                      else if (notification.type === 'project') url = '/proyectos';
+                                      else if (notification.type === 'file') url = '/proyectos';
+                                      else if (notification.type === 'comment') url = '/proyectos';
+                                      else if (notification.category === 'support') url = '/soporte';
+                                      else if (notification.category === 'collaboration') url = '/proyectos';
+                                      else if (notification.roomId) url = `/chat/${notification.roomId}`;
+                                      navigate(url);
+                                      setIsOpen(false);
+                                    }}
+                                  >
+                                    <ExternalLink className="h-3 w-3" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Ir a sección</TooltipContent>
+                              </Tooltip>
+                            )}
+                           <Tooltip>
+                             <TooltipTrigger asChild>
+                           <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNotification(notification.id);
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                             </TooltipTrigger>
+                             <TooltipContent>Eliminar notificación</TooltipContent>
+                           </Tooltip>
+                          </div>
+                        </div>
+                        {!notification.isRead && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => markAsRead(notification.id)}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Marcar como leída</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {index < notifications.length - 1 && (
+                      <Separator className="my-2" />
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+          
+          {notifications.length > 0 && (
+            <div className="p-3 border-t border-border bg-muted/20">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Mostrando {notifications.length} de {notifications.length} notificaciones</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/notificaciones')}
+                  className="h-6 px-2 text-xs"
+                >
+                  Ver todas
+                </Button>
+              </div>
+            </div>
+          )}
+        </TooltipProvider>
       </PopoverContent>
     </Popover>
   );

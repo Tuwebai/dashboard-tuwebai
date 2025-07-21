@@ -74,6 +74,7 @@ import {
   CheckSquare
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface Notification {
   id: string;
