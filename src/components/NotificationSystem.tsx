@@ -75,6 +75,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { useTranslation } from 'react-i18next';
+import { formatDateSafe } from '@/utils/formatDateSafe';
 
 interface Notification {
   id: string;
@@ -178,6 +180,7 @@ export default function NotificationSystem() {
   const [filterCategory, setFilterCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { t } = useTranslation();
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const notificationTimeoutRef = useRef<NodeJS.Timeout>();
@@ -654,8 +657,8 @@ export default function NotificationSystem() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold">Acceso denegado</h3>
-          <p className="text-muted-foreground">Debes iniciar sesión para ver las notificaciones.</p>
+          <h3 className="text-lg font-semibold">{t('Acceso denegado')}</h3>
+          <p className="text-muted-foreground">{t('Debes iniciar sesión para ver las notificaciones.')}</p>
         </div>
       </div>
     );
@@ -666,8 +669,8 @@ export default function NotificationSystem() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Notificaciones</h1>
-          <p className="text-muted-foreground">Gestiona todas tus notificaciones</p>
+          <h1 className="text-3xl font-bold">{t('Notificaciones')}</h1>
+          <p className="text-muted-foreground">{t('Gestiona todas tus notificaciones')}</p>
         </div>
         
         <div className="flex items-center gap-2">
@@ -676,7 +679,7 @@ export default function NotificationSystem() {
             onClick={() => setIsSettingsOpen(true)}
           >
             <Settings className="h-4 w-4 mr-2" />
-            Configuración
+            {t('Configuración')}
           </Button>
         </div>
       </div>
@@ -687,7 +690,7 @@ export default function NotificationSystem() {
           <CardContent className="p-4 bg-card border border-border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('Total')}</p>
                 <p className="text-2xl font-bold">{stats.total}</p>
               </div>
               <Bell className="h-8 w-8 text-blue-500" />
@@ -699,7 +702,7 @@ export default function NotificationSystem() {
           <CardContent className="p-4 bg-card border border-border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">No leídas</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('No leídas')}</p>
                 <p className="text-2xl font-bold text-red-500">{stats.unread}</p>
               </div>
               <Eye className="h-8 w-8 text-red-500" />
@@ -711,7 +714,7 @@ export default function NotificationSystem() {
           <CardContent className="p-4 bg-card border border-border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Leídas</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('Leídas')}</p>
                 <p className="text-2xl font-bold text-green-500">{stats.read}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500" />
@@ -723,7 +726,7 @@ export default function NotificationSystem() {
           <CardContent className="p-4 bg-card border border-border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Ancladas</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('Ancladas')}</p>
                 <p className="text-2xl font-bold text-purple-500">{stats.pinned}</p>
               </div>
               <Star className="h-8 w-8 text-purple-500" />
@@ -735,7 +738,7 @@ export default function NotificationSystem() {
           <CardContent className="p-4 bg-card border border-border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Archivadas</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('Archivadas')}</p>
                 <p className="text-2xl font-bold text-gray-500">{stats.archived}</p>
               </div>
               <Archive className="h-8 w-8 text-gray-500" />
@@ -751,7 +754,7 @@ export default function NotificationSystem() {
             <div className="flex items-center gap-2">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar notificaciones..."
+                placeholder={t('Buscar notificaciones...')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-64"
@@ -763,16 +766,16 @@ export default function NotificationSystem() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="info">Info</SelectItem>
-                <SelectItem value="success">Éxito</SelectItem>
-                <SelectItem value="warning">Advertencia</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
-                <SelectItem value="project">Proyecto</SelectItem>
-                <SelectItem value="task">Tarea</SelectItem>
-                <SelectItem value="file">Archivo</SelectItem>
-                <SelectItem value="comment">Comentario</SelectItem>
-                <SelectItem value="payment">Pago</SelectItem>
+                <SelectItem value="all">{t('Todos')}</SelectItem>
+                <SelectItem value="info">{t('Info')}</SelectItem>
+                <SelectItem value="success">{t('Éxito')}</SelectItem>
+                <SelectItem value="warning">{t('Advertencia')}</SelectItem>
+                <SelectItem value="error">{t('Error')}</SelectItem>
+                <SelectItem value="project">{t('Proyecto')}</SelectItem>
+                <SelectItem value="task">{t('Tarea')}</SelectItem>
+                <SelectItem value="file">{t('Archivo')}</SelectItem>
+                <SelectItem value="comment">{t('Comentario')}</SelectItem>
+                <SelectItem value="payment">{t('Pago')}</SelectItem>
               </SelectContent>
             </Select>
             
@@ -781,11 +784,11 @@ export default function NotificationSystem() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="low">Baja</SelectItem>
-                <SelectItem value="medium">Media</SelectItem>
-                <SelectItem value="high">Alta</SelectItem>
-                <SelectItem value="urgent">Urgente</SelectItem>
+                <SelectItem value="all">{t('Todas')}</SelectItem>
+                <SelectItem value="low">{t('Baja')}</SelectItem>
+                <SelectItem value="medium">{t('Media')}</SelectItem>
+                <SelectItem value="high">{t('Alta')}</SelectItem>
+                <SelectItem value="urgent">{t('Urgente')}</SelectItem>
               </SelectContent>
             </Select>
             
@@ -794,13 +797,13 @@ export default function NotificationSystem() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="general">General</SelectItem>
-                <SelectItem value="project">Proyecto</SelectItem>
-                <SelectItem value="billing">Facturación</SelectItem>
-                <SelectItem value="support">Soporte</SelectItem>
-                <SelectItem value="system">Sistema</SelectItem>
-                <SelectItem value="collaboration">Colaboración</SelectItem>
+                <SelectItem value="all">{t('Todas')}</SelectItem>
+                <SelectItem value="general">{t('General')}</SelectItem>
+                <SelectItem value="project">{t('Proyecto')}</SelectItem>
+                <SelectItem value="billing">{t('Facturación')}</SelectItem>
+                <SelectItem value="support">{t('Soporte')}</SelectItem>
+                <SelectItem value="system">{t('Sistema')}</SelectItem>
+                <SelectItem value="collaboration">{t('Colaboración')}</SelectItem>
               </SelectContent>
             </Select>
             
@@ -811,7 +814,7 @@ export default function NotificationSystem() {
               disabled={stats.unread === 0}
             >
               <Check className="h-4 w-4 mr-2" />
-              Marcar todas como leídas
+              {t('Marcar todas como leídas')}
             </Button>
           </div>
         </CardContent>
@@ -822,19 +825,19 @@ export default function NotificationSystem() {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="all" className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
-            Todas ({stats.total})
+            {t('Todas')} ({stats.total})
           </TabsTrigger>
           <TabsTrigger value="unread" className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
-            No leídas ({stats.unread})
+            {t('No leídas')} ({stats.unread})
           </TabsTrigger>
           <TabsTrigger value="pinned" className="flex items-center gap-2">
             <Star className="h-4 w-4" />
-            Ancladas ({stats.pinned})
+            {t('Ancladas')} ({stats.pinned})
           </TabsTrigger>
           <TabsTrigger value="archived" className="flex items-center gap-2">
             <Archive className="h-4 w-4" />
-            Archivadas ({stats.archived})
+            {t('Archivadas')} ({stats.archived})
           </TabsTrigger>
         </TabsList>
 
@@ -843,12 +846,12 @@ export default function NotificationSystem() {
             <Card>
               <CardContent className="p-8 text-center">
                 <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold">No hay notificaciones</h3>
+                <h3 className="text-lg font-semibold">{t('No hay notificaciones')}</h3>
                 <p className="text-muted-foreground">
-                  {activeTab === 'unread' ? 'No tienes notificaciones sin leer' :
-                   activeTab === 'pinned' ? 'No tienes notificaciones ancladas' :
-                   activeTab === 'archived' ? 'No tienes notificaciones archivadas' :
-                   'No hay notificaciones que coincidan con los filtros'}
+                  {activeTab === 'unread' ? t('No tienes notificaciones sin leer') :
+                   activeTab === 'pinned' ? t('No tienes notificaciones ancladas') :
+                   activeTab === 'archived' ? t('No tienes notificaciones archivadas') :
+                   t('No hay notificaciones que coincidan con los filtros')}
                 </p>
               </CardContent>
             </Card>
@@ -893,10 +896,10 @@ export default function NotificationSystem() {
                             {notification.message}
                           </p>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>De: {notification.senderName}</span>
-                            <span>{new Date(notification.createdAt).toLocaleString()}</span>
+                            <span>{t('De')}: {notification.senderName}</span>
+                            <span>{formatDateSafe(notification.createdAt)}</span>
                             {notification.projectId && (
-                              <span>Proyecto: {notification.projectId}</span>
+                              <span>{t('Proyecto')}: {notification.projectId}</span>
                             )}
                           </div>
                         </div>
@@ -947,27 +950,27 @@ export default function NotificationSystem() {
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
         <DialogContent className="max-w-2xl bg-card border border-border shadow-card">
           <DialogHeader>
-            <DialogTitle>Configuración de Notificaciones</DialogTitle>
+            <DialogTitle>{t('Configuración de Notificaciones')}</DialogTitle>
             <DialogDescription>
-              Personaliza cómo recibes las notificaciones
+              {t('Personaliza cómo recibes las notificaciones')}
             </DialogDescription>
           </DialogHeader>
           
           {settings && (
             <Tabs defaultValue="general" className="space-y-4">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="categories">Categorías</TabsTrigger>
-                <TabsTrigger value="advanced">Avanzado</TabsTrigger>
+                <TabsTrigger value="general">{t('General')}</TabsTrigger>
+                <TabsTrigger value="categories">{t('Categorías')}</TabsTrigger>
+                <TabsTrigger value="advanced">{t('Avanzado')}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="general" className="space-y-4">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Notificaciones por email</Label>
+                      <Label>{t('Notificaciones por email')}</Label>
                       <p className="text-sm text-muted-foreground">
-                        Recibe notificaciones en tu correo electrónico
+                        {t('Recibe notificaciones en tu correo electrónico')}
                       </p>
                     </div>
                     <Switch
@@ -978,9 +981,9 @@ export default function NotificationSystem() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Notificaciones push</Label>
+                      <Label>{t('Notificaciones push')}</Label>
                       <p className="text-sm text-muted-foreground">
-                        Notificaciones del navegador
+                        {t('Notificaciones del navegador')}
                       </p>
                     </div>
                     <Switch
@@ -991,9 +994,9 @@ export default function NotificationSystem() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Sonido</Label>
+                      <Label>{t('Sonido')}</Label>
                       <p className="text-sm text-muted-foreground">
-                        Reproducir sonido al recibir notificaciones
+                        {t('Reproducir sonido al recibir notificaciones')}
                       </p>
                     </div>
                     <Switch
@@ -1004,9 +1007,9 @@ export default function NotificationSystem() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Vibración</Label>
+                      <Label>{t('Vibración')}</Label>
                       <p className="text-sm text-muted-foreground">
-                        Vibración en dispositivos móviles
+                        {t('Vibración en dispositivos móviles')}
                       </p>
                     </div>
                     <Switch
@@ -1024,7 +1027,7 @@ export default function NotificationSystem() {
                       <div>
                         <Label className="capitalize">{category}</Label>
                         <p className="text-sm text-muted-foreground">
-                          Notificaciones de {category}
+                          {t('Notificaciones de')} {category}
                         </p>
                       </div>
                       <Switch
@@ -1042,9 +1045,9 @@ export default function NotificationSystem() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Horas silenciosas</Label>
+                      <Label>{t('Horas silenciosas')}</Label>
                       <p className="text-sm text-muted-foreground">
-                        No recibir notificaciones en horarios específicos
+                        {t('No recibir notificaciones en horarios específicos')}
                       </p>
                     </div>
                     <Switch
@@ -1058,7 +1061,7 @@ export default function NotificationSystem() {
                   {settings.quietHours.enabled && (
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label>Inicio</Label>
+                        <Label>{t('Inicio')}</Label>
                         <Input
                           type="time"
                           value={settings.quietHours.start}
@@ -1068,7 +1071,7 @@ export default function NotificationSystem() {
                         />
                       </div>
                       <div>
-                        <Label>Fin</Label>
+                        <Label>{t('Fin')}</Label>
                         <Input
                           type="time"
                           value={settings.quietHours.end}
@@ -1082,9 +1085,9 @@ export default function NotificationSystem() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Auto-archivar</Label>
+                      <Label>{t('Auto-archivar')}</Label>
                       <p className="text-sm text-muted-foreground">
-                        Archivar notificaciones automáticamente
+                        {t('Archivar notificaciones automáticamente')}
                       </p>
                     </div>
                     <Switch
@@ -1095,7 +1098,7 @@ export default function NotificationSystem() {
                   
                   {settings.autoArchive && (
                     <div>
-                      <Label>Días antes de archivar</Label>
+                      <Label>{t('Días antes de archivar')}</Label>
                       <Input
                         type="number"
                         value={settings.autoArchiveDays}
@@ -1116,89 +1119,89 @@ export default function NotificationSystem() {
       <Dialog open={false} onOpenChange={() => {}}>
         <DialogContent className="max-w-md bg-card border border-border shadow-card">
           <DialogHeader>
-            <DialogTitle>Crear Notificación</DialogTitle>
+            <DialogTitle>{t('Crear Notificación')}</DialogTitle>
             <DialogDescription>
-              Crea una nueva notificación
+              {t('Crea una nueva notificación')}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <Label htmlFor="title">Título</Label>
+              <Label htmlFor="title">{t('Título')}</Label>
               <Input
                 id="title"
                 value=""
                 onChange={(e) => {}}
-                placeholder="Título de la notificación"
+                placeholder={t('Título de la notificación')}
               />
             </div>
             
             <div>
-              <Label htmlFor="message">Mensaje</Label>
+              <Label htmlFor="message">{t('Mensaje')}</Label>
               <Textarea
                 id="message"
                 value=""
                 onChange={(e) => {}}
-                placeholder="Mensaje de la notificación"
+                placeholder={t('Mensaje de la notificación')}
               />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="type">Tipo</Label>
+                <Label htmlFor="type">{t('Tipo')}</Label>
                 <Select value="info" onValueChange={() => {}}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="info">Info</SelectItem>
-                    <SelectItem value="success">Éxito</SelectItem>
-                    <SelectItem value="warning">Advertencia</SelectItem>
-                    <SelectItem value="error">Error</SelectItem>
-                    <SelectItem value="project">Proyecto</SelectItem>
-                    <SelectItem value="task">Tarea</SelectItem>
-                    <SelectItem value="file">Archivo</SelectItem>
-                    <SelectItem value="comment">Comentario</SelectItem>
-                    <SelectItem value="payment">Pago</SelectItem>
+                    <SelectItem value="info">{t('Info')}</SelectItem>
+                    <SelectItem value="success">{t('Éxito')}</SelectItem>
+                    <SelectItem value="warning">{t('Advertencia')}</SelectItem>
+                    <SelectItem value="error">{t('Error')}</SelectItem>
+                    <SelectItem value="project">{t('Proyecto')}</SelectItem>
+                    <SelectItem value="task">{t('Tarea')}</SelectItem>
+                    <SelectItem value="file">{t('Archivo')}</SelectItem>
+                    <SelectItem value="comment">{t('Comentario')}</SelectItem>
+                    <SelectItem value="payment">{t('Pago')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               
               <div>
-                <Label htmlFor="priority">Prioridad</Label>
+                <Label htmlFor="priority">{t('Prioridad')}</Label>
                 <Select value="medium" onValueChange={() => {}}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Baja</SelectItem>
-                    <SelectItem value="medium">Media</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
-                    <SelectItem value="urgent">Urgente</SelectItem>
+                    <SelectItem value="low">{t('Baja')}</SelectItem>
+                    <SelectItem value="medium">{t('Media')}</SelectItem>
+                    <SelectItem value="high">{t('Alta')}</SelectItem>
+                    <SelectItem value="urgent">{t('Urgente')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             
             <div>
-              <Label htmlFor="category">Categoría</Label>
+              <Label htmlFor="category">{t('Categoría')}</Label>
               <Select value="general" onValueChange={() => {}}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="project">Proyecto</SelectItem>
-                  <SelectItem value="billing">Facturación</SelectItem>
-                  <SelectItem value="support">Soporte</SelectItem>
-                  <SelectItem value="system">Sistema</SelectItem>
-                  <SelectItem value="collaboration">Colaboración</SelectItem>
+                  <SelectItem value="general">{t('General')}</SelectItem>
+                  <SelectItem value="project">{t('Proyecto')}</SelectItem>
+                  <SelectItem value="billing">{t('Facturación')}</SelectItem>
+                  <SelectItem value="support">{t('Soporte')}</SelectItem>
+                  <SelectItem value="system">{t('Sistema')}</SelectItem>
+                  <SelectItem value="collaboration">{t('Colaboración')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div>
-              <Label htmlFor="expiresAt">Fecha de expiración (opcional)</Label>
+              <Label htmlFor="expiresAt">{t('Fecha de expiración (opcional)')}</Label>
               <Input
                 id="expiresAt"
                 type="datetime-local"
@@ -1208,9 +1211,7 @@ export default function NotificationSystem() {
             </div>
             
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => {}}>
-                Cancelar
-              </Button>
+              <Button variant="outline" onClick={() => {}}>{t('Cancelar')}</Button>
               <Button onClick={() => {
                 // This function is no longer needed, so it's removed.
                 // The createNotification logic was removed from the file.
@@ -1220,7 +1221,7 @@ export default function NotificationSystem() {
                   description: 'La funcionalidad de creación de notificaciones ha sido desactivada por el momento.'
                 });
               }} disabled={true}>
-                Crear Notificación
+                {t('Crear Notificación')}
               </Button>
             </div>
           </div>

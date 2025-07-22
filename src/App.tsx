@@ -36,6 +36,7 @@ const ProyectosNuevo = lazy(() => import('./pages/ProyectosNuevo'));
 const CollaborationPage = lazy(() => import('./pages/CollaborationPage'));
 const Admin = lazy(() => import('./pages/Admin'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
+const EditarProyecto = lazy(() => import('./pages/EditarProyecto'));
 
 // Componente de carga
 const LoadingSpinner = () => (
@@ -71,6 +72,7 @@ function AppRoutes() {
         <Route path="/soporte" element={<ProtectedRoute><DashboardLayout><Soporte /></DashboardLayout></ProtectedRoute>} />
         <Route path="/configuracion" element={<ProtectedRoute><DashboardLayout><Configuracion /></DashboardLayout></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+        <Route path="/proyectos/:id" element={<ProtectedRoute><DashboardLayout><EditarProyecto /></DashboardLayout></ProtectedRoute>} />
         
         {/* Ruta de admin */}
         <Route path="/admin" element={<ProtectedRoute><DashboardLayout><Admin /></DashboardLayout></ProtectedRoute>} />

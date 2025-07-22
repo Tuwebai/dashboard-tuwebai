@@ -1,4 +1,5 @@
 import { useApp } from '@/contexts/AppContext';
+import type { AppContextType } from '@/contexts/AppContext';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,11 +33,14 @@ import {
   Unlock
 } from 'lucide-react';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 
 export default function Configuracion() {
-  const { user } = useApp();
+  const { user, updateUserSettings } = useApp() as AppContextType;
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const { t } = useTranslation();
   
   // Configuración general
   const [generalSettings, setGeneralSettings] = useState({
@@ -140,42 +144,36 @@ export default function Configuracion() {
 
   const handleSaveSettings = async (settingsType: string) => {
     if (!user) return;
-    
     setLoading(true);
+    let updates: any = {};
+    switch (settingsType) {
+      case 'general':
+        updates = { ...generalSettings };
+        break;
+      case 'privacy':
+        updates = { ...privacySettings };
+        break;
+      case 'notifications':
+        updates = { ...notificationSettings };
+        break;
+      case 'performance':
+        updates = { ...performanceSettings };
+        break;
+      case 'security':
+        updates = { ...securitySettings };
+        break;
+      case 'all':
+        updates = {
+          ...generalSettings,
+          ...privacySettings,
+          ...notificationSettings,
+          ...performanceSettings,
+          ...securitySettings
+        };
+        break;
+    }
     try {
-      const userRef = doc(firestore, 'users', user.uid);
-      let updates: any = { updatedAt: new Date().toISOString() };
-
-      switch (settingsType) {
-        case 'general':
-          updates = { ...updates, ...generalSettings };
-          break;
-        case 'privacy':
-          updates = { ...updates, ...privacySettings };
-          break;
-        case 'notifications':
-          updates = { ...updates, ...notificationSettings };
-          break;
-        case 'performance':
-          updates = { ...updates, ...performanceSettings };
-          break;
-        case 'security':
-          updates = { ...updates, ...securitySettings };
-          break;
-        case 'all':
-          updates = {
-            ...updates,
-            ...generalSettings,
-            ...privacySettings,
-            ...notificationSettings,
-            ...performanceSettings,
-            ...securitySettings
-          };
-          break;
-      }
-
-      await updateDoc(userRef, updates);
-
+      await updateUserSettings(updates);
       toast({
         title: 'Configuración guardada',
         description: 'Los cambios han sido guardados correctamente.'
@@ -317,8 +315,8 @@ export default function Configuracion() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Configuración</h1>
-          <p className="text-muted-foreground">Personaliza tu experiencia en la plataforma</p>
+          <h1 className="text-3xl font-bold">{t('Configuración')}</h1>
+          <p className="text-muted-foreground">{t('Personaliza tu experiencia en la plataforma')}</p>
         </div>
         <div className="flex gap-2">
           <TooltipProvider>
@@ -326,10 +324,10 @@ export default function Configuracion() {
               <TooltipTrigger asChild>
                 <Button variant="outline" onClick={handleExportSettings}>
                   <Download className="h-4 w-4 mr-2" />
-                  Exportar
+                  {t('Exportar')}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Descargar</TooltipContent>
+              <TooltipContent>{t('Descargar')}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
           <Label htmlFor="import-settings" className="cursor-pointer">
@@ -338,10 +336,10 @@ export default function Configuracion() {
                 <TooltipTrigger asChild>
                   <Button variant="outline">
                     <Upload className="h-4 w-4 mr-2" />
-                    Importar
+                    {t('Importar')}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Subir</TooltipContent>
+                <TooltipContent>{t('Subir')}</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </Label>
@@ -357,10 +355,10 @@ export default function Configuracion() {
               <TooltipTrigger asChild>
                 <Button variant="outline" onClick={handleResetSettings}>
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Restablecer
+                  {t('Restablecer')}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Restablecer</TooltipContent>
+              <TooltipContent>{t('Restablecer')}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
@@ -381,10 +379,10 @@ export default function Configuracion() {
                     className="flex items-center gap-2"
                   >
                     <Icon className="h-4 w-4" />
-                    {tab.label}
+                    {t(tab.label)}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>{tab.label.split(' ')[0]}</TooltipContent>
+                <TooltipContent>{t(tab.label.split(' ')[0])}</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           );
@@ -399,30 +397,33 @@ export default function Configuracion() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Settings className="h-5 w-5" />
-                Configuración General
+                {t('Configuración')} {t('General')}
               </CardTitle>
               <CardDescription>
-                Personaliza la apariencia y comportamiento básico de la aplicación
+                {t('Personaliza tu experiencia en la plataforma')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="language">Idioma</Label>
-                  <Select value={generalSettings.language} onValueChange={(value) => setGeneralSettings(prev => ({ ...prev, language: value }))}>
+                  <Label htmlFor="language">{t('Idioma')}</Label>
+                  <Select value={generalSettings.language} onValueChange={(value) => {
+                    setGeneralSettings(prev => ({ ...prev, language: value }));
+                    i18n.changeLanguage(value);
+                  }}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="es">Español</SelectItem>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="pt">Português</SelectItem>
+                      <SelectItem value="es">{t('Español')}</SelectItem>
+                      <SelectItem value="en">{t('English')}</SelectItem>
+                      <SelectItem value="pt">{t('Português')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="timezone">Zona horaria</Label>
+                  <Label htmlFor="timezone">{t('Zona horaria')}</Label>
                   <Select value={generalSettings.timezone} onValueChange={(value) => setGeneralSettings(prev => ({ ...prev, timezone: value }))}>
                     <SelectTrigger>
                       <SelectValue />
@@ -437,7 +438,7 @@ export default function Configuracion() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="dateFormat">Formato de fecha</Label>
+                  <Label htmlFor="dateFormat">{t('Formato de fecha')}</Label>
                   <Select value={generalSettings.dateFormat} onValueChange={(value) => setGeneralSettings(prev => ({ ...prev, dateFormat: value }))}>
                     <SelectTrigger>
                       <SelectValue />
@@ -451,7 +452,7 @@ export default function Configuracion() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="timeFormat">Formato de hora</Label>
+                  <Label htmlFor="timeFormat">{t('Formato de hora')}</Label>
                   <Select value={generalSettings.timeFormat} onValueChange={(value) => setGeneralSettings(prev => ({ ...prev, timeFormat: value }))}>
                     <SelectTrigger>
                       <SelectValue />
@@ -466,7 +467,7 @@ export default function Configuracion() {
 
               <div className="flex gap-2 pt-4">
                 <Button onClick={() => handleSaveSettings('general')} disabled={loading}>
-                  {loading ? 'Guardando...' : <><Save className="h-4 w-4 mr-2" />Guardar cambios</>}
+                  {loading ? t('Guardando...') : <><Save className="h-4 w-4 mr-2" />{t('Guardar cambios')}</>}
                 </Button>
               </div>
             </CardContent>
@@ -479,24 +480,24 @@ export default function Configuracion() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                Privacidad y Datos
+                {t('Privacidad')} {t('y')} {t('Datos')}
               </CardTitle>
               <CardDescription>
-                Controla cómo se comparten y utilizan tus datos
+                {t('Controla cómo se comparten y utilizan tus datos')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="profileVisibility">Visibilidad del perfil</Label>
+                  <Label htmlFor="profileVisibility">{t('Visibilidad del perfil')}</Label>
                   <Select value={privacySettings.profileVisibility} onValueChange={(value) => setPrivacySettings(prev => ({ ...prev, profileVisibility: value }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="public">Público</SelectItem>
-                      <SelectItem value="private">Privado</SelectItem>
-                      <SelectItem value="contacts">Solo contactos</SelectItem>
+                      <SelectItem value="public">{t('Público')}</SelectItem>
+                      <SelectItem value="private">{t('Privado')}</SelectItem>
+                      <SelectItem value="contacts">{t('Solo contactos')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -506,8 +507,8 @@ export default function Configuracion() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-sm font-medium">Mostrar email en perfil</Label>
-                      <p className="text-xs text-muted-foreground">Permite que otros usuarios vean tu email</p>
+                      <Label className="text-sm font-medium">{t('Mostrar email en perfil')}</Label>
+                      <p className="text-xs text-muted-foreground">{t('Permite que otros usuarios vean tu email')}</p>
                     </div>
                     <Switch
                       checked={privacySettings.showEmail}
@@ -517,8 +518,8 @@ export default function Configuracion() {
 
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-sm font-medium">Mostrar teléfono en perfil</Label>
-                      <p className="text-xs text-muted-foreground">Permite que otros usuarios vean tu teléfono</p>
+                      <Label className="text-sm font-medium">{t('Mostrar teléfono en perfil')}</Label>
+                      <p className="text-xs text-muted-foreground">{t('Permite que otros usuarios vean tu teléfono')}</p>
                     </div>
                     <Switch
                       checked={privacySettings.showPhone}
@@ -528,8 +529,8 @@ export default function Configuracion() {
 
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-sm font-medium">Permitir análisis</Label>
-                      <p className="text-xs text-muted-foreground">Ayuda a mejorar la plataforma con datos anónimos</p>
+                      <Label className="text-sm font-medium">{t('Permitir análisis')}</Label>
+                      <p className="text-xs text-muted-foreground">{t('Ayuda a mejorar la plataforma con datos anónimos')}</p>
                     </div>
                     <Switch
                       checked={privacySettings.allowAnalytics}
@@ -539,8 +540,8 @@ export default function Configuracion() {
 
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-sm font-medium">Permitir cookies</Label>
-                      <p className="text-xs text-muted-foreground">Cookies necesarias para el funcionamiento</p>
+                      <Label className="text-sm font-medium">{t('Permitir cookies')}</Label>
+                      <p className="text-xs text-muted-foreground">{t('Cookies necesarias para el funcionamiento')}</p>
                     </div>
                     <Switch
                       checked={privacySettings.allowCookies}
@@ -550,8 +551,8 @@ export default function Configuracion() {
 
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-sm font-medium">Autenticación de dos factores</Label>
-                      <p className="text-xs text-muted-foreground">Añade una capa extra de seguridad</p>
+                      <Label className="text-sm font-medium">{t('Autenticación de dos factores')}</Label>
+                      <p className="text-xs text-muted-foreground">{t('Añade una capa extra de seguridad')}</p>
                     </div>
                     <Switch
                       checked={privacySettings.twoFactorAuth}
@@ -563,7 +564,7 @@ export default function Configuracion() {
 
               <div className="flex gap-2 pt-4">
                 <Button onClick={() => handleSaveSettings('privacy')} disabled={loading}>
-                  {loading ? 'Guardando...' : <><Save className="h-4 w-4 mr-2" />Guardar cambios</>}
+                  {loading ? t('Guardando...') : <><Save className="h-4 w-4 mr-2" />{t('Guardar cambios')}</>}
                 </Button>
               </div>
             </CardContent>
@@ -576,18 +577,18 @@ export default function Configuracion() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bell className="h-5 w-5" />
-                Notificaciones
+                {t('Notificaciones')}
               </CardTitle>
               <CardDescription>
-                Configura cómo y cuándo recibir notificaciones
+                {t('Configura cómo y cuándo recibir notificaciones')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Notificaciones push</Label>
-                    <p className="text-xs text-muted-foreground">Recibe notificaciones en tiempo real</p>
+                    <Label className="text-sm font-medium">{t('Notificaciones push')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('Recibe notificaciones en tiempo real')}</p>
                   </div>
                   <Switch
                     checked={notificationSettings.pushNotifications}
@@ -597,8 +598,8 @@ export default function Configuracion() {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Notificaciones por email</Label>
-                    <p className="text-xs text-muted-foreground">Recibe notificaciones importantes por email</p>
+                    <Label className="text-sm font-medium">{t('Notificaciones por email')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('Recibe notificaciones importantes por email')}</p>
                   </div>
                   <Switch
                     checked={notificationSettings.emailNotifications}
@@ -608,8 +609,8 @@ export default function Configuracion() {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Notificaciones por SMS</Label>
-                    <p className="text-xs text-muted-foreground">Recibe notificaciones críticas por SMS</p>
+                    <Label className="text-sm font-medium">{t('Notificaciones por SMS')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('Recibe notificaciones críticas por SMS')}</p>
                   </div>
                   <Switch
                     checked={notificationSettings.smsNotifications}
@@ -621,8 +622,8 @@ export default function Configuracion() {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Sonidos</Label>
-                    <p className="text-xs text-muted-foreground">Reproducir sonidos en notificaciones</p>
+                    <Label className="text-sm font-medium">{t('Sonidos')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('Reproducir sonidos en notificaciones')}</p>
                   </div>
                   <Switch
                     checked={notificationSettings.soundEnabled}
@@ -632,8 +633,8 @@ export default function Configuracion() {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Vibración</Label>
-                    <p className="text-xs text-muted-foreground">Vibración en dispositivos móviles</p>
+                    <Label className="text-sm font-medium">{t('Vibración')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('Vibración en dispositivos móviles')}</p>
                   </div>
                   <Switch
                     checked={notificationSettings.vibrationEnabled}
@@ -645,8 +646,8 @@ export default function Configuracion() {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Horas silenciosas</Label>
-                    <p className="text-xs text-muted-foreground">No recibir notificaciones en horarios específicos</p>
+                    <Label className="text-sm font-medium">{t('Horas silenciosas')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('No recibir notificaciones en horarios específicos')}</p>
                   </div>
                   <Switch
                     checked={notificationSettings.quietHours}
@@ -657,7 +658,7 @@ export default function Configuracion() {
                 {notificationSettings.quietHours && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="quietHoursStart">Inicio</Label>
+                      <Label htmlFor="quietHoursStart">{t('Inicio')}</Label>
                       <Input
                         id="quietHoursStart"
                         type="time"
@@ -666,7 +667,7 @@ export default function Configuracion() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="quietHoursEnd">Fin</Label>
+                      <Label htmlFor="quietHoursEnd">{t('Fin')}</Label>
                       <Input
                         id="quietHoursEnd"
                         type="time"
@@ -680,7 +681,7 @@ export default function Configuracion() {
 
               <div className="flex gap-2 pt-4">
                 <Button onClick={() => handleSaveSettings('notifications')} disabled={loading}>
-                  {loading ? 'Guardando...' : <><Save className="h-4 w-4 mr-2" />Guardar cambios</>}
+                  {loading ? t('Guardando...') : <><Save className="h-4 w-4 mr-2" />{t('Guardar cambios')}</>}
                 </Button>
               </div>
             </CardContent>
@@ -693,18 +694,18 @@ export default function Configuracion() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Monitor className="h-5 w-5" />
-                Rendimiento
+                {t('Rendimiento')}
               </CardTitle>
               <CardDescription>
-                Optimiza el rendimiento de la aplicación
+                {t('Optimiza el rendimiento de la aplicación')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Guardado automático</Label>
-                    <p className="text-xs text-muted-foreground">Guardar cambios automáticamente</p>
+                    <Label className="text-sm font-medium">{t('Guardado automático')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('Guardar cambios automáticamente')}</p>
                   </div>
                   <Switch
                     checked={performanceSettings.autoSave}
@@ -714,7 +715,7 @@ export default function Configuracion() {
 
                 {performanceSettings.autoSave && (
                   <div className="space-y-2">
-                    <Label>Intervalo de guardado automático: {performanceSettings.autoSaveInterval} segundos</Label>
+                    <Label>{t('Intervalo de guardado automático')}: {performanceSettings.autoSaveInterval} {t('segundos')}</Label>
                     <Slider
                       value={[performanceSettings.autoSaveInterval]}
                       onValueChange={(value) => setPerformanceSettings(prev => ({ ...prev, autoSaveInterval: value[0] }))}
@@ -728,8 +729,8 @@ export default function Configuracion() {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Habilitar caché</Label>
-                    <p className="text-xs text-muted-foreground">Mejora la velocidad de carga</p>
+                    <Label className="text-sm font-medium">{t('Habilitar caché')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('Mejora la velocidad de carga')}</p>
                   </div>
                   <Switch
                     checked={performanceSettings.cacheEnabled}
@@ -738,23 +739,23 @@ export default function Configuracion() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="imageQuality">Calidad de imagen</Label>
+                  <Label htmlFor="imageQuality">{t('Calidad de imagen')}</Label>
                   <Select value={performanceSettings.imageQuality} onValueChange={(value) => setPerformanceSettings(prev => ({ ...prev, imageQuality: value }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="low">Baja (más rápido)</SelectItem>
-                      <SelectItem value="medium">Media</SelectItem>
-                      <SelectItem value="high">Alta (mejor calidad)</SelectItem>
+                      <SelectItem value="low">{t('Baja (más rápido)')}</SelectItem>
+                      <SelectItem value="medium">{t('Media')}</SelectItem>
+                      <SelectItem value="high">{t('Alta (mejor calidad)')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Animaciones</Label>
-                    <p className="text-xs text-muted-foreground">Mostrar animaciones y transiciones</p>
+                    <Label className="text-sm font-medium">{t('Animaciones')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('Mostrar animaciones y transiciones')}</p>
                   </div>
                   <Switch
                     checked={performanceSettings.animationsEnabled}
@@ -764,8 +765,8 @@ export default function Configuracion() {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Modo de bajo ancho de banda</Label>
-                    <p className="text-xs text-muted-foreground">Optimizar para conexiones lentas</p>
+                    <Label className="text-sm font-medium">{t('Modo de bajo ancho de banda')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('Optimizar para conexiones lentas')}</p>
                   </div>
                   <Switch
                     checked={performanceSettings.lowBandwidthMode}
@@ -776,7 +777,7 @@ export default function Configuracion() {
 
               <div className="flex gap-2 pt-4">
                 <Button onClick={() => handleSaveSettings('performance')} disabled={loading}>
-                  {loading ? 'Guardando...' : <><Save className="h-4 w-4 mr-2" />Guardar cambios</>}
+                  {loading ? t('Guardando...') : <><Save className="h-4 w-4 mr-2" />{t('Guardar cambios')}</>}
                 </Button>
               </div>
             </CardContent>
@@ -789,16 +790,16 @@ export default function Configuracion() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Lock className="h-5 w-5" />
-                Seguridad
+                {t('Seguridad')}
               </CardTitle>
               <CardDescription>
-                Configura las opciones de seguridad de tu cuenta
+                {t('Configura las opciones de seguridad de tu cuenta')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Tiempo de sesión: {securitySettings.sessionTimeout} minutos</Label>
+                  <Label>{t('Tiempo de sesión')}: {securitySettings.sessionTimeout} {t('minutos')}</Label>
                   <Slider
                     value={[securitySettings.sessionTimeout]}
                     onValueChange={(value) => setSecuritySettings(prev => ({ ...prev, sessionTimeout: value[0] }))}
@@ -810,7 +811,7 @@ export default function Configuracion() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Intentos máximos de login: {securitySettings.maxLoginAttempts}</Label>
+                  <Label>{t('Intentos máximos de login')}: {securitySettings.maxLoginAttempts}</Label>
                   <Slider
                     value={[securitySettings.maxLoginAttempts]}
                     onValueChange={(value) => setSecuritySettings(prev => ({ ...prev, maxLoginAttempts: value[0] }))}
@@ -822,7 +823,7 @@ export default function Configuracion() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Expiración de contraseña: {securitySettings.passwordExpiryDays} días</Label>
+                  <Label>{t('Expiración de contraseña')}: {securitySettings.passwordExpiryDays} {t('días')}</Label>
                   <Slider
                     value={[securitySettings.passwordExpiryDays]}
                     onValueChange={(value) => setSecuritySettings(prev => ({ ...prev, passwordExpiryDays: value[0] }))}
@@ -837,8 +838,8 @@ export default function Configuracion() {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Requerir cambio de contraseña</Label>
-                    <p className="text-xs text-muted-foreground">Forzar cambio de contraseña periódico</p>
+                    <Label className="text-sm font-medium">{t('Requerir cambio de contraseña')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('Forzar cambio de contraseña periódico')}</p>
                   </div>
                   <Switch
                     checked={securitySettings.requirePasswordChange}
@@ -848,8 +849,8 @@ export default function Configuracion() {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Notificaciones de login</Label>
-                    <p className="text-xs text-muted-foreground">Recibir alertas de nuevos inicios de sesión</p>
+                    <Label className="text-sm font-medium">{t('Notificaciones de login')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('Recibir alertas de nuevos inicios de sesión')}</p>
                   </div>
                   <Switch
                     checked={securitySettings.loginNotifications}
@@ -859,8 +860,8 @@ export default function Configuracion() {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Gestión de dispositivos</Label>
-                    <p className="text-xs text-muted-foreground">Controlar dispositivos conectados</p>
+                    <Label className="text-sm font-medium">{t('Gestión de dispositivos')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('Controlar dispositivos conectados')}</p>
                   </div>
                   <Switch
                     checked={securitySettings.deviceManagement}
@@ -871,7 +872,7 @@ export default function Configuracion() {
 
               <div className="flex gap-2 pt-4">
                 <Button onClick={() => handleSaveSettings('security')} disabled={loading}>
-                  {loading ? 'Guardando...' : <><Save className="h-4 w-4 mr-2" />Guardar cambios</>}
+                  {loading ? t('Guardando...') : <><Save className="h-4 w-4 mr-2" />{t('Guardar cambios')}</>}
                 </Button>
               </div>
             </CardContent>
@@ -882,7 +883,7 @@ export default function Configuracion() {
       {/* Botón para guardar todo */}
       <div className="flex justify-center">
         <Button onClick={() => handleSaveSettings('all')} disabled={loading} size="lg">
-          {loading ? 'Guardando toda la configuración...' : <><Save className="h-4 w-4 mr-2" />Guardar toda la configuración</>}
+          {loading ? t('Guardando toda la configuración...') : <><Save className="h-4 w-4 mr-2" />{t('Guardar toda la configuración')}</>}
         </Button>
       </div>
     </div>

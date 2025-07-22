@@ -115,7 +115,7 @@ export interface ProjectLog {
   timestamp: string;
 }
 
-interface AppContextType {
+export interface AppContextType {
   user: User | null;
   projects: Project[];
   isAuthenticated: boolean;
@@ -139,6 +139,7 @@ interface AppContextType {
   getProjectLogs: (projectId: string) => ProjectLog[];
   refreshData: () => Promise<void>;
   clearError: () => void;
+  updateUserSettings: (updates: Partial<User>) => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -185,7 +186,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       // Recargar proyectos
       const projectsRef = collection(firestore, 'projects');
-      const qProjects = query(projectsRef, where('ownerEmail', '==', user.email));
+      const qProjects = user.role === 'admin'
+        ? query(projectsRef, limit(50))
+        : query(projectsRef, where('ownerEmail', '==', user.email), limit(50));
       const projectsSnap = await getDocs(qProjects);
       const projectData = projectsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Project);
       setProjects(projectData);
@@ -354,11 +357,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         
         // Query optimizada para proyectos con límite y ordenamiento
         const projectsRef = collection(firestore, 'projects');
-        const qProjects = query(
-          projectsRef, 
-          where('ownerEmail', '==', user.email),
-          limit(50) // Limitar a 50 proyectos para mejor rendimiento
-        );
+        const qProjects = user.role === 'admin'
+          ? query(projectsRef, limit(50))
+          : query(
+            projectsRef, 
+            where('ownerEmail', '==', user.email),
+            limit(50) // Limitar a 50 proyectos para mejor rendimiento
+          );
         
         unsubProjects = onSnapshot(qProjects, (snapshot) => {
           try {
@@ -822,27 +827,47 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return projectLogs;
   }, [logs]);
 
+  // Actualizar configuración del usuario y sincronizar contexto
+  const updateUserSettings = async (updates: Partial<User>) => {
+    if (!user || !firestore) return false;
+    setLoading(true);
+    try {
+      const userRef = doc(firestore, 'users', user.uid!);
+      await updateDoc(userRef, { ...updates, updatedAt: new Date().toISOString() });
+      setUser(prev => (prev ? { ...prev, ...updates } : prev));
+      setCachedData(`user_${user.uid}`, { ...user, ...updates }, 10 * 60 * 1000);
+      return true;
+    } catch (error) {
+      console.error('Error al actualizar configuración de usuario:', error);
+      setError('Error al actualizar configuración');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Memoizar el contexto para evitar re-renders innecesarios
   const contextValue = useMemo(() => ({
       user,
       projects,
       isAuthenticated,
-    logs,
-    loading,
-    error,
+      logs,
+      loading,
+      error,
       login,
       register,
-    loginWithProvider,
+      loginWithProvider,
       logout,
       createProject,
       updateProject,
       deleteProject,
       addFunctionalities,
-    addCommentToPhase,
-    addLog,
-    getProjectLogs,
-    refreshData,
-    clearError
+      addCommentToPhase,
+      addLog,
+      getProjectLogs,
+      refreshData,
+      clearError,
+      updateUserSettings
   }), [
     user,
     projects,
@@ -862,7 +887,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addLog,
       getProjectLogs,
     refreshData,
-    clearError
+    clearError,
+    updateUserSettings
   ]);
 
   return (

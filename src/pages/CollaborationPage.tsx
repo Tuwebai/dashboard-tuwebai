@@ -25,7 +25,8 @@ import {
   orderBy, 
   serverTimestamp,
   getDocs,
-  limit
+  limit,
+  getDoc
 } from 'firebase/firestore';
 import { 
   MessageSquare, 
@@ -84,6 +85,7 @@ import {
 import CollaborationTools from '@/components/CollaborationTools';
 import RealTimeCollaboration from '@/components/RealTimeCollaboration';
 import CollaborativeEditor from '@/components/CollaborativeEditor';
+import { formatDateSafe } from '@/utils/formatDateSafe';
 
 interface Task {
   id: string;
@@ -204,6 +206,8 @@ export default function CollaborationPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [uploadingFile, setUploadingFile] = useState<File | null>(null);
   const [fileUploadProgress, setFileUploadProgress] = useState(0);
+  const [openFileMenuId, setOpenFileMenuId] = useState<string | null>(null);
+  const [fileDetails, setFileDetails] = useState<File | null>(null);
 
   // Comments state
   const [comments, setComments] = useState<any[]>([]);
@@ -221,13 +225,72 @@ export default function CollaborationPage() {
   const [isPresenceVisible, setIsPresenceVisible] = useState(true);
   const [notifications, setNotifications] = useState(true);
 
+  // 1. Estado para edición de tarea
+  const [editTaskModalOpen, setEditTaskModalOpen] = useState(false);
+  const [editTaskData, setEditTaskData] = useState<Task | null>(null);
+
+  // 2. Función para abrir modal de edición
+  const openEditTaskModal = (task: Task) => {
+    setEditTaskData(task);
+    setEditTaskModalOpen(true);
+  };
+
+  // 3. Función para guardar cambios de edición
+  const saveEditTask = async () => {
+    if (!editTaskData) return;
+    try {
+      const taskRef = doc(firestore, 'tasks', editTaskData.id);
+      await updateDoc(taskRef, {
+        title: editTaskData.title,
+        description: editTaskData.description,
+        priority: editTaskData.priority,
+        status: editTaskData.status,
+        dueDate: editTaskData.dueDate,
+        phaseKey: editTaskData.phaseKey,
+        updatedAt: serverTimestamp()
+      });
+      toast({ title: 'Tarea actualizada', description: 'Los cambios han sido guardados.' });
+      setEditTaskModalOpen(false);
+      setEditTaskData(null);
+    } catch (error) {
+      toast({ title: 'Error', description: 'No se pudo actualizar la tarea', variant: 'destructive' });
+    }
+  };
+
+  // 1. Formularios y modales oscuros pero no transparentes
+  // Cambiar clases de fondo de todos los DialogContent y CardContent de formularios y modales a bg-zinc-900/95 o bg-background
+  // 2. Archivos: menú real en vez de '...'
+  // 3. Actividad: Información de Sesión real y menú de configuración
+  // Estado para modal de configuración de sesión
+  const [sessionConfigOpen, setSessionConfigOpen] = useState(false);
+  const [sessionStatus, setSessionStatus] = useState('Activa');
+  const [sessionParticipants, setSessionParticipants] = useState(participants);
+  const sessionStart = project?.createdAt || new Date().toISOString();
+  const sessionId = projectId;
+
   // Find project by ID
   useEffect(() => {
-    if (projectId && projects.length > 0) {
+    async function fetchProjectById() {
+      if (!projectId) return;
+      // Si ya está en projects, úsalo
       const foundProject = projects.find(p => p.id === projectId);
-      setProject(foundProject || null);
+      if (foundProject) {
+        setProject(foundProject);
+      } else if (user?.role === 'admin') {
+        // Si es admin, busca el proyecto por ID en Firestore
+        const projectRef = doc(firestore, 'projects', projectId);
+        const projectSnap = await getDoc(projectRef);
+        if (projectSnap.exists()) {
+          setProject({ id: projectSnap.id, ...projectSnap.data() });
+        } else {
+          setProject(null);
+        }
+      } else {
+        setProject(null);
+      }
     }
-  }, [projectId, projects]);
+    fetchProjectById();
+  }, [projectId, projects, user]);
 
   // Load collaboration data
   useEffect(() => {
@@ -539,34 +602,6 @@ export default function CollaborationPage() {
     }
   };
 
-  // Start voice/video call
-  const startCall = async (type: 'voice' | 'video') => {
-    try {
-      setIsCallActive(true);
-      setCallParticipants([user?.email || '']);
-      
-      toast({
-        title: 'Llamada iniciada',
-        description: `Llamada de ${type} iniciada`
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo iniciar la llamada',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  // Toggle screen sharing
-  const toggleScreenSharing = () => {
-    setIsScreenSharing(!isScreenSharing);
-    toast({
-      title: isScreenSharing ? 'Compartir pantalla detenido' : 'Compartir pantalla iniciado',
-      description: isScreenSharing ? 'Ya no estás compartiendo tu pantalla' : 'Estás compartiendo tu pantalla'
-    });
-  };
-
   // Add participant
   const addParticipant = (email: string) => {
     if (!participants.includes(email)) {
@@ -642,33 +677,7 @@ export default function CollaborationPage() {
         
         {/* Call controls */}
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => startCall('voice')}
-            disabled={isCallActive}
-          >
-            <Phone className="h-4 w-4 mr-2" />
-            Llamada
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => startCall('video')}
-            disabled={isCallActive}
-          >
-            <Video className="h-4 w-4 mr-2" />
-            Video
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleScreenSharing}
-            disabled={!isCallActive}
-          >
-            <ScreenShare className="h-4 w-4 mr-2" />
-            Pantalla
-          </Button>
+          
         </div>
       </div>
 
@@ -742,14 +751,6 @@ export default function CollaborationPage() {
             <Users className="h-4 w-4" />
             Comentarios
           </TabsTrigger>
-          <TabsTrigger value="editor" className="flex items-center gap-2">
-            <Code className="h-4 w-4" />
-            Editor
-          </TabsTrigger>
-          <TabsTrigger value="tools" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Herramientas
-          </TabsTrigger>
           <TabsTrigger value="activity" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
             Actividad
@@ -787,7 +788,7 @@ export default function CollaborationPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-medium">{message.senderName}</span>
                         <span className="text-xs opacity-70">
-                          {new Date(message.timestamp).toLocaleTimeString()}
+                          {formatDateSafe(message.timestamp)}
                         </span>
                       </div>
                       <p className="text-sm">{message.text}</p>
@@ -847,8 +848,8 @@ export default function CollaborationPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Asignado a: {task.assigneeName}</span>
-                    <span>Vence: {new Date(task.dueDate).toLocaleDateString()}</span>
+                    <span>Estado: {task.assigneeName}</span>
+                    <span>Vence: {formatDateSafe(task.dueDate)}</span>
                   </div>
                   
                   <div className="flex items-center gap-2">
@@ -867,7 +868,7 @@ export default function CollaborationPage() {
                       </SelectContent>
                     </Select>
                     
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => openEditTaskModal(task)}>
                       <Edit className="h-4 w-4" />
                     </Button>
                   </div>
@@ -916,13 +917,22 @@ export default function CollaborationPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm">
+                    <div className="flex items-center gap-1 relative">
+                      <Button variant="ghost" size="sm" onClick={() => window.open(file.url, '_blank')}>
                         <Download className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => setOpenFileMenuId(openFileMenuId === file.id ? null : file.id)}>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
+                      {openFileMenuId === file.id && (
+                        <div className="absolute right-0 top-8 z-20 w-48 rounded-md bg-zinc-900/95 shadow-lg border border-zinc-800">
+                          <button className="block w-full text-left px-4 py-2 hover:bg-zinc-800" onClick={() => { window.open(file.url, '_blank'); setOpenFileMenuId(null); }}>Descargar</button>
+                          {user.email === file.uploadedBy && (
+                            <button className="block w-full text-left px-4 py-2 text-red-500 hover:bg-zinc-800" onClick={async () => { await deleteDoc(doc(firestore, 'projectFiles', file.id)); toast({ title: 'Archivo eliminado' }); setOpenFileMenuId(null); }}>Eliminar</button>
+                          )}
+                          <button className="block w-full text-left px-4 py-2 hover:bg-zinc-800" onClick={() => { setFileDetails(file); setOpenFileMenuId(null); }}>Ver detalles</button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -988,7 +998,7 @@ export default function CollaborationPage() {
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-medium">{comment.authorName}</span>
                             <span className="text-xs text-muted-foreground">
-                              {new Date(comment.timestamp).toLocaleString()}
+                              {formatDateSafe(comment.timestamp)}
                             </span>
                             {comment.phaseKey && (
                               <Badge variant="outline">{comment.phaseKey}</Badge>
@@ -1004,33 +1014,33 @@ export default function CollaborationPage() {
           </div>
         </TabsContent>
 
-        {/* Editor Tab */}
-        <TabsContent value="editor" className="space-y-4">
-          <CollaborativeEditor projectId={projectId!} />
-        </TabsContent>
-
-        {/* Tools Tab */}
-        <TabsContent value="tools" className="space-y-4">
-          <CollaborationTools
-            projectId={projectId!}
-            isCallActive={isCallActive}
-            onCallToggle={startCall}
-            onScreenShareToggle={toggleScreenSharing}
-            participants={participants}
-            onParticipantAdd={addParticipant}
-            onParticipantRemove={removeParticipant}
-          />
-        </TabsContent>
-
         {/* Activity Tab */}
         <TabsContent value="activity" className="space-y-4">
+          <Card className="bg-zinc-900/95">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">Información de Sesión</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div><b>ID de Sesión:</b> {sessionId}</div>
+                <div><b>Iniciada:</b> {formatDateSafe(sessionStart)}</div>
+                <div><b>Participantes:</b> {sessionParticipants.length}</div>
+                <div><b>Estado:</b> {sessionStatus}</div>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <Button onClick={() => setSessionConfigOpen(true)}>
+                  <Settings className="h-4 w-4 mr-2" /> Configuración
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
           <RealTimeCollaboration projectId={projectId!} />
         </TabsContent>
       </Tabs>
 
       {/* Task Modal */}
       <Dialog open={isTaskModalOpen} onOpenChange={setIsTaskModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md bg-zinc-900/95">
           <DialogHeader>
             <DialogTitle>Crear Nueva Tarea</DialogTitle>
             <DialogDescription>
@@ -1109,6 +1119,135 @@ export default function CollaborationPage() {
                 Crear Tarea
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de edición de tarea */}
+      <Dialog open={editTaskModalOpen} onOpenChange={setEditTaskModalOpen}>
+        <DialogContent className="max-w-md bg-zinc-900/95">
+          <DialogHeader>
+            <DialogTitle>Editar Tarea</DialogTitle>
+            <DialogDescription>Modifica los campos de la tarea y guarda los cambios.</DialogDescription>
+          </DialogHeader>
+          {editTaskData && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-title">Título</Label>
+                <Input
+                  id="edit-title"
+                  value={editTaskData.title}
+                  onChange={e => setEditTaskData({ ...editTaskData, title: e.target.value })}
+                  placeholder="Título de la tarea"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-description">Descripción</Label>
+                <Textarea
+                  id="edit-description"
+                  value={editTaskData.description}
+                  onChange={e => setEditTaskData({ ...editTaskData, description: e.target.value })}
+                  placeholder="Descripción de la tarea"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-priority">Prioridad</Label>
+                  <Select value={editTaskData.priority} onValueChange={value => setEditTaskData({ ...editTaskData, priority: value as Task['priority'] })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Baja</SelectItem>
+                      <SelectItem value="medium">Media</SelectItem>
+                      <SelectItem value="high">Alta</SelectItem>
+                      <SelectItem value="urgent">Urgente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-status">Estado</Label>
+                  <Select value={editTaskData.status} onValueChange={value => setEditTaskData({ ...editTaskData, status: value as Task['status'] })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pendiente</SelectItem>
+                      <SelectItem value="in-progress">En Progreso</SelectItem>
+                      <SelectItem value="completed">Completado</SelectItem>
+                      <SelectItem value="cancelled">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit-dueDate">Fecha límite</Label>
+                <Input
+                  id="edit-dueDate"
+                  type="date"
+                  value={editTaskData.dueDate}
+                  onChange={e => setEditTaskData({ ...editTaskData, dueDate: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-phase">Fase</Label>
+                <Select value={editTaskData.phaseKey} onValueChange={value => setEditTaskData({ ...editTaskData, phaseKey: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar fase" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {project.fases?.map((fase: any) => (
+                      <SelectItem key={fase.key} value={fase.key}>
+                        {fase.descripcion}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setEditTaskModalOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={saveEditTask}>
+                  Guardar Cambios
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para detalles de archivo */}
+      <Dialog open={!!fileDetails} onOpenChange={() => setFileDetails(null)}>
+        <DialogContent className="max-w-md bg-zinc-900/95">
+          <DialogHeader>
+            <DialogTitle>Detalles del Archivo</DialogTitle>
+          </DialogHeader>
+          {fileDetails && (
+            <div className="space-y-2">
+              <div><b>Nombre:</b> {fileDetails.name}</div>
+              <div><b>Tipo:</b> {fileDetails.type}</div>
+              <div><b>Tamaño:</b> {(fileDetails.size / 1024 / 1024).toFixed(2)} MB</div>
+              <div><b>Subido por:</b> {fileDetails.uploadedByName}</div>
+              <div><b>Fecha de subida:</b> {formatDateSafe(fileDetails.uploadedAt)}</div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de configuración de sesión */}
+      <Dialog open={sessionConfigOpen} onOpenChange={setSessionConfigOpen}>
+        <DialogContent className="max-w-md bg-zinc-900/95">
+          <DialogHeader>
+            <DialogTitle>Configuración de Sesión</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Button className="w-full" onClick={() => { setSessionStatus('Finalizada'); setSessionConfigOpen(false); }}>Cerrar sesión actual</Button>
+            {user.role === 'admin' && (
+              <Button className="w-full" onClick={() => { setSessionParticipants([]); setSessionConfigOpen(false); }}>Expulsar participantes</Button>
+            )}
+            <Button className="w-full" onClick={() => toast({ title: 'Historial', description: 'Función de historial real pendiente' })}>Ver historial de actividad</Button>
+            <Button className="w-full" onClick={() => { setSessionStatus(sessionStatus === 'Activa' ? 'Finalizada' : 'Activa'); setSessionConfigOpen(false); }}>Cambiar estado de la sesión ({sessionStatus === 'Activa' ? 'Finalizada' : 'Activa'})</Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -41,6 +41,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { formatDateSafe } from '@/utils/formatDateSafe';
 
 interface Comment {
   id: string;
@@ -312,8 +313,7 @@ export default function CollaborativeComments({
   // Format timestamp
   const formatTimestamp = (timestamp: any) => {
     if (!timestamp) return '';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return format(date, 'dd/MM/yyyy HH:mm', { locale: es });
+    return formatDateSafe(timestamp);
   };
 
   // Handle key press

@@ -15,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PaymentSync from '@/components/PaymentSync';
+import { useTranslation } from 'react-i18next';
 
 export default function Facturacion() {
   const { user } = useApp();
@@ -25,6 +26,7 @@ export default function Facturacion() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedPaymentType, setSelectedPaymentType] = useState<string>('');
   const [processingPayment, setProcessingPayment] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!user) return;
@@ -183,15 +185,15 @@ export default function Facturacion() {
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Facturación y Pagos</h1>
-          <p className="text-muted-foreground">Gestiona tus pagos y descarga facturas</p>
+          <h1 className="text-3xl font-bold">{t('Facturación y Pagos')}</h1>
+          <p className="text-muted-foreground">{t('Gestiona tus pagos y descarga facturas')}</p>
         </div>
         <div className="flex items-center gap-2">
            <Button
              onClick={() => window.location.href = 'https://tuweb-ai.com/#pricing'}
            >
              <Plus className="h-4 w-4 mr-2" />
-             Nuevo Pago
+             {t('Nuevo Pago')}
            </Button>
         </div>
       </div>

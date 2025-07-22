@@ -30,16 +30,37 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
+>(({ className, children, style, ...props }, ref) => {
+  // Disable body scroll when modal is open
+  React.useEffect(() => {
+    const original = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, []);
+
+  // Fallback style: fuerza centrado absoluto y z-index
+  const fallbackStyle = {
+    position: 'fixed' as React.CSSProperties['position'],
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    zIndex: 9999,
+    ...style,
+  } as React.CSSProperties;
+
+  return (
+    <DialogPortal /* always renders to body */>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        // Centrado absoluto vertical y horizontal, sin grid/flex ni gap
+          // Centrado absoluto vertical y horizontal, overlay, z-50, responsivo
         "fixed top-1/2 left-1/2 z-50 w-full max-w-lg sm:max-w-2xl md:max-w-3xl -translate-x-1/2 -translate-y-1/2 border bg-background p-0 sm:p-6 shadow-lg duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[90vh] overflow-y-auto",
         className
       )}
+        style={fallbackStyle}
       {...props}
     >
       {children}
@@ -49,7 +70,8 @@ const DialogContent = React.forwardRef<
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </DialogPortal>
-))
+  );
+})
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
 const DialogHeader = ({

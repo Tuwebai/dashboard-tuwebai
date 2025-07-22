@@ -59,6 +59,7 @@ import {
 } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
+import { formatDateSafe } from '@/utils/formatDateSafe';
 
 // Sistema de Notificaciones Avanzado
 export function AdminNotificationSystem() {
@@ -514,7 +515,7 @@ export function AdminSystemLogs() {
                   <div className="flex-1">
                     <p className="text-sm font-medium">{log.message}</p>
                     <p className="text-xs text-muted-foreground">
-                      {log.timestamp?.toDate?.()?.toLocaleString() || 'Fecha no disponible'}
+                      {formatDateSafe(log.timestamp?.toDate?.())}
                     </p>
                   </div>
                   <Badge variant={log.level === 'error' ? 'destructive' : 'secondary'}>
@@ -572,7 +573,7 @@ export function AdminBackupSystem() {
   };
 
   const downloadBackup = (backup: any) => {
-    const blob = new Blob([`Backup: ${backup.name}\nFecha: ${backup.createdAt?.toDate?.()?.toLocaleString()}`], { type: 'text/plain' });
+    const blob = new Blob([`Backup: ${backup.name}\nFecha: ${formatDateSafe(backup.createdAt?.toDate?.())}`], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -624,7 +625,7 @@ export function AdminBackupSystem() {
                 <div>
                   <p className="font-medium">{backup.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {backup.createdAt?.toDate?.()?.toLocaleString() || 'Fecha no disponible'}
+                    {formatDateSafe(backup.createdAt?.toDate?.())}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -942,7 +943,7 @@ export function AdminSecuritySystem() {
                   <div className="flex-1">
                     <p className="text-sm font-medium">{log.message}</p>
                     <p className="text-xs text-muted-foreground">
-                      {log.timestamp?.toDate?.()?.toLocaleString() || 'Fecha no disponible'}
+                      {formatDateSafe(log.timestamp?.toDate?.())}
                     </p>
                   </div>
                   <Badge className={getThreatLevelColor(log.level)}>
@@ -1239,7 +1240,7 @@ export function AdminPerformanceSystem() {
                   <div className="flex-1">
                     <p className="text-sm font-medium">{log.message}</p>
                     <p className="text-xs text-muted-foreground">
-                      {log.timestamp?.toDate?.()?.toLocaleString() || 'Fecha no disponible'}
+                      {formatDateSafe(log.timestamp?.toDate?.())}
                     </p>
                   </div>
                   <Badge variant="outline">{log.type}</Badge>
@@ -1438,7 +1439,7 @@ export function AdminReportsSystem() {
                     <div>
                       <p className="font-medium">Reporte de {report.type}</p>
                       <p className="text-xs text-muted-foreground">
-                        {report.createdAt?.toDate?.()?.toLocaleDateString() || 'Fecha no disponible'}
+                        {formatDateSafe(report.createdAt?.toDate?.())}
                       </p>
                     </div>
                   </div>

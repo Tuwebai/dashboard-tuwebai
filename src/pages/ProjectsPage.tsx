@@ -25,7 +25,9 @@ import {
   Play,
   Pause,
   FileText,
-  Users
+  Users,
+  CheckSquare,
+  User
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
@@ -39,6 +41,7 @@ import { firestore } from '@/lib/firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import ProyectosNuevoModal from './ProyectosNuevo';
+import { formatDateSafe } from '@/utils/formatDateSafe';
 
 export default function ProjectsPage() {
   const { projects, loading, error, refreshData, user } = useApp();
@@ -318,7 +321,7 @@ export default function ProjectsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => navigate(`/proyectos/${project.id}/editar`)}
+                              onClick={() => navigate(`/proyectos/${project.id}`)}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -391,11 +394,11 @@ export default function ProjectsPage() {
                   <div className="text-xs text-muted-foreground space-y-1">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      Creado: {new Date(project.createdAt).toLocaleDateString('es-ES')}
+                      Creado: {formatDateSafe(project.createdAt)}
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      Actualizado: {new Date(project.updatedAt).toLocaleDateString('es-ES')}
+                      Actualizado: {formatDateSafe(project.updatedAt)}
                     </div>
                   </div>
 
@@ -429,120 +432,106 @@ export default function ProjectsPage() {
 
       {/* Modal de detalles del proyecto */}
       <Dialog open={showProjectModal} onOpenChange={setShowProjectModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{selectedProject?.name}</DialogTitle>
-            <DialogDescription>
-              Detalles completos del proyecto
-            </DialogDescription>
-          </DialogHeader>
-          
+        <DialogContent className="max-w-3xl w-full bg-zinc-900/95 rounded-2xl shadow-2xl border border-zinc-800 p-0 overflow-hidden">
           {selectedProject && (
-            <div className="space-y-6">
-              {/* Información básica */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Descripción</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedProject.description}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Información del proyecto</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Tipo:</span>
-                      <span className="font-medium">{selectedProject.type}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Estado:</span>
-                      <Badge variant="outline" className={getStatusColor(getProjectStatus(selectedProject))}>
+            <div className="flex flex-col md:flex-row">
+              {/* Lado izquierdo: Info principal */}
+              <div className="flex-1 p-6 space-y-6 min-w-[260px]">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="bg-primary/20 rounded-full p-3">
+                    <FileText className="h-8 w-8 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold leading-tight">{selectedProject.name}</h2>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="outline" className={getStatusColor(getProjectStatus(selectedProject)) + ' text-xs'}>
                         {getProjectStatus(selectedProject)}
                       </Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Progreso:</span>
-                      <span className="font-medium">{calculateProjectProgress(selectedProject)}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Funcionalidades:</span>
-                      <span className="font-medium">{selectedProject.funcionalidades?.length || 0}</span>
+                      <span className="text-xs text-muted-foreground">{selectedProject.type}</span>
                     </div>
                   </div>
                 </div>
+                <div className="mb-2">
+                  <h4 className="font-semibold text-sm mb-1 flex items-center gap-2"><MessageSquare className="h-4 w-4" /> Descripción</h4>
+                  <p className="text-sm text-muted-foreground">{selectedProject.description || <span className="italic">Sin descripción</span>}</p>
+                </div>
+                <div className="mb-2">
+                  <h4 className="font-semibold text-sm mb-1 flex items-center gap-2"><BarChart3 className="h-4 w-4" /> Progreso</h4>
+                  <div className="flex items-center gap-2">
+                    <Progress value={calculateProjectProgress(selectedProject)} className="h-2 flex-1" />
+                    <span className="text-xs font-medium">{calculateProjectProgress(selectedProject)}%</span>
+                  </div>
+                </div>
+                <div className="mb-2">
+                  <h4 className="font-semibold text-sm mb-1 flex items-center gap-2"><Users className="h-4 w-4" /> Funcionalidades</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {(selectedProject.funcionalidades && selectedProject.funcionalidades.length > 0)
+                      ? selectedProject.funcionalidades.map((f: string, i: number) => (
+                        <Badge key={i} variant="secondary">{f}</Badge>
+                      ))
+                      : <span className="text-xs text-muted-foreground italic">Sin funcionalidades</span>
+                    }
+                  </div>
+                </div>
+                <div className="mb-2">
+                  <h4 className="font-semibold text-sm mb-1 flex items-center gap-2"><Calendar className="h-4 w-4" /> Fechas</h4>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Creado: {formatDateSafe(selectedProject.createdAt)}</div>
+                    <div className="flex items-center gap-1"><Clock className="h-3 w-3" /> Actualizado: {formatDateSafe(selectedProject.updatedAt)}</div>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-6">
+                  <Button variant="outline" className="flex-1" onClick={() => navigate(`/proyectos/${selectedProject.id}/colaboracion`)}>
+                    <Users className="h-4 w-4 mr-2" /> Colaborar
+                  </Button>
+                  <Button variant="outline" className="flex-1" onClick={() => navigate(`/proyectos/${selectedProject.id}`)}>
+                    <Edit className="h-4 w-4 mr-2" /> Editar
+                  </Button>
+                </div>
               </div>
-
-              {/* Fases del proyecto */}
-              {selectedProject.fases && selectedProject.fases.length > 0 && (
-                <div>
-                  <h4 className="font-semibold mb-4">Fases del proyecto</h4>
-                  <div className="space-y-3">
-                    {selectedProject.fases.map((fase: any, index: number) => (
-                      <div key={fase.key} className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h5 className="font-medium">{fase.descripcion}</h5>
-                          <Badge variant="outline" className={getStatusColor(fase.estado)}>
-                            {fase.estado}
-                          </Badge>
+              {/* Lado derecho: Fases y comentarios */}
+              <div className="flex-1 bg-zinc-950/90 p-6 space-y-6 min-w-[260px] border-l border-zinc-800">
+                <h4 className="font-semibold text-base mb-2 flex items-center gap-2"><CheckSquare className="h-4 w-4" /> Fases del proyecto</h4>
+                <div className="space-y-3 max-h-56 overflow-y-auto pr-2">
+                  {selectedProject.fases && selectedProject.fases.length > 0 ? (
+                    selectedProject.fases.map((fase: any, index: number) => (
+                      <div key={fase.key} className="border rounded-lg p-3 bg-zinc-900/80">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500" /> {fase.descripcion}</span>
+                          <Badge variant="outline" className={getStatusColor(fase.estado)}>{fase.estado}</Badge>
                         </div>
                         {fase.fechaEntrega && (
-                          <p className="text-sm text-muted-foreground mb-2">
-                            Fecha de entrega: {new Date(fase.fechaEntrega).toLocaleDateString('es-ES')}
-                          </p>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                            <Calendar className="h-3 w-3" /> Entrega: {formatDateSafe(fase.fechaEntrega)}
+                          </div>
                         )}
                         {fase.comentarios && fase.comentarios.length > 0 && (
-                          <div className="mt-3">
-                            <h6 className="text-sm font-medium mb-2">Comentarios ({fase.comentarios.length})</h6>
-                            <div className="space-y-2 max-h-32 overflow-y-auto">
+                          <div className="mt-2">
+                            <h6 className="text-xs font-medium mb-1 flex items-center gap-1"><MessageSquare className="h-3 w-3" /> Comentarios ({fase.comentarios.length})</h6>
+                            <div className="space-y-1 max-h-20 overflow-y-auto">
                               {fase.comentarios.map((comentario: any, idx: number) => (
-                                <div key={idx} className="text-sm bg-muted p-2 rounded">
-                                  <div className="flex justify-between items-start mb-1">
-                                    <span className="font-medium">{comentario.autor}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {new Date(comentario.fecha).toLocaleDateString('es-ES')}
-                                    </span>
-                  </div>
-                                  <p className="text-muted-foreground">{comentario.texto}</p>
-                        </div>
-                      ))}
-                    </div>
-                    </div>
+                                <div key={idx} className="flex items-start gap-2 bg-zinc-800/80 p-2 rounded">
+                                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                                    <User className="h-4 w-4 text-primary" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="font-medium text-xs">{comentario.autor}</span>
+                                      <span className="text-xs text-muted-foreground">{formatDateSafe(comentario.fecha)}</span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">{comentario.texto}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-xs text-muted-foreground italic">Sin fases registradas</div>
                   )}
                 </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Funcionalidades */}
-              {selectedProject.funcionalidades && selectedProject.funcionalidades.length > 0 && (
-                <div>
-                  <h4 className="font-semibold mb-4">Funcionalidades</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedProject.funcionalidades.map((funcionalidad: string, index: number) => (
-                      <Badge key={index} variant="secondary">
-                        {funcionalidad}
-                      </Badge>
-                    ))}
-              </div>
-            </div>
-          )}
-
-              {/* Fechas */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <h4 className="font-semibold mb-2">Fechas importantes</h4>
-                  <div className="space-y-1">
-                    <div className="flex justify-between">
-                      <span>Fecha de creación:</span>
-                      <span>{new Date(selectedProject.createdAt).toLocaleDateString('es-ES')}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Última actualización:</span>
-                      <span>{new Date(selectedProject.updatedAt).toLocaleDateString('es-ES')}</span>
-              </div>
-              </div>
-              </div>
               </div>
             </div>
           )}

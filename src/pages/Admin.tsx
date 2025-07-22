@@ -1,12 +1,11 @@
-import { useApp } from '@/contexts/AppContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { firestore } from '@/lib/firebase';
-import { collection, getDocs, updateDoc, doc, query, where, deleteDoc, addDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { collection, getDocs, updateDoc, doc, query, where, deleteDoc, addDoc, serverTimestamp, getDoc, orderBy, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { Bar, Line } from 'react-chartjs-2';
 import {
@@ -25,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Eye, MessageSquare, Plus, Trash2, Download, FileText, Users, TrendingUp, Edit, Shield, Settings, Activity, Database, HardDrive, Cpu, Bell, Upload, CheckCircle } from 'lucide-react';
+import { Eye, MessageSquare, Plus, Trash2, Download, FileText, Users, TrendingUp, Edit, Shield, Settings, Activity, Database, HardDrive, Cpu, Bell, Upload, CheckCircle, Search, Send } from 'lucide-react';
 import { 
   AdminNotificationSystem, 
   AdminAnalytics, 
@@ -44,6 +43,8 @@ import AdvancedAnalytics from '@/components/admin/AdvancedAnalytics';
 import SecurityAudit from '@/components/admin/SecurityAudit';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useApp } from '@/contexts/AppContext';
+import VerDetallesProyecto from '@/components/VerDetallesProyecto';
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
 export default function Admin() {
@@ -104,24 +105,26 @@ export default function Admin() {
         const ticketsSnap = await getDocs(collection(firestore, 'tickets'));
         const ticketsData = ticketsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         // Filtrar tickets que no sean simulados
-        const realTickets = ticketsData.filter(ticket => 
-          ticket.userEmail && 
-          !ticket.userEmail.includes('ejemplo.com') && 
-          ticket.createdAt && 
-          new Date(ticket.createdAt).toString() !== 'Invalid Date'
-        );
+        const realTickets = ticketsData.filter(ticket => {
+          const t = ticket as any;
+          return t.userEmail &&
+            !t.userEmail.includes('ejemplo.com') &&
+            t.createdAt &&
+            new Date(t.createdAt).toString() !== 'Invalid Date';
+        });
         setTickets(realTickets);
         
         // Cargar pagos reales (solo si existen)
         const pagosSnap = await getDocs(collection(firestore, 'pagos'));
         const pagosData = pagosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         // Filtrar pagos que no sean simulados
-        const realPagos = pagosData.filter(pago => 
-          pago.userEmail && 
-          !pago.userEmail.includes('ejemplo.com') && 
-          pago.fecha && 
-          new Date(pago.fecha).toString() !== 'Invalid Date'
-        );
+        const realPagos = pagosData.filter(pago => {
+          const p = pago as any;
+          return p.userEmail &&
+            !p.userEmail.includes('ejemplo.com') &&
+            p.fecha &&
+            new Date(p.fecha).toString() !== 'Invalid Date';
+        });
         setPagos(realPagos);
         
       } catch (error) {
@@ -555,6 +558,7 @@ export default function Admin() {
           handleAddPhase={addNewPhase}
           handleDeletePhase={deletePhase}
           handleUpdateDeliveryDate={handleUpdateDeliveryDate}
+          navigate={navigate}
         />;
       case 'tickets':
         return <TicketsSection tickets={tickets} onRespond={handleRespondTicket} onClose={handleCloseTicket} />;
@@ -822,9 +826,12 @@ function UsuariosSection({ usuarios, onEditUser, onDeleteUser }: any) {
   );
 }
 
-function ProyectosSection({ proyectos, onEstadoChange, onComentario, onArchivo, addCommentToPhase, initializePhases, handleAddPhase, handleDeletePhase, handleUpdateDeliveryDate }: any) {
+function ProyectosSection(props: any) {
+  const { proyectos, onEstadoChange, onComentario, onArchivo, addCommentToPhase, initializePhases, handleAddPhase, handleDeletePhase, handleUpdateDeliveryDate, navigate } = props;
   const [comentario, setComentario] = useState('');
   const [archivo, setArchivo] = useState<File | null>(null);
+  const [showDetalles, setShowDetalles] = useState(false);
+  const [proyectoSeleccionado, setProyectoSeleccionado] = useState<any>(null);
 
   const handleAddComment = async (projectId: string, faseKey: string) => {
     if (!comentario.trim()) return;
@@ -865,14 +872,25 @@ function ProyectosSection({ proyectos, onEstadoChange, onComentario, onArchivo, 
     await handleUpdateDeliveryDate(projectId, faseKey, fecha);
   };
 
+  const handleViewProject = (proyecto: any) => {
+    setProyectoSeleccionado(proyecto);
+    setShowDetalles(true);
+  };
+  const handleEditarProyecto = () => {
+    if (proyectoSeleccionado) navigate(`/proyectos/${proyectoSeleccionado.id}`);
+  };
+  const handleColaborarProyecto = () => {
+    if (proyectoSeleccionado) navigate(`/proyectos/${proyectoSeleccionado.id}/colaboracion`);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0">
         <div>
           <h2 className="text-2xl font-bold">Gestión de Proyectos</h2>
           <p className="text-muted-foreground">Administra y supervisa todos los proyectos</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 mt-2 md:mt-0">
           <div className="text-right">
             <div className="text-2xl font-bold text-primary">{proyectos.length}</div>
             <div className="text-sm text-muted-foreground">Proyectos totales</div>
@@ -882,9 +900,9 @@ function ProyectosSection({ proyectos, onEstadoChange, onComentario, onArchivo, 
 
       <div className="space-y-6">
         {proyectos.map((proyecto: any) => (
-          <Card key={proyecto.id} className="bg-gradient-card border-border">
+          <Card key={proyecto.id} className="bg-gradient-card border-border w-full overflow-x-auto">
             <CardHeader>
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-0 w-full">
                 <div>
                   <CardTitle className="text-xl">{proyecto.name}</CardTitle>
                   <p className="text-muted-foreground">{proyecto.description}</p>
@@ -893,13 +911,42 @@ function ProyectosSection({ proyectos, onEstadoChange, onComentario, onArchivo, 
                     <Badge variant="outline">{proyecto.ownerEmail}</Badge>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-right mt-2 md:mt-0 min-w-0 break-words flex flex-col gap-2">
                   <p className="text-sm text-muted-foreground">
                     Creado: {new Date(proyecto.createdAt || Date.now()).toLocaleDateString('es-ES')}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Actualizado: {new Date(proyecto.updatedAt || Date.now()).toLocaleDateString('es-ES')}
                   </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2 mt-2"
+                    onClick={() => handleColaborarProyecto()}
+                  >
+                    <Users className="h-4 w-4 mr-1" />
+                    Colaborar
+                  </Button>
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      onClick={() => handleViewProject(proyecto)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Ver detalles
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      onClick={() => navigate(`/proyectos/${proyecto.id}`)}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Editar
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardHeader>
@@ -910,13 +957,13 @@ function ProyectosSection({ proyectos, onEstadoChange, onComentario, onArchivo, 
                   <h3 className="font-semibold mb-3">Fases del Proyecto</h3>
                   <div className="space-y-3">
                     {(proyecto.fases || []).map((fase: any) => (
-                      <div key={fase.key} className="p-4 border rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
+                      <div key={fase.key} className="p-4 border rounded-lg w-full overflow-x-auto">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
                           <div>
                             <h4 className="font-medium">{fase.descripcion}</h4>
                             <p className="text-sm text-muted-foreground">Clave: {fase.key}</p>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
                             <Select value={fase.estado} onValueChange={(value) => onEstadoChange(proyecto.id, fase.key, value)}>
                               <SelectTrigger className="w-32">
                                 <SelectValue />
@@ -938,18 +985,18 @@ function ProyectosSection({ proyectos, onEstadoChange, onComentario, onArchivo, 
                         </div>
                         
                         {/* Fecha de entrega */}
-                        <div className="flex items-center gap-2 mb-3">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-3 w-full">
                           <span className="text-sm">Fecha de entrega:</span>
                           <Input
                             type="date"
                             value={fase.fechaEntrega || ''}
                             onChange={(e) => handleDeliveryDateChange(proyecto.id, fase.key, e.target.value)}
-                            className="w-40"
+                            className="w-full sm:w-40 min-w-0"
                           />
                         </div>
 
                         {/* Comentarios */}
-                        <div className="space-y-2">
+                        <div className="space-y-2 w-full">
                           <h5 className="text-sm font-medium">Comentarios</h5>
                           <div className="space-y-2 max-h-32 overflow-y-auto">
                             {(fase.comentarios || []).map((comentario: any, index: number) => (
@@ -964,12 +1011,12 @@ function ProyectosSection({ proyectos, onEstadoChange, onComentario, onArchivo, 
                           </div>
                           
                           {/* Agregar comentario */}
-                          <div className="flex gap-2">
+                          <div className="flex flex-col sm:flex-row gap-2 w-full">
                             <Input
                               placeholder="Agregar comentario..."
                               value={comentario}
                               onChange={(e) => setComentario(e.target.value)}
-                              className="flex-1"
+                              className="flex-1 min-w-0"
                             />
                             <Button
                               size="sm"
@@ -981,11 +1028,11 @@ function ProyectosSection({ proyectos, onEstadoChange, onComentario, onArchivo, 
                         </div>
 
                         {/* Archivos */}
-                        <div className="mt-3">
+                        <div className="mt-3 w-full">
                           <h5 className="text-sm font-medium mb-2">Archivos</h5>
-                          <div className="space-y-2">
+                          <div className="space-y-2 w-full">
                             {(fase.archivos || []).map((archivo: any, index: number) => (
-                              <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
+                              <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-2 bg-muted rounded w-full overflow-x-auto">
                                 <FileText className="h-4 w-4" />
                                 <span className="text-sm">{archivo.name}</span>
                                 <Button variant="ghost" size="sm">
@@ -1030,6 +1077,13 @@ function ProyectosSection({ proyectos, onEstadoChange, onComentario, onArchivo, 
           </Card>
         ))}
       </div>
+      <VerDetallesProyecto
+        open={showDetalles}
+        onOpenChange={setShowDetalles}
+        proyecto={proyectoSeleccionado}
+        onEditar={handleEditarProyecto}
+        onColaborar={handleColaborarProyecto}
+      />
     </div>
   );
 }

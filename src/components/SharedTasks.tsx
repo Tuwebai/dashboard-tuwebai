@@ -50,6 +50,7 @@ import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { formatDateSafe } from '@/utils/formatDateSafe';
 
 interface Task {
   id: string;
@@ -599,7 +600,7 @@ export default function SharedTasks({
                       {task.dueDate && (
                         <span className={`flex items-center gap-1 ${isOverdue(task) ? 'text-red-500' : ''}`}>
                           <CalendarIcon className="h-3 w-3" />
-                          {formatDate(task.dueDate)}
+                          {formatDateSafe(task.dueDate)}
                         </span>
                       )}
                       
@@ -708,7 +709,7 @@ export default function SharedTasks({
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {newTask.dueDate ? formatDate(newTask.dueDate) : 'Seleccionar fecha'}
+                      {newTask.dueDate ? formatDateSafe(newTask.dueDate) : 'Seleccionar fecha'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -787,7 +788,7 @@ export default function SharedTasks({
                 <div>
                   <h4 className="font-semibold mb-2">Fecha de creación</h4>
                   <p className="text-sm text-muted-foreground">
-                    {formatDate(showTaskDetails.createdAt)}
+                    {formatDateSafe(showTaskDetails.createdAt)}
                   </p>
                 </div>
               </div>
@@ -796,7 +797,7 @@ export default function SharedTasks({
                 <div>
                   <h4 className="font-semibold mb-2">Fecha límite</h4>
                   <p className={`text-sm ${isOverdue(showTaskDetails) ? 'text-red-500' : 'text-muted-foreground'}`}>
-                    {formatDate(showTaskDetails.dueDate)}
+                    {formatDateSafe(showTaskDetails.dueDate)}
                     {isOverdue(showTaskDetails) && ' (Vencida)'}
                   </p>
                 </div>

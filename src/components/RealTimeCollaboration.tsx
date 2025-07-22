@@ -128,18 +128,18 @@ export default function RealTimeCollaboration({ projectId }: { projectId: string
       } catch (error) {
         // Create presence document if it doesn't exist
         try {
-          const presenceRef = doc(firestore, 'userPresence', user.email);
+        const presenceRef = doc(firestore, 'userPresence', user.email);
           await setDoc(presenceRef, {
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            isOnline: true,
-            lastSeen: serverTimestamp(),
-            currentPage: 'collaboration',
-            isTyping: false,
-            status: 'available',
-            projectId
-          });
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          isOnline: true,
+          lastSeen: serverTimestamp(),
+          currentPage: 'collaboration',
+          isTyping: false,
+          status: 'available',
+          projectId
+        });
         } catch (err) {
           toast({
             title: 'Error de presencia',

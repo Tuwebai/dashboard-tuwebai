@@ -30,6 +30,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useTranslation } from 'react-i18next';
+import { formatDateSafe } from '@/utils/formatDateSafe';
 
 interface ProjectPhase {
   key: string;
@@ -72,6 +74,7 @@ export default function Dashboard() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [realTimeProjects, setRealTimeProjects] = useState<Project[]>([]);
+  const { t } = useTranslation();
 
 
   // Escuchar cambios en tiempo real de los proyectos del usuario
@@ -195,8 +198,8 @@ export default function Dashboard() {
     <div className="p-2 sm:p-4 md:p-6 space-y-4 sm:space-y-6 md:space-y-8 max-w-full overflow-x-hidden">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Bienvenido, {user?.name || user?.email}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">{t('Dashboard')}</h1>
+          <p className="text-muted-foreground">{t('Bienvenido, {name}', { name: user?.name || user?.email })}</p>
         </div>
 
       </div>
@@ -208,7 +211,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-sm text-muted-foreground">Proyectos</p>
+                <p className="text-sm text-muted-foreground">{t('Proyectos')}</p>
                 <p className="text-2xl font-bold">{userProjects.length}</p>
               </div>
             </div>
@@ -219,7 +222,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-green-400" />
               <div>
-                <p className="text-sm text-muted-foreground">En Progreso</p>
+                <p className="text-sm text-muted-foreground">{t('En Progreso')}</p>
                 <p className="text-2xl font-bold">
                   {userProjects.filter(p => getProjectStatus(p) === 'En Progreso').length}
                 </p>
@@ -232,7 +235,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Completados</p>
+                <p className="text-sm text-muted-foreground">{t('Completados')}</p>
                 <p className="text-2xl font-bold">
                   {userProjects.filter(p => getProjectStatus(p) === 'Completado').length}
                 </p>
@@ -245,7 +248,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-blue-400" />
               <div>
-                <p className="text-sm text-muted-foreground">Comentarios</p>
+                <p className="text-sm text-muted-foreground">{t('Comentarios')}</p>
                 <p className="text-2xl font-bold">
                                          {userProjects.reduce((acc, p) => 
                        acc + (p.fases?.reduce((sum: number, f: ProjectPhase) => 
@@ -264,16 +267,16 @@ export default function Dashboard() {
                           <CardContent className="p-6 sm:p-12 text-center">
       <div className="space-y-4">
               <div className="text-4xl sm:text-6xl">🚀</div>
-              <h3 className="text-lg sm:text-xl font-semibold">No tienes proyectos aún</h3>
+              <h3 className="text-lg sm:text-xl font-semibold">{t('No tienes proyectos aún')}</h3>
               <p className="text-muted-foreground text-sm sm:text-base">
-                Comienza creando tu primer proyecto web y verás el progreso en tiempo real.
+                {t('Comienza creando tu primer proyecto web y verás el progreso en tiempo real.')}
               </p>
               <Button 
                 className="btn-gradient-electric transition-all duration-200 hover:scale-105 hover:shadow-lg"
                 onClick={() => navigate('/proyectos/nuevo')}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Crear mi primer proyecto
+                {t('Crear mi primer proyecto')}
               </Button>
             </div>
             </CardContent>
@@ -311,7 +314,7 @@ export default function Dashboard() {
                         className="btn-gradient-electric transition-all duration-200 hover:scale-105 hover:shadow-lg"
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        Ver Detalles
+                        {t('Ver Detalles')}
                       </Button>
           </div>
       </div>
@@ -319,7 +322,7 @@ export default function Dashboard() {
                   {/* Barra de progreso */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span>Progreso general</span>
+                      <span>{t('Progreso general')}</span>
                       <span>{Math.round(progress)}%</span>
                     </div>
                     <Progress value={progress} className="h-2 progress-gradient-electric" />
@@ -376,7 +379,7 @@ export default function Dashboard() {
                             {fase.fechaEntrega && (
                               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <Calendar className="h-3 w-3" />
-                                Entrega: {new Date(fase.fechaEntrega).toLocaleDateString('es-ES')}
+                                {t('Entrega:')} {formatDateSafe(fase.fechaEntrega)}
             </div>
                             )}
                           </CardHeader>
@@ -385,7 +388,7 @@ export default function Dashboard() {
                             {/* Archivos */}
                             {fase.archivos && fase.archivos.length > 0 && (
             <div className="space-y-2">
-                                <Label className="text-xs font-medium">Archivos</Label>
+                                <Label className="text-xs font-medium">{t('Archivos')}</Label>
                                 <div className="flex flex-wrap gap-2">
                                                                      {fase.archivos.map((file, idx: number) => (
                                     <div key={idx} className="flex items-center gap-1 p-2 bg-muted/20 rounded text-xs">
@@ -408,7 +411,7 @@ export default function Dashboard() {
             <div className="space-y-2">
                               <div className="flex items-center justify-between">
                                 <Label className="text-xs font-medium">
-                                  Comentarios ({fase.comentarios?.length || 0})
+                                  {t('Comentarios')} ({fase.comentarios?.length || 0})
                                 </Label>
                                 <Button
                                   variant="outline"
@@ -417,7 +420,7 @@ export default function Dashboard() {
                                   className="btn-gradient-electric transition-all duration-200 hover:scale-105 hover:shadow-lg"
                                 >
                                   <MessageSquare className="h-3 w-3 mr-1" />
-                                  Comentar
+                                  {t('Comentar')}
                                 </Button>
             </div>
 
@@ -427,7 +430,7 @@ export default function Dashboard() {
                                   <Textarea
                                     value={comentarioInput[`${project.id}-${fase.key}`] || ''}
                                     onChange={e => handleComentarioChange(project.id, fase.key, e.target.value)}
-                                    placeholder="Escribe tu comentario..."
+                                    placeholder={t('Escribe tu comentario...')}
                                     className="min-h-[60px] text-xs"
                                   />
                                   <div className="flex gap-2">
@@ -436,14 +439,14 @@ export default function Dashboard() {
                                       onClick={() => handleComentarioSubmit(project.id, fase.key)}
                                       disabled={!comentarioInput[`${project.id}-${fase.key}`]?.trim()}
                                     >
-                                      Enviar
+                                      {t('Enviar')}
                                     </Button>
               <Button 
                 variant="outline" 
                                       size="sm"
                                       onClick={() => setComentarioInput(prev => ({ ...prev, [`${project.id}-${fase.key}`]: undefined }))}
               >
-                Cancelar
+                {t('Cancelar')}
               </Button>
                                   </div>
                                 </div>
@@ -465,7 +468,7 @@ export default function Dashboard() {
                                         {comentario.autor}
                                       </span>
                                       <span className="text-muted-foreground">
-                                        {new Date(comentario.fecha).toLocaleString('es-ES')}
+                                        {formatDateSafe(comentario.fecha)}
                                       </span>
                                     </div>
                                     <p>{comentario.texto}</p>
@@ -498,23 +501,23 @@ export default function Dashboard() {
               {/* Información del proyecto */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Tipo de proyecto</Label>
+                  <Label className="text-sm font-medium">{t('Tipo de proyecto')}</Label>
                   <Badge variant="outline">{selectedProject.type}</Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Fecha de creación</Label>
+                  <Label className="text-sm font-medium">{t('Fecha de creación')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(selectedProject.createdAt).toLocaleDateString('es-ES')}
+                    {formatDateSafe(selectedProject.createdAt)}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Estado general</Label>
+                  <Label className="text-sm font-medium">{t('Estado general')}</Label>
                   <Badge className={getStatusColor(getProjectStatus(selectedProject))}>
                     {getProjectStatus(selectedProject)}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Progreso</Label>
+                  <Label className="text-sm font-medium">{t('Progreso')}</Label>
                   <div className="flex items-center gap-2">
                     <Progress value={getProjectProgress(selectedProject)} className="flex-1 h-2" />
                     <span className="text-sm">{Math.round(getProjectProgress(selectedProject))}%</span>
@@ -524,7 +527,7 @@ export default function Dashboard() {
 
               {/* Fases detalladas */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Fases del Proyecto</h3>
+                <h3 className="text-lg font-semibold">{t('Fases del Proyecto')}</h3>
                 <div className="space-y-4">
                    {(selectedProject.fases || []).map((fase: ProjectPhase, index: number) => {
                      const faseConfig = FASES.find(f => f.key === fase.key);
@@ -560,7 +563,7 @@ export default function Dashboard() {
                           {/* Comentarios detallados */}
                           <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                              <h4 className="text-sm font-medium">Comentarios ({fase.comentarios?.length || 0})</h4>
+                              <h4 className="text-sm font-medium">{t('Comentarios')} ({fase.comentarios?.length || 0})</h4>
                     <Button 
                                 variant="outline"
                                 size="sm"
@@ -568,7 +571,7 @@ export default function Dashboard() {
                                 className="btn-gradient-electric transition-all duration-200 hover:scale-105 hover:shadow-lg"
                     >
                                 <MessageSquare className="h-4 w-4 mr-2" />
-                                Agregar comentario
+                                {t('Agregar comentario')}
                     </Button>
                   </div>
                   
@@ -578,7 +581,7 @@ export default function Dashboard() {
                                 <Textarea
                                   value={comentarioInput[`${selectedProject.id}-${fase.key}`] || ''}
                                   onChange={e => handleComentarioChange(selectedProject.id, fase.key, e.target.value)}
-                                  placeholder="Escribe tu comentario..."
+                                  placeholder={t('Escribe tu comentario...')}
                                   className="min-h-[80px]"
                                 />
                                 <div className="flex gap-2">
@@ -586,13 +589,13 @@ export default function Dashboard() {
                                     onClick={() => handleComentarioSubmit(selectedProject.id, fase.key)}
                                     disabled={!comentarioInput[`${selectedProject.id}-${fase.key}`]?.trim()}
                                   >
-                                    Enviar comentario
+                                    {t('Enviar comentario')}
                                   </Button>
                     <Button 
                       variant="outline" 
                                     onClick={() => setComentarioInput(prev => ({ ...prev, [`${selectedProject.id}-${fase.key}`]: undefined }))}
                     >
-                      Cancelar
+                      {t('Cancelar')}
                     </Button>
                   </div>
                 </div>
@@ -614,7 +617,7 @@ export default function Dashboard() {
                                       {comentario.autor}
                                     </span>
                                     <span className="text-xs text-muted-foreground">
-                                      {new Date(comentario.fecha).toLocaleString('es-ES')}
+                                      {formatDateSafe(comentario.fecha)}
                                     </span>
                                   </div>
                                   <p className="text-sm">{comentario.texto}</p>
@@ -626,7 +629,7 @@ export default function Dashboard() {
                           {/* Archivos */}
                           {fase.archivos && fase.archivos.length > 0 && (
               <div className="space-y-2">
-                              <h4 className="text-sm font-medium">Archivos ({fase.archivos.length})</h4>
+                              <h4 className="text-sm font-medium">{t('Archivos')} ({fase.archivos.length})</h4>
                               <div className="space-y-1">
                                                                  {fase.archivos.map((archivo, index: number) => (
                                   <div key={index} className="flex items-center justify-between p-2 bg-muted/20 rounded">

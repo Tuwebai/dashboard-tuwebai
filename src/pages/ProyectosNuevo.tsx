@@ -191,7 +191,8 @@ export default function ProyectosNuevoModal({ open, onClose }: { open: boolean; 
     <AnimatePresence>
       {open && (
         <Dialog open={open} onOpenChange={v => { if (!v) onClose(); }}>
-          <DialogContent className="max-w-lg w-full p-0 bg-white/10 backdrop-blur-xl border-4 border-transparent shadow-2xl rounded-2xl animate-in fade-in-0 zoom-in-95 relative"
+          <DialogContent
+            className="max-w-lg w-full p-0 bg-white/10 backdrop-blur-xl border-4 border-transparent shadow-2xl rounded-2xl animate-in fade-in-0 zoom-in-95 relative flex items-center justify-center min-h-[60vh] sm:min-h-[60vh] md:min-h-[60vh]"
             style={{
               boxShadow: '0 8px 40px 0 rgba(80, 63, 205, 0.25), 0 1.5px 8px 0 rgba(80, 63, 205, 0.10)',
               borderImage: 'linear-gradient(90deg, #6366f1 0%, #a21caf 100%) 1',
@@ -204,14 +205,14 @@ export default function ProyectosNuevoModal({ open, onClose }: { open: boolean; 
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="p-0"
+              className="w-full flex flex-col items-center justify-center px-2 sm:px-6 py-4"
             >
-              <DialogHeader>
-                <DialogTitle>Crear nuevo proyecto</DialogTitle>
-                <DialogDescription>Completá los datos para tu nuevo proyecto</DialogDescription>
+              <DialogHeader className="w-full flex flex-col items-center justify-center">
+                <DialogTitle className="text-center w-full">Crear nuevo proyecto</DialogTitle>
+                <DialogDescription className="text-center w-full">Completá los datos para tu nuevo proyecto</DialogDescription>
               </DialogHeader>
               {/* Stepper visual */}
-              <div className="flex items-center justify-center gap-4 mb-8 mt-2">
+              <div className="flex items-center justify-center gap-4 mb-8 mt-2 w-full">
                 {steps.map((s, i) => (
                   <div key={s.label} className="flex items-center gap-2">
                     <div className={`w-8 h-8 flex items-center justify-center rounded-full border-2 transition-all duration-300
@@ -226,8 +227,8 @@ export default function ProyectosNuevoModal({ open, onClose }: { open: boolean; 
                   </div>
                 ))}
               </div>
-              <CardContent className="p-6">
-                <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
+              <CardContent className="w-full max-w-md mx-auto p-2 sm:p-6 bg-transparent flex flex-col items-center justify-center">
+                <form className="space-y-4 w-full" onSubmit={handleSubmit} autoComplete="off">
                   <AnimatePresence mode="wait">
                     {step === 0 && (
                       <motion.div key="step1" initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -40, opacity: 0 }} transition={{ duration: 0.3 }}>

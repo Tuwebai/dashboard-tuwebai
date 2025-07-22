@@ -12,6 +12,7 @@ import { Navigate } from 'react-router-dom';
 import { MessageSquare, Send, Clock, CheckCircle, AlertCircle, HelpCircle, FileText, Phone, Mail } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { sendSupportTicketEmail, sendTicketConfirmationEmail } from '@/lib/emailService';
+import { formatDateSafe } from '@/utils/formatDateSafe';
 
 interface Ticket {
   id: string;
@@ -68,61 +69,52 @@ export default function Soporte() {
       return;
     }
 
-    try {
-      const newTicket = {
-        asunto: formData.asunto,
-        mensaje: formData.mensaje,
-        email: user.email,
-        fecha: serverTimestamp(),
-        estado: 'abierto' as const,
-        prioridad: formData.prioridad
-      };
+    // Confirmación instantánea y limpieza del formulario
+    toast({ title: 'Ticket enviado', description: 'Tu ticket de soporte fue enviado. Procesando en segundo plano...' });
+    setFormData({ asunto: '', mensaje: '', prioridad: 'media' });
+    setShowForm(false);
 
-      // Crear el ticket en Firestore
-      const ticketRef = await addDoc(collection(firestore, 'tickets'), newTicket);
-      const ticketId = ticketRef.id;
-      
-      // Enviar email al admin
-      const adminEmailResult = await sendSupportTicketEmail({
-        ...newTicket,
-        fecha: new Date().toISOString()
-      });
-      
-      // Enviar email de confirmación al cliente
-      const clientEmailResult = await sendTicketConfirmationEmail({
-        ...newTicket,
-        fecha: new Date().toISOString(),
-        ticketId: ticketId
-      });
-      
-      // Actualizar lista local
-      setTickets(prev => [{
-        id: ticketId,
-        ...newTicket,
-        fecha: new Date().toISOString()
-      }, ...prev]);
-      
-      // Limpiar formulario
-      setFormData({ asunto: '', mensaje: '', prioridad: 'media' });
-      setShowForm(false);
-      
-      // Mostrar mensaje de éxito
-      let successMessage = 'Tu ticket de soporte fue enviado correctamente.';
-      if (adminEmailResult.success && clientEmailResult.success) {
-        successMessage += ' Se han enviado las confirmaciones por email.';
-      } else if (adminEmailResult.success || clientEmailResult.success) {
-        successMessage += ' Se ha enviado una confirmación por email.';
+    // Procesamiento real en segundo plano
+    (async () => {
+      try {
+        const newTicket = {
+          asunto: formData.asunto,
+          mensaje: formData.mensaje,
+          email: user.email,
+          fecha: serverTimestamp(),
+          estado: 'abierto' as const,
+          prioridad: formData.prioridad
+        };
+
+        // Crear el ticket en Firestore
+        const ticketRef = await addDoc(collection(firestore, 'tickets'), newTicket);
+        const ticketId = ticketRef.id;
+        
+        // Enviar email al admin
+        const adminEmailResult = await sendSupportTicketEmail({
+          ...newTicket,
+          fecha: new Date().toISOString()
+        });
+        
+        // Enviar email de confirmación al cliente
+        const clientEmailResult = await sendTicketConfirmationEmail({
+          ...newTicket,
+          fecha: new Date().toISOString(),
+          ticketId: ticketId
+        });
+        
+        // Actualizar lista local
+        setTickets(prev => [{
+          id: ticketId,
+          ...newTicket,
+          fecha: new Date().toISOString()
+        }, ...prev]);
+        // (No mostrar toast aquí, ya se mostró antes)
+      } catch (error) {
+        console.error('Error enviando ticket:', error);
+        toast({ title: 'Error', description: 'No se pudo enviar el ticket.', variant: 'destructive' });
       }
-      
-      toast({ 
-        title: 'Ticket enviado', 
-        description: successMessage 
-      });
-      
-    } catch (error) {
-      console.error('Error enviando ticket:', error);
-      toast({ title: 'Error', description: 'No se pudo enviar el ticket.', variant: 'destructive' });
-    }
+    })();
   };
 
   const getStatusColor = (status: string) => {
@@ -359,7 +351,7 @@ export default function Soporte() {
                   </div>
                   
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Creado: {new Date(ticket.fecha).toLocaleDateString('es-ES')}</span>
+                    <span>Creado: {formatDateSafe(ticket.fecha)}</span>
                     <div className="flex items-center gap-4">
                       {ticket.respuesta && (
                         <div className="flex items-center gap-1">
@@ -375,7 +367,7 @@ export default function Soporte() {
                       <p className="text-sm font-medium mb-1">Respuesta del soporte:</p>
                       <p className="text-sm">{ticket.respuesta}</p>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Respondido el {new Date(ticket.fechaRespuesta || '').toLocaleDateString('es-ES')}
+                        Respondido el {formatDateSafe(ticket.fechaRespuesta || '')}
                       </p>
                     </div>
                   )}

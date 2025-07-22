@@ -20,6 +20,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { useTranslation } from 'react-i18next';
 
 interface TopbarProps {
   onMenuClick?: () => void;
@@ -27,6 +28,7 @@ interface TopbarProps {
 }
 
 export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarProps) {
+  const { t } = useTranslation();
   const { user, projects } = useApp();
   const navigate = useNavigate();
   const [unreadChats, setUnreadChats] = useState(0);
@@ -94,7 +96,7 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
         {/* Stats */}
         <div className="hidden sm:flex items-center gap-4">
           <div className="text-sm">
-            <span className="text-muted-foreground">Proyectos: </span>
+            <span className="text-muted-foreground">{t('Proyectos')}: </span>
             <Badge variant="secondary" className="bg-primary/10 text-primary">
               {projects.length}
             </Badge>
@@ -114,7 +116,7 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
                 )}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Chat</TooltipContent>
+            <TooltipContent>{t('Chat')}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
@@ -139,19 +141,19 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={() => navigate('/perfil')}>
-                <UserIcon className="h-4 w-4 mr-2" /> Mi perfil
+                <UserIcon className="h-4 w-4 mr-2" /> {t('Mi perfil')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/proyectos')}>
-                <FolderOpen className="h-4 w-4 mr-2" /> Mis proyectos
+                <FolderOpen className="h-4 w-4 mr-2" /> {t('Mis proyectos')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/facturacion')}>
-                <CreditCard className="h-4 w-4 mr-2" /> Facturación / Pagos
+                <CreditCard className="h-4 w-4 mr-2" /> {t('Facturación / Pagos')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/soporte')}>
-                <MessageCircle className="h-4 w-4 mr-2" /> Soporte / Chat
+                <MessageCircle className="h-4 w-4 mr-2" /> {t('Soporte / Chat')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/configuracion')}>
-                <SettingsIcon className="h-4 w-4 mr-2" /> Configuración
+                <SettingsIcon className="h-4 w-4 mr-2" /> {t('Configuración')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -161,7 +163,7 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
                 }}
                 className="text-destructive"
               >
-                <LogOut className="h-4 w-4 mr-2" /> Cerrar sesión
+                <LogOut className="h-4 w-4 mr-2" /> {t('Cerrar sesión')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
