@@ -47,6 +47,7 @@ export interface Project {
       tipo: 'admin' | 'cliente';
     }>;
   }>;
+  progressHistory?: Array<{ date: string; progress: number }>;
 }
 
 export interface User {
@@ -652,22 +653,48 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Actualizar proyecto optimizado
   const updateProject = async (id: string, updates: Partial<Project>) => {
     if (!firestore) return;
-    
     try {
       setLoading(true);
       setError(null);
-      
       const projectRef = doc(firestore, 'projects', id);
+      // Obtener el proyecto actual para comparar progreso
+      const projectSnap = await getDoc(projectRef);
+      let progressHistory = [];
+      let prevProgress = 0;
+      if (projectSnap.exists()) {
+        const projectData = projectSnap.data();
+        progressHistory = projectData.progressHistory || [];
+        // Calcular progreso anterior
+        if (projectData.fases && projectData.fases.length > 0) {
+          const completed = projectData.fases.filter((f: any) => f.estado === 'Terminado').length;
+          prevProgress = Math.round((completed / projectData.fases.length) * 100);
+        }
+      }
+      // Calcular nuevo progreso si fases cambian
+      let newProgress = prevProgress;
+      if (updates.fases && updates.fases.length > 0) {
+        const completed = updates.fases.filter((f: any) => f.estado === 'Terminado').length;
+        newProgress = Math.round((completed / updates.fases.length) * 100);
+      }
+      // Si el progreso cambió, agrega snapshot diario
+      const today = new Date().toISOString().slice(0, 10);
+      if (newProgress !== prevProgress) {
+        // Si ya hay snapshot de hoy, reemplaza, si no, agrega
+        const idx = progressHistory.findIndex((h: any) => h.date === today);
+        if (idx >= 0) {
+          progressHistory[idx] = { date: today, progress: newProgress };
+        } else {
+          progressHistory.push({ date: today, progress: newProgress });
+        }
+      }
       await updateDoc(projectRef, {
         ...updates,
+        progressHistory,
         updatedAt: serverTimestamp()
       });
-      
-      // Limpiar cache de proyectos
       if (user) {
         cache.delete(`projects_${user.email}`);
       }
-      
     } catch (error) {
       console.error('Update project error:', error);
       setError('Error al actualizar el proyecto');
