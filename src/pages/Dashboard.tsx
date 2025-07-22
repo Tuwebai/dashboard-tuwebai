@@ -32,6 +32,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTranslation } from 'react-i18next';
 import { formatDateSafe } from '@/utils/formatDateSafe';
+import VerDetallesProyecto from '@/components/VerDetallesProyecto';
 
 interface ProjectPhase {
   key: string;
@@ -290,7 +291,8 @@ export default function Dashboard() {
             return (
               <Card
                 key={project.id}
-                className="relative bg-[#181824]/80 backdrop-blur-md border border-[#23263a] rounded-2xl shadow-2xl hover:scale-[1.02] hover:shadow-3xl transition-all overflow-hidden"
+                className="relative bg-[#181824]/80 backdrop-blur-md border border-[#23263a] rounded-2xl shadow-2xl hover:scale-[1.02] hover:shadow-3xl transition-all overflow-hidden cursor-pointer"
+                onClick={() => navigate(`/proyectos/${project.id}`)}
               >
                 {/* Barra superior de gradiente animado */}
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-gradient-x rounded-t-2xl" />
@@ -310,7 +312,7 @@ export default function Dashboard() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleViewProject(project)}
+                        onClick={e => { e.stopPropagation(); handleViewProject(project); }}
                         className="btn-gradient-electric transition-all duration-200 hover:scale-105 hover:shadow-lg"
                       >
                         <Eye className="h-4 w-4 mr-1" />
@@ -489,169 +491,13 @@ export default function Dashboard() {
       )}
 
       {/* Modal de detalle del proyecto */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="w-full max-w-[98vw] sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 bg-[#10111a]/95 backdrop-blur-xl border border-[#23263a] shadow-2xl rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">{selectedProject?.name}</DialogTitle>
-            <DialogDescription>{selectedProject?.description}</DialogDescription>
-          </DialogHeader>
-          
-          {selectedProject && (
-            <div className="space-y-6">
-              {/* Información del proyecto */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium">{t('Tipo de proyecto')}</Label>
-                  <Badge variant="outline">{selectedProject.type}</Badge>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">{t('Fecha de creación')}</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDateSafe(selectedProject.createdAt)}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">{t('Estado general')}</Label>
-                  <Badge className={getStatusColor(getProjectStatus(selectedProject))}>
-                    {getProjectStatus(selectedProject)}
-                  </Badge>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">{t('Progreso')}</Label>
-                  <div className="flex items-center gap-2">
-                    <Progress value={getProjectProgress(selectedProject)} className="flex-1 h-2" />
-                    <span className="text-sm">{Math.round(getProjectProgress(selectedProject))}%</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Fases detalladas */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">{t('Fases del Proyecto')}</h3>
-                <div className="space-y-4">
-                   {(selectedProject.fases || []).map((fase: ProjectPhase, index: number) => {
-                     const faseConfig = FASES.find(f => f.key === fase.key);
-                    return (
-                      <Card key={fase.key} className="bg-muted/10 border-border transition-all duration-200 hover:scale-105 hover:shadow-2xl">
-                        <CardHeader>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold">
-                                {index + 1}
-                              </div>
-                              <div>
-                                <CardTitle className="text-base flex items-center gap-2">
-                                  <span>{faseConfig?.icon}</span>
-                                  {faseConfig?.label}
-                                </CardTitle>
-                                <p className="text-sm text-muted-foreground">{fase.descripcion}</p>
-                              </div>
-                            </div>
-                            <Badge 
-                              variant="outline" 
-                              className={
-                                fase.estado === 'Terminado' ? 'bg-gradient-gold text-[#181824] border-none' :
-                                fase.estado === 'En Progreso' ? 'bg-gradient-electric text-white border-none' :
-                                'bg-gradient-to-r from-[#a259ff] to-[#23263a] text-white border-none'
-                              }
-                            >
-                              {fase.estado || 'Pendiente'}
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          {/* Comentarios detallados */}
-                          <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                              <h4 className="text-sm font-medium">{t('Comentarios')} ({fase.comentarios?.length || 0})</h4>
-                    <Button 
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setComentarioInput(prev => ({ ...prev, [`${selectedProject.id}-${fase.key}`]: '' }))}
-                                className="btn-gradient-electric transition-all duration-200 hover:scale-105 hover:shadow-lg"
-                    >
-                                <MessageSquare className="h-4 w-4 mr-2" />
-                                {t('Agregar comentario')}
-                    </Button>
-                  </div>
-                  
-                            {/* Formulario de comentario */}
-                            {comentarioInput[`${selectedProject.id}-${fase.key}`] !== undefined && (
-                              <div className="space-y-2">
-                                <Textarea
-                                  value={comentarioInput[`${selectedProject.id}-${fase.key}`] || ''}
-                                  onChange={e => handleComentarioChange(selectedProject.id, fase.key, e.target.value)}
-                                  placeholder={t('Escribe tu comentario...')}
-                                  className="min-h-[80px]"
-                                />
-                                <div className="flex gap-2">
-                                  <Button
-                                    onClick={() => handleComentarioSubmit(selectedProject.id, fase.key)}
-                                    disabled={!comentarioInput[`${selectedProject.id}-${fase.key}`]?.trim()}
-                                  >
-                                    {t('Enviar comentario')}
-                                  </Button>
-                    <Button 
-                      variant="outline" 
-                                    onClick={() => setComentarioInput(prev => ({ ...prev, [`${selectedProject.id}-${fase.key}`]: undefined }))}
-                    >
-                      {t('Cancelar')}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-                            {/* Lista de comentarios */}
-                            <div className="space-y-2 max-h-60 overflow-y-auto">
-                              {(fase.comentarios || []).map((comentario) => (
-                                <div
-                                  key={comentario.id}
-                                  className={`p-3 rounded-lg ${
-                                    comentario.tipo === 'admin' 
-                                      ? 'bg-primary/10 border border-primary/20' 
-                                      : 'bg-muted/20 border border-border'
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="text-sm font-medium">
-                                      {comentario.autor}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {formatDateSafe(comentario.fecha)}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm">{comentario.texto}</p>
-                                </div>
-                              ))}
-            </div>
-              </div>
-
-                          {/* Archivos */}
-                          {fase.archivos && fase.archivos.length > 0 && (
-              <div className="space-y-2">
-                              <h4 className="text-sm font-medium">{t('Archivos')} ({fase.archivos.length})</h4>
-                              <div className="space-y-1">
-                                                                 {fase.archivos.map((archivo, index: number) => (
-                                  <div key={index} className="flex items-center justify-between p-2 bg-muted/20 rounded">
-                                    <span className="text-sm">{archivo.name}</span>
-                                    <Button variant="ghost" size="sm">
-                                      <Download className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                ))}
-                              </div>
-              </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-              </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <VerDetallesProyecto
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        proyecto={selectedProject}
+        onEditar={() => navigate(`/proyectos/${selectedProject?.id}`)}
+        onColaborar={() => navigate(`/proyectos/${selectedProject?.id}/colaboracion`)}
+      />
 
 
     </div>
