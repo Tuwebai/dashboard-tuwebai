@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,18 +7,24 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from '@/hooks/use-toast';
-import { FileText, MessageSquare, BarChart3, Users, Calendar, Clock, Edit, CheckSquare, CheckCircle, User } from 'lucide-react';
+import { FileText, MessageSquare, BarChart3, Users, Calendar, Clock, Edit, CheckSquare, CheckCircle, User, Pencil, Plus, Trash2, Copy, Filter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { formatDateSafe } from '@/utils/formatDateSafe';
 
 export default function EditarProyecto() {
   const { id } = useParams();
-  const { projects, user, updateProject, addLog } = useApp();
+  const { projects, user, updateProject, addLog, createProject } = useApp();
+  const navigate = useNavigate();
   const [project, setProject] = useState<any>(null);
   const [form, setForm] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('basico');
   const [saving, setSaving] = useState(false);
+  const { getProjectLogs } = useApp();
+  const [showHistorial, setShowHistorial] = useState(false);
+  const logs = project ? getProjectLogs(project.id) : [];
+  const [filtroAccion, setFiltroAccion] = useState('');
 
   useEffect(() => {
     if (id && projects.length > 0) {
@@ -123,6 +129,51 @@ export default function EditarProyecto() {
 
   // RESTAURAR
   const handleRestore = () => setForm(project);
+
+  // CLONAR PROYECTO
+  const handleClonarProyecto = async () => {
+    if (!project) return;
+    try {
+      // Copia profunda y elimina id
+      const { id: _omit, ...cloneBase } = project;
+      const clone = {
+        ...cloneBase,
+        name: `Copia de ${project.name}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        fases: (project.fases || []).map(f => ({ ...f, key: `fase${Date.now()}${Math.random()}` })),
+        funcionalidades: [...(project.funcionalidades || [])],
+        colaboradores: [...(project.colaboradores || [])],
+      };
+      await createProject(clone);
+      toast({ title: 'Proyecto clonado', description: 'La copia fue creada correctamente.' });
+      setTimeout(() => {
+        const nuevo = projects.find(p => p.name === clone.name && p.createdAt === clone.createdAt);
+        if (nuevo) {
+          navigate(`/proyectos/${nuevo.id}`);
+        } else {
+          navigate('/proyectos');
+        }
+      }, 1200);
+      await addLog({
+        user: user?.email,
+        projectId: project.id,
+        action: 'clone',
+      });
+    } catch (e) {
+      toast({ title: 'Error', description: 'No se pudo clonar el proyecto', variant: 'destructive' });
+    }
+  };
+
+  // Mapeo de acciones a iconos y descripciones
+  const actionDetails = {
+    update: { icon: <Pencil className="h-4 w-4 text-blue-400" />, desc: 'Actualización del proyecto' },
+    create: { icon: <Plus className="h-4 w-4 text-green-400" />, desc: 'Creación del proyecto' },
+    delete: { icon: <Trash2 className="h-4 w-4 text-red-400" />, desc: 'Eliminación del proyecto' },
+    clone: { icon: <Copy className="h-4 w-4 text-purple-400" />, desc: 'Clonación del proyecto' },
+    default: { icon: <FileText className="h-4 w-4 text-zinc-400" />, desc: 'Acción sobre el proyecto' },
+  };
+  const accionesUnicas = Array.from(new Set(logs.map(l => l.action)));
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
@@ -239,12 +290,12 @@ export default function EditarProyecto() {
                   <p className="font-bold">Acciones avanzadas solo para admin:</p>
                   {isAdmin ? (
                     <>
-                      <Button variant="outline" onClick={() => toast({ title: 'Clonar', description: 'Función de clonado real pendiente' })}>Clonar proyecto</Button>
+                      <Button variant="outline" onClick={handleClonarProyecto}>Clonar proyecto</Button>
                       <Button variant="outline" onClick={() => toast({ title: 'Archivar', description: 'Función de archivado real pendiente' })}>Archivar proyecto</Button>
                       <Button variant="outline" onClick={() => toast({ title: 'Eliminar', description: 'Función de eliminación real pendiente' })}>Eliminar proyecto</Button>
                       <Button variant="outline" onClick={() => toast({ title: 'Restaurar', description: 'Función de restaurar real pendiente' })}>Restaurar proyecto</Button>
                       <Button variant="outline" onClick={() => toast({ title: 'Exportar', description: 'Función de exportar real pendiente' })}>Exportar (PDF, Excel, JSON)</Button>
-                      <Button variant="outline" onClick={() => toast({ title: 'Historial', description: 'Función de historial real pendiente' })}>Ver historial de cambios</Button>
+                      <Button variant="outline" onClick={() => setShowHistorial(true)}>Ver historial de cambios</Button>
                       <Button variant="outline" onClick={() => toast({ title: 'Logs', description: 'Función de logs real pendiente' })}>Ver logs de auditoría</Button>
                       <Button variant="outline" onClick={() => toast({ title: 'Facturación', description: 'Función de facturación real pendiente' })}>Gestionar facturación</Button>
                       <Button variant="outline" onClick={() => toast({ title: 'Permisos', description: 'Función de permisos real pendiente' })}>Gestionar permisos</Button>
@@ -264,6 +315,50 @@ export default function EditarProyecto() {
           </div>
         </div>
       </Card>
+      {/* Modal de historial de cambios */}
+      <Dialog open={showHistorial} onOpenChange={setShowHistorial}>
+        <DialogContent className="max-w-2xl bg-zinc-900/95">
+          <DialogTitle>Historial de cambios</DialogTitle>
+          <DialogDescription>Registro completo de acciones realizadas sobre este proyecto.</DialogDescription>
+          {/* Filtro por tipo de acción */}
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <select
+              className="bg-zinc-800 text-sm rounded px-2 py-1 text-white border border-zinc-700"
+              value={filtroAccion}
+              onChange={e => setFiltroAccion(e.target.value)}
+            >
+              <option value="">Todas las acciones</option>
+              {accionesUnicas.map(a => (
+                <option key={a} value={a}>{a.charAt(0).toUpperCase() + a.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-3 max-h-96 overflow-y-auto mt-2">
+            {logs.length === 0 ? (
+              <div className="text-muted-foreground text-sm italic">No hay historial de cambios para este proyecto.</div>
+            ) : (
+              logs
+                .filter(log => !filtroAccion || log.action === filtroAccion)
+                .sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''))
+                .map(log => {
+                  const details = actionDetails[log.action] || actionDetails.default;
+                  return (
+                    <div key={log.id} className="bg-zinc-800/80 rounded p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        {details.icon}
+                        <span className="font-semibold text-primary">{log.user}</span>
+                        <span className="mx-2 text-xs text-muted-foreground">{details.desc}</span>
+                        <span className="mx-2 text-xs text-muted-foreground">({log.action})</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">{formatDateSafe(log.timestamp)}</div>
+                    </div>
+                  );
+                })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

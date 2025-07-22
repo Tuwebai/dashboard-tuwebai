@@ -30,7 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import Logo from './Logo';
 import { useEffect, useState } from 'react';
 import { firestore } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useTranslation } from 'react-i18next';
 
@@ -49,29 +49,18 @@ export default function Sidebar() {
   // Cargar contadores
   useEffect(() => {
     if (user?.role === 'admin') {
-      loadCounts();
+      const unsubUsers = onSnapshot(collection(firestore, 'users'), snap => setCounts(c => ({ ...c, users: snap.size })));
+      const unsubProjects = onSnapshot(collection(firestore, 'projects'), snap => setCounts(c => ({ ...c, projects: snap.size })));
+      const unsubTickets = onSnapshot(collection(firestore, 'tickets'), snap => setCounts(c => ({ ...c, tickets: snap.size })));
+      const unsubPayments = onSnapshot(collection(firestore, 'pagos'), snap => setCounts(c => ({ ...c, payments: snap.size })));
+      return () => {
+        unsubUsers();
+        unsubProjects();
+        unsubTickets();
+        unsubPayments();
+      };
     }
   }, [user]);
-
-  const loadCounts = async () => {
-    try {
-      const [usersSnap, projectsSnap, ticketsSnap, paymentsSnap] = await Promise.all([
-        getDocs(collection(firestore, 'users')),
-        getDocs(collection(firestore, 'projects')),
-        getDocs(collection(firestore, 'tickets')),
-        getDocs(collection(firestore, 'pagos'))
-      ]);
-
-      setCounts({
-        users: usersSnap.size,
-        projects: projectsSnap.size,
-        tickets: ticketsSnap.size,
-        payments: paymentsSnap.size
-      });
-    } catch (error) {
-      console.error('Error loading counts:', error);
-    }
-  };
 
   const navItem = (to: string, icon: JSX.Element, label: string, count?: number, badge?: string) => (
     <NavLink

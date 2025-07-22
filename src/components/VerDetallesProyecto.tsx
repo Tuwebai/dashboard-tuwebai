@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,8 @@ export default function VerDetallesProyecto({ open, onOpenChange, proyecto, onEd
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl w-full bg-zinc-900/95 rounded-2xl shadow-2xl border border-zinc-800 p-0 overflow-hidden">
+        <DialogTitle>{proyecto.name}</DialogTitle>
+        <DialogDescription>Detalles completos del proyecto</DialogDescription>
         <div className="flex flex-col md:flex-row">
           {/* Lado izquierdo: Info principal */}
           <div className="flex-1 p-6 space-y-6 min-w-[260px]">

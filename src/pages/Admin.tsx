@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Eye, MessageSquare, Plus, Trash2, Download, FileText, Users, TrendingUp, Edit, Shield, Settings, Activity, Database, HardDrive, Cpu, Bell, Upload, CheckCircle, Search, Send } from 'lucide-react';
+import { Eye, MessageSquare, Plus, Trash2, Download, FileText, Users, TrendingUp, Edit, Shield, Settings, Activity, Database, HardDrive, Cpu, Bell, Upload, CheckCircle, Search, Send, X, History, Paperclip } from 'lucide-react';
 import { 
   AdminNotificationSystem, 
   AdminAnalytics, 
@@ -45,6 +45,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useApp } from '@/contexts/AppContext';
 import VerDetallesProyecto from '@/components/VerDetallesProyecto';
+import { jsPDF } from 'jspdf';
+
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
 export default function Admin() {
@@ -140,8 +142,29 @@ export default function Admin() {
     };
     fetchData();
     
+    // Escuchar tickets en tiempo real
+    const unsubTickets = onSnapshot(collection(firestore, 'tickets'), (snapshot) => {
+      const ticketsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const realTickets = ticketsData.filter(ticket => {
+        const t = ticket as any;
+        return t.userEmail &&
+          !t.userEmail.includes('ejemplo.com') &&
+          t.createdAt &&
+          new Date(t.createdAt).toString() !== 'Invalid Date';
+      });
+      setTickets(realTickets);
+    });
+    
+    // Escuchar pagos en tiempo real
+    const unsubPagos = onSnapshot(collection(firestore, 'pagos'), (snapshot) => {
+      const pagosData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPagos(pagosData);
+    });
+    
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
+      unsubTickets();
+      unsubPagos();
     };
   }, [user, navigate]);
 
@@ -561,7 +584,7 @@ export default function Admin() {
           navigate={navigate}
         />;
       case 'tickets':
-        return <TicketsSection tickets={tickets} onRespond={handleRespondTicket} onClose={handleCloseTicket} />;
+        return <TicketsSection tickets={tickets} usuarios={usuarios} onRespond={handleRespondTicket} onClose={handleCloseTicket} />;
       case 'pagos':
         return <PagosSection pagos={pagos} onDownloadInvoice={handleDownloadInvoice} onMarkComplete={handleMarkPaymentComplete} />;
       case 'notifications':
@@ -1088,9 +1111,125 @@ function ProyectosSection(props: any) {
   );
 }
 
-function TicketsSection({ tickets, onRespond, onClose }: any) {
+function TicketsSection({ tickets, usuarios, onRespond, onClose }: any) {
   const [respuesta, setRespuesta] = useState('');
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [filtroEstado, setFiltroEstado] = useState('');
+  const [filtroPrioridad, setFiltroPrioridad] = useState('');
+  const [filtroTexto, setFiltroTexto] = useState('');
+  const [pagina, setPagina] = useState(1);
+  const [showHistorial, setShowHistorial] = useState(false);
+  const [historialTicket, setHistorialTicket] = useState<any[]>([]);
+  const [showAdjuntos, setShowAdjuntos] = useState(false);
+  const [adjuntosTicket, setAdjuntosTicket] = useState<any[]>([]);
+  const [showAsignar, setShowAsignar] = useState(false);
+  const [asignarTicket, setAsignarTicket] = useState<any>(null);
+  const [asignadoA, setAsignadoA] = useState('');
+  const [showComentarios, setShowComentarios] = useState(false);
+  const [comentariosTicket, setComentariosTicket] = useState<any[]>([]);
+  const [nuevoComentario, setNuevoComentario] = useState('');
+  const [editandoComentario, setEditandoComentario] = useState<any>(null);
+  const [comentarioEditado, setComentarioEditado] = useState('');
+  const ticketsPorPagina = 8;
+  // Filtros avanzados
+  const ticketsFiltrados = tickets
+    .filter(t => !filtroEstado || t.estado === filtroEstado)
+    .filter(t => !filtroPrioridad || t.priority === filtroPrioridad)
+    .filter(t => !filtroTexto || (t.userEmail && t.userEmail.toLowerCase().includes(filtroTexto.toLowerCase())) || (t.title && t.title.toLowerCase().includes(filtroTexto.toLowerCase())));
+  const totalPaginas = Math.ceil(ticketsFiltrados.length / ticketsPorPagina);
+  const ticketsPagina = ticketsFiltrados.slice((pagina - 1) * ticketsPorPagina, pagina * ticketsPorPagina);
+
+  // Eliminar ticket
+  const handleDeleteTicket = async (ticketId: string) => {
+    if (!window.confirm('¿Seguro que deseas eliminar este ticket?')) return;
+    await deleteDoc(doc(firestore, 'tickets', ticketId));
+    toast({ title: 'Ticket eliminado', description: 'El ticket fue eliminado correctamente.' });
+  };
+
+  // Exportar ticket
+  const handleExportTicket = (ticket: any, formato: 'pdf' | 'txt' | 'json') => {
+    if (formato === 'json') {
+      const blob = new Blob([JSON.stringify(ticket, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ticket-${ticket.id}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (formato === 'txt') {
+      const content = `TICKET\nID: ${ticket.id}\nTítulo: ${ticket.title}\nDescripción: ${ticket.description}\nUsuario: ${ticket.userEmail}\nPrioridad: ${ticket.priority}\nEstado: ${ticket.estado}\nCreado: ${ticket.createdAt}\nRespuesta: ${ticket.respuesta || ''}`;
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ticket-${ticket.id}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (formato === 'pdf') {
+      const docu = new jsPDF();
+      docu.text(`TICKET\nID: ${ticket.id}\nTítulo: ${ticket.title}\nDescripción: ${ticket.description}\nUsuario: ${ticket.userEmail}\nPrioridad: ${ticket.priority}\nEstado: ${ticket.estado}\nCreado: ${ticket.createdAt}\nRespuesta: ${ticket.respuesta || ''}`, 10, 10);
+      docu.save(`ticket-${ticket.id}.pdf`);
+    }
+    toast({ title: 'Ticket exportado', description: `El ticket fue exportado como ${formato.toUpperCase()}.` });
+  };
+
+  // Historial de cambios (simulado)
+  const handleShowHistorial = (ticket: any) => {
+    setHistorialTicket([
+      { id: 1, action: 'create', user: ticket.userEmail, fecha: ticket.createdAt },
+      ...(ticket.respuesta ? [{ id: 2, action: 'respond', user: ticket.respondidoPor, fecha: ticket.fechaRespuesta }] : []),
+      ...(ticket.estado === 'cerrado' ? [{ id: 3, action: 'close', user: ticket.cerradoPor, fecha: ticket.fechaCierre }] : []),
+    ]);
+    setShowHistorial(true);
+  };
+
+  // Adjuntos (simulado)
+  const handleShowAdjuntos = (ticket: any) => {
+    setAdjuntosTicket(ticket.adjuntos || []);
+    setShowAdjuntos(true);
+  };
+
+  // Asignar ticket
+  const handleShowAsignar = (ticket: any) => {
+    setAsignarTicket(ticket);
+    setAsignadoA(ticket.asignadoA || '');
+    setShowAsignar(true);
+  };
+  const handleAsignar = async () => {
+    if (!asignarTicket) return;
+    await updateDoc(doc(firestore, 'tickets', asignarTicket.id), { asignadoA });
+    setShowAsignar(false);
+    toast({ title: 'Ticket asignado', description: `El ticket fue asignado a ${asignadoA}` });
+  };
+
+  // Comentarios internos
+  const handleShowComentarios = (ticket: any) => {
+    setComentariosTicket(ticket.comentariosInternos || []);
+    setShowComentarios(true);
+  };
+  const handleAgregarComentario = async () => {
+    if (!nuevoComentario.trim() || !selectedTicket) return;
+    const nuevos = [...(selectedTicket.comentariosInternos || []), { texto: nuevoComentario, fecha: new Date().toISOString() }];
+    await updateDoc(doc(firestore, 'tickets', selectedTicket.id), { comentariosInternos: nuevos });
+    setComentariosTicket(nuevos);
+    setNuevoComentario('');
+  };
+  const handleEditarComentario = (idx: number) => {
+    setEditandoComentario(idx);
+    setComentarioEditado(comentariosTicket[idx].texto);
+  };
+  const handleGuardarComentario = async (idx: number) => {
+    const nuevos = comentariosTicket.map((c, i) => i === idx ? { ...c, texto: comentarioEditado } : c);
+    await updateDoc(doc(firestore, 'tickets', selectedTicket.id), { comentariosInternos: nuevos });
+    setComentariosTicket(nuevos);
+    setEditandoComentario(null);
+    setComentarioEditado('');
+  };
+  const handleEliminarComentario = async (idx: number) => {
+    const nuevos = comentariosTicket.filter((_, i) => i !== idx);
+    await updateDoc(doc(firestore, 'tickets', selectedTicket.id), { comentariosInternos: nuevos });
+    setComentariosTicket(nuevos);
+  };
 
   const handleRespond = async (ticketId: string) => {
     if (!respuesta.trim()) return;
@@ -1125,54 +1264,65 @@ function TicketsSection({ tickets, onRespond, onClose }: any) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">Gestión de Tickets</h2>
           <p className="text-muted-foreground">Administra tickets de soporte y solicitudes</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <div className="text-2xl font-bold text-primary">{tickets.length}</div>
-            <div className="text-sm text-muted-foreground">Tickets totales</div>
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-end md:items-center">
+          <div className="flex gap-2">
+            <select className="bg-zinc-800 text-sm rounded px-2 py-1 text-white border border-zinc-700" value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
+              <option value="">Todos los estados</option>
+              <option value="abierto">Abierto</option>
+              <option value="en_revision">En revisión</option>
+              <option value="respondido">Respondido</option>
+              <option value="cerrado">Cerrado</option>
+            </select>
+            <select className="bg-zinc-800 text-sm rounded px-2 py-1 text-white border border-zinc-700" value={filtroPrioridad} onChange={e => setFiltroPrioridad(e.target.value)}>
+              <option value="">Todas las prioridades</option>
+              <option value="alta">Alta</option>
+              <option value="media">Media</option>
+              <option value="baja">Baja</option>
+            </select>
           </div>
+          <input
+            className="bg-zinc-800 text-sm rounded px-2 py-1 text-white border border-zinc-700"
+            placeholder="Buscar por usuario, email o título..."
+            value={filtroTexto}
+            onChange={e => setFiltroTexto(e.target.value)}
+          />
         </div>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {tickets.map((ticket: any) => (
+        {ticketsPagina.map((ticket: any) => (
           <Card key={ticket.id} className="bg-gradient-card border-border hover:border-primary/30 transition-all">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <CardTitle className="text-lg">{ticket.title}</CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    {ticket.priority === 'alta' && <span className="text-red-500 font-bold animate-pulse">●</span>}
+                    {ticket.title}
+                  </CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">{ticket.description}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge className={getStatusColor(ticket.estado)}>
-                      {ticket.estado}
-                    </Badge>
-                    <Badge className={getPriorityColor(ticket.priority)}>
-                      {ticket.priority}
-                    </Badge>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <Badge className={getStatusColor(ticket.estado)}>{ticket.estado}</Badge>
+                    <Badge className={getPriorityColor(ticket.priority)}>{ticket.priority}</Badge>
                     <Badge variant="outline">{ticket.category}</Badge>
+                    {ticket.asignadoA && <Badge variant="secondary">Asignado: {ticket.asignadoA}</Badge>}
+                    {ticket.urgente && <Badge className="bg-red-700 text-white">Urgente</Badge>}
                   </div>
                 </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedTicket(ticket)}
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                  </Button>
-                  {ticket.estado !== 'cerrado' && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onClose(ticket.id)}
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                    </Button>
-                  )}
+                <div className="flex flex-col gap-1 items-end">
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedTicket(ticket)}><MessageSquare className="h-4 w-4" /></Button>
+                  {ticket.estado !== 'cerrado' && <Button variant="ghost" size="sm" onClick={() => onClose(ticket.id)}><CheckCircle className="h-4 w-4" /></Button>}
+                  <Button variant="ghost" size="sm" onClick={() => handleDeleteTicket(ticket.id)}><Trash2 className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleExportTicket(ticket, 'json')}><Download className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleExportTicket(ticket, 'txt')}><FileText className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleExportTicket(ticket, 'pdf')}><Paperclip className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleShowHistorial(ticket)}><History className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleShowAdjuntos(ticket)}><Paperclip className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleShowAsignar(ticket)}><Users className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleShowComentarios(ticket)}><MessageSquare className="h-4 w-4" /></Button>
                 </div>
               </div>
             </CardHeader>
@@ -1182,27 +1332,32 @@ function TicketsSection({ tickets, onRespond, onClose }: any) {
                   <span>Usuario: {ticket.userEmail}</span>
                   <span>Creado: {new Date(ticket.createdAt || Date.now()).toLocaleDateString('es-ES')}</span>
                 </div>
-                
                 {ticket.respuesta && (
                   <div className="p-3 bg-muted rounded text-sm">
                     <div className="font-medium mb-1">Respuesta del Admin:</div>
                     <p>{ticket.respuesta}</p>
                   </div>
                 )}
+                {/* TODO: historial de cambios, archivos adjuntos, comentarios internos, logs, etc. */}
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
-
+      {/* Paginación */}
+      {totalPaginas > 1 && (
+        <div className="flex justify-center gap-2 mt-4">
+          <Button size="sm" variant="outline" disabled={pagina === 1} onClick={() => setPagina(pagina - 1)}>Anterior</Button>
+          <span className="text-sm text-muted-foreground">Página {pagina} de {totalPaginas}</span>
+          <Button size="sm" variant="outline" disabled={pagina === totalPaginas} onClick={() => setPagina(pagina + 1)}>Siguiente</Button>
+        </div>
+      )}
       {/* Modal para responder ticket */}
       <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Responder Ticket</DialogTitle>
-            <DialogDescription>
-              Responde al ticket: {selectedTicket?.title}
-            </DialogDescription>
+            <DialogDescription>Responde al ticket: {selectedTicket?.title}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -1216,13 +1371,137 @@ function TicketsSection({ tickets, onRespond, onClose }: any) {
               />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setSelectedTicket(null)}>
-                Cancelar
-              </Button>
-              <Button onClick={() => handleRespond(selectedTicket?.id)}>
-                Enviar Respuesta
-              </Button>
+              <Button variant="outline" onClick={() => setSelectedTicket(null)}>Cancelar</Button>
+              <Button onClick={() => handleRespond(selectedTicket?.id)}>Enviar Respuesta</Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Historial de Cambios */}
+      <Dialog open={showHistorial} onOpenChange={setShowHistorial}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Historial de Cambios para Ticket: {selectedTicket?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {historialTicket.map((h) => (
+              <div key={h.id} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className={h.action === 'create' ? 'bg-blue-500 text-white' : h.action === 'respond' ? 'bg-green-500 text-white' : 'bg-purple-500 text-white'}>
+                    {h.action === 'create' ? 'Creado' : h.action === 'respond' ? 'Respondido' : 'Cerrado'}
+                  </Badge>
+                  <span>{h.user}</span>
+                  <span>({new Date(h.fecha).toLocaleDateString('es-ES')})</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end mt-4">
+            <Button variant="outline" onClick={() => setShowHistorial(false)}>Cerrar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Adjuntos */}
+      <Dialog open={showAdjuntos} onOpenChange={setShowAdjuntos}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adjuntos para Ticket: {selectedTicket?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {adjuntosTicket.map((adjunto, index) => (
+              <div key={index} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                <div className="flex items-center gap-2">
+                  <Paperclip className="h-4 w-4" />
+                  <a href={adjunto.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                    {adjunto.name}
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end mt-4">
+            <Button variant="outline" onClick={() => setShowAdjuntos(false)}>Cerrar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Asignar Ticket */}
+      <Dialog open={showAsignar} onOpenChange={setShowAsignar}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Asignar Ticket: {asignarTicket?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="asignadoA">Asignar a:</Label>
+              <Select value={asignadoA} onValueChange={setAsignadoA}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar usuario" />
+                </SelectTrigger>
+                <SelectContent>
+                  {usuarios.map(user => (
+                    <SelectItem key={user.id} value={user.email}>{user.name} ({user.email})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAsignar(false)}>Cancelar</Button>
+              <Button onClick={handleAsignar}>Guardar Asignación</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Comentarios Internos */}
+      <Dialog open={showComentarios} onOpenChange={setShowComentarios}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Comentarios Internos para Ticket: {selectedTicket?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {comentariosTicket.map((comentario, index) => (
+                <div key={index} className="p-3 bg-muted rounded text-sm">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Por {comentario.autor} ({new Date(comentario.fecha).toLocaleDateString('es-ES')})</span>
+                    <Button variant="ghost" size="sm" onClick={() => handleEditarComentario(index)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {editandoComentario === index ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={comentarioEditado}
+                        onChange={(e) => setComentarioEditado(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button size="sm" onClick={() => handleGuardarComentario(index)}>Guardar</Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditandoComentario(null)}>Cancelar</Button>
+                    </div>
+                  ) : (
+                    <p>{comentario.texto}</p>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => handleEliminarComentario(index)}>
+                    <X className="h-4 w-4 text-red-400" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Nuevo comentario interno..."
+                value={nuevoComentario}
+                onChange={(e) => setNuevoComentario(e.target.value)}
+                className="flex-1"
+              />
+              <Button onClick={handleAgregarComentario}>Agregar</Button>
+            </div>
+          </div>
+          <div className="flex justify-end mt-4">
+            <Button variant="outline" onClick={() => setShowComentarios(false)}>Cerrar</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -1231,6 +1510,89 @@ function TicketsSection({ tickets, onRespond, onClose }: any) {
 }
 
 function PagosSection({ pagos, onDownloadInvoice, onMarkComplete }: any) {
+  const [filtroEstado, setFiltroEstado] = useState('');
+  const [filtroMetodo, setFiltroMetodo] = useState('');
+  const [filtroTexto, setFiltroTexto] = useState('');
+  const [filtroFechaInicio, setFiltroFechaInicio] = useState('');
+  const [filtroFechaFin, setFiltroFechaFin] = useState('');
+  const [pagina, setPagina] = useState(1);
+  const [showHistorial, setShowHistorial] = useState(false);
+  const [historialPago, setHistorialPago] = useState<any[]>([]);
+  const [showDetalles, setShowDetalles] = useState(false);
+  const [pagoSeleccionado, setPagoSeleccionado] = useState<any>(null);
+  const [showNotas, setShowNotas] = useState(false);
+  const [notas, setNotas] = useState('');
+  const pagosPorPagina = 8;
+  // Filtros avanzados
+  const pagosFiltrados = pagos
+    .filter(p => !filtroEstado || p.estado === filtroEstado)
+    .filter(p => !filtroMetodo || p.metodo === filtroMetodo)
+    .filter(p => !filtroTexto || (p.userEmail && p.userEmail.toLowerCase().includes(filtroTexto.toLowerCase())) || (p.concepto && p.concepto.toLowerCase().includes(filtroTexto.toLowerCase())) || (p.factura && p.factura.toLowerCase().includes(filtroTexto.toLowerCase())))
+    .filter(p => {
+      if (!filtroFechaInicio && !filtroFechaFin) return true;
+      const fecha = new Date(p.fecha);
+      if (filtroFechaInicio && fecha < new Date(filtroFechaInicio)) return false;
+      if (filtroFechaFin && fecha > new Date(filtroFechaFin)) return false;
+      return true;
+    });
+  const totalPaginas = Math.ceil(pagosFiltrados.length / pagosPorPagina);
+  const pagosPagina = pagosFiltrados.slice((pagina - 1) * pagosPorPagina, pagina * pagosPorPagina);
+
+  // Acciones rápidas
+  const handleDeletePago = async (pagoId: string) => {
+    if (!window.confirm('¿Seguro que deseas eliminar este pago?')) return;
+    await deleteDoc(doc(firestore, 'pagos', pagoId));
+    toast({ title: 'Pago eliminado', description: 'El pago fue eliminado correctamente.' });
+  };
+  const handleExportPago = (pago: any, formato: 'pdf' | 'txt' | 'json') => {
+    if (formato === 'json') {
+      const blob = new Blob([JSON.stringify(pago, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pago-${pago.id}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (formato === 'txt') {
+      const content = `PAGO\nID: ${pago.id}\nConcepto: ${pago.concepto}\nUsuario: ${pago.userEmail}\nMonto: ${pago.monto}\nEstado: ${pago.estado}\nFecha: ${pago.fecha}\nFactura: ${pago.factura}`;
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pago-${pago.id}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (formato === 'pdf') {
+      const docu = new jsPDF();
+      docu.text(`PAGO\nID: ${pago.id}\nConcepto: ${pago.concepto}\nUsuario: ${pago.userEmail}\nMonto: ${pago.monto}\nEstado: ${pago.estado}\nFecha: ${pago.fecha}\nFactura: ${pago.factura}`, 10, 10);
+      docu.save(`pago-${pago.id}.pdf`);
+    }
+    toast({ title: 'Pago exportado', description: `El pago fue exportado como ${formato.toUpperCase()}.` });
+  };
+  const handleShowHistorial = (pago: any) => {
+    setHistorialPago([
+      { id: 1, action: 'create', user: pago.userEmail, fecha: pago.fecha },
+      ...(pago.estado === 'completado' ? [{ id: 2, action: 'complete', user: pago.completadoPor, fecha: pago.fechaCompletado }] : []),
+      ...(pago.estado === 'cancelado' ? [{ id: 3, action: 'cancel', user: pago.canceladoPor, fecha: pago.fechaCancelado }] : []),
+    ]);
+    setShowHistorial(true);
+  };
+  const handleShowDetalles = (pago: any) => {
+    setPagoSeleccionado(pago);
+    setShowDetalles(true);
+  };
+  const handleShowNotas = (pago: any) => {
+    setPagoSeleccionado(pago);
+    setNotas(pago.notas || '');
+    setShowNotas(true);
+  };
+  const handleGuardarNotas = async () => {
+    if (!pagoSeleccionado) return;
+    await updateDoc(doc(firestore, 'pagos', pagoSeleccionado.id), { notas });
+    setShowNotas(false);
+    toast({ title: 'Notas guardadas', description: 'Las notas internas fueron actualizadas.' });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completado': return 'bg-green-500/10 text-green-400 border-green-500/20';
@@ -1249,38 +1611,54 @@ function PagosSection({ pagos, onDownloadInvoice, onMarkComplete }: any) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">Gestión de Pagos</h2>
           <p className="text-muted-foreground">Administra pagos y facturación</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <div className="text-2xl font-bold text-primary">{pagos.length}</div>
-            <div className="text-sm text-muted-foreground">Pagos totales</div>
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-end md:items-center">
+          <div className="flex gap-2">
+            <select className="bg-zinc-800 text-sm rounded px-2 py-1 text-white border border-zinc-700" value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
+              <option value="">Todos los estados</option>
+              <option value="completado">Completado</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+            <select className="bg-zinc-800 text-sm rounded px-2 py-1 text-white border border-zinc-700" value={filtroMetodo} onChange={e => setFiltroMetodo(e.target.value)}>
+              <option value="">Todos los métodos</option>
+              <option value="tarjeta">Tarjeta de Crédito</option>
+              <option value="transferencia">Transferencia Bancaria</option>
+              <option value="efectivo">Efectivo</option>
+            </select>
+          </div>
+          <input
+            className="bg-zinc-800 text-sm rounded px-2 py-1 text-white border border-zinc-700"
+            placeholder="Buscar por usuario, email, concepto, factura..."
+            value={filtroTexto}
+            onChange={e => setFiltroTexto(e.target.value)}
+          />
+          <div className="flex gap-2">
+            <input type="date" className="bg-zinc-800 text-sm rounded px-2 py-1 text-white border border-zinc-700" value={filtroFechaInicio} onChange={e => setFiltroFechaInicio(e.target.value)} />
+            <input type="date" className="bg-zinc-800 text-sm rounded px-2 py-1 text-white border border-zinc-700" value={filtroFechaFin} onChange={e => setFiltroFechaFin(e.target.value)} />
           </div>
         </div>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {pagos.map((pago: any) => (
+        {pagosPagina.map((pago: any) => (
           <Card key={pago.id} className="bg-gradient-card border-border hover:border-primary/30 transition-all">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div>
                   <CardTitle className="text-lg">{pago.concepto}</CardTitle>
                   <p className="text-sm text-muted-foreground">{pago.userEmail}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge className={getStatusColor(pago.estado)}>
-                      {pago.estado}
-                    </Badge>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <Badge className={getStatusColor(pago.estado)}>{pago.estado}</Badge>
                     <Badge variant="outline">{pago.metodo}</Badge>
+                    <Badge variant="outline">{pago.moneda}</Badge>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-primary">
-                    {formatCurrency(pago.monto)}
-                  </div>
+                  <div className="text-2xl font-bold text-primary">{formatCurrency(pago.monto)}</div>
                   <p className="text-xs text-muted-foreground">{pago.moneda}</p>
                 </div>
               </div>
@@ -1291,26 +1669,17 @@ function PagosSection({ pagos, onDownloadInvoice, onMarkComplete }: any) {
                   <span>Factura: {pago.factura}</span>
                   <span>Fecha: {new Date(pago.fecha || Date.now()).toLocaleDateString('es-ES')}</span>
                 </div>
-                
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onDownloadInvoice(pago.id)}
-                    className="flex-1"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Descargar
-                  </Button>
+                <div className="flex gap-2 flex-wrap">
+                  <Button variant="ghost" size="sm" onClick={() => onDownloadInvoice(pago.id)}><Download className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleExportPago(pago, 'json')}><FileText className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleExportPago(pago, 'txt')}><FileText className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleExportPago(pago, 'pdf')}><FileText className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleShowHistorial(pago)}><History className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleShowDetalles(pago)}><Eye className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleShowNotas(pago)}><MessageSquare className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleDeletePago(pago.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
                   {pago.estado === 'pendiente' && (
-                    <Button
-                      size="sm"
-                      onClick={() => onMarkComplete(pago.id)}
-                      className="flex-1"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Completar
-                    </Button>
+                    <Button size="sm" onClick={() => onMarkComplete(pago.id)} className="flex-1"><CheckCircle className="h-4 w-4 mr-2" />Completar</Button>
                   )}
                 </div>
               </div>
@@ -1318,6 +1687,210 @@ function PagosSection({ pagos, onDownloadInvoice, onMarkComplete }: any) {
           </Card>
         ))}
       </div>
+      {/* Paginación */}
+      {totalPaginas > 1 && (
+        <div className="flex justify-center gap-2 mt-4">
+          <Button size="sm" variant="outline" disabled={pagina === 1} onClick={() => setPagina(pagina - 1)}>Anterior</Button>
+          <span className="text-sm text-muted-foreground">Página {pagina} de {totalPaginas}</span>
+          <Button size="sm" variant="outline" disabled={pagina === totalPaginas} onClick={() => setPagina(pagina + 1)}>Siguiente</Button>
+        </div>
+      )}
+      {/* Modal para editar pago */}
+      <Dialog open={!!pagoSeleccionado} onOpenChange={() => setPagoSeleccionado(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Pago</DialogTitle>
+            <DialogDescription>
+              Modifica la información del pago
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="concepto">Concepto</Label>
+              <Input
+                id="concepto"
+                value={pagoSeleccionado?.concepto || ''}
+                onChange={(e) => setPagoSeleccionado(prev => ({ ...prev, concepto: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="monto">Monto</Label>
+              <Input
+                id="monto"
+                type="number"
+                value={pagoSeleccionado?.monto || ''}
+                onChange={(e) => setPagoSeleccionado(prev => ({ ...prev, monto: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="metodo">Método de Pago</Label>
+              <Select value={pagoSeleccionado?.metodo || ''} onValueChange={(value) => setPagoSeleccionado(prev => ({ ...prev, metodo: value }))} defaultValue={pagoSeleccionado?.metodo}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="tarjeta">Tarjeta de Crédito</SelectItem>
+                  <SelectItem value="transferencia">Transferencia Bancaria</SelectItem>
+                  <SelectItem value="efectivo">Efectivo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="moneda">Moneda</Label>
+              <Select value={pagoSeleccionado?.moneda || ''} onValueChange={(value) => setPagoSeleccionado(prev => ({ ...prev, moneda: value }))} defaultValue={pagoSeleccionado?.moneda}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ARS">Peso Argentino (ARS)</SelectItem>
+                  <SelectItem value="USD">Dólar Estadounidense (USD)</SelectItem>
+                  <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="factura">Número de Factura</Label>
+              <Input
+                id="factura"
+                value={pagoSeleccionado?.factura || ''}
+                onChange={(e) => setPagoSeleccionado(prev => ({ ...prev, factura: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="notas">Notas</Label>
+              <Textarea
+                id="notas"
+                value={pagoSeleccionado?.notas || ''}
+                onChange={(e) => setPagoSeleccionado(prev => ({ ...prev, notas: e.target.value }))}
+                placeholder="Escribe cualquier nota adicional..."
+                rows={4}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setPagoSeleccionado(null)}>Cancelar</Button>
+              <Button onClick={() => setPagoSeleccionado(pagoSeleccionado)}>Guardar Cambios</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Modal de Historial de Cambios */}
+      <Dialog open={showHistorial} onOpenChange={setShowHistorial}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Historial de Cambios para Pago: {pagoSeleccionado?.concepto}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {historialPago.map((h) => (
+              <div key={h.id} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className={h.action === 'create' ? 'bg-blue-500 text-white' : h.action === 'complete' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}>
+                    {h.action === 'create' ? 'Creado' : h.action === 'complete' ? 'Completado' : 'Cancelado'}
+                  </Badge>
+                  <span>{h.user}</span>
+                  <span>({new Date(h.fecha).toLocaleDateString('es-ES')})</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end mt-4">
+            <Button variant="outline" onClick={() => setShowHistorial(false)}>Cerrar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Modal de Detalles del Pago */}
+      <Dialog open={showDetalles} onOpenChange={setShowDetalles}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Detalles del Pago</DialogTitle>
+            <DialogDescription>
+              Información detallada del pago
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="concepto">Concepto</Label>
+              <Input
+                id="concepto"
+                value={pagoSeleccionado?.concepto || ''}
+                readOnly
+              />
+            </div>
+            <div>
+              <Label htmlFor="monto">Monto</Label>
+              <Input
+                id="monto"
+                type="number"
+                value={pagoSeleccionado?.monto || ''}
+                readOnly
+              />
+            </div>
+            <div>
+              <Label htmlFor="metodo">Método de Pago</Label>
+              <Input
+                id="metodo"
+                value={pagoSeleccionado?.metodo || ''}
+                readOnly
+              />
+            </div>
+            <div>
+              <Label htmlFor="moneda">Moneda</Label>
+              <Input
+                id="moneda"
+                value={pagoSeleccionado?.moneda || ''}
+                readOnly
+              />
+            </div>
+            <div>
+              <Label htmlFor="factura">Número de Factura</Label>
+              <Input
+                id="factura"
+                value={pagoSeleccionado?.factura || ''}
+                readOnly
+              />
+            </div>
+            <div>
+              <Label htmlFor="notas">Notas</Label>
+              <Textarea
+                id="notas"
+                value={pagoSeleccionado?.notas || ''}
+                readOnly
+                rows={4}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowDetalles(false)}>Cerrar</Button>
+              <Button onClick={handleShowNotas}>Ver Notas</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Modal de Notas */}
+      <Dialog open={showNotas} onOpenChange={setShowNotas}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Notas del Pago</DialogTitle>
+            <DialogDescription>
+              Notas internas sobre el pago
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="notas">Notas</Label>
+              <Textarea
+                id="notas"
+                value={notas}
+                onChange={(e) => setNotas(e.target.value)}
+                placeholder="Escribe cualquier nota adicional..."
+                rows={4}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowNotas(false)}>Cancelar</Button>
+              <Button onClick={handleGuardarNotas}>Guardar Notas</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
