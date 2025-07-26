@@ -1,0 +1,213 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+h1, .text-3xl, .text-2xl, .font-bold, .font-semibold {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.text-secondary {
+  color: #a3a3b2;
+}
+
+.text-help {
+  color: #b0b0c3;
+  font-size: 0.95em;
+}
+
+/* Gradientes y badges más oscuros */
+.bg-gradient-to-r.from-blue-500 {
+  --tw-gradient-from: #1e3a8a; /* blue-800 */
+}
+.bg-gradient-to-r.via-purple-500 {
+  --tw-gradient-via: #6d28d9; /* purple-800 */
+}
+.bg-gradient-to-r.to-pink-500 {
+  --tw-gradient-to: #831843; /* pink-900 */
+}
+.bg-green-500\/10 { background-color: #16653422; }
+.bg-blue-500\/10 { background-color: #1e3a8a22; }
+.bg-gray-500\/10 { background-color: #37415122; }
+.bg-yellow-50 { background-color: #fef9c3; }
+
+/* Espaciado generoso */
+.section-spacing {
+  margin-bottom: 3rem;
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+}
+.card-spacing {
+  margin-bottom: 2rem;
+}
+
+@keyframes avatar-glow {
+  0%,100% { box-shadow: 0 0 0 0 #fff0, 0 0 8px 2px #a259ff80; }
+  50% { box-shadow: 0 0 0 4px #fff2, 0 0 24px 8px #a259ffcc; }
+}
+.animate-avatar-glow {
+  animation: avatar-glow 2s infinite alternate;
+}
+
+.card, .popover, .menu, .list-item, .dropdown, .tooltip, .button, .hover-card, .select, .tab, .badge {
+  transition: box-shadow 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.card:hover, .popover:hover, .menu:hover, .list-item:hover, .dropdown:hover, .tooltip:hover, .button:hover, .hover-card:hover, .select:hover, .tab:hover, .badge:hover {
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25), 0 1.5px 6px 0 rgba(80,80,255,0.10);
+  transform: scale(1.03);
+  z-index: 2;
+}
+
+@layer base {
+  :root {
+    /* TuWeb.ai Theme - Colores actualizados con fondo gradiente */
+    --background: 0 0% 100% / 0.1; /* Transparente para mostrar el gradiente */
+    --foreground: 0 0% 100%; /* #ffffff */
+
+    --card: 0 0% 8% / 0.95; /* Más opaco y oscuro */
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 8% / 0.95;
+    --popover-foreground: 0 0% 100%;
+
+    /* Primary Blue */
+    --primary: 195 100% 50%; /* #00CCFF */
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 195 100% 60%;
+
+    /* Primary Purple */
+    --secondary: 270 100% 60%; /* #9933FF */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 10% / 0.95; /* Más opaco y oscuro */
+    --muted-foreground: 0 0% 90%; /* #e6e6e6 */
+
+    --accent: 270 100% 60%; /* Purple accent */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 15% / 0.95; /* Más opaco y oscuro */
+    --input: 0 0% 10% / 0.95;
+    --ring: 195 100% 50%;
+
+    --radius: 1rem;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(195 100% 8%), hsl(270 100% 12%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 8% / 0.95), hsl(0 0% 5% / 0.95));
+    
+    /* Shadows */
+    --shadow-glow: 0 0 40px hsl(195 100% 50% / 0.3);
+    --shadow-card: 0 10px 30px -10px hsl(0 0% 0% / 0.5);
+    
+    /* Sidebar */
+    --sidebar-background: 0 0% 5% / 0.95;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 195 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 8% / 0.95;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 15% / 0.95;
+    --sidebar-ring: 195 100% 50%;
+    --accent-electric: #00ccff;
+    --accent-violet: #a259ff;
+    --accent-neon: #39ff14;
+    --accent-gold: #ffd700;
+  }
+
+  /* Gradientes premium para botones y barras */
+  .btn-gradient-electric {
+    background: linear-gradient(90deg, #00ccff 0%, #a259ff 100%);
+    color: #fff;
+    border: none;
+  }
+  .btn-gradient-gold {
+    background: linear-gradient(90deg, #ffd700 0%, #a259ff 100%);
+    color: #181824;
+    border: none;
+  }
+  .btn-gradient-neon {
+    background: linear-gradient(90deg, #39ff14 0%, #00ccff 100%);
+    color: #181824;
+    border: none;
+  }
+  .progress-gradient-electric {
+    background: linear-gradient(90deg, #00ccff 0%, #a259ff 100%);
+  }
+  .progress-gradient-gold {
+    background: linear-gradient(90deg, #ffd700 0%, #a259ff 100%);
+  }
+  .progress-gradient-neon {
+    background: linear-gradient(90deg, #39ff14 0%, #00ccff 100%);
+  }
+
+  .dark {
+    /* Dark theme is default - Colores actualizados con fondo gradiente */
+    --background: 0 0% 100% / 0.1; /* Transparente para mostrar el gradiente */
+    --foreground: 0 0% 100%; /* #ffffff */
+    --card: 0 0% 8% / 0.95; /* Más opaco y oscuro */
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 8% / 0.95;
+    --popover-foreground: 0 0% 100%;
+    --primary: 195 100% 50%; /* #00CCFF */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 270 100% 60%; /* #9933FF */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 10% / 0.95; /* Más opaco y oscuro */
+    --muted-foreground: 0 0% 90%; /* #e6e6e6 */
+    --accent: 270 100% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 15% / 0.95; /* Más opaco y oscuro */
+    --input: 0 0% 10% / 0.95;
+    --ring: 195 100% 50%;
+    --sidebar-background: 0 0% 5% / 0.95;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 195 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 8% / 0.95;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 15% / 0.95;
+    --sidebar-ring: 195 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    background: linear-gradient(135deg, hsl(195 100% 8%), hsl(270 100% 12%));
+    background-attachment: fixed;
+    min-height: 100vh;
+    @apply text-foreground;
+  }
+}
+
+.bg-gradient-secondary {
+  background: linear-gradient(135deg, #181824 60%, #23263a 100%);
+}
+.bg-gradient-gold {
+  background: linear-gradient(90deg, #ffe259 0%, #ffa751 100%);
+}
+.bg-gradient-neon {
+  background: linear-gradient(90deg, #00ffb4 0%, #00cfff 100%);
+}
+.bg-gradient-danger {
+  background: linear-gradient(90deg, #ff5858 0%, #f09819 100%);
+}

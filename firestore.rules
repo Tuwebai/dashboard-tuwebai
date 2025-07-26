@@ -1,0 +1,133 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Reglas para chats
+    match /chats/{chatId} {
+      allow read, write: if request.auth != null && (resource.data.users.hasAny([request.auth.uid]) || request.auth.token.email == 'admin@tuwebai.com');
+      // Reglas para mensajes dentro de un chat
+      match /messages/{messageId} {
+        allow read: if request.auth != null && (get(/databases/$(database)/documents/chats/$(chatId)).data.users.hasAny([request.auth.uid]) || request.auth.token.email == 'admin@tuwebai.com');
+        allow create: if request.auth != null && (get(/databases/$(database)/documents/chats/$(chatId)).data.users.hasAny([request.auth.uid]) || request.auth.token.email == 'admin@tuwebai.com');
+        allow update: if request.auth != null && (
+          resource.data.senderId == request.auth.uid || request.auth.token.email == 'admin@tuwebai.com'
+        );
+        allow delete: if request.auth != null && (
+          resource.data.senderId == request.auth.uid || request.auth.token.email == 'admin@tuwebai.com'
+        );
+        // Permitir campo replyTo (id de mensaje original) en los mensajes
+      }
+    }
+    // Reglas para usuarios
+    match /users/{userId} {
+      allow read, write: if request.auth != null && (request.auth.uid == userId || request.auth.token.email == 'admin@tuwebai.com');
+    }
+    // Reglas para notificaciones
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null && (resource.data.recipientId == request.auth.token.email || resource.data.userId == request.auth.token.email || request.auth.token.email == 'admin@tuwebai.com');
+    }
+    // Permitir acceso completo a usuarios autenticados al resto de documentos
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas específicas para proyectos
+    match /projects/{projectId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para logs
+    match /logs/{logId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para chat rooms
+    match /chatRooms/{roomId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para mensajes de chat
+    match /chatRooms/{roomId}/messages/{messageId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para comentarios
+    match /comments/{commentId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para tareas
+    match /tasks/{taskId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para notificaciones
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para configuración de notificaciones
+    match /notificationSettings/{userId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para pagos
+    match /payments/{paymentId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para tickets de soporte
+    match /support_tickets/{ticketId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para archivos
+    match /files/{fileId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para colaboración
+    match /collaboration/{collabId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para analytics
+    match /analytics/{analyticsId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para backups
+    match /backups/{backupId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para system logs
+    match /system_logs/{logId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para user sessions
+    match /user_sessions/{sessionId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para project phases
+    match /project_phases/{phaseId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para project comments
+    match /project_comments/{commentId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para project tasks
+    match /project_tasks/{taskId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para project files
+    match /project_files/{fileId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
