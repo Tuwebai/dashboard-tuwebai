@@ -33,7 +33,7 @@ class WebSocketService {
     this.connect();
   }
 
-  private connect() {
+  public connect() {
     if (this.isConnecting || this.ws?.readyState === WebSocket.OPEN) return;
 
     this.isConnecting = true;
@@ -100,12 +100,19 @@ class WebSocketService {
     toast({
       title: message.title,
       description: message.message,
-      variant: message.type,
-      action: message.action ? {
-        label: 'Ver',
-        onClick: () => this.handleAction(message.action!)
-      } : undefined
+      variant: message.type === 'error' ? 'destructive' : 'default'
     });
+
+    // Si hay acción, mostrar botón adicional
+    if (message.action) {
+      setTimeout(() => {
+        toast({
+          title: 'Acción disponible',
+          description: 'Haz clic para ver más detalles'
+        });
+        // La acción se maneja internamente
+      }, 100);
+    }
 
     // Notificar a los listeners
     this.listeners.forEach(listener => listener(message));

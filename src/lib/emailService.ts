@@ -31,6 +31,10 @@ export const sendEmailWithTemplate = async (emailType: string, data: any) => {
         subject = `[TuWebAI] Resumen Diario de Soporte - ${data.date}`;
         break;
         
+      case 'user_invitation':
+        subject = `[TuWebAI] Invitación para unirte al equipo - ${data.role}`;
+        break;
+        
       default:
         throw new Error('Tipo de email no válido');
     }

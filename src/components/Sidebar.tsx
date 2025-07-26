@@ -175,9 +175,8 @@ export default function Sidebar() {
             <div className="mb-4">
               <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-4 py-2 mb-2">Sistema</div>
               <div className="space-y-1">
+                {navItem('/user-management', <Users className="h-5 w-5" />, 'Gestión de Usuarios')}
                 {adminNavItem('notifications', <Bell className="h-5 w-5" />, 'Notificaciones')}
-                {adminNavItem('logs', <Database className="h-5 w-5" />, 'Logs')}
-                {adminNavItem('backup', <HardDrive className="h-5 w-5" />, 'Backup')}
                 {adminNavItem('settings', <Settings className="h-5 w-5" />, 'Configuración')}
               </div>
             </div>

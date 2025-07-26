@@ -436,3 +436,104 @@ export const EMAIL_TEMPLATES = {
     </html>
   `
 }; 
+
+export const userInvitationTemplate = {
+  subject: 'Invitación para unirte a TuWebAI',
+  html: `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Invitación TuWebAI</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+        .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+        .highlight { background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>¡Has sido invitado!</h1>
+          <p>Te invitamos a unirte al equipo de TuWebAI</p>
+        </div>
+        
+        <div class="content">
+          <h2>Hola,</h2>
+          
+          <p>Has recibido una invitación para unirte a <strong>TuWebAI</strong> como <strong>{{role}}</strong>.</p>
+          
+          <div class="highlight">
+            <p><strong>Detalles de la invitación:</strong></p>
+            <ul>
+              <li><strong>Rol:</strong> {{role}}</li>
+              <li><strong>Invitado por:</strong> {{invitedBy}}</li>
+              <li><strong>Expira en:</strong> {{expiresIn}}</li>
+            </ul>
+          </div>
+          
+          {{#if message}}
+          <p><strong>Mensaje personal:</strong></p>
+          <blockquote style="border-left: 3px solid #667eea; padding-left: 15px; margin: 20px 0; font-style: italic;">
+            "{{message}}"
+          </blockquote>
+          {{/if}}
+          
+          <p>Para aceptar esta invitación, haz clic en el botón de abajo:</p>
+          
+          <div style="text-align: center;">
+            <a href="{{invitationUrl}}" class="button">Aceptar Invitación</a>
+          </div>
+          
+          <p style="margin-top: 30px; font-size: 14px; color: #666;">
+            <strong>Importante:</strong> Esta invitación expira en {{expiresIn}}. Si no puedes acceder al enlace, copia y pega la siguiente URL en tu navegador:
+          </p>
+          
+          <p style="word-break: break-all; background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 12px;">
+            {{invitationUrl}}
+          </p>
+          
+          <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+          
+          <p>Saludos,<br>El equipo de TuWebAI</p>
+        </div>
+        
+        <div class="footer">
+          <p>© 2024 TuWebAI. Todos los derechos reservados.</p>
+          <p>Este email fue enviado a {{email}}</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `,
+  text: `
+    ¡Has sido invitado a unirte a TuWebAI!
+    
+    Hola,
+    
+    Has recibido una invitación para unirte a TuWebAI como {{role}}.
+    
+    Detalles de la invitación:
+    - Rol: {{role}}
+    - Invitado por: {{invitedBy}}
+    - Expira en: {{expiresIn}}
+    
+    {{#if message}}
+    Mensaje personal: "{{message}}"
+    {{/if}}
+    
+    Para aceptar esta invitación, visita: {{invitationUrl}}
+    
+    Esta invitación expira en {{expiresIn}}.
+    
+    Saludos,
+    El equipo de TuWebAI
+    
+    © 2024 TuWebAI. Todos los derechos reservados.
+  `
+}; 

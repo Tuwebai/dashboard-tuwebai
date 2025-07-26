@@ -24,18 +24,36 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Eye, MessageSquare, Plus, Trash2, Download, FileText, Users, TrendingUp, Edit, Shield, Settings, Activity, Database, HardDrive, Cpu, Bell, Upload, CheckCircle, Search, Send, X, History, Paperclip } from 'lucide-react';
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  MoreHorizontal, 
+  Eye, 
+  Edit, 
+  Trash2, 
+  Users, 
+  FileText, 
+  CheckSquare, 
+  Clock, 
+  AlertTriangle,
+  BarChart3,
+  TrendingUp,
+  Settings,
+  Download,
+  MessageSquare,
+  CheckCircle,
+  Paperclip,
+  X,
+  History as HistoryIcon,
+  Activity
+} from 'lucide-react';
 import { 
   AdminNotificationSystem, 
   AdminAnalytics, 
-  AdminSystemLogs, 
-  AdminBackupSystem, 
-  AdminResourceMonitor, 
   AdminSettings,
-  AdminControlPanel,
   AdminReportsSystem,
-  AdminSecuritySystem,
-  AdminPerformanceSystem
+  AdminSecuritySystem
 } from '@/components/AdminAdvancedFeatures';
 import { initializeChatData, initializeCommentsData, initializeTasksData, initializeAdminSystemData, cleanSimulatedData } from '@/utils/initializeData';
 import AdvancedTools from '@/components/admin/AdvancedTools';
@@ -592,10 +610,6 @@ export default function Admin() {
         return <AdminNotificationSystem />;
       case 'analytics':
         return <AdminAnalytics />;
-      case 'logs':
-        return <AdminSystemLogs />;
-      case 'backup':
-        return <AdminBackupSystem />;
       case 'settings':
         return <AdminSettings />;
       case 'metricas':
@@ -604,8 +618,6 @@ export default function Admin() {
         return <AdminReportsSystem />;
       case 'security':
         return <AdminSecuritySystem />;
-      case 'performance':
-        return <AdminPerformanceSystem />;
       case 'tools':
         return <AdvancedTools />;
       case 'advanced-analytics':
@@ -880,6 +892,16 @@ function ProyectosSection(props: any) {
             <div className="text-2xl font-bold text-primary">{proyectos.length}</div>
             <div className="text-sm text-muted-foreground">Proyectos totales</div>
           </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => navigate('/analytics')}>
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Analytics
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/dashboard-custom')}>
+              <Settings className="h-4 w-4 mr-2" />
+              Dashboard
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -982,14 +1004,139 @@ function TicketsSection({ tickets, usuarios, onRespond, onClose }: any) {
   const [nuevoComentario, setNuevoComentario] = useState('');
   const [editandoComentario, setEditandoComentario] = useState<any>(null);
   const [comentarioEditado, setComentarioEditado] = useState('');
+  
+  // Nuevas funcionalidades avanzadas
+  const [showWorkflow, setShowWorkflow] = useState(false);
+  const [showEscalation, setShowEscalation] = useState(false);
+  const [showAutoAssignment, setShowAutoAssignment] = useState(false);
+  const [workflowStages, setWorkflowStages] = useState([
+    { id: 'new', name: 'Nuevo', color: 'blue' },
+    { id: 'assigned', name: 'Asignado', color: 'yellow' },
+    { id: 'in_progress', name: 'En Progreso', color: 'orange' },
+    { id: 'waiting', name: 'En Espera', color: 'purple' },
+    { id: 'escalated', name: 'Escalado', color: 'red' },
+    { id: 'resolved', name: 'Resuelto', color: 'green' },
+    { id: 'closed', name: 'Cerrado', color: 'gray' }
+  ]);
+  const [escalationRules, setEscalationRules] = useState([
+    { id: 1, name: 'Escalación por tiempo', trigger: 'time', delay: 60, active: true },
+    { id: 2, name: 'Escalación por prioridad', trigger: 'priority', delay: 30, active: true },
+    { id: 3, name: 'Escalación por etapa', trigger: 'stage', delay: 120, active: true }
+  ]);
+  const [assignmentRules, setAssignmentRules] = useState([
+    { id: 1, name: 'Round Robin', type: 'round_robin', active: true },
+    { id: 2, name: 'Menor carga', type: 'least_busy', active: true },
+    { id: 3, name: 'Por expertise', type: 'expertise', active: true }
+  ]);
+
   const ticketsPorPagina = 8;
+  
   // Filtros avanzados
   const ticketsFiltrados = tickets
     .filter(t => !filtroEstado || t.estado === filtroEstado)
     .filter(t => !filtroPrioridad || t.priority === filtroPrioridad)
     .filter(t => !filtroTexto || (t.userEmail && t.userEmail.toLowerCase().includes(filtroTexto.toLowerCase())) || (t.title && t.title.toLowerCase().includes(filtroTexto.toLowerCase())));
+  
   const totalPaginas = Math.ceil(ticketsFiltrados.length / ticketsPorPagina);
   const ticketsPagina = ticketsFiltrados.slice((pagina - 1) * ticketsPorPagina, pagina * ticketsPorPagina);
+
+  // Funciones avanzadas de workflow
+  const handleWorkflowStageChange = async (ticketId: string, newStage: string) => {
+    try {
+      await updateDoc(doc(firestore, 'tickets', ticketId), { 
+        estado: newStage,
+        updatedAt: new Date().toISOString()
+      });
+      
+      // Verificar escalación automática
+      await checkAutoEscalation(ticketId, newStage);
+      
+      toast({ 
+        title: 'Estado actualizado', 
+        description: `Ticket movido a etapa: ${newStage}` 
+      });
+    } catch (error) {
+      console.error('Error updating ticket stage:', error);
+      toast({ 
+        title: 'Error', 
+        description: 'No se pudo actualizar el estado del ticket',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  // Verificar escalación automática
+  const checkAutoEscalation = async (ticketId: string, stage: string) => {
+    const ticket = tickets.find(t => t.id === ticketId);
+    if (!ticket) return;
+
+    // Escalación por tiempo
+    const timeSinceCreation = Date.now() - new Date(ticket.createdAt).getTime();
+    const hoursSinceCreation = timeSinceCreation / (1000 * 60 * 60);
+    
+    if (hoursSinceCreation > 2 && stage === 'in_progress') {
+      await escalateTicket(ticketId, 'Escalación automática por tiempo');
+    }
+    
+    // Escalación por prioridad
+    if (ticket.priority === 'critical' && stage === 'new') {
+      await escalateTicket(ticketId, 'Escalación automática por prioridad crítica');
+    }
+  };
+
+  // Escalar ticket
+  const escalateTicket = async (ticketId: string, reason: string) => {
+    try {
+      await updateDoc(doc(firestore, 'tickets', ticketId), {
+        estado: 'escalated',
+        escalationReason: reason,
+        escalatedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      
+      toast({ 
+        title: 'Ticket escalado', 
+        description: reason,
+        variant: 'destructive'
+      });
+    } catch (error) {
+      console.error('Error escalating ticket:', error);
+    }
+  };
+
+  // Asignación automática
+  const handleAutoAssign = async (ticketId: string) => {
+    try {
+      const ticket = tickets.find(t => t.id === ticketId);
+      if (!ticket) return;
+
+      // Lógica de asignación automática
+      const availableUsers = usuarios.filter((u: any) => u.role === 'admin' || u.role === 'support');
+      if (availableUsers.length === 0) return;
+
+      // Round Robin simple
+      const assignedUser = availableUsers[ticket.id.length % availableUsers.length];
+      
+      await updateDoc(doc(firestore, 'tickets', ticketId), {
+        asignadoA: assignedUser.email,
+        estado: 'assigned',
+        assignedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      
+      toast({ 
+        title: 'Ticket asignado automáticamente', 
+        description: `Asignado a: ${assignedUser.email}` 
+      });
+    } catch (error) {
+      console.error('Error auto-assigning ticket:', error);
+      toast({ 
+        title: 'Error', 
+        description: 'No se pudo asignar automáticamente el ticket',
+        variant: 'destructive'
+      });
+    }
+  };
 
   // Eliminar ticket
   const handleDeleteTicket = async (ticketId: string) => {
@@ -1031,6 +1178,7 @@ function TicketsSection({ tickets, usuarios, onRespond, onClose }: any) {
       { id: 1, action: 'create', user: ticket.userEmail, fecha: ticket.createdAt },
       ...(ticket.respuesta ? [{ id: 2, action: 'respond', user: ticket.respondidoPor, fecha: ticket.fechaRespuesta }] : []),
       ...(ticket.estado === 'cerrado' ? [{ id: 3, action: 'close', user: ticket.cerradoPor, fecha: ticket.fechaCierre }] : []),
+      ...(ticket.escalatedAt ? [{ id: 4, action: 'escalate', user: 'Sistema', fecha: ticket.escalatedAt, reason: ticket.escalationReason }] : []),
     ]);
     setShowHistorial(true);
   };
@@ -1047,9 +1195,15 @@ function TicketsSection({ tickets, usuarios, onRespond, onClose }: any) {
     setAsignadoA(ticket.asignadoA || '');
     setShowAsignar(true);
   };
+  
   const handleAsignar = async () => {
     if (!asignarTicket) return;
-    await updateDoc(doc(firestore, 'tickets', asignarTicket.id), { asignadoA });
+    await updateDoc(doc(firestore, 'tickets', asignarTicket.id), { 
+      asignadoA,
+      estado: 'assigned',
+      assignedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
     setShowAsignar(false);
     toast({ title: 'Ticket asignado', description: `El ticket fue asignado a ${asignadoA}` });
   };
@@ -1059,28 +1213,17 @@ function TicketsSection({ tickets, usuarios, onRespond, onClose }: any) {
     setComentariosTicket(ticket.comentariosInternos || []);
     setShowComentarios(true);
   };
+  
   const handleAgregarComentario = async () => {
     if (!nuevoComentario.trim() || !selectedTicket) return;
-    const nuevos = [...(selectedTicket.comentariosInternos || []), { texto: nuevoComentario, fecha: new Date().toISOString() }];
+    const nuevos = [...(selectedTicket.comentariosInternos || []), { 
+      texto: nuevoComentario, 
+      fecha: new Date().toISOString(),
+      user: 'Admin'
+    }];
     await updateDoc(doc(firestore, 'tickets', selectedTicket.id), { comentariosInternos: nuevos });
     setComentariosTicket(nuevos);
     setNuevoComentario('');
-  };
-  const handleEditarComentario = (idx: number) => {
-    setEditandoComentario(idx);
-    setComentarioEditado(comentariosTicket[idx].texto);
-  };
-  const handleGuardarComentario = async (idx: number) => {
-    const nuevos = comentariosTicket.map((c, i) => i === idx ? { ...c, texto: comentarioEditado } : c);
-    await updateDoc(doc(firestore, 'tickets', selectedTicket.id), { comentariosInternos: nuevos });
-    setComentariosTicket(nuevos);
-    setEditandoComentario(null);
-    setComentarioEditado('');
-  };
-  const handleEliminarComentario = async (idx: number) => {
-    const nuevos = comentariosTicket.filter((_, i) => i !== idx);
-    await updateDoc(doc(firestore, 'tickets', selectedTicket.id), { comentariosInternos: nuevos });
-    setComentariosTicket(nuevos);
   };
 
   const handleRespond = async (ticketId: string) => {
@@ -1118,23 +1261,56 @@ function TicketsSection({ tickets, usuarios, onRespond, onClose }: any) {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Gestión de Tickets</h2>
-          <p className="text-muted-foreground">Administra tickets de soporte y solicitudes</p>
+          <h2 className="text-2xl font-bold">Gestión Avanzada de Tickets</h2>
+          <p className="text-muted-foreground">Administra tickets con workflow, escalación y asignación automática</p>
         </div>
         <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-end md:items-center">
           <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowWorkflow(true)}
+              className="flex items-center gap-2"
+            >
+              <Activity className="h-4 w-4" />
+              Workflow
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowEscalation(true)}
+              className="flex items-center gap-2"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              Escalación
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowAutoAssignment(true)}
+              className="flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              Asignación
+            </Button>
+          </div>
+          <div className="flex gap-2">
             <select className="bg-zinc-800 text-sm rounded px-2 py-1 text-white border border-zinc-700" value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
               <option value="">Todos los estados</option>
-              <option value="abierto">Abierto</option>
-              <option value="en_revision">En revisión</option>
-              <option value="respondido">Respondido</option>
-              <option value="cerrado">Cerrado</option>
+              <option value="new">Nuevo</option>
+              <option value="assigned">Asignado</option>
+              <option value="in_progress">En Progreso</option>
+              <option value="waiting">En Espera</option>
+              <option value="escalated">Escalado</option>
+              <option value="resolved">Resuelto</option>
+              <option value="closed">Cerrado</option>
             </select>
             <select className="bg-zinc-800 text-sm rounded px-2 py-1 text-white border border-zinc-700" value={filtroPrioridad} onChange={e => setFiltroPrioridad(e.target.value)}>
               <option value="">Todas las prioridades</option>
-              <option value="alta">Alta</option>
-              <option value="media">Media</option>
-              <option value="baja">Baja</option>
+              <option value="low">Baja</option>
+              <option value="medium">Media</option>
+              <option value="high">Alta</option>
+              <option value="critical">Crítica</option>
             </select>
           </div>
           <input
@@ -1311,49 +1487,174 @@ function TicketsSection({ tickets, usuarios, onRespond, onClose }: any) {
       <Dialog open={showComentarios} onOpenChange={setShowComentarios}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Comentarios Internos para Ticket: {selectedTicket?.title}</DialogTitle>
+            <DialogTitle>Comentarios Internos</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {comentariosTicket.map((comentario, index) => (
-                <div key={index} className="p-3 bg-muted rounded text-sm">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Por {comentario.autor} ({new Date(comentario.fecha).toLocaleDateString('es-ES')})</span>
-                    <Button variant="ghost" size="sm" onClick={() => handleEditarComentario(index)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {comentariosTicket.map((c, idx) => (
+                <div key={idx} className="p-2 bg-muted rounded text-sm">
+                  <div className="font-medium">{c.user}</div>
+                  <p>{c.texto}</p>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {new Date(c.fecha).toLocaleString('es-ES')}
                   </div>
-                  {editandoComentario === index ? (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={comentarioEditado}
-                        onChange={(e) => setComentarioEditado(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button size="sm" onClick={() => handleGuardarComentario(index)}>Guardar</Button>
-                      <Button size="sm" variant="outline" onClick={() => setEditandoComentario(null)}>Cancelar</Button>
-                    </div>
-                  ) : (
-                    <p>{comentario.texto}</p>
-                  )}
-                  <Button variant="ghost" size="sm" onClick={() => handleEliminarComentario(index)}>
-                    <X className="h-4 w-4 text-red-400" />
-                  </Button>
                 </div>
               ))}
             </div>
             <div className="flex gap-2">
               <Input
-                placeholder="Nuevo comentario interno..."
                 value={nuevoComentario}
                 onChange={(e) => setNuevoComentario(e.target.value)}
-                className="flex-1"
+                placeholder="Agregar comentario interno..."
               />
               <Button onClick={handleAgregarComentario}>Agregar</Button>
             </div>
           </div>
-          <div className="flex justify-end mt-4">
-            <Button variant="outline" onClick={() => setShowComentarios(false)}>Cerrar</Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Workflow */}
+      <Dialog open={showWorkflow} onOpenChange={setShowWorkflow}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Configuración de Workflow</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div>
+              <h3 className="font-medium mb-4">Etapas del Workflow</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {workflowStages.map((stage) => (
+                  <div key={stage.id} className="p-4 border rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`w-3 h-3 rounded-full bg-${stage.color}-500`}></div>
+                      <span className="font-medium">{stage.name}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">ID: {stage.id}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="font-medium mb-4">Transiciones Automáticas</h3>
+              <div className="space-y-2">
+                <div className="p-3 border rounded">
+                  <div className="flex items-center justify-between">
+                    <span>Nuevo → Asignado (Auto-asignación)</span>
+                    <Badge variant="outline">Automático</Badge>
+                  </div>
+                </div>
+                <div className="p-3 border rounded">
+                  <div className="flex items-center justify-between">
+                    <span>En Progreso → Escalado (2+ horas)</span>
+                    <Badge variant="outline">Automático</Badge>
+                  </div>
+                </div>
+                <div className="p-3 border rounded">
+                  <div className="flex items-center justify-between">
+                    <span>Crítico → Escalado (Inmediato)</span>
+                    <Badge variant="outline">Automático</Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Escalación */}
+      <Dialog open={showEscalation} onOpenChange={setShowEscalation}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Reglas de Escalación</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {escalationRules.map((rule) => (
+              <div key={rule.id} className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium">{rule.name}</h4>
+                  <Badge variant={rule.active ? "default" : "secondary"}>
+                    {rule.active ? "Activo" : "Inactivo"}
+                  </Badge>
+                </div>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <div>Trigger: {rule.trigger}</div>
+                  <div>Delay: {rule.delay} minutos</div>
+                </div>
+              </div>
+            ))}
+            
+            <div className="p-4 bg-muted rounded-lg">
+              <h4 className="font-medium mb-2">Estadísticas de Escalación</h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Tickets escalados hoy:</span>
+                  <span className="ml-2 font-medium">
+                    {tickets.filter(t => t.escalatedAt && new Date(t.escalatedAt).toDateString() === new Date().toDateString()).length}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Total escalados:</span>
+                  <span className="ml-2 font-medium">
+                    {tickets.filter(t => t.estado === 'escalated').length}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Asignación Automática */}
+      <Dialog open={showAutoAssignment} onOpenChange={setShowAutoAssignment}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Configuración de Asignación Automática</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {assignmentRules.map((rule) => (
+              <div key={rule.id} className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium">{rule.name}</h4>
+                  <Badge variant={rule.active ? "default" : "secondary"}>
+                    {rule.active ? "Activo" : "Inactivo"}
+                  </Badge>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Tipo: {rule.type}
+                </div>
+              </div>
+            ))}
+            
+            <div className="p-4 bg-muted rounded-lg">
+              <h4 className="font-medium mb-2">Agentes Disponibles</h4>
+              <div className="space-y-2">
+                {usuarios.filter((u: any) => u.role === 'admin' || u.role === 'support').map((user: any) => (
+                  <div key={user.id} className="flex items-center justify-between text-sm">
+                    <span>{user.email}</span>
+                    <Badge variant="outline">{user.role}</Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="p-4 bg-muted rounded-lg">
+              <h4 className="font-medium mb-2">Estadísticas de Asignación</h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Tickets sin asignar:</span>
+                  <span className="ml-2 font-medium">
+                    {tickets.filter(t => !t.asignadoA && t.estado !== 'closed').length}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Asignaciones automáticas:</span>
+                  <span className="ml-2 font-medium">
+                    {tickets.filter(t => t.assignedAt && !t.asignadoA).length}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
