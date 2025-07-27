@@ -32,6 +32,7 @@ export default defineConfig({
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
+          if (!assetInfo.name) return 'assets/[name]-[hash][extname]'
           const info = assetInfo.name.split('.')
           const ext = info[info.length - 1]
           if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
@@ -72,29 +73,6 @@ export default defineConfig({
   preview: {
     port: 4173,
     host: true
-  },
-  
-  // Configuración de CSS
-  css: {
-    // Optimizar CSS
-    postcss: {
-      plugins: [
-        require('tailwindcss'),
-        require('autoprefixer'),
-        // Compresión de CSS
-        require('cssnano')({
-          preset: ['default', {
-            discardComments: {
-              removeAll: true,
-            },
-            normalizeWhitespace: true,
-            colormin: true,
-            minifyFontValues: true,
-            minifySelectors: true,
-          }]
-        })
-      ]
-    }
   },
   
   // Optimizaciones de dependencias

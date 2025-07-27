@@ -569,7 +569,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
   const renderFases = () => {
     const fases = proyectoLocal.fases || [];
     
-    return (
+  return (
       <div className="space-y-6">
         {/* Formulario para agregar nueva fase */}
         {user?.role === 'admin' && (
@@ -650,7 +650,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                     >
                       {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                     </Button>
-                    <div>
+              <div>
                       <CardTitle className="text-lg text-white">{fase.descripcion}</CardTitle>
                       <p className="text-sm text-gray-300">Clave: {fase.key}</p>
                     </div>
@@ -864,12 +864,12 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                               <div className="flex-1">
                                                                  <div className="font-medium text-white">{tarea.titulo}</div>
                                  <div className="text-sm text-gray-300">{tarea.descripcion}</div>
-                                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1">
                                   <Badge variant="outline" className="text-xs">{tarea.responsable}</Badge>
                                   <Badge variant="outline" className="text-xs">{tarea.prioridad}</Badge>
                                   <Badge className={`text-xs ${getTareaStatusColor(tarea.status)}`}>
                                     {ESTADOS_TAREA.find(s => s.value === tarea.status)?.label}
-                                  </Badge>
+                  </Badge>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
@@ -1134,7 +1134,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-blue-400" />
                         <span className="text-sm text-white">Presupuesto: ${datosProyecto.presupuesto || 'No definido'}</span>
-                      </div>
+                    </div>
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-blue-400" />
                         <span className="text-sm text-white">Cliente: {datosProyecto.cliente || 'No definido'}</span>
@@ -1169,7 +1169,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                         <p className="text-sm text-gray-300 mt-2">
                           {proyecto.fases?.length || 0} fases • {(proyecto.fases || []).reduce((acc: number, fase: any) => acc + (fase.tareas?.length || 0), 0)} tareas
                         </p>
-                      </div>
+                              </div>
                     </CardContent>
                   </Card>
                                 </div>
@@ -1192,7 +1192,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                             onChange={(e) => setDatosProyecto({...datosProyecto, presupuesto: e.target.value})}
                             className="text-white placeholder-gray-400"
                           />
-                        </div>
+                              </div>
                         <div>
                           <Label htmlFor="cliente" className="text-white">Cliente</Label>
                           <Input
@@ -1202,7 +1202,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                             onChange={(e) => setDatosProyecto({...datosProyecto, cliente: e.target.value})}
                             className="text-white placeholder-gray-400"
                           />
-                        </div>
+                            </div>
                         <div>
                           <Label htmlFor="fechaEntrega" className="text-white">Fecha de Entrega</Label>
                           <Input
@@ -1259,7 +1259,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                           </div>
                         </div>
                       ))}
-                    </div>
+                  </div>
                   </CardContent>
                 </Card>
               </TabsContent>

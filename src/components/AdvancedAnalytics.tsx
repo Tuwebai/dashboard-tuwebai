@@ -321,8 +321,8 @@ export default function AdvancedAnalytics() {
           'Tasa de Satisfacción',
           `${data.performance.satisfactionRate}%`,
           <CheckCircle className="h-8 w-8" />
-        )}
-      </div>
+          )}
+        </div>
 
       {/* Charts */}
       <Tabs defaultValue="overview" className="space-y-4">
@@ -357,17 +357,17 @@ export default function AdvancedAnalytics() {
                   <Select value={chartType} onValueChange={setChartType}>
                     <SelectTrigger className="w-24">
                       <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
+          </SelectTrigger>
+          <SelectContent>
                       <SelectItem value="line">Línea</SelectItem>
                       <SelectItem value="area">Área</SelectItem>
                       <SelectItem value="bar">Barras</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+          </SelectContent>
+        </Select>
+      </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
               <ResponsiveContainer width="100%" height={400}>
                 {chartType === 'line' ? (
                   <LineChart data={data.timeSeriesData}>
@@ -376,7 +376,7 @@ export default function AdvancedAnalytics() {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Line 
+            <Line 
                       type="monotone" 
                       dataKey={selectedMetric} 
                       stroke="#0088FE" 
@@ -410,19 +410,19 @@ export default function AdvancedAnalytics() {
                   </BarChart>
                 )}
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          </CardContent>
+        </Card>
 
           {/* Project Types and Task Status */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
                   <PieChartIcon className="h-5 w-5" />
                   Tipos de Proyecto
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -442,17 +442,17 @@ export default function AdvancedAnalytics() {
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-              </CardContent>
-            </Card>
+          </CardContent>
+        </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
                   Estado de Tareas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={data.taskStatus} layout="horizontal">
                     <CartesianGrid strokeDasharray="3 3" />
@@ -472,14 +472,14 @@ export default function AdvancedAnalytics() {
         </TabsContent>
 
         <TabsContent value="revenue" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
                 Análisis de Ingresos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
               <ResponsiveContainer width="100%" height={400}>
                 <ComposedChart data={data.revenueByMonth}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -492,19 +492,19 @@ export default function AdvancedAnalytics() {
                   <Line yAxisId="right" type="monotone" dataKey="projects" stroke="#ff7300" name="Proyectos" />
                 </ComposedChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        </CardContent>
+      </Card>
         </TabsContent>
 
         <TabsContent value="performance" className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
                 <Target className="h-5 w-5" />
                 Métricas de Rendimiento
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
               <ResponsiveContainer width="100%" height={400}>
                 <RadarChart data={[
                   {
@@ -535,19 +535,19 @@ export default function AdvancedAnalytics() {
                   <Tooltip />
                 </RadarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        </CardContent>
+      </Card>
         </TabsContent>
 
         <TabsContent value="activity" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5" />
                 Actividad de Usuarios por Hora
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
               <ResponsiveContainer width="100%" height={400}>
                 <AreaChart data={data.userActivity}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -557,8 +557,8 @@ export default function AdvancedAnalytics() {
                   <Area type="monotone" dataKey="activeUsers" stroke="#8884d8" fill="#8884d8" fillOpacity={0.3} />
                 </AreaChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        </CardContent>
+      </Card>
         </TabsContent>
       </Tabs>
     </div>

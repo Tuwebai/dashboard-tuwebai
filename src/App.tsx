@@ -63,11 +63,11 @@ const queryClient = new QueryClient({
 
 function AppRoutes() {
   return (
-    <Routes>
+      <Routes>
       {/* Rutas públicas */}
       <Route path="/" element={<Index />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
       <Route path="/invite" element={<InvitationPage />} />
       
       {/* Rutas protegidas */}
@@ -198,7 +198,7 @@ function AppRoutes() {
           </DashboardLayout>
         </ProtectedRoute>
       } />
-      
+        
       <Route path="/dashboard-custom" element={
         <ProtectedRoute>
           <DashboardLayout>
@@ -214,10 +214,10 @@ function AppRoutes() {
           </DashboardLayout>
         </ProtectedRoute>
       } />
-      
+        
       {/* Ruta 404 */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
   );
 }
 
@@ -225,23 +225,23 @@ function App() {
   return (
     <ErrorBoundary>
       <I18nextProvider i18n={i18n}>
-        <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
           <ThemeProvider>
-            <TooltipProvider>
-              <AppProvider>
-                <NotificationProvider>
+      <TooltipProvider>
+        <AppProvider>
+            <NotificationProvider>
                   <Router>
                     <Suspense fallback={<PageLoader />}>
                       <AppRoutes />
                     </Suspense>
                   </Router>
-                  <Toaster />
-                  <Sonner />
-                </NotificationProvider>
-              </AppProvider>
-            </TooltipProvider>
+          <Toaster />
+          <Sonner />
+            </NotificationProvider>
+        </AppProvider>
+      </TooltipProvider>
           </ThemeProvider>
-        </QueryClientProvider>
+    </QueryClientProvider>
       </I18nextProvider>
     </ErrorBoundary>
   );

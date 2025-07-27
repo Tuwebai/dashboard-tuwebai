@@ -971,8 +971,8 @@ function ProyectosSection(props: any) {
         ))}
       </div>
       {showDetalles && proyectoSeleccionado && (
-        <VerDetallesProyecto
-          proyecto={proyectoSeleccionado}
+      <VerDetallesProyecto
+        proyecto={proyectoSeleccionado}
           onClose={() => setShowDetalles(false)}
           onUpdate={(proyectoActualizado) => {
             props.setProyectos(prev => prev.map((p: any) => 
@@ -1330,7 +1330,7 @@ function TicketsSection({ tickets, usuarios, onRespond, onClose }: any) {
                   <CardTitle className="text-lg flex items-center gap-2">
                     {ticket.priority === 'alta' && <span className="text-red-500 font-bold animate-pulse">●</span>}
                     {ticket.title}
-                  </CardTitle>
+                </CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">{ticket.description}</p>
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     <Badge className={getStatusColor(ticket.estado)}>{ticket.estado}</Badge>
@@ -1364,7 +1364,7 @@ function TicketsSection({ tickets, usuarios, onRespond, onClose }: any) {
                   <div className="p-3 bg-muted rounded text-sm">
                     <div className="font-medium mb-1">Respuesta del Admin:</div>
                     <p>{ticket.respuesta}</p>
-                  </div>
+              </div>
                 )}
                 {/* TODO: historial de cambios, archivos adjuntos, comentarios internos, logs, etc. */}
               </div>
