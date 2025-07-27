@@ -12,7 +12,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, FileText, Calendar, UploadCloud, AlertCircle, Info, Star, Trash2 } from 'lucide-react';
 import { useRef } from 'react';
 
-export default function ProyectosNuevoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+// Componente wrapper para usar como página
+export default function ProyectosNuevo() {
+  const [open, setOpen] = useState(true);
+  const navigate = useNavigate();
+
+  const handleClose = () => {
+    setOpen(false);
+    navigate('/proyectos');
+  };
+
+  return <ProyectosNuevoModal open={open} onClose={handleClose} />;
+}
+
+// Componente modal original
+function ProyectosNuevoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user, createProject } = useApp();
   const navigate = useNavigate();
   const [nombreProyecto, setNombreProyecto] = useState('');
