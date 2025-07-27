@@ -51,14 +51,9 @@ import {
 import { 
   AdminNotificationSystem, 
   AdminAnalytics, 
-  AdminSettings,
-  AdminReportsSystem,
-  AdminSecuritySystem
+  AdminSettings
 } from '@/components/AdminAdvancedFeatures';
 import { initializeChatData, initializeCommentsData, initializeTasksData, initializeAdminSystemData, cleanSimulatedData } from '@/utils/initializeData';
-import AdvancedTools from '@/components/admin/AdvancedTools';
-import AdvancedAnalytics from '@/components/admin/AdvancedAnalytics';
-import SecurityAudit from '@/components/admin/SecurityAudit';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useApp } from '@/contexts/AppContext';
@@ -614,16 +609,6 @@ export default function Admin() {
         return <AdminSettings />;
       case 'metricas':
         return <MetricasSection usuarios={usuarios} proyectos={proyectos} pagos={pagos} tickets={tickets} />;
-      case 'reports':
-        return <AdminReportsSystem />;
-      case 'security':
-        return <AdminSecuritySystem />;
-      case 'tools':
-        return <AdvancedTools />;
-      case 'advanced-analytics':
-        return <AdvancedAnalytics />;
-      case 'security-audit':
-        return <SecurityAudit />;
       default:
         return <DashboardSection usuarios={usuarios} proyectos={proyectos} pagos={pagos} tickets={tickets} />;
     }
@@ -1347,7 +1332,7 @@ function TicketsSection({ tickets, usuarios, onRespond, onClose }: any) {
                   <Button variant="ghost" size="sm" onClick={() => handleExportTicket(ticket, 'json')}><Download className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="sm" onClick={() => handleExportTicket(ticket, 'txt')}><FileText className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="sm" onClick={() => handleExportTicket(ticket, 'pdf')}><Paperclip className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleShowHistorial(ticket)}><History className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleShowHistorial(ticket)}><HistoryIcon className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="sm" onClick={() => handleShowAdjuntos(ticket)}><Paperclip className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="sm" onClick={() => handleShowAsignar(ticket)}><Users className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="sm" onClick={() => handleShowComentarios(ticket)}><MessageSquare className="h-4 w-4" /></Button>
@@ -1827,7 +1812,7 @@ function PagosSection({ pagos, onDownloadInvoice, onMarkComplete }: any) {
                   <Button variant="ghost" size="sm" onClick={() => handleExportPago(pago, 'json')}><FileText className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="sm" onClick={() => handleExportPago(pago, 'txt')}><FileText className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="sm" onClick={() => handleExportPago(pago, 'pdf')}><FileText className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleShowHistorial(pago)}><History className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleShowHistorial(pago)}><HistoryIcon className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="sm" onClick={() => handleShowDetalles(pago)}><Eye className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="sm" onClick={() => handleShowNotas(pago)}><MessageSquare className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="sm" onClick={() => handleDeletePago(pago.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button>

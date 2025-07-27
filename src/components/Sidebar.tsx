@@ -180,18 +180,6 @@ export default function Sidebar() {
                 {adminNavItem('settings', <Settings className="h-5 w-5" />, 'Configuración')}
               </div>
             </div>
-
-            {/* Sección Herramientas */}
-            <div className="mb-4">
-              <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-4 py-2 mb-2">{t('Herramientas')}</div>
-              <div className="space-y-1">
-                {adminNavItem('tools', <Code className="h-5 w-5" />, t('Herramientas Avanzadas'))}
-                {adminNavItem('security-audit', <Eye className="h-5 w-5" />, t('Auditoría de Seguridad'))}
-                {adminNavItem('reports', <FileText className="h-5 w-5" />, t('Reportes'))}
-                {adminNavItem('security', <Shield className="h-5 w-5" />, t('Seguridad'))}
-                {adminNavItem('performance', <Zap className="h-5 w-5" />, t('Rendimiento'))}
-              </div>
-            </div>
           </nav>
         ) : (
           // Menú solo para clientes
