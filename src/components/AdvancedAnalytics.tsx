@@ -261,9 +261,6 @@ export default function AdvancedAnalytics() {
         color: COLORS[index % COLORS.length]
       }));
 
-      // Datos de series temporales reales
-      const timeSeriesData = generateTimeSeriesData();
-
       // Estado de tareas basado en tickets
       const taskStatus = [
         { status: 'Completado', count: completedTickets, color: '#00C49F' },
@@ -271,12 +268,6 @@ export default function AdvancedAnalytics() {
         { status: 'Pendiente', count: pendingTickets, color: '#FF8042' },
         { status: 'Cancelado', count: cancelledTickets, color: '#FF0000' }
       ];
-
-      // Actividad de usuarios (simulada pero basada en datos reales)
-      const userActivity = generateUserActivityData();
-
-      // Ingresos por mes
-      const revenueByMonth = generateRevenueData();
 
       const realData: AnalyticsData = {
         projects: {
@@ -305,11 +296,11 @@ export default function AdvancedAnalytics() {
             (completedProjects / (completedProjects + pendingProjects)) * 100 : 0,
           qualityScore: 91.8 // Mantener como métrica de calidad
         },
-        timeSeriesData,
+        timeSeriesData: generateRealTimeSeriesData(projects, payments, users, tickets),
         projectTypes: projectTypesData,
-        userActivity,
+        userActivity: generateRealUserActivityData(users),
         taskStatus,
-        revenueByMonth
+        revenueByMonth: generateRealRevenueData(payments, projects)
       };
 
       setData(realData);
@@ -322,6 +313,114 @@ export default function AdvancedAnalytics() {
       });
     }
     setLoading(false);
+  };
+
+  // Función para generar datos de series temporales reales
+  const generateRealTimeSeriesData = (projects: any[], payments: any[], users: any[], tickets: any[]) => {
+    const data = [];
+    const today = new Date();
+    
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+      
+      // Contar proyectos creados en esta fecha
+      const projectsCount = projects.filter(p => {
+        const createdAt = p.createdAt?.toDate?.() || new Date(p.createdAt);
+        return createdAt.toDateString() === date.toDateString();
+      }).length;
+      
+      // Contar usuarios registrados en esta fecha
+      const usersCount = users.filter(u => {
+        const createdAt = u.createdAt?.toDate?.() || new Date(u.createdAt);
+        return createdAt.toDateString() === date.toDateString();
+      }).length;
+      
+      // Sumar ingresos de esta fecha
+      const revenue = payments.filter(p => {
+        const createdAt = p.createdAt?.toDate?.() || new Date(p.createdAt);
+        return createdAt.toDateString() === date.toDateString();
+      }).reduce((sum, p) => sum + (p.amount || 0), 0);
+      
+      // Contar tickets creados en esta fecha
+      const tasksCount = tickets.filter(t => {
+        const createdAt = t.createdAt?.toDate?.() || new Date(t.createdAt);
+        return createdAt.toDateString() === date.toDateString();
+      }).length;
+      
+      data.push({
+        date: dateStr,
+        projects: projectsCount,
+        users: usersCount,
+        revenue: revenue,
+        tasks: tasksCount
+      });
+    }
+    
+    return data;
+  };
+
+  // Función para generar datos de actividad de usuarios reales
+  const generateRealUserActivityData = (users: any[]) => {
+    const data = [];
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    
+    // Agrupar usuarios por hora de último login
+    const hourlyActivity: { [key: number]: number } = {};
+    
+    users.forEach(user => {
+      if (user.lastLoginAt) {
+        const lastLogin = user.lastLoginAt.toDate?.() || new Date(user.lastLoginAt);
+        if (lastLogin > thirtyDaysAgo) {
+          const hour = lastLogin.getHours();
+          hourlyActivity[hour] = (hourlyActivity[hour] || 0) + 1;
+        }
+      }
+    });
+    
+    // Generar datos para las 24 horas
+    for (let hour = 0; hour < 24; hour++) {
+      data.push({
+        hour,
+        activeUsers: hourlyActivity[hour] || 0
+      });
+    }
+    
+    return data;
+  };
+
+  // Función para generar datos de ingresos por mes reales
+  const generateRealRevenueData = (payments: any[], projects: any[]) => {
+    const data = [];
+    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const currentYear = new Date().getFullYear();
+    
+    for (let month = 0; month < 12; month++) {
+      const monthStart = new Date(currentYear, month, 1);
+      const monthEnd = new Date(currentYear, month + 1, 0);
+      
+      // Sumar ingresos del mes
+      const revenue = payments.filter(p => {
+        const createdAt = p.createdAt?.toDate?.() || new Date(p.createdAt);
+        return createdAt >= monthStart && createdAt <= monthEnd;
+      }).reduce((sum, p) => sum + (p.amount || 0), 0);
+      
+      // Contar proyectos del mes
+      const projectsCount = projects.filter(p => {
+        const createdAt = p.createdAt?.toDate?.() || new Date(p.createdAt);
+        return createdAt >= monthStart && createdAt <= monthEnd;
+      }).length;
+      
+      data.push({
+        month: months[month],
+        revenue: revenue,
+        projects: projectsCount
+      });
+    }
+    
+    return data;
   };
 
   const generateTimeSeriesData = () => {
