@@ -415,9 +415,13 @@ export default function Dashboard() {
                         size="sm"
                         onClick={e => { 
                           e.stopPropagation(); 
+                          console.log('Botón Colaborar clickeado, proyecto:', project);
                           if (project && project.id) {
-                            navigate(`/proyectos/${project.id}/colaboracion-cliente`);
+                            const url = `/proyectos/${project.id}/colaboracion-cliente`;
+                            console.log('Navegando a:', url);
+                            navigate(url);
                           } else {
+                            console.error('Proyecto inválido:', project);
                             toast({ 
                               title: 'Error', 
                               description: 'Proyecto inválido', 

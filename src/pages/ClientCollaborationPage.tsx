@@ -197,14 +197,20 @@ export default function ClientCollaborationPage() {
   // Find project by ID
   useEffect(() => {
     async function fetchProjectById() {
+      console.log('ClientCollaborationPage - Buscando proyecto:', projectId);
+      console.log('ClientCollaborationPage - Proyectos disponibles:', projects);
+      
       if (!projectId) return;
       
       // Buscar el proyecto en los proyectos del usuario
       const foundProject = projects.find(p => p.id === projectId);
+      console.log('ClientCollaborationPage - Proyecto encontrado:', foundProject);
+      
       if (foundProject) {
         setProject(foundProject);
       } else {
         setProject(null);
+        console.log('ClientCollaborationPage - Proyecto no encontrado');
         toast({
           title: 'Error',
           description: 'Proyecto no encontrado o no tienes acceso',
@@ -477,7 +483,11 @@ export default function ClientCollaborationPage() {
     }
   };
 
+  console.log('ClientCollaborationPage - User:', user);
+  console.log('ClientCollaborationPage - User role:', user?.role);
+  
   if (!user || user.role !== 'client') {
+    console.log('Usuario no autorizado, redirigiendo a dashboard');
     navigate('/dashboard');
     return null;
   }
