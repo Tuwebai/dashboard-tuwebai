@@ -259,15 +259,21 @@ export default function ClientCollaborationPage() {
           const messagesRef = collection(firestore, 'chatRooms', roomId, 'messages');
           const messagesQuery = query(messagesRef, orderBy('timestamp', 'asc'));
           
-          const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
-            const messagesData = snapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            })) as ChatMessage[];
-            console.log('Mensajes actualizados:', messagesData.length);
-            setMessages(messagesData);
-            setCollaborationStats(prev => ({ ...prev, totalMessages: messagesData.length }));
-          }, (error) => {
+                     const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+             const messagesData = snapshot.docs.map(doc => {
+               const data = doc.data();
+               console.log('Mensaje raw data:', data);
+               console.log('Timestamp type:', typeof data.timestamp);
+               console.log('Timestamp value:', data.timestamp);
+               return {
+                 id: doc.id,
+                 ...data
+               };
+             }) as ChatMessage[];
+             console.log('Mensajes actualizados:', messagesData.length);
+             setMessages(messagesData);
+             setCollaborationStats(prev => ({ ...prev, totalMessages: messagesData.length }));
+           }, (error) => {
             console.error('Error escuchando mensajes:', error);
             toast({
               title: 'Error',
@@ -503,6 +509,31 @@ export default function ClientCollaborationPage() {
     }
   };
 
+  // Función utilitaria para manejar timestamps de Firebase
+  const formatFirebaseTimestamp = (timestamp: any, options?: Intl.DateTimeFormatOptions) => {
+    try {
+      if (!timestamp) return 'Ahora';
+      
+      // Firebase timestamp viene como objeto con toDate() method
+      const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+      
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid timestamp:', timestamp);
+        return 'Ahora';
+      }
+      
+      const defaultOptions: Intl.DateTimeFormatOptions = {
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      
+      return date.toLocaleTimeString('es-ES', options || defaultOptions);
+    } catch (error) {
+      console.error('Error formatting timestamp:', error, timestamp);
+      return 'Ahora';
+    }
+  };
+
   // Validación de rol en useEffect para evitar warnings de React
   useEffect(() => {
     console.log('ClientCollaborationPage - User:', user);
@@ -692,10 +723,7 @@ export default function ClientCollaborationPage() {
                              {message.sender === user.email ? 'Tú' : message.senderName}
                            </span>
                            <span className="text-xs opacity-70">
-                             {message.timestamp ? new Date(message.timestamp).toLocaleTimeString('es-ES', {
-                               hour: '2-digit',
-                               minute: '2-digit'
-                             }) : 'Ahora'}
+                             {formatFirebaseTimestamp(message.timestamp)}
                            </span>
                          </div>
                          <p className="text-sm break-words">{message.text}</p>
