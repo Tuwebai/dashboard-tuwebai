@@ -483,13 +483,27 @@ export default function ClientCollaborationPage() {
     }
   };
 
-  console.log('ClientCollaborationPage - User:', user);
-  console.log('ClientCollaborationPage - User role:', user?.role);
+  // Validación de rol en useEffect para evitar warnings de React
+  useEffect(() => {
+    console.log('ClientCollaborationPage - User:', user);
+    console.log('ClientCollaborationPage - User role:', user?.role);
+    
+    if (!user || (user.role !== 'client' && user.role !== 'user')) {
+      console.log('Usuario no autorizado, redirigiendo a dashboard');
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
   
-  if (!user || user.role !== 'client') {
-    console.log('Usuario no autorizado, redirigiendo a dashboard');
-    navigate('/dashboard');
-    return null;
+  // Si no hay usuario o no es autorizado, mostrar loading
+  if (!user || (user.role !== 'client' && user.role !== 'user')) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Verificando permisos...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!project) {
