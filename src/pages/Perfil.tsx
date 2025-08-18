@@ -59,14 +59,7 @@ export default function Perfil() {
     confirmPassword: ''
   });
 
-  // Estados para configuración de notificaciones
-  const [notifications, setNotifications] = useState({
-    emailNotifications: true,
-    projectUpdates: true,
-    paymentReminders: true,
-    supportUpdates: true,
-    marketingEmails: false
-  });
+
 
   useEffect(() => {
     if (user) {
@@ -81,13 +74,7 @@ export default function Perfil() {
         website: user.website || ''
       });
 
-      setNotifications({
-        emailNotifications: user.emailNotifications !== false,
-        projectUpdates: user.projectUpdates !== false,
-        paymentReminders: user.paymentReminders !== false,
-        supportUpdates: user.supportUpdates !== false,
-        marketingEmails: user.marketingEmails === true
-      });
+
     }
   }, [user]);
 
@@ -194,35 +181,7 @@ export default function Perfil() {
     }
   };
 
-  const handleNotificationSettings = async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
-      const userRef = doc(firestore, 'users', user.uid);
-      await updateDoc(userRef, {
-        emailNotifications: notifications.emailNotifications,
-        projectUpdates: notifications.projectUpdates,
-        paymentReminders: notifications.paymentReminders,
-        supportUpdates: notifications.supportUpdates,
-        marketingEmails: notifications.marketingEmails,
-        updatedAt: new Date().toISOString()
-      });
 
-      toast({
-        title: 'Configuración actualizada',
-        description: 'Las preferencias de notificaciones han sido guardadas.'
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudieron guardar las preferencias.',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -529,92 +488,7 @@ export default function Perfil() {
             </CardContent>
           </Card>
 
-          {/* Configuración de notificaciones */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Notificaciones
-              </CardTitle>
-              <CardDescription>
-                Configura tus preferencias de notificaciones
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Notificaciones por email</Label>
-                    <p className="text-xs text-muted-foreground">Recibe notificaciones importantes por email</p>
-                  </div>
-                  <Switch
-                    checked={notifications.emailNotifications}
-                    onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, emailNotifications: checked }))}
-                  />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Actualizaciones de proyectos</Label>
-                    <p className="text-xs text-muted-foreground">Notificaciones sobre el progreso de tus proyectos</p>
-                  </div>
-                  <Switch
-                    checked={notifications.projectUpdates}
-                    onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, projectUpdates: checked }))}
-                  />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Recordatorios de pago</Label>
-                    <p className="text-xs text-muted-foreground">Notificaciones sobre pagos pendientes</p>
-                  </div>
-                  <Switch
-                    checked={notifications.paymentReminders}
-                    onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, paymentReminders: checked }))}
-                  />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Actualizaciones de soporte</Label>
-                    <p className="text-xs text-muted-foreground">Respuestas a tus tickets de soporte</p>
-                  </div>
-                  <Switch
-                    checked={notifications.supportUpdates}
-                    onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, supportUpdates: checked }))}
-                  />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Emails de marketing</Label>
-                    <p className="text-xs text-muted-foreground">Ofertas especiales y novedades</p>
-                  </div>
-                  <Switch
-                    checked={notifications.marketingEmails}
-                    onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, marketingEmails: checked }))}
-                  />
-                </div>
-              </div>
 
-              <Button 
-                onClick={handleNotificationSettings} 
-                disabled={loading}
-                className="w-full"
-              >
-                {loading ? 'Guardando...' : <><Save className="h-4 w-4 mr-2" />Guardar preferencias</>}
-              </Button>
-            </CardContent>
-          </Card>
 
           {/* Información de la cuenta */}
           <Card>

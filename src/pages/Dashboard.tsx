@@ -69,20 +69,34 @@ const FASES = [
 ];
 
 export default function Dashboard() {
-  const { user, projects, updateProject, addCommentToPhase } = useApp();
+  const { user, projects, updateProject, addCommentToPhase, loading } = useApp();
   const navigate = useNavigate();
   const [comentarioInput, setComentarioInput] = useState<Record<string, string>>({});
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalInitialized, setModalInitialized] = useState(false);
   const [realTimeProjects, setRealTimeProjects] = useState<Project[]>([]);
   const { t } = useTranslation();
 
 
+  // Proyectos visibles para el usuario actual y validación temprana
+  const userProjects = realTimeProjects.filter(p => p.ownerEmail === user?.email && p.id);
+  const hasValidProjects = userProjects.length > 0;
+
   // Escuchar cambios en tiempo real de los proyectos del usuario
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setRealTimeProjects([]);
+      return;
+    }
 
     const userProjects = projects.filter(p => p.ownerEmail === user.email);
+    
+    if (userProjects.length === 0) {
+      setRealTimeProjects([]);
+      return;
+    }
+
     const unsubscribe = userProjects.map(project => 
       onSnapshot(doc(firestore, 'projects', project.id), (doc) => {
         if (doc.exists()) {
@@ -92,6 +106,8 @@ export default function Dashboard() {
             return [...filtered, projectData];
           });
         }
+      }, (error) => {
+        console.warn('Error cargando proyecto en tiempo real:', error);
       })
     );
 
@@ -99,6 +115,34 @@ export default function Dashboard() {
       unsubscribe.forEach(unsub => unsub());
     };
   }, [user, projects]);
+
+  // Limpiar estado del modal cuando se desmonte el componente
+  useEffect(() => {
+    return () => {
+      setIsModalOpen(false);
+      setSelectedProject(null);
+      setModalInitialized(false);
+    };
+  }, []);
+
+  // Verificar que el modal no se abra automáticamente
+  useEffect(() => {
+    if (isModalOpen && !modalInitialized) {
+      console.warn('Modal se abrió automáticamente, cerrando...');
+      setIsModalOpen(false);
+      setSelectedProject(null);
+    }
+  }, [isModalOpen, modalInitialized]);
+
+  // Verificar que el modal no se abra cuando no hay proyectos válidos
+  useEffect(() => {
+    if (isModalOpen && !hasValidProjects) {
+      console.warn('Modal abierto sin proyectos válidos, cerrando...');
+      setIsModalOpen(false);
+      setSelectedProject(null);
+      setModalInitialized(false);
+    }
+  }, [isModalOpen, hasValidProjects]);
 
 
 
@@ -130,14 +174,25 @@ export default function Dashboard() {
 
   // Función para ver detalles del proyecto
   const handleViewProject = (project: Project) => {
-    setSelectedProject(project);
-    setIsModalOpen(true);
+    if (project && project.id) {
+      setSelectedProject(project);
+      setIsModalOpen(true);
+      setModalInitialized(true);
+    } else {
+      console.warn('Proyecto inválido:', project);
+      toast({ 
+        title: 'Error', 
+        description: 'No se pudo cargar la información del proyecto.', 
+        variant: 'destructive' 
+      });
+    }
   };
 
   // Función para cerrar modal
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedProject(null);
+    setModalInitialized(false);
   };
 
   // Función para descargar archivos
@@ -152,14 +207,14 @@ export default function Dashboard() {
 
   // Función para calcular progreso del proyecto
   const calculateProjectProgress = (project: Project) => {
-    if (!project.fases || project.fases.length === 0) return 0;
+    if (!project || !project.fases || project.fases.length === 0) return 0;
     const completedPhases = project.fases.filter(fase => fase.estado === 'Terminado').length;
     return (completedPhases / project.fases.length) * 100;
   };
 
   // Función para obtener el estado general del proyecto
   const getProjectStatus = (project: Project) => {
-    if (!project.fases || project.fases.length === 0) return 'Pendiente';
+    if (!project || !project.fases || project.fases.length === 0) return 'Pendiente';
     if (project.fases.every(fase => fase.estado === 'Terminado')) return 'Completado';
     if (project.fases.some(fase => fase.estado === 'En Progreso')) return 'En Progreso';
     return 'Pendiente';
@@ -167,6 +222,7 @@ export default function Dashboard() {
 
   // Función para formatear fecha
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'Fecha no disponible';
     try {
       return new Date(dateString).toLocaleDateString('es-ES');
     } catch {
@@ -175,7 +231,7 @@ export default function Dashboard() {
   };
 
   const getProjectProgress = (project: Project) => {
-    if (!project.fases || project.fases.length === 0) return 0;
+    if (!project || !project.fases || project.fases.length === 0) return 0;
     const completed = project.fases.filter((f: ProjectPhase) => f.estado === 'Terminado').length;
     return (completed / project.fases.length) * 100;
   };
@@ -193,7 +249,21 @@ export default function Dashboard() {
     return <Navigate to="/admin" replace />;
   }
 
-  const userProjects = realTimeProjects.filter(p => p.ownerEmail === user?.email);
+  // Mostrar loading mientras se cargan los datos
+  if (loading) {
+    return (
+      <div className="p-2 sm:p-4 md:p-6 space-y-4 sm:space-y-6 md:space-y-8 max-w-full overflow-x-hidden">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Cargando proyectos...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  
 
   return (
     <div className="p-2 sm:p-4 md:p-6 space-y-4 sm:space-y-6 md:space-y-8 max-w-full overflow-x-hidden">
@@ -213,7 +283,7 @@ export default function Dashboard() {
               <FileText className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">{t('Proyectos')}</p>
-                <p className="text-2xl font-bold">{userProjects.length}</p>
+                <p className="text-2xl font-bold">{hasValidProjects ? userProjects.length : 0}</p>
               </div>
             </div>
           </CardContent>
@@ -263,7 +333,7 @@ export default function Dashboard() {
       </div>
 
       {/* Vista de proyectos */}
-      {userProjects.length === 0 ? (
+      {!hasValidProjects ? (
         <Card className="bg-muted/20 border-border transition-all duration-200 hover:scale-105 hover:shadow-2xl">
                           <CardContent className="p-6 sm:p-12 text-center">
       <div className="space-y-4">
@@ -284,7 +354,7 @@ export default function Dashboard() {
           </Card>
         ) : (
         <div className="space-y-6">
-          {userProjects.map(project => {
+          {userProjects.filter(project => project && project.id).map(project => {
             const progress = getProjectProgress(project);
             const status = getProjectStatus(project);
             
@@ -292,7 +362,17 @@ export default function Dashboard() {
               <Card
                 key={project.id}
                 className="relative bg-[#181824]/80 backdrop-blur-md border border-[#23263a] rounded-2xl shadow-2xl hover:scale-[1.02] hover:shadow-3xl transition-all overflow-hidden cursor-pointer"
-                onClick={() => navigate(`/proyectos/${project.id}`)}
+                onClick={() => {
+                  if (project && project.id) {
+                    navigate(`/proyectos/${project.id}`);
+                  } else {
+                    toast({ 
+                      title: 'Error', 
+                      description: 'Proyecto inválido', 
+                      variant: 'destructive' 
+                    });
+                  }
+                }}
               >
                 {/* Barra superior de gradiente animado */}
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-gradient-x rounded-t-2xl" />
@@ -300,19 +380,30 @@ export default function Dashboard() {
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                        <CardTitle className="text-xl sm:text-2xl font-bold">{project.name}</CardTitle>
+                        <CardTitle className="text-xl sm:text-2xl font-bold">{project.name || 'Proyecto sin nombre'}</CardTitle>
                         <div className="flex flex-wrap gap-2">
                         <Badge className={getStatusColor(status)}>{status}</Badge>
-                        <Badge variant="outline">{project.type}</Badge>
+                        <Badge variant="outline">{project.type || 'Sin tipo'}</Badge>
                         </div>
                       </div>
-                      <p className="text-muted-foreground text-sm sm:text-base">{project.description}</p>
+                      <p className="text-muted-foreground text-sm sm:text-base">{project.description || 'Sin descripción'}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={e => { e.stopPropagation(); handleViewProject(project); }}
+                        onClick={e => { 
+                          e.stopPropagation(); 
+                          if (project && project.id) {
+                            handleViewProject(project);
+                          } else {
+                            toast({ 
+                              title: 'Error', 
+                              description: 'Proyecto inválido', 
+                              variant: 'destructive' 
+                            });
+                          }
+                        }}
                         className="btn-gradient-electric transition-all duration-200 hover:scale-105 hover:shadow-lg"
                       >
                         <Eye className="h-4 w-4 mr-1" />
@@ -333,7 +424,7 @@ export default function Dashboard() {
                 
                 <CardContent>
                                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                     {(project.fases || []).map((fase: ProjectPhase) => {
+                     {(project.fases || []).filter(fase => fase && fase.key).map((fase: ProjectPhase) => {
                        const faseConfig = FASES.find(f => f.key === fase.key);
                       return (
                         <Card
@@ -361,8 +452,8 @@ export default function Dashboard() {
                                 {fase.estado === 'Pendiente' && (
                                   <svg className="w-6 h-6 text-gray-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" /></svg>
                                 )}
-                                <span>{faseConfig?.icon}</span>
-                                {faseConfig?.label}
+                                <span>{faseConfig?.icon || '📋'}</span>
+                                {faseConfig?.label || fase.descripcion || 'Fase'}
                               </CardTitle>
                               <Badge 
                                 variant="outline" 
@@ -375,24 +466,24 @@ export default function Dashboard() {
                                 {fase.estado || 'Pendiente'}
                               </Badge>
                             </div>
-                            {fase.descripcion && (
-                              <p className="text-xs text-muted-foreground">{fase.descripcion}</p>
-                            )}
-                            {fase.fechaEntrega && (
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Calendar className="h-3 w-3" />
-                                {t('Entrega:')} {formatDateSafe(fase.fechaEntrega)}
-            </div>
-                            )}
+                                                          {fase.descripcion && (
+                                <p className="text-xs text-muted-foreground">{fase.descripcion}</p>
+                              )}
+                                                          {fase.fechaEntrega && (
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Calendar className="h-3 w-3" />
+                                  {t('Entrega:')} {formatDateSafe(fase.fechaEntrega)}
+                                </div>
+                              )}
                           </CardHeader>
 
                           <CardContent className="space-y-3">
                             {/* Archivos */}
                             {fase.archivos && fase.archivos.length > 0 && (
-            <div className="space-y-2">
+                              <div className="space-y-2">
                                 <Label className="text-xs font-medium">{t('Archivos')}</Label>
                                 <div className="flex flex-wrap gap-2">
-                                                                     {fase.archivos.map((file, idx: number) => (
+                                  {fase.archivos.filter(file => file && file.url && file.name).map((file, idx: number) => (
                                     <div key={idx} className="flex items-center gap-1 p-2 bg-muted/20 rounded text-xs">
                                       <FileText className="h-3 w-3" />
                                       <a 
@@ -400,8 +491,9 @@ export default function Dashboard() {
                                         target="_blank" 
                                         rel="noopener noreferrer"
                                         className="text-primary hover:underline"
+                                        onClick={(e) => e.stopPropagation()}
                                       >
-                                        {file.name}
+                                        {file.name || 'Archivo sin nombre'}
                                       </a>
                                     </div>
                                   ))}
@@ -409,12 +501,12 @@ export default function Dashboard() {
             </div>
                             )}
 
-                            {/* Comentarios */}
-            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <Label className="text-xs font-medium">
-                                  {t('Comentarios')} ({fase.comentarios?.length || 0})
-                                </Label>
+                                                          {/* Comentarios */}
+                              <div className="space-y-2">
+                                                              <div className="flex items-center justify-between">
+                                  <Label className="text-xs font-medium">
+                                    {t('Comentarios')} ({(fase.comentarios || []).filter(c => c && c.id).length})
+                                  </Label>
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -456,7 +548,7 @@ export default function Dashboard() {
 
                               {/* Lista de comentarios */}
                               <div className="space-y-2 max-h-32 overflow-y-auto">
-                                {(fase.comentarios || []).map((comentario) => (
+                                {(fase.comentarios || []).filter(comentario => comentario && comentario.id).map((comentario) => (
                                   <div
                                     key={comentario.id}
                                     className={`p-2 rounded text-xs ${
@@ -467,13 +559,13 @@ export default function Dashboard() {
                                   >
                                     <div className="flex items-center justify-between mb-1">
                                       <span className="font-medium">
-                                        {comentario.autor}
+                                        {comentario.autor || 'Usuario anónimo'}
                                       </span>
                                       <span className="text-muted-foreground">
                                         {formatDateSafe(comentario.fecha)}
                                       </span>
                                     </div>
-                                    <p>{comentario.texto}</p>
+                                    <p>{comentario.texto || 'Comentario sin texto'}</p>
                                   </div>
                                 ))}
             </div>
@@ -491,13 +583,23 @@ export default function Dashboard() {
       )}
 
       {/* Modal de detalle del proyecto */}
-      <VerDetallesProyecto
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        proyecto={selectedProject}
-        onEditar={() => navigate(`/proyectos/${selectedProject?.id}`)}
-        onColaborar={() => navigate(`/proyectos/${selectedProject?.id}/colaboracion`)}
-      />
+      {isModalOpen && modalInitialized && selectedProject && selectedProject.id && hasValidProjects && (
+        <VerDetallesProyecto
+          proyecto={selectedProject}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedProject(null);
+            setModalInitialized(false);
+          }}
+          onUpdate={(updatedProject) => {
+            // Actualizar el proyecto en el estado local
+            setRealTimeProjects(prev => 
+              prev.map(p => p.id === updatedProject.id ? updatedProject : p)
+            );
+            updateProject(updatedProject);
+          }}
+        />
+      )}
 
 
     </div>

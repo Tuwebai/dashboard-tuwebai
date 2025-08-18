@@ -38,6 +38,21 @@ googleProvider.setCustomParameters({
   auth_type: 'reauthenticate'
 });
 
+// Configurar Firebase Auth para manejar errores de CORS
+if (typeof window !== 'undefined') {
+  // Configurar headers para evitar problemas de CORS
+  const originalFetch = window.fetch;
+  window.fetch = function(input, init) {
+    if (init && typeof input === 'string' && input.includes('firebase')) {
+      init.headers = {
+        ...init.headers,
+        'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
+      };
+    }
+    return originalFetch.call(this, input, init);
+  };
+}
+
 // Configurar GitHub provider
 githubProvider.setCustomParameters({
   prompt: 'select_account'

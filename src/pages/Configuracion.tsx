@@ -60,17 +60,7 @@ export default function Configuracion() {
     twoFactorAuth: false
   });
 
-  // Configuración de notificaciones
-  const [notificationSettings, setNotificationSettings] = useState({
-    pushNotifications: true,
-    emailNotifications: true,
-    smsNotifications: false,
-    soundEnabled: true,
-    vibrationEnabled: true,
-    quietHours: false,
-    quietHoursStart: '22:00',
-    quietHoursEnd: '08:00'
-  });
+
 
   // Configuración de rendimiento
   const [performanceSettings, setPerformanceSettings] = useState({
@@ -111,16 +101,7 @@ export default function Configuracion() {
         twoFactorAuth: user.twoFactorAuth || false
       });
 
-      setNotificationSettings({
-        pushNotifications: user.pushNotifications !== false,
-        emailNotifications: user.emailNotifications !== false,
-        smsNotifications: user.smsNotifications || false,
-        soundEnabled: user.soundEnabled !== false,
-        vibrationEnabled: user.vibrationEnabled !== false,
-        quietHours: user.quietHours || false,
-        quietHoursStart: user.quietHoursStart || '22:00',
-        quietHoursEnd: user.quietHoursEnd || '08:00'
-      });
+
 
       setPerformanceSettings({
         autoSave: user.autoSave !== false,
@@ -153,9 +134,7 @@ export default function Configuracion() {
       case 'privacy':
         updates = { ...privacySettings };
         break;
-      case 'notifications':
-        updates = { ...notificationSettings };
-        break;
+
       case 'performance':
         updates = { ...performanceSettings };
         break;
@@ -248,7 +227,7 @@ export default function Configuracion() {
     const settings = {
       general: generalSettings,
       privacy: privacySettings,
-      notifications: notificationSettings,
+      
       performance: performanceSettings,
       security: securitySettings,
       exportedAt: new Date().toISOString()
@@ -280,7 +259,7 @@ export default function Configuracion() {
           
           if (settings.general) setGeneralSettings(settings.general);
           if (settings.privacy) setPrivacySettings(settings.privacy);
-          if (settings.notifications) setNotificationSettings(settings.notifications);
+    
           if (settings.performance) setPerformanceSettings(settings.performance);
           if (settings.security) setSecuritySettings(settings.security);
 
@@ -305,7 +284,6 @@ export default function Configuracion() {
   const tabs = [
     { id: 'general', label: 'General', icon: Settings },
     { id: 'privacy', label: 'Privacidad', icon: Shield },
-    { id: 'notifications', label: 'Notificaciones', icon: Bell },
     { id: 'performance', label: 'Rendimiento', icon: Monitor },
     { id: 'security', label: 'Seguridad', icon: Lock }
   ];
@@ -571,122 +549,7 @@ export default function Configuracion() {
           </Card>
         )}
 
-        {/* Configuración de Notificaciones */}
-        {activeTab === 'notifications' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                {t('Notificaciones')}
-              </CardTitle>
-              <CardDescription>
-                {t('Configura cómo y cuándo recibir notificaciones')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">{t('Notificaciones push')}</Label>
-                    <p className="text-xs text-muted-foreground">{t('Recibe notificaciones en tiempo real')}</p>
-                  </div>
-                  <Switch
-                    checked={notificationSettings.pushNotifications}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, pushNotifications: checked }))}
-                  />
-                </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">{t('Notificaciones por email')}</Label>
-                    <p className="text-xs text-muted-foreground">{t('Recibe notificaciones importantes por email')}</p>
-                  </div>
-                  <Switch
-                    checked={notificationSettings.emailNotifications}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, emailNotifications: checked }))}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">{t('Notificaciones por SMS')}</Label>
-                    <p className="text-xs text-muted-foreground">{t('Recibe notificaciones críticas por SMS')}</p>
-                  </div>
-                  <Switch
-                    checked={notificationSettings.smsNotifications}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, smsNotifications: checked }))}
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">{t('Sonidos')}</Label>
-                    <p className="text-xs text-muted-foreground">{t('Reproducir sonidos en notificaciones')}</p>
-                  </div>
-                  <Switch
-                    checked={notificationSettings.soundEnabled}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, soundEnabled: checked }))}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">{t('Vibración')}</Label>
-                    <p className="text-xs text-muted-foreground">{t('Vibración en dispositivos móviles')}</p>
-                  </div>
-                  <Switch
-                    checked={notificationSettings.vibrationEnabled}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, vibrationEnabled: checked }))}
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">{t('Horas silenciosas')}</Label>
-                    <p className="text-xs text-muted-foreground">{t('No recibir notificaciones en horarios específicos')}</p>
-                  </div>
-                  <Switch
-                    checked={notificationSettings.quietHours}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, quietHours: checked }))}
-                  />
-                </div>
-
-                {notificationSettings.quietHours && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="quietHoursStart">{t('Inicio')}</Label>
-                      <Input
-                        id="quietHoursStart"
-                        type="time"
-                        value={notificationSettings.quietHoursStart}
-                        onChange={(e) => setNotificationSettings(prev => ({ ...prev, quietHoursStart: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="quietHoursEnd">{t('Fin')}</Label>
-                      <Input
-                        id="quietHoursEnd"
-                        type="time"
-                        value={notificationSettings.quietHoursEnd}
-                        onChange={(e) => setNotificationSettings(prev => ({ ...prev, quietHoursEnd: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <Button onClick={() => handleSaveSettings('notifications')} disabled={loading}>
-                  {loading ? t('Guardando...') : <><Save className="h-4 w-4 mr-2" />{t('Guardar cambios')}</>}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Configuración de Rendimiento */}
         {activeTab === 'performance' && (

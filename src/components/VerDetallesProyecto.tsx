@@ -124,6 +124,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
 
   // Validar que el proyecto existe
   if (!proyecto || !proyecto.id) {
+    console.warn('VerDetallesProyecto: Proyecto inválido recibido:', proyecto);
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
@@ -131,7 +132,9 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Error</h3>
             <p className="text-gray-600 mb-4">No se pudo cargar la información del proyecto.</p>
-            <Button onClick={onClose}>Cerrar</Button>
+            <Button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white">
+              Cerrar
+            </Button>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './lib/i18n';
 import { AppProvider } from './contexts/AppContext';
-import { NotificationProvider } from './contexts/NotificationContext';
+
 import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -229,7 +229,6 @@ function App() {
           <ThemeProvider>
       <TooltipProvider>
         <AppProvider>
-            <NotificationProvider>
                   <Router>
                     <Suspense fallback={<PageLoader />}>
                       <AppRoutes />
@@ -237,7 +236,6 @@ function App() {
                   </Router>
           <Toaster />
           <Sonner />
-            </NotificationProvider>
         </AppProvider>
       </TooltipProvider>
           </ThemeProvider>

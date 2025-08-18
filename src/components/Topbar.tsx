@@ -15,7 +15,7 @@ import {
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { LogOut, User as UserIcon, FolderOpen, CreditCard, Settings as SettingsIcon } from 'lucide-react';
-import NotificationBell from './NotificationBell';
+
 
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useTranslation } from 'react-i18next';
@@ -83,8 +83,7 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
 
 
 
-        {/* Notifications */}
-        <NotificationBell />
+
 
         {/* User info */}
         <div className="flex items-center gap-2 sm:gap-4">

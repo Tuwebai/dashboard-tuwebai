@@ -186,7 +186,7 @@ export default function Sidebar() {
           <nav className="flex flex-col gap-1 p-3 sm:p-4">
             {navItem('/dashboard', <Home className="h-5 w-5" />, t('Dashboard'))}
             {navItem('/proyectos', <FolderKanban className="h-5 w-5" />, t('Proyectos'))}
-            {navItem('/notificaciones', <Bell className="h-5 w-5" />, t('Notificaciones'))}
+
             {navItem('/perfil', <User className="h-5 w-5" />, t('Mi Perfil'))}
             {navItem('/facturacion', <CreditCard className="h-5 w-5" />, t('Facturación'))}
             {navItem('/soporte', <HelpCircle className="h-5 w-5" />, t('Soporte'))}
