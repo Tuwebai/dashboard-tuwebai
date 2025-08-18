@@ -414,12 +414,26 @@ export default function Dashboard() {
                         variant="outline"
                         size="sm"
                         onClick={e => { 
+                          e.preventDefault();
                           e.stopPropagation(); 
                           console.log('Botón Colaborar clickeado, proyecto:', project);
+                          console.log('Proyecto ID:', project?.id);
+                          console.log('Usuario actual:', user);
+                          
                           if (project && project.id) {
                             const url = `/proyectos/${project.id}/colaboracion-cliente`;
                             console.log('Navegando a:', url);
-                            navigate(url);
+                            try {
+                              navigate(url);
+                              console.log('Navegación exitosa');
+                            } catch (error) {
+                              console.error('Error en navegación:', error);
+                              toast({ 
+                                title: 'Error de navegación', 
+                                description: 'No se pudo navegar a la página de colaboración', 
+                                variant: 'destructive' 
+                              });
+                            }
                           } else {
                             console.error('Proyecto inválido:', project);
                             toast({ 
@@ -429,6 +443,8 @@ export default function Dashboard() {
                             });
                           }
                         }}
+                        onMouseDown={e => e.stopPropagation()}
+                        onMouseUp={e => e.stopPropagation()}
                         className="btn-gradient-electric transition-all duration-200 hover:scale-105 hover:shadow-lg"
                       >
                         <Users className="h-4 w-4 mr-1" />
