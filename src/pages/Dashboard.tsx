@@ -409,6 +409,27 @@ export default function Dashboard() {
                         <Eye className="h-4 w-4 mr-1" />
                         {t('Ver Detalles')}
                       </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={e => { 
+                          e.stopPropagation(); 
+                          if (project && project.id) {
+                            navigate(`/proyectos/${project.id}/colaboracion-cliente`);
+                          } else {
+                            toast({ 
+                              title: 'Error', 
+                              description: 'Proyecto inválido', 
+                              variant: 'destructive' 
+                            });
+                          }
+                        }}
+                        className="btn-gradient-electric transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                      >
+                        <Users className="h-4 w-4 mr-1" />
+                        Colaborar
+                      </Button>
           </div>
       </div>
 

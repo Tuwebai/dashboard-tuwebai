@@ -24,6 +24,7 @@ const Proyectos = lazy(() => import('./pages/Proyectos'));
 const ProyectosNuevo = lazy(() => import('./pages/ProyectosNuevo'));
 const EditarProyecto = lazy(() => import('./pages/EditarProyecto'));
 const CollaborationPage = lazy(() => import('./pages/CollaborationPage'));
+const ClientCollaborationPage = lazy(() => import('./pages/ClientCollaborationPage'));
 const CodeEditorPage = lazy(() => import('./pages/CodeEditorPage'));
 const WorkspacePage = lazy(() => import('./pages/WorkspacePage'));
 const VisualBuilder = lazy(() => import('./pages/VisualBuilder'));
@@ -115,6 +116,14 @@ function AppRoutes() {
         <ProtectedRoute>
           <DashboardLayout>
             <CollaborationPage />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/proyectos/:projectId/colaboracion-cliente" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <ClientCollaborationPage />
           </DashboardLayout>
         </ProtectedRoute>
       } />
