@@ -26,7 +26,8 @@ import {
   serverTimestamp,
   getDocs,
   limit,
-  getDoc
+  getDoc,
+  increment
 } from 'firebase/firestore';
 import { 
   MessageSquare, 
@@ -176,23 +177,8 @@ export default function ClientCollaborationPage() {
   const [newComment, setNewComment] = useState('');
   const [commentPhase, setCommentPhase] = useState('');
 
-  // Voice/Video call state (solo para clientes)
-  const [isCallActive, setIsCallActive] = useState(false);
-  const [callParticipants, setCallParticipants] = useState<string[]>([]);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
-
-  // Collaboration tools state
+  // Collaboration state
   const [participants, setParticipants] = useState<string[]>([]);
-  const [isCursorSharing, setIsCursorSharing] = useState(false);
-  const [isPresenceVisible, setIsPresenceVisible] = useState(true);
-  const [notifications, setNotifications] = useState(true);
-
-  // Session state
-  const [sessionConfigOpen, setSessionConfigOpen] = useState(false);
-  const [sessionStatus, setSessionStatus] = useState('Activa');
-  const [sessionParticipants, setSessionParticipants] = useState(participants);
-  const sessionStart = project?.createdAt || new Date().toISOString();
-  const sessionId = projectId;
 
   // Find project by ID
   useEffect(() => {
@@ -228,40 +214,70 @@ export default function ClientCollaborationPage() {
 
     const loadCollaborationData = async () => {
       try {
+        console.log('Cargando datos de colaboración para proyecto:', projectId);
+        
         // Load chat room
         const chatRoomsRef = collection(firestore, 'chatRooms');
         const chatQuery = query(
           chatRoomsRef, 
-          where('projectId', '==', projectId),
-          where('participants', 'array-contains', user.email)
+          where('projectId', '==', projectId)
         );
         
         const chatSnap = await getDocs(chatQuery);
+        let roomId = '';
+        
         if (!chatSnap.empty) {
+          // Usar la primera sala existente
           const room = chatSnap.docs[0];
-          setChatRoomId(room.id);
+          roomId = room.id;
+          setChatRoomId(roomId);
+          console.log('Sala de chat encontrada:', roomId);
           
-          // Listen to messages
-          const messagesRef = collection(firestore, 'chatRooms', room.id, 'messages');
-          const messagesQuery = query(messagesRef, orderBy('timestamp', 'asc'));
-          
-          onSnapshot(messagesQuery, (snapshot) => {
-            const messagesData = snapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            })) as ChatMessage[];
-            setMessages(messagesData);
-            setCollaborationStats(prev => ({ ...prev, totalMessages: messagesData.length }));
-          });
+          // Actualizar participantes si es necesario
+          const roomData = room.data();
+          if (!roomData.participants.includes(user.email)) {
+            await updateDoc(doc(firestore, 'chatRooms', roomId), {
+              participants: [...roomData.participants, user.email]
+            });
+          }
         } else {
-          // Create new chat room
+          // Crear nueva sala de chat
           const newRoom = await addDoc(chatRoomsRef, {
             projectId,
             participants: [user.email, 'tuwebai@gmail.com'],
             createdAt: serverTimestamp(),
-            unreadCount: 0
+            unreadCount: 0,
+            projectName: project.name
           });
-          setChatRoomId(newRoom.id);
+          roomId = newRoom.id;
+          setChatRoomId(roomId);
+          console.log('Nueva sala de chat creada:', roomId);
+        }
+        
+        // Escuchar mensajes en tiempo real
+        if (roomId) {
+          const messagesRef = collection(firestore, 'chatRooms', roomId, 'messages');
+          const messagesQuery = query(messagesRef, orderBy('timestamp', 'asc'));
+          
+          const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+            const messagesData = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            })) as ChatMessage[];
+            console.log('Mensajes actualizados:', messagesData.length);
+            setMessages(messagesData);
+            setCollaborationStats(prev => ({ ...prev, totalMessages: messagesData.length }));
+          }, (error) => {
+            console.error('Error escuchando mensajes:', error);
+            toast({
+              title: 'Error',
+              description: 'No se pudieron cargar los mensajes',
+              variant: 'destructive'
+            });
+          });
+          
+          // Cleanup function
+          return () => unsubscribe();
         }
 
         // Load tasks (solo lectura para clientes)
@@ -344,23 +360,42 @@ export default function ClientCollaborationPage() {
 
   // Send message
   const sendMessage = async () => {
-    if (!newMessage.trim() || !chatRoomId) return;
+    if (!newMessage.trim() || !chatRoomId) {
+      console.log('No se puede enviar mensaje:', { message: newMessage.trim(), chatRoomId });
+      return;
+    }
+
+    const messageText = newMessage.trim();
+    setNewMessage(''); // Limpiar input inmediatamente para mejor UX
 
     try {
+      console.log('Enviando mensaje:', messageText);
+      
       const messageData = {
-        text: newMessage.trim(),
+        text: messageText,
         sender: user.email,
-        senderName: user.name,
+        senderName: user.name || user.email,
         timestamp: serverTimestamp(),
-        type: 'text'
+        type: 'text',
+        projectId: projectId
       };
 
-      await addDoc(collection(firestore, 'chatRooms', chatRoomId, 'messages'), messageData);
-      setNewMessage('');
+      const messageRef = await addDoc(collection(firestore, 'chatRooms', chatRoomId, 'messages'), messageData);
+      console.log('Mensaje enviado exitosamente:', messageRef.id);
+      
+      // Actualizar contador de mensajes no leídos para otros participantes
+      await updateDoc(doc(firestore, 'chatRooms', chatRoomId), {
+        lastMessage: messageText,
+        lastMessageTime: serverTimestamp(),
+        unreadCount: increment(1)
+      });
+      
     } catch (error) {
+      console.error('Error enviando mensaje:', error);
+      setNewMessage(messageText); // Restaurar mensaje si falla
       toast({
         title: 'Error',
-        description: 'No se pudo enviar el mensaje',
+        description: 'No se pudo enviar el mensaje. Inténtalo de nuevo.',
         variant: 'destructive'
       });
     }
@@ -447,22 +482,7 @@ export default function ClientCollaborationPage() {
     }
   };
 
-  // Call functions
-  const handleCallToggle = (type: 'voice' | 'video') => {
-    setIsCallActive(!isCallActive);
-    toast({
-      title: isCallActive ? 'Llamada terminada' : 'Llamada iniciada',
-      description: `Llamada ${type} ${isCallActive ? 'terminada' : 'iniciada'}`
-    });
-  };
 
-  const handleScreenShareToggle = () => {
-    setIsScreenSharing(!isScreenSharing);
-    toast({
-      title: isScreenSharing ? 'Compartir pantalla detenido' : 'Compartir pantalla iniciado',
-      description: isScreenSharing ? 'Ya no estás compartiendo tu pantalla' : 'Estás compartiendo tu pantalla'
-    });
-  };
 
   // Utility functions
   const getStatusIcon = (status: Task['status']) => {
@@ -532,16 +552,12 @@ export default function ClientCollaborationPage() {
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Users className="h-3 w-3" />
-            {participants.length} participantes
-          </Badge>
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Activity className="h-3 w-3" />
-            {sessionStatus}
-          </Badge>
-        </div>
+                 <div className="flex items-center gap-4">
+           <Badge variant="outline" className="flex items-center gap-1">
+             <Users className="h-3 w-3" />
+             {participants.length} participantes
+           </Badge>
+         </div>
       </div>
 
       {/* Stats Cards */}
@@ -619,54 +635,7 @@ export default function ClientCollaborationPage() {
         </Card>
       </div>
 
-      {/* Collaboration Tools */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5" />
-            Herramientas de Colaboración
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <Button
-              variant={isCallActive ? "destructive" : "default"}
-              onClick={() => handleCallToggle('voice')}
-              className="flex items-center gap-2"
-            >
-              {isCallActive ? <Phone className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
-              {isCallActive ? 'Terminar Llamada' : 'Llamada de Voz'}
-            </Button>
-            
-            <Button
-              variant={isCallActive ? "destructive" : "default"}
-              onClick={() => handleCallToggle('video')}
-              className="flex items-center gap-2"
-            >
-              {isCallActive ? <Video className="h-4 w-4" /> : <Video className="h-4 w-4" />}
-              {isCallActive ? 'Terminar Video' : 'Video Llamada'}
-            </Button>
-            
-            <Button
-              variant={isScreenSharing ? "destructive" : "outline"}
-              onClick={handleScreenShareToggle}
-              className="flex items-center gap-2"
-            >
-              <ScreenShare className="h-4 w-4" />
-              {isScreenSharing ? 'Detener Compartir' : 'Compartir Pantalla'}
-            </Button>
-            
-            <Button
-              variant="outline"
-              onClick={() => setSessionConfigOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              Configuración
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -699,31 +668,43 @@ export default function ClientCollaborationPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="h-96 overflow-y-auto space-y-4 border rounded-lg p-4">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.sender === user.email ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        message.sender === user.email
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium">{message.senderName}</span>
-                        <span className="text-xs opacity-70">
-                          {new Date(message.timestamp).toLocaleTimeString()}
-                        </span>
-                      </div>
-                      <p className="text-sm">{message.text}</p>
-                    </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
+                             <div className="h-96 overflow-y-auto space-y-4 border rounded-lg p-4 bg-muted/20">
+                 {messages.length === 0 ? (
+                   <div className="text-center py-8 text-muted-foreground">
+                     <MessageSquare className="h-8 w-8 mx-auto mb-2" />
+                     <p>No hay mensajes aún. ¡Sé el primero en escribir!</p>
+                   </div>
+                 ) : (
+                   messages.map((message) => (
+                     <div
+                       key={message.id}
+                       className={`flex ${message.sender === user.email ? 'justify-end' : 'justify-start'}`}
+                     >
+                       <div
+                         className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg shadow-sm ${
+                           message.sender === user.email
+                             ? 'bg-primary text-primary-foreground'
+                             : 'bg-background border border-border'
+                         }`}
+                       >
+                         <div className="flex items-center gap-2 mb-1">
+                           <span className="text-xs font-medium">
+                             {message.sender === user.email ? 'Tú' : message.senderName}
+                           </span>
+                           <span className="text-xs opacity-70">
+                             {message.timestamp ? new Date(message.timestamp).toLocaleTimeString('es-ES', {
+                               hour: '2-digit',
+                               minute: '2-digit'
+                             }) : 'Ahora'}
+                           </span>
+                         </div>
+                         <p className="text-sm break-words">{message.text}</p>
+                       </div>
+                     </div>
+                   ))
+                 )}
+                 <div ref={messagesEndRef} />
+               </div>
               
               <div className="flex gap-2">
                 <Input
@@ -970,25 +951,7 @@ export default function ClientCollaborationPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Modal de configuración de sesión */}
-      <Dialog open={sessionConfigOpen} onOpenChange={setSessionConfigOpen}>
-        <DialogContent className="max-w-md bg-zinc-900/95">
-          <DialogHeader>
-            <DialogTitle>Configuración de Sesión</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Button className="w-full" onClick={() => { setSessionStatus('Finalizada'); setSessionConfigOpen(false); }}>
-              Cerrar sesión actual
-            </Button>
-            <Button className="w-full" onClick={() => toast({ title: 'Historial', description: 'Función de historial real pendiente' })}>
-              Ver historial de actividad
-            </Button>
-            <Button className="w-full" onClick={() => { setSessionStatus(sessionStatus === 'Activa' ? 'Finalizada' : 'Activa'); setSessionConfigOpen(false); }}>
-              Cambiar estado de la sesión ({sessionStatus === 'Activa' ? 'Finalizada' : 'Activa'})
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      
     </div>
   );
 }
