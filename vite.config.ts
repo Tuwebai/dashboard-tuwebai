@@ -16,17 +16,9 @@ export default defineConfig({
     minify: 'terser',
     sourcemap: false,
     
-    // Configuración de rollup para optimización
+    // Configuración de rollup simplificada para evitar problemas de exportación
     rollupOptions: {
       output: {
-        // Separar chunks para mejor caching
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs'],
-          charts: ['recharts'],
-          utils: ['date-fns', 'clsx', 'tailwind-merge']
-        },
-        
         // Optimizar nombres de archivos
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
