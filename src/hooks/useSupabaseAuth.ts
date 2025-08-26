@@ -2,10 +2,22 @@ import { useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
+// Función para obtener la URL base correcta según el entorno
+const getBaseUrl = () => {
+  // En desarrollo, usar localhost
+  if (import.meta.env.DEV) {
+    return 'http://localhost:8083';
+  }
+  
+  // En producción, usar la URL de Netlify o la URL actual
+  return import.meta.env.VITE_PUBLIC_URL || window.location.origin;
+};
+
 export function useSupabaseAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,7 +74,7 @@ export function useSupabaseAuth() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${getBaseUrl()}/auth/callback`
         }
       });
 
@@ -86,7 +98,7 @@ export function useSupabaseAuth() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${getBaseUrl()}/auth/callback`
         }
       });
 
@@ -166,17 +178,21 @@ export function useSupabaseAuth() {
   const resetPassword = async (email: string) => {
     try {
       setError(null);
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
-      });
+      setLoading(true);
       
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${getBaseUrl()}/auth/reset-password`
+      });
+
       if (error) {
         console.warn('Error en reset password:', error);
         setError(error.message);
+        setLoading(false);
       }
     } catch (error: any) {
       console.warn('Error en resetPassword:', error);
       setError(error.message);
+      setLoading(false);
     }
   };
 
