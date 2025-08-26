@@ -16,11 +16,12 @@ import {
   BarController,
   DoughnutController
 } from 'chart.js';
-import { Line, Bar, Doughnut, Radar } from 'react-chartjs-2';
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Download, Mail, TrendingUp, Users, DollarSign, Target, Activity } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, Target, Activity } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 // Registrar componentes de Chart.js
 ChartJS.register(
@@ -73,145 +74,274 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
   const [timeRange, setTimeRange] = useState('30d');
   const [loading, setLoading] = useState(true);
 
-  // Generar datos de ejemplo basados en métricas reales
-  const generateChartData = () => {
-    const now = new Date();
-    const labels = [];
-    
-    // Generar etiquetas de fechas según el rango seleccionado
-    if (timeRange === '7d') {
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-        labels.push(date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }));
+  // Cargar datos reales desde la base de datos
+  const loadRealData = async () => {
+    try {
+      setLoading(true);
+      
+      // Cargar usuarios
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('created_at')
+        .order('created_at', { ascending: true });
+      
+      if (usersError) throw usersError;
+
+      // Cargar pagos
+      const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
+        .select('amount, created_at, status')
+        .eq('status', 'completed')
+        .order('created_at', { ascending: true });
+      
+      if (paymentsError) throw paymentsError;
+
+      // Cargar proyectos
+      const { data: projects, error: projectsError } = await supabase
+        .from('projects')
+        .select('status, created_at')
+        .order('created_at', { ascending: true });
+      
+      if (projectsError) throw projectsError;
+
+      // Cargar tickets
+      const { data: tickets, error: ticketsError } = await supabase
+        .from('tickets')
+        .select('priority, status, created_at')
+        .order('created_at', { ascending: true });
+      
+      if (ticketsError) throw ticketsError;
+
+      // Generar etiquetas de fechas según el rango seleccionado
+      const now = new Date();
+      const labels = [];
+      
+      if (timeRange === '7d') {
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - i);
+          labels.push(date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }));
+        }
+      } else if (timeRange === '30d') {
+        for (let i = 29; i >= 0; i--) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - i);
+          labels.push(date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }));
+        }
+      } else if (timeRange === '90d') {
+        for (let i = 89; i >= 0; i -= 3) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - i);
+          labels.push(date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }));
+        }
       }
-    } else if (timeRange === '30d') {
-      for (let i = 29; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-        labels.push(date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }));
-      }
-    } else if (timeRange === '90d') {
-      for (let i = 89; i >= 0; i -= 3) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-        labels.push(date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }));
-      }
+
+      // Procesar datos de usuarios por fecha
+      const userGrowthData = labels.map((label, index) => {
+        const targetDate = new Date(now);
+        if (timeRange === '7d') {
+          targetDate.setDate(targetDate.getDate() - (6 - index));
+        } else if (timeRange === '30d') {
+          targetDate.setDate(targetDate.getDate() - (29 - index));
+        } else if (timeRange === '90d') {
+          targetDate.setDate(targetDate.getDate() - (89 - index * 3));
+        }
+        
+        const endDate = new Date(targetDate);
+        endDate.setDate(endDate.getDate() + 1);
+        
+        return users?.filter(user => {
+          const userDate = new Date(user.created_at);
+          return userDate >= targetDate && userDate < endDate;
+        }).length || 0;
+      });
+
+      // Procesar datos de ingresos por fecha
+      const revenueData = labels.map((label, index) => {
+        const targetDate = new Date(now);
+        if (timeRange === '7d') {
+          targetDate.setDate(targetDate.getDate() - (6 - index));
+        } else if (timeRange === '30d') {
+          targetDate.setDate(targetDate.getDate() - (29 - index));
+        } else if (timeRange === '90d') {
+          targetDate.setDate(targetDate.getDate() - (89 - index * 3));
+        }
+        
+        const endDate = new Date(targetDate);
+        endDate.setDate(endDate.getDate() + 1);
+        
+        return payments?.filter(payment => {
+          const paymentDate = new Date(payment.created_at);
+          return paymentDate >= targetDate && paymentDate < endDate;
+        }).reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0) || 0;
+      });
+
+      // Procesar distribución de proyectos
+      const projectStatuses = projects?.reduce((acc, project) => {
+        const status = project.status || 'unknown';
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      const projectLabels = Object.keys(projectStatuses);
+      const projectData = Object.values(projectStatuses);
+
+      // Procesar tickets por prioridad
+      const ticketPriorities = tickets?.reduce((acc, ticket) => {
+        const priority = ticket.priority || 'unknown';
+        acc[priority] = (acc[priority] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      const ticketLabels = Object.keys(ticketPriorities);
+      const ticketData = Object.values(ticketPriorities);
+
+      // Procesar actividad del sistema (última semana)
+      const weekLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+      const weekData = weekLabels.map((_, index) => {
+        const targetDate = new Date(now);
+        const dayOfWeek = targetDate.getDay();
+        const daysToSubtract = dayOfWeek - index;
+        targetDate.setDate(targetDate.getDate() - daysToSubtract);
+        
+        const endDate = new Date(targetDate);
+        endDate.setDate(endDate.getDate() + 1);
+        
+        // Contar actividad (usuarios + proyectos + tickets creados ese día)
+        const userActivity = users?.filter(user => {
+          const userDate = new Date(user.created_at);
+          return userDate >= targetDate && userDate < endDate;
+        }).length || 0;
+
+        const projectActivity = projects?.filter(project => {
+          const projectDate = new Date(project.created_at);
+          return projectDate >= targetDate && projectDate < endDate;
+        }).length || 0;
+
+        const ticketActivity = tickets?.filter(ticket => {
+          const ticketDate = new Date(ticket.created_at);
+          return ticketDate >= targetDate && ticketDate < endDate;
+        }).length || 0;
+
+        return userActivity + projectActivity + ticketActivity;
+      });
+
+      setChartData({
+        userGrowth: {
+          labels,
+          datasets: [
+            {
+              label: 'Usuarios Registrados',
+              data: userGrowthData,
+              borderColor: 'rgb(59, 130, 246)',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              fill: true,
+              tension: 0.4,
+              pointBackgroundColor: 'rgb(59, 130, 246)',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            }
+          ]
+        },
+        monthlyRevenue: {
+          labels,
+          datasets: [
+            {
+              label: 'Ingresos ($)',
+              data: revenueData,
+              backgroundColor: 'rgba(34, 197, 94, 0.8)',
+              borderColor: 'rgb(34, 197, 94)',
+              borderWidth: 2,
+              borderRadius: 4,
+              borderSkipped: false
+            }
+          ]
+        },
+        projectDistribution: {
+          labels: projectLabels.length > 0 ? projectLabels : ['Sin datos'],
+          datasets: [
+            {
+              data: projectData.length > 0 ? projectData : [0],
+              backgroundColor: [
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(34, 197, 94, 0.8)',
+                'rgba(251, 191, 36, 0.8)',
+                'rgba(239, 68, 68, 0.8)',
+                'rgba(147, 51, 234, 0.8)'
+              ],
+              borderColor: [
+                'rgb(59, 130, 246)',
+                'rgb(34, 197, 94)',
+                'rgb(251, 191, 36)',
+                'rgb(239, 68, 68)',
+                'rgb(147, 51, 234)'
+              ],
+              borderWidth: 2,
+              hoverOffset: 4
+            }
+          ]
+        },
+        ticketPriority: {
+          labels: ticketLabels.length > 0 ? ticketLabels : ['Sin datos'],
+          datasets: [
+            {
+              label: 'Tickets por Prioridad',
+              data: ticketData.length > 0 ? ticketData : [0],
+              backgroundColor: [
+                'rgba(239, 68, 68, 0.8)',
+                'rgba(251, 191, 36, 0.8)',
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(34, 197, 94, 0.8)',
+                'rgba(147, 51, 234, 0.8)'
+              ],
+              borderColor: [
+                'rgb(239, 68, 68)',
+                'rgb(251, 191, 36)',
+                'rgb(59, 130, 246)',
+                'rgb(34, 197, 94)',
+                'rgb(147, 51, 234)'
+              ],
+              borderWidth: 2
+            }
+          ]
+        },
+        systemActivity: {
+          labels: weekLabels,
+          datasets: [
+            {
+              label: 'Actividad del Sistema',
+              data: weekData,
+              borderColor: 'rgb(147, 51, 234)',
+              backgroundColor: 'rgba(147, 51, 234, 0.1)',
+              fill: true,
+              tension: 0.4,
+              pointBackgroundColor: 'rgb(147, 51, 234)',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              pointRadius: 4
+            }
+          ]
+        }
+      });
+    } catch (error) {
+      console.error('Error loading chart data:', error);
+      // Si hay error, mostrar gráficos vacíos
+      setChartData({
+        userGrowth: { labels: [], datasets: [{ label: 'Sin datos', data: [], borderColor: 'rgb(156, 163, 175)', backgroundColor: 'rgba(156, 163, 175, 0.1)' }] },
+        monthlyRevenue: { labels: [], datasets: [{ label: 'Sin datos', data: [], backgroundColor: 'rgba(156, 163, 175, 0.8)' }] },
+        projectDistribution: { labels: ['Sin datos'], datasets: [{ data: [0], backgroundColor: ['rgba(156, 163, 175, 0.8)'] }] },
+        ticketPriority: { labels: ['Sin datos'], datasets: [{ label: 'Sin datos', data: [0], backgroundColor: ['rgba(156, 163, 175, 0.8)'] }] },
+        systemActivity: { labels: ['Sin datos'], datasets: [{ label: 'Sin datos', data: [0], borderColor: 'rgb(156, 163, 175)' }] }
+      });
+    } finally {
+      setLoading(false);
     }
-
-    // Simular datos reales con tendencias
-    const userGrowthData = labels.map((_, index) => {
-      const baseUsers = 150;
-      const growthRate = 0.05; // 5% de crecimiento diario
-      return Math.floor(baseUsers * Math.pow(1 + growthRate, index) + Math.random() * 10);
-    });
-
-    const revenueData = labels.map((_, index) => {
-      const baseRevenue = 2500;
-      const volatility = 0.15; // 15% de volatilidad
-      return Math.floor(baseRevenue * (1 + (Math.random() - 0.5) * volatility));
-    });
-
-    setChartData({
-      userGrowth: {
-        labels,
-        datasets: [
-          {
-            label: 'Usuarios Activos',
-            data: userGrowthData,
-            borderColor: 'rgb(59, 130, 246)',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            fill: true,
-            tension: 0.4,
-            pointBackgroundColor: 'rgb(59, 130, 246)',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointRadius: 4,
-            pointHoverRadius: 6
-          }
-        ]
-      },
-      monthlyRevenue: {
-        labels,
-        datasets: [
-          {
-            label: 'Ingresos Mensuales ($)',
-            data: revenueData,
-            backgroundColor: 'rgba(34, 197, 94, 0.8)',
-            borderColor: 'rgb(34, 197, 94)',
-            borderWidth: 2,
-            borderRadius: 4,
-            borderSkipped: false
-          }
-        ]
-      },
-      projectDistribution: {
-        labels: ['En Desarrollo', 'Completados', 'Pendientes', 'Pausados'],
-        datasets: [
-          {
-            data: [35, 28, 22, 15],
-            backgroundColor: [
-              'rgba(59, 130, 246, 0.8)',
-              'rgba(34, 197, 94, 0.8)',
-              'rgba(251, 191, 36, 0.8)',
-              'rgba(239, 68, 68, 0.8)'
-            ],
-            borderColor: [
-              'rgb(59, 130, 246)',
-              'rgb(34, 197, 94)',
-              'rgb(251, 191, 36)',
-              'rgb(239, 68, 68)'
-            ],
-            borderWidth: 2,
-            hoverOffset: 4
-          }
-        ]
-      },
-      ticketPriority: {
-        labels: ['Críticos', 'Altos', 'Medios', 'Bajos'],
-        datasets: [
-          {
-            label: 'Tickets por Prioridad',
-            data: [12, 28, 45, 23],
-            backgroundColor: [
-              'rgba(239, 68, 68, 0.8)',
-              'rgba(251, 191, 36, 0.8)',
-              'rgba(59, 130, 246, 0.8)',
-              'rgba(34, 197, 94, 0.8)'
-            ],
-            borderColor: [
-              'rgb(239, 68, 68)',
-              'rgb(251, 191, 36)',
-              'rgb(59, 130, 246)',
-              'rgb(34, 197, 94)'
-            ],
-            borderWidth: 2
-          }
-        ]
-      },
-      systemActivity: {
-        labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-        datasets: [
-          {
-            label: 'Actividad del Sistema',
-            data: [85, 92, 78, 95, 88, 65, 72],
-            borderColor: 'rgb(147, 51, 234)',
-            backgroundColor: 'rgba(147, 51, 234, 0.1)',
-            fill: true,
-            tension: 0.4,
-            pointBackgroundColor: 'rgb(147, 51, 234)',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointRadius: 4
-          }
-        ]
-      }
-    });
   };
 
   useEffect(() => {
-    generateChartData();
-    setLoading(false);
+    loadRealData();
   }, [timeRange]);
 
   const chartOptions = {
@@ -274,6 +404,15 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
     );
   }
 
+  if (!chartData) {
+    return (
+      <div className="text-center py-8">
+        <Activity className="h-12 w-12 text-zinc-400 mx-auto mb-4" />
+        <p className="text-zinc-400">No hay datos disponibles para mostrar</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header con controles */}
@@ -314,7 +453,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <Line data={chartData!.userGrowth} options={chartOptions} />
+              <Line data={chartData.userGrowth} options={chartOptions} />
             </div>
           </CardContent>
         </Card>
@@ -324,12 +463,12 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center text-white">
               <DollarSign className="h-5 w-5 mr-2 text-green-400" />
-              Ingresos Mensuales
+              Ingresos
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <Bar data={chartData!.monthlyRevenue} options={chartOptions} />
+              <Bar data={chartData.monthlyRevenue} options={chartOptions} />
             </div>
           </CardContent>
         </Card>
@@ -344,7 +483,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <Doughnut data={chartData!.projectDistribution} options={doughnutOptions} />
+              <Doughnut data={chartData.projectDistribution} options={doughnutOptions} />
             </div>
           </CardContent>
         </Card>
@@ -359,7 +498,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <Bar data={chartData!.ticketPriority} options={chartOptions} />
+              <Bar data={chartData.ticketPriority} options={chartOptions} />
             </div>
           </CardContent>
         </Card>
@@ -375,7 +514,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
         </CardHeader>
         <CardContent>
           <div className="h-80">
-            <Line data={chartData!.systemActivity} options={chartOptions} />
+            <Line data={chartData.systemActivity} options={chartOptions} />
           </div>
         </CardContent>
       </Card>
