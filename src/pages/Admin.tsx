@@ -38,7 +38,6 @@ import { ProjectsManagement } from '@/components/admin/ProjectsManagement';
 import NotificationsManager from '@/components/admin/NotificationsManager';
 import NotificationBell from '@/components/admin/NotificationBell';
 import ExecutiveCharts from '@/components/admin/ExecutiveCharts';
-import ReportsSystem from '@/components/admin/ReportsSystem';
 
 
 export default function Admin() {
@@ -492,12 +491,12 @@ export default function Admin() {
                           variant="outline" 
                           className="w-full justify-start"
                           onClick={() => {
-                            setActiveSection('reports');
-                            window.location.hash = 'reports';
+                            setActiveSection('advanced-analytics');
+                            window.location.hash = 'advanced-analytics';
                           }}
                         >
-                          <FileText className="h-4 w-4 mr-2" />
-                          Sistema de Reportes
+                          <BarChart3 className="h-4 w-4 mr-2" />
+                          Analytics Avanzado
                         </Button>
                       </div>
                     </div>
@@ -685,10 +684,6 @@ export default function Admin() {
 
         {activeSection === 'notifications' && (
           <NotificationsManager />
-        )}
-
-        {activeSection === 'reports' && (
-          <ReportsSystem />
         )}
 
         {activeSection === 'settings' && (
