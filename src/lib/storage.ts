@@ -1,5 +1,4 @@
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll, getMetadata } from 'firebase/storage';
-import { app } from './firebase';
+
 
 export interface FileData {
   id: string;

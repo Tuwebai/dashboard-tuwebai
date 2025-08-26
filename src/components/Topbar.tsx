@@ -12,8 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+
 import { LogOut, User as UserIcon, FolderOpen, CreditCard, Settings as SettingsIcon } from 'lucide-react';
 
 
@@ -27,7 +26,7 @@ interface TopbarProps {
 
 export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarProps) {
   const { t } = useTranslation();
-  const { user, projects } = useApp();
+  const { user, projects, logout } = useApp();
   const navigate = useNavigate();
 
 
@@ -94,11 +93,7 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Avatar className="h-8 w-8 sm:h-10 sm:w-10 cursor-pointer border-2 border-primary">
-                {user?.photoURL ? (
-                  <AvatarImage src={user.photoURL} alt={user.name} />
-                ) : (
-                  <AvatarFallback>{user?.name?.charAt(0).toUpperCase()}</AvatarFallback>
-                )}
+                <AvatarFallback>{(user?.full_name || user?.email || '').charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -120,7 +115,7 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={async () => {
-                  await signOut(auth);
+                  await logout();
                   navigate('/login');
                 }}
                 className="text-destructive"

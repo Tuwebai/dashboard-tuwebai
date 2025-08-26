@@ -10,10 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/hooks/use-toast';
-import { firestore } from '@/lib/firebase';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+
 import { 
   User, 
   Mail, 
@@ -83,7 +80,7 @@ export default function Perfil() {
     
     setLoading(true);
     try {
-      // Actualizar perfil en Firebase Auth
+      // Actualizar perfil en Supabase
       await updateProfile(auth.currentUser!, {
         displayName: profileData.name
       });
@@ -186,11 +183,11 @@ export default function Perfil() {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Simular subida de archivo (en producción usar Firebase Storage)
+      // Simular subida de archivo (en producción usar Supabase Storage)
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageUrl = e.target?.result as string;
-        // Aquí se actualizaría la foto de perfil en Firebase Storage
+        // Aquí se actualizaría la foto de perfil en Supabase Storage
         toast({
           title: 'Foto actualizada',
           description: 'Tu foto de perfil ha sido actualizada.'

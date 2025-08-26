@@ -26,7 +26,7 @@ import {
   AlertCircle,
   XCircle
 } from 'lucide-react';
-import { firestore } from '@/lib/firebase';
+
 import { 
   collection, 
   getDocs, 
@@ -36,7 +36,7 @@ import {
   limit,
   addDoc,
   serverTimestamp
-} from 'firebase/firestore';
+
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,

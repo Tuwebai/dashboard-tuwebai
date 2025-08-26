@@ -24,8 +24,7 @@ import {
   Globe,
   Lock
 } from 'lucide-react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { firestore } from '@/lib/firebase';
+
 
 export interface Workspace {
   id: string;

@@ -22,16 +22,17 @@ import {
   Zap,
   Code,
   BarChart,
-  Eye
+  Eye,
+  Key
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Logo from './Logo';
 import { useEffect, useState } from 'react';
-import { firestore } from '@/lib/firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
+
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '@/lib/supabase';
 
 export default function Sidebar() {
   const { user, logout } = useApp();
@@ -45,19 +46,38 @@ export default function Sidebar() {
   });
   const { t } = useTranslation();
 
-  // Cargar contadores
+  // Cargar contadores con Supabase
   useEffect(() => {
     if (user?.role === 'admin') {
-      const unsubUsers = onSnapshot(collection(firestore, 'users'), snap => setCounts(c => ({ ...c, users: snap.size })));
-      const unsubProjects = onSnapshot(collection(firestore, 'projects'), snap => setCounts(c => ({ ...c, projects: snap.size })));
-      const unsubTickets = onSnapshot(collection(firestore, 'tickets'), snap => setCounts(c => ({ ...c, tickets: snap.size })));
-      const unsubPayments = onSnapshot(collection(firestore, 'pagos'), snap => setCounts(c => ({ ...c, payments: snap.size })));
-      return () => {
-        unsubUsers();
-        unsubProjects();
-        unsubTickets();
-        unsubPayments();
+      const loadCounts = async () => {
+        try {
+          // Cargar contadores desde Supabase
+          const [usersResult, projectsResult, ticketsResult, paymentsResult] = await Promise.all([
+            supabase.from('users').select('id', { count: 'exact' }),
+            supabase.from('projects').select('id', { count: 'exact' }),
+            supabase.from('tickets').select('id', { count: 'exact' }),
+            supabase.from('payments').select('id', { count: 'exact' })
+          ]);
+
+          setCounts({
+            users: usersResult.count || 0,
+            projects: projectsResult.count || 0,
+            tickets: ticketsResult.count || 0,
+            payments: paymentsResult.count || 0
+          });
+        } catch (error) {
+          console.error('Error loading counts:', error);
+          // Mantener valores por defecto en caso de error
+          setCounts({
+            users: 0,
+            projects: 0,
+            tickets: 0,
+            payments: 0
+          });
+        }
       };
+
+      loadCounts();
     }
   }, [user]);
 
@@ -92,13 +112,17 @@ export default function Sidebar() {
   );
 
   const adminNavItem = (hash: string, icon: JSX.Element, label: string, count?: number, badge?: string) => {
-    const isActive = location.pathname === '/admin' && window.location.hash === `#${hash}`;
+    const isActive = location.pathname === '/admin' && (hash === 'dashboard' ? !window.location.hash : window.location.hash === `#${hash}`);
     return (
       <button
         onClick={() => {
           navigate('/admin');
           setTimeout(() => {
-            window.location.hash = hash;
+            if (hash === 'dashboard') {
+              window.location.hash = '';
+            } else {
+              window.location.hash = hash;
+            }
           }, 100);
         }}
         className={`flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition-colors text-base w-full
@@ -154,7 +178,7 @@ export default function Sidebar() {
             <div className="mb-4">
               <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-4 py-2 mb-2">{t('Principal')}</div>
               <div className="space-y-1">
-                {navItem('/admin', <BarChart3 className="h-5 w-5" />, t('Dashboard'))}
+                {adminNavItem('dashboard', <BarChart3 className="h-5 w-5" />, t('Dashboard'))}
                 {adminNavItem('usuarios', <Users className="h-5 w-5" />, t('Usuarios'), counts.users)}
                 {adminNavItem('proyectos', <FolderKanban className="h-5 w-5" />, t('Proyectos'), counts.projects)}
                 {adminNavItem('tickets', <Ticket className="h-5 w-5" />, t('Tickets'), counts.tickets)}
@@ -175,7 +199,9 @@ export default function Sidebar() {
             <div className="mb-4">
               <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-4 py-2 mb-2">Sistema</div>
               <div className="space-y-1">
+                {navItem('/code-editor', <Code className="h-5 w-5" />, 'Código')}
                 {navItem('/user-management', <Users className="h-5 w-5" />, 'Gestión de Usuarios')}
+                {navItem('/environment', <Key className="h-5 w-5" />, 'Variables de Entorno')}
                 {adminNavItem('notifications', <Bell className="h-5 w-5" />, 'Notificaciones')}
                 {adminNavItem('settings', <Settings className="h-5 w-5" />, 'Configuración')}
               </div>

@@ -5,8 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { firestore } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+
 import { Users, UserPlus, Crown, Trash2, Mail } from 'lucide-react';
 
 interface Member {

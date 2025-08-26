@@ -12,23 +12,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { firestore } from '@/lib/firebase';
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  onSnapshot, 
-  query, 
-  where, 
-  orderBy, 
-  serverTimestamp,
-  getDocs,
-  limit,
-  getDoc,
-  increment
-} from 'firebase/firestore';
 import { 
   MessageSquare, 
   FileText, 
@@ -426,12 +409,12 @@ export default function ClientCollaborationPage() {
         });
       }, 200);
 
-      // Simular subida de archivo (en producción usar Firebase Storage)
+      // Simular subida de archivo (en producción usar Supabase Storage)
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const fileData = {
         name: file.name,
-        url: URL.createObjectURL(file), // En producción sería la URL de Firebase Storage
+        url: URL.createObjectURL(file), // En producción sería la URL de Supabase Storage
         size: file.size,
         type: file.type,
         uploadedBy: user.email,
@@ -509,12 +492,12 @@ export default function ClientCollaborationPage() {
     }
   };
 
-  // Función utilitaria para manejar timestamps de Firebase
-  const formatFirebaseTimestamp = (timestamp: any, options?: Intl.DateTimeFormatOptions) => {
+  // Función utilitaria para manejar timestamps de Supabase
+  const formatSupabaseTimestamp = (timestamp: any, options?: Intl.DateTimeFormatOptions) => {
     try {
       if (!timestamp) return 'Ahora';
       
-      // Firebase timestamp viene como objeto con toDate() method
+      // Supabase timestamp viene como string ISO
       const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
       
       if (isNaN(date.getTime())) {
@@ -723,7 +706,7 @@ export default function ClientCollaborationPage() {
                              {message.sender === user.email ? 'Tú' : message.senderName}
                            </span>
                            <span className="text-xs opacity-70">
-                             {formatFirebaseTimestamp(message.timestamp)}
+                             {formatSupabaseTimestamp(message.timestamp)}
                            </span>
                          </div>
                          <p className="text-sm break-words">{message.text}</p>

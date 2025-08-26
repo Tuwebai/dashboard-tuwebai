@@ -1,16 +1,4 @@
-import { firestore } from './firebase';
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  doc, 
-  getDoc, 
-  query, 
-  where, 
-  getDocs,
-  serverTimestamp,
-  onSnapshot
-} from 'firebase/firestore';
+
 import { MERCADOPAGO_CONFIG, PAYMENT_TYPES, PAYMENT_STATUS, formatCurrency, toCents } from './mercadopago';
 
 export interface Payment {

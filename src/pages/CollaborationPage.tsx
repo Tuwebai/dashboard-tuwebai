@@ -12,22 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { firestore } from '@/lib/firebase';
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  onSnapshot, 
-  query, 
-  where, 
-  orderBy, 
-  serverTimestamp,
-  getDocs,
-  limit,
-  getDoc
-} from 'firebase/firestore';
+
 import { 
   MessageSquare, 
   FileText, 
@@ -539,7 +524,7 @@ export default function CollaborationPage() {
       const filesRef = collection(firestore, 'projectFiles');
       await addDoc(filesRef, {
         name: file.name,
-        url: URL.createObjectURL(file), // In production, upload to Firebase Storage
+                    url: URL.createObjectURL(file), // In production, upload to Supabase Storage
         size: file.size,
         type: file.type,
         uploadedBy: user.email,

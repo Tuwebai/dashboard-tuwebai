@@ -1,19 +1,4 @@
-import { firestore } from './firebase';
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  updateDoc, 
-  addDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
-  serverTimestamp,
-  writeBatch,
-  onSnapshot
-} from 'firebase/firestore';
+
 
 export interface TicketWorkflow {
   id: string;

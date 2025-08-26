@@ -4,8 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useApp } from '@/contexts/AppContext';
 import { useEffect, useState } from 'react';
-import { firestore } from '@/lib/firebase';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+
 import { Navigate } from 'react-router-dom';
 import { Download, CreditCard, Calendar, FileText, TrendingUp, AlertCircle, Plus, ExternalLink, CheckCircle, Star, Zap, Globe, Users, Shield } from 'lucide-react';
 import { Label } from '@/components/ui/label';

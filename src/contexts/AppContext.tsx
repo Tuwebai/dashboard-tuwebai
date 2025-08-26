@@ -1,38 +1,27 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { firestore } from '@/lib/firebase';
-import { auth } from '@/lib/firebase';
-import {
-  collection,
-  doc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot,
-  query,
-  where,
-  addDoc,
-  getDocs,
-  orderBy,
-  serverTimestamp,
-  getDoc,
-  limit,
-  startAfter,
-  enableNetwork,
-  disableNetwork
-} from 'firebase/firestore';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, User as FirebaseUser, updateProfile, signInWithPopup, GoogleAuthProvider, AuthProvider } from 'firebase/auth';
-import { initializeChatData, initializeCommentsData, initializeTasksData, initializeAdminSystemData, cleanSimulatedData } from '@/utils/initializeData';
+import { supabase } from '@/lib/supabase';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { userService, ticketService } from '@/lib/supabaseService';
+import { projectService } from '@/lib/projectService';
 import { toast as toastGlobal } from '@/hooks/use-toast';
+import { SupabaseError } from '@/components/SupabaseError';
 
 export interface Project {
   id: string;
   name: string;
-  description: string;
-  type: 'Web' | 'App' | 'Landing' | 'Ecommerce' | string;
-  funcionalidades: string[];
-  createdAt: string;
-  updatedAt: string;
-  ownerEmail: string;
+  description?: string;
+  technologies: string[];
+  environment_variables?: Record<string, any>;
+  status: 'development' | 'production' | 'paused' | 'maintenance';
+  github_repository_url?: string;
+  customicon?: string;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+  is_active: boolean;
+  // Campos extendidos para compatibilidad
+  type?: 'Web' | 'App' | 'Landing' | 'Ecommerce' | string;
+  funcionalidades?: string[];
   fases?: Array<{
     key: string;
     estado: 'Pendiente' | 'En Progreso' | 'Terminado';
@@ -51,12 +40,13 @@ export interface Project {
 }
 
 export interface User {
-  uid?: string;
-  name: string;
+  id: string;
   email: string;
+  full_name: string | null;
   role: 'admin' | 'user';
-  photoURL?: string;
-  // Perfil
+  created_at: string;
+  updated_at: string;
+  // Perfil extendido
   phone?: string;
   company?: string;
   position?: string;
@@ -103,8 +93,6 @@ export interface User {
   loginNotifications?: boolean;
   deviceManagement?: boolean;
   // Timestamps
-  createdAt?: string;
-  updatedAt?: string;
   lastLogin?: string;
 }
 
@@ -125,7 +113,8 @@ export interface AppContextType {
   error: string | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
-  loginWithProvider: (provider: AuthProvider) => Promise<boolean>;
+  loginWithGoogle: () => Promise<boolean>;
+  loginWithGithub: () => Promise<boolean>;
   logout: () => Promise<void>;
   createProject: (projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'ownerEmail'>) => Promise<void>;
   updateProject: (id: string, updates: Partial<Project>) => Promise<void>;
@@ -172,10 +161,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Usar el hook de autenticación de Supabase
+  const { 
+    user: supabaseUser, 
+    session, 
+    loading: authLoading, 
+    error: authError,
+    signInWithEmail,
+    signUpWithEmail,
+    signInWithGoogle,
+    signInWithGithub,
+    signOut,
+    clearError: clearAuthError
+  } = useSupabaseAuth();
+
   // Función para limpiar errores
   const clearError = useCallback(() => {
     setError(null);
-  }, []);
+    clearAuthError();
+  }, [clearAuthError]);
 
   // Función para refrescar datos
   const refreshData = useCallback(async () => {
@@ -185,21 +189,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       clearCache();
       
-      // Recargar proyectos
-      const projectsRef = collection(firestore, 'projects');
-      const qProjects = user.role === 'admin'
-        ? query(projectsRef, limit(50))
-        : query(projectsRef, where('ownerEmail', '==', user.email), limit(50));
-      const projectsSnap = await getDocs(qProjects);
-      const projectData = projectsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Project);
-      setProjects(projectData);
+             // Recargar proyectos usando Supabase
+       const response = await projectService.getProjects();
+       const projectData = response.projects || [];
+       setProjects(projectData as any);
       
-      // Recargar logs
-      const logsRef = collection(firestore, 'logs');
-      const qLogs = query(logsRef, where('user', '==', user.email), orderBy('timestamp', 'desc'));
-      const logsSnap = await getDocs(qLogs);
-      const logData = logsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id }) as ProjectLog);
-      setLogs(logData);
+      // Recargar logs (implementar cuando tengas la tabla de logs)
+      // const logData = await logService.getUserLogs(user.id);
+      // setLogs(logData);
       
     } catch (error) {
       console.error('Error refreshing data:', error);
@@ -209,62 +206,47 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  // Sincronizar usuario real de Firebase Auth con optimizaciones
+  // Sincronizar usuario de Supabase
   useEffect(() => {
-    if (!auth) return;
-    
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      try {
-        setLoading(true);
-        
-        if (firebaseUser) {
-          const { displayName, email, photoURL, uid } = firebaseUser;
-          let role: 'admin' | 'user' = 'user';
-          if (email && email.toLowerCase() === 'tuwebai@gmail.com') role = 'admin';
+    const syncUser = async () => {
+      if (authLoading) return;
+      
+      if (supabaseUser && session) {
+        try {
+          setLoading(true);
           
-          // Intentar obtener datos del usuario desde cache primero
-          const cacheKey = `user_${uid}`;
+          // Obtener datos del usuario desde Supabase
+          const cacheKey = `user_${supabaseUser.id}`;
           let userData = getCachedData(cacheKey);
           
           if (!userData) {
-            // Si no está en cache, obtener desde Firestore
             try {
-              const userRef = doc(firestore, 'users', uid);
-              const userSnap = await getDoc(userRef);
-              
-              if (userSnap.exists()) {
-                userData = userSnap.data() as User;
-              } else {
-                // Crear usuario si no existe
-                userData = { 
-                  uid,
-                  name: displayName || email?.split('@')[0] || '', 
-                  email: email || '', 
-                  role, 
-                  photoURL,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString()
-                };
-                
-                await setDoc(userRef, userData);
-              }
-              
-              // Guardar en cache por 10 minutos
-              setCachedData(cacheKey, userData, 10 * 60 * 1000);
+              userData = await userService.getUserById(supabaseUser.id);
             } catch (error) {
               console.warn('Error loading user data:', error);
-              userData = { 
-                uid,
-                name: displayName || email?.split('@')[0] || '', 
-                email: email || '', 
-                role, 
-                photoURL 
-              };
+              // Si no existe el usuario en la tabla, crearlo
+              const { email, user_metadata } = supabaseUser;
+              let role: 'admin' | 'user' = 'user';
+              if (email && email.toLowerCase() === 'tuwebai@gmail.com') role = 'admin';
+              
+                             userData = {
+                 id: supabaseUser.id,
+                 email: email || '',
+                 full_name: user_metadata?.full_name || user_metadata?.name || email?.split('@')[0] || '',
+                 role,
+                 created_at: new Date().toISOString(),
+                 updated_at: new Date().toISOString()
+               };
+              
+              await userService.upsertUser(userData);
             }
+            
+            // Guardar en cache por 10 minutos
+            setCachedData(cacheKey, userData, 10 * 60 * 1000);
           }
           
-          setUser(userData);
-      setIsAuthenticated(true);
+          setUser(userData as User);
+          setIsAuthenticated(true);
           setError(null);
 
           // Mostrar toast de bienvenida solo una vez por sesión
@@ -275,39 +257,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             });
             localStorage.setItem('tuwebai_welcome_back', '1');
           }
-
-          // Inicializar datos del admin si el usuario es admin
-          if (userData.role === 'admin') {
-            await initializeAdminSystemData(userData.email);
-          }
           
-          // Limpiar datos simulados si es admin
-          if (role === 'admin') {
-            await cleanSimulatedData();
-          }
-        } else {
-          setUser(null);
-          setIsAuthenticated(false);
-          setProjects([]);
-          setLogs([]);
-          clearCache();
+        } catch (error) {
+          console.error('Error in auth state change:', error);
+          setError('Error de autenticación');
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error in auth state change:', error);
-        setError('Error de autenticación');
-      } finally {
-        setLoading(false);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+        setProjects([]);
+        setLogs([]);
+        clearCache();
+        localStorage.removeItem('tuwebai_welcome_back');
+        setLoading(false); // ¡AQUÍ ESTABA EL PROBLEMA!
       }
-    });
-    
-    return () => unsubscribe();
-  }, []);
+    };
+
+    syncUser();
+  }, [supabaseUser, session, authLoading]);
 
   // Persistir estado de autenticación en localStorage
   useEffect(() => {
     if (isAuthenticated && user) {
       localStorage.setItem('tuwebai_auth', JSON.stringify({
-        uid: user.uid,
+        id: user.id,
         email: user.email,
         role: user.role,
         timestamp: Date.now()
@@ -317,99 +292,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthenticated, user]);
 
-  // Restaurar estado de autenticación al cargar la app
+  // Cargar proyectos desde Supabase
   useEffect(() => {
-    const savedAuth = localStorage.getItem('tuwebai_auth');
-    if (savedAuth && !isAuthenticated) {
-      try {
-        const authData = JSON.parse(savedAuth);
-        const now = Date.now();
-        const authAge = now - authData.timestamp;
-        
-        // Si la sesión tiene menos de 24 horas, mantenerla
-        if (authAge < 24 * 60 * 60 * 1000) {
-          // No hacer nada aquí, dejar que Firebase Auth maneje la restauración
-          // Esto solo es para mantener el estado mientras Firebase se inicializa
-        } else {
-          // Sesión expirada, limpiar
-          localStorage.removeItem('tuwebai_auth');
-        }
-      } catch (error) {
-        console.warn('Error parsing saved auth:', error);
-        localStorage.removeItem('tuwebai_auth');
-      }
-    }
-  }, [isAuthenticated]);
-
-  // Cargar proyectos y logs desde Firestore con optimizaciones
-  useEffect(() => {
-    if (!firestore || !user) {
+    if (!user) {
       setProjects([]);
       setLogs([]);
       return;
     }
     
-    let unsubProjects: (() => void) | undefined;
-    let unsubLogs: (() => void) | undefined;
+    let subscription: any;
     
     const setupListeners = async () => {
       try {
         setLoading(true);
         
-        // Query optimizada para proyectos con límite y ordenamiento
-        const projectsRef = collection(firestore, 'projects');
-        const qProjects = user.role === 'admin'
-          ? query(projectsRef, limit(50))
-          : query(
-            projectsRef, 
-            where('ownerEmail', '==', user.email),
-            limit(50) // Limitar a 50 proyectos para mejor rendimiento
-          );
+        // Cargar proyectos iniciales usando el método correcto
+        const response = await projectService.getProjects();
+        const projectData = response.projects || [];
+        setProjects(projectData as any);
         
-        unsubProjects = onSnapshot(qProjects, (snapshot) => {
-          try {
-            const projectData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Project);
-            setProjects(projectData);
-            
-            // Cache de proyectos
-            setCachedData(`projects_${user.email}`, projectData, 2 * 60 * 1000);
-          } catch (error) {
-            console.warn('Error procesando proyectos:', error);
-            setProjects([]);
-          }
-        }, (error) => {
-          console.warn('Error cargando proyectos:', error);
-          setError('Error al cargar proyectos');
-          setProjects([]);
-        });
+        // Cache de proyectos
+        setCachedData(`projects_${user.email}`, projectData, 2 * 60 * 1000);
         
-        // Query optimizada para logs con límite
-        const logsRef = collection(firestore, 'logs');
-        const qLogs = query(
-          logsRef, 
-          where('user', '==', user.email), 
-          limit(100) // Limitar a 100 logs
-        );
-        
-        unsubLogs = onSnapshot(qLogs, (snapshot) => {
-          try {
-            const logData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as ProjectLog);
-            setLogs(logData);
-            
-            // Cache de logs
-            setCachedData(`logs_${user.email}`, logData, 2 * 60 * 1000);
-          } catch (error) {
-            console.warn('Error procesando logs:', error);
-            setLogs([]);
-          }
-        }, (error) => {
-          console.warn('Error cargando logs:', error);
-          setError('Error al cargar logs');
-          setLogs([]);
-        });
+        // Por ahora no usamos suscripciones en tiempo real para evitar errores
+        // TODO: Implementar suscripciones cuando sea necesario
         
       } catch (error) {
-        console.warn('Error configurando listeners de Firestore:', error);
+        console.warn('Error configurando listeners de Supabase:', error);
         setError('Error de conexión');
         setProjects([]);
         setLogs([]);
@@ -421,54 +330,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setupListeners();
     
     return () => {
-      if (unsubProjects) unsubProjects();
-      if (unsubLogs) unsubLogs();
+      // Cleanup si es necesario en el futuro
+      // if (subscription) {
+      //   subscription.unsubscribe();
+      // }
     };
   }, [user]);
 
   // Login optimizado con manejo de errores mejorado
   const login = async (email: string, password: string): Promise<boolean> => {
-    if (!auth) return false;
-    
     try {
       setLoading(true);
       setError(null);
       
-      await signInWithEmailAndPassword(auth, email, password);
-      
-      // Actualizar último login
-      if (auth.currentUser) {
-        const userRef = doc(firestore, 'users', auth.currentUser.uid);
-        await updateDoc(userRef, {
-          lastLogin: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-      }
-      
+      await signInWithEmail(email, password);
       return true;
     } catch (error: any) {
       console.error('Login error:', error);
-      
-      let errorMessage = 'Error al iniciar sesión';
-      switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = 'Usuario no encontrado';
-          break;
-        case 'auth/wrong-password':
-          errorMessage = 'Contraseña incorrecta';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Email inválido';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'Demasiados intentos. Intenta más tarde';
-          break;
-        case 'auth/network-request-failed':
-          errorMessage = 'Error de conexión. Verifica tu internet';
-          break;
-      }
-      
-      setError(errorMessage);
+      setError('Error al iniciar sesión');
       return false;
     } finally {
       setLoading(false);
@@ -477,129 +356,49 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Register optimizado
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
-    if (!auth || !firestore) return false;
-    
     try {
       setLoading(true);
       setError(null);
       
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const { user: firebaseUser } = userCredential;
-      
-      // Actualizar perfil
-      await updateProfile(firebaseUser, { displayName: name });
-      
-      // Guardar en Firestore
-      const userRef = doc(firestore, 'users', firebaseUser.uid);
-      const userData = {
-        uid: firebaseUser.uid,
-        name,
-        email,
-        role: 'user' as const,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
-      
-      await setDoc(userRef, userData);
-      
+      await signUpWithEmail(email, password, { full_name: name });
       return true;
     } catch (error: any) {
       console.error('Register error:', error);
-      
-      let errorMessage = 'Error al registrar usuario';
-      switch (error.code) {
-        case 'auth/email-already-in-use':
-          errorMessage = 'El email ya está registrado';
-          break;
-        case 'auth/weak-password':
-          errorMessage = 'La contraseña es muy débil';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Email inválido';
-          break;
-      }
-      
-      setError(errorMessage);
-    return false;
+      setError('Error al registrar usuario');
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  // Login con proveedor optimizado
-  const loginWithProvider = async (provider: AuthProvider): Promise<boolean> => {
-    if (!auth || !firestore) return false;
-    
+  // Login con Google
+  const loginWithGoogle = async (): Promise<boolean> => {
     try {
       setLoading(true);
       setError(null);
       
-      // Usar signInWithPopup con manejo de errores mejorado
-      const result = await signInWithPopup(auth, provider);
-      const { user: firebaseUser } = result;
-      
-      // Guardar en Firestore si es nuevo usuario
-      const userRef = doc(firestore, 'users', firebaseUser.uid);
-      const userSnap = await getDoc(userRef);
-      
-      if (!userSnap.exists()) {
-        const userData = {
-          uid: firebaseUser.uid,
-          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || '',
-          email: firebaseUser.email || '',
-          role: 'user' as const,
-          photoURL: firebaseUser.photoURL,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-        
-        await setDoc(userRef, userData);
-        
-        // Inicializar datos para el nuevo usuario
-        if (firebaseUser.email) {
-          await initializeChatData(firebaseUser.email);
-        }
-      } else {
-        // Actualizar último login
-        await updateDoc(userRef, {
-          lastLogin: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-      }
-      
+      await signInWithGoogle();
       return true;
     } catch (error: any) {
-      console.warn('Provider login error:', error);
+      console.error('Google login error:', error);
+      setError('Error al iniciar sesión con Google');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Login con GitHub
+  const loginWithGithub = async (): Promise<boolean> => {
+    try {
+      setLoading(true);
+      setError(null);
       
-      // No mostrar errores de CORS como errores críticos
-      if (error.message && error.message.includes('Cross-Origin-Opener-Policy')) {
-        console.warn('Error de CORS detectado, pero el login puede haber sido exitoso');
-        return true; // No mostrar como error
-      }
-      
-      // Manejar errores específicos de Firestore
-      if (error.code === 'permission-denied') {
-        console.warn('Error de permisos de Firestore, pero el login puede haber sido exitoso');
-        return true; // No mostrar como error crítico
-      }
-      
-      let errorMessage = 'Error al iniciar sesión';
-      switch (error.code) {
-        case 'auth/popup-closed-by-user':
-          errorMessage = 'Inicio de sesión cancelado';
-          break;
-        case 'auth/popup-blocked':
-          errorMessage = 'Popup bloqueado. Permite popups para este sitio';
-          break;
-        case 'auth/account-exists-with-different-credential':
-          errorMessage = 'Ya existe una cuenta con este email';
-          break;
-        case 'auth/network-request-failed':
-          errorMessage = 'Error de conexión. Verifica tu internet';
-          break;
-      }
-      
-      setError(errorMessage);
+      await signInWithGithub();
+      return true;
+    } catch (error: any) {
+      console.error('GitHub login error:', error);
+      setError('Error al iniciar sesión con GitHub');
       return false;
     } finally {
       setLoading(false);
@@ -610,7 +409,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       setLoading(true);
-      await signOut(auth);
+      await signOut();
       clearCache();
       localStorage.removeItem('tuwebai_welcome_back');
     } catch (error) {
@@ -623,21 +422,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Crear proyecto optimizado
   const createProject = async (projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'ownerEmail'>) => {
-    if (!firestore || !user) return;
+    if (!user) return;
     
     try {
       setLoading(true);
       setError(null);
       
-      const projectRef = collection(firestore, 'projects');
-      const newProject = {
-      ...projectData,
-      ownerEmail: user.email,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
+             const newProject = {
+         ...projectData,
+         created_by: user.id,
+         status: 'development' as const,
+         technologies: projectData.technologies || []
+       };
       
-      await addDoc(projectRef, newProject);
+      await projectService.createProject(newProject);
       
       // Limpiar cache de proyectos
       cache.delete(`projects_${user.email}`);
@@ -652,30 +450,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Actualizar proyecto optimizado
   const updateProject = async (id: string, updates: Partial<Project>) => {
-    if (!firestore) return;
     try {
       setLoading(true);
       setError(null);
-      const projectRef = doc(firestore, 'projects', id);
+      
       // Obtener el proyecto actual para comparar progreso
-      const projectSnap = await getDoc(projectRef);
-      let progressHistory = [];
+      const currentProject = await projectService.getProjectById(id);
+      let progressHistory = (currentProject as any).progressHistory || [];
       let prevProgress = 0;
-      if (projectSnap.exists()) {
-        const projectData = projectSnap.data();
-        progressHistory = projectData.progressHistory || [];
-        // Calcular progreso anterior
-        if (projectData.fases && projectData.fases.length > 0) {
-          const completed = projectData.fases.filter((f: any) => f.estado === 'Terminado').length;
-          prevProgress = Math.round((completed / projectData.fases.length) * 100);
-        }
+      
+      // Calcular progreso anterior
+      if ((currentProject as any).fases && (currentProject as any).fases.length > 0) {
+        const completed = (currentProject as any).fases.filter((f: any) => f.estado === 'Terminado').length;
+        prevProgress = Math.round((completed / (currentProject as any).fases.length) * 100);
       }
+      
       // Calcular nuevo progreso si fases cambian
       let newProgress = prevProgress;
-      if (updates.fases && updates.fases.length > 0) {
-        const completed = updates.fases.filter((f: any) => f.estado === 'Terminado').length;
-        newProgress = Math.round((completed / updates.fases.length) * 100);
+      if ((updates as any).fases && (updates as any).fases.length > 0) {
+        const completed = (updates as any).fases.filter((f: any) => f.estado === 'Terminado').length;
+        newProgress = Math.round((completed / (updates as any).fases.length) * 100);
       }
+      
       // Si el progreso cambió, agrega snapshot diario
       const today = new Date().toISOString().slice(0, 10);
       if (newProgress !== prevProgress) {
@@ -687,11 +483,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           progressHistory.push({ date: today, progress: newProgress });
         }
       }
-      await updateDoc(projectRef, {
-        ...updates,
-        progressHistory,
-        updatedAt: serverTimestamp()
-      });
+      
+             await projectService.updateProject(id, {
+         ...updates,
+         progressHistory
+       } as any);
+      
       if (user) {
         cache.delete(`projects_${user.email}`);
       }
@@ -705,14 +502,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Eliminar proyecto optimizado
   const deleteProject = async (id: string) => {
-    if (!firestore) return;
-    
     try {
       setLoading(true);
       setError(null);
       
-      const projectRef = doc(firestore, 'projects', id);
-      await deleteDoc(projectRef);
+      await projectService.deleteProject(id);
       
       // Limpiar cache de proyectos
       if (user) {
@@ -729,28 +523,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Agregar funcionalidades optimizado
   const addFunctionalities = async (projectId: string, functionalities: string[]) => {
-    if (!firestore) return;
-    
     try {
       setLoading(true);
       setError(null);
       
-      const projectRef = doc(firestore, 'projects', projectId);
-      const projectSnap = await getDoc(projectRef);
+      const currentProject = await projectService.getProjectById(projectId);
+      const currentFuncionalidades = (currentProject as any).funcionalidades || [];
+      const updatedFuncionalidades = [...currentFuncionalidades, ...functionalities];
       
-      if (projectSnap.exists()) {
-        const currentFuncionalidades = projectSnap.data().funcionalidades || [];
-        const updatedFuncionalidades = [...currentFuncionalidades, ...functionalities];
-        
-        await updateDoc(projectRef, {
-          funcionalidades: updatedFuncionalidades,
-          updatedAt: serverTimestamp()
-        });
-        
-        // Limpiar cache de proyectos
-        if (user) {
-          cache.delete(`projects_${user.email}`);
-        }
+             await projectService.updateProject(projectId, {
+         funcionalidades: updatedFuncionalidades
+       } as any);
+      
+      // Limpiar cache de proyectos
+      if (user) {
+        cache.delete(`projects_${user.email}`);
       }
       
     } catch (error) {
@@ -767,44 +554,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     autor: string;
     tipo: 'admin' | 'cliente';
   }) => {
-    if (!firestore) return;
-    
     try {
       setLoading(true);
       setError(null);
       
-      const projectRef = doc(firestore, 'projects', projectId);
-      const projectSnap = await getDoc(projectRef);
+      const currentProject = await projectService.getProjectById(projectId);
+      const fases = (currentProject as any).fases || [];
       
-      if (projectSnap.exists()) {
-        const projectData = projectSnap.data();
-        const fases = projectData.fases || [];
-        
-        const updatedFases = fases.map((fase: any) => {
-          if (fase.key === faseKey) {
-            const comentarios = fase.comentarios || [];
-            const newComment = {
-              id: Date.now().toString(),
-              ...comment,
-              fecha: new Date().toISOString()
-            };
-            return {
-              ...fase,
-              comentarios: [...comentarios, newComment]
-            };
-          }
-          return fase;
-        });
-        
-        await updateDoc(projectRef, {
-          fases: updatedFases,
-          updatedAt: serverTimestamp()
-        });
-        
-        // Limpiar cache de proyectos
-        if (user) {
-          cache.delete(`projects_${user.email}`);
+      const updatedFases = fases.map((fase: any) => {
+        if (fase.key === faseKey) {
+          const comentarios = fase.comentarios || [];
+          const newComment = {
+            id: Date.now().toString(),
+            ...comment,
+            fecha: new Date().toISOString()
+          };
+          return {
+            ...fase,
+            comentarios: [...comentarios, newComment]
+          };
         }
+        return fase;
+      });
+      
+             await projectService.updateProject(projectId, {
+         fases: updatedFases
+       } as any);
+      
+      // Limpiar cache de proyectos
+      if (user) {
+        cache.delete(`projects_${user.email}`);
       }
       
     } catch (error) {
@@ -817,16 +596,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Agregar log optimizado
   const addLog = async (log: Omit<ProjectLog, 'id' | 'timestamp'>) => {
-    if (!firestore) return;
-    
     try {
-      const logsRef = collection(firestore, 'logs');
-      const newLog = {
-        ...log,
-        timestamp: serverTimestamp()
-      };
-      
-      await addDoc(logsRef, newLog);
+      // Implementar cuando tengas la tabla de logs en Supabase
+      console.log('Log functionality to be implemented with Supabase logs table');
       
       // Limpiar cache de logs
       if (user) {
@@ -856,13 +628,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Actualizar configuración del usuario y sincronizar contexto
   const updateUserSettings = async (updates: Partial<User>) => {
-    if (!user || !firestore) return false;
+    if (!user) return false;
     setLoading(true);
     try {
-      const userRef = doc(firestore, 'users', user.uid!);
-      await updateDoc(userRef, { ...updates, updatedAt: new Date().toISOString() });
+      await userService.updateUser(user.id, { ...updates, updated_at: new Date().toISOString() });
       setUser(prev => (prev ? { ...prev, ...updates } : prev));
-      setCachedData(`user_${user.uid}`, { ...user, ...updates }, 10 * 60 * 1000);
+      setCachedData(`user_${user.id}`, { ...user, ...updates }, 10 * 60 * 1000);
       return true;
     } catch (error) {
       console.error('Error al actualizar configuración de usuario:', error);
@@ -883,7 +654,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       error,
       login,
       register,
-      loginWithProvider,
+      loginWithGoogle,
+      loginWithGithub,
       logout,
       createProject,
       updateProject,
@@ -899,24 +671,40 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     user,
     projects,
     isAuthenticated,
-      logs,
+    logs,
     loading,
     error,
     login,
     register,
-    loginWithProvider,
+    loginWithGoogle,
+    loginWithGithub,
     logout,
     createProject,
     updateProject,
     deleteProject,
     addFunctionalities,
     addCommentToPhase,
-      addLog,
-      getProjectLogs,
+    addLog,
+    getProjectLogs,
     refreshData,
     clearError,
     updateUserSettings
   ]);
+
+
+
+  // Mostrar error de configuración si hay un error crítico
+  if (error && (error.includes('Invalid API key') || error.includes('Clave API de Supabase inválida') || error.includes('Error de configuración'))) {
+    return (
+      <SupabaseError 
+        error={error} 
+        onRetry={() => {
+          clearError();
+          window.location.reload();
+        }}
+      />
+    );
+  }
 
   return (
     <AppContext.Provider value={contextValue}>
@@ -928,7 +716,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 export function useApp() {
   const context = useContext(AppContext);
   if (context === undefined) {
-    throw new Error('useApp must be used within an AppProvider');
+    console.error('useApp must be used within an AppProvider');
+    // Retornar un contexto por defecto en lugar de lanzar error
+    return {
+      user: null,
+      projects: [],
+      isAuthenticated: false,
+      logs: [],
+      loading: true,
+      error: 'Contexto no disponible',
+      login: async () => false,
+      register: async () => false,
+      loginWithGoogle: async () => false,
+      loginWithGithub: async () => false,
+      logout: async () => {},
+      createProject: async () => {},
+      updateProject: async () => {},
+      deleteProject: async () => {},
+      addFunctionalities: async () => {},
+      addCommentToPhase: async () => {},
+      addLog: async () => {},
+      getProjectLogs: () => [],
+      refreshData: async () => {},
+      clearError: () => {},
+      updateUserSettings: async () => false
+    };
   }
   return context;
 }

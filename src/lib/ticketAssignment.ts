@@ -1,17 +1,4 @@
-import { firestore } from './firebase';
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  updateDoc, 
-  addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  limit,
-  serverTimestamp
-} from 'firebase/firestore';
+
 
 export interface TicketAssignment {
   id: string;

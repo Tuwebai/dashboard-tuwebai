@@ -6,8 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useApp } from '@/contexts/AppContext';
 import { useEffect, useState } from 'react';
-import { firestore } from '@/lib/firebase';
-import { collection, query, where, getDocs, addDoc, orderBy, serverTimestamp } from 'firebase/firestore';
+
 import { Navigate } from 'react-router-dom';
 import { MessageSquare, Send, Clock, CheckCircle, AlertCircle, HelpCircle, FileText, Phone, Mail } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';

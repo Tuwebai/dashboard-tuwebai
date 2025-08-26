@@ -18,14 +18,17 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 const Index = lazy(() => import('./pages/Index'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const PoliticaPrivacidad = lazy(() => import('./pages/PoliticaPrivacidad'));
+const TerminosCondiciones = lazy(() => import('./pages/TerminosCondiciones'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Admin = lazy(() => import('./pages/Admin'));
 const Proyectos = lazy(() => import('./pages/Proyectos'));
 const ProyectosNuevo = lazy(() => import('./pages/ProyectosNuevo'));
-const EditarProyecto = lazy(() => import('./pages/EditarProyecto'));
+
 const CollaborationPage = lazy(() => import('./pages/CollaborationPage'));
 const ClientCollaborationPage = lazy(() => import('./pages/ClientCollaborationPage'));
 const CodeEditorPage = lazy(() => import('./pages/CodeEditorPage'));
+const VSCodeEditor = lazy(() => import('./components/admin/VSCodeEditor'));
 const WorkspacePage = lazy(() => import('./pages/WorkspacePage'));
 const VisualBuilder = lazy(() => import('./pages/VisualBuilder'));
 const Perfil = lazy(() => import('./pages/Perfil'));
@@ -39,6 +42,8 @@ const AdvancedAnalytics = lazy(() => import('./components/AdvancedAnalytics'));
 const CustomizableDashboard = lazy(() => import('./components/CustomizableDashboard'));
 const AdvancedUserManagement = lazy(() => import('./components/AdvancedUserManagement'));
 const InvitationPage = lazy(() => import('./pages/InvitationPage'));
+const AuthCallback = lazy(() => import('./pages/AuthCallback'));
+const EnvironmentVariables = lazy(() => import('./pages/EnvironmentVariables'));
 
 // Componente de carga optimizado
 const PageLoader = () => (
@@ -69,7 +74,10 @@ function AppRoutes() {
       <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
+        <Route path="/terminos-condiciones" element={<TerminosCondiciones />} />
       <Route path="/invite" element={<InvitationPage />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       
       {/* Rutas protegidas */}
       <Route path="/dashboard" element={
@@ -104,13 +112,7 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       
-      <Route path="/proyectos/:id/editar" element={
-        <ProtectedRoute>
-          <DashboardLayout>
-            <EditarProyecto />
-          </DashboardLayout>
-        </ProtectedRoute>
-      } />
+
       
       <Route path="/proyectos/:projectId/colaboracion" element={
         <ProtectedRoute>
@@ -133,6 +135,12 @@ function AppRoutes() {
           <DashboardLayout>
             <CodeEditorPage />
           </DashboardLayout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/code-editor/:projectId" element={
+        <ProtectedRoute>
+          <VSCodeEditor />
         </ProtectedRoute>
       } />
       
@@ -200,6 +208,14 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       
+      <Route path="/environment" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <EnvironmentVariables />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
+      
       <Route path="/analytics" element={
         <ProtectedRoute>
           <DashboardLayout>
@@ -234,21 +250,21 @@ function App() {
   return (
     <ErrorBoundary>
       <I18nextProvider i18n={i18n}>
-    <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={queryClient}>
           <ThemeProvider>
-      <TooltipProvider>
-        <AppProvider>
-                  <Router>
-                    <Suspense fallback={<PageLoader />}>
-                      <AppRoutes />
-                    </Suspense>
-                  </Router>
-          <Toaster />
-          <Sonner />
-        </AppProvider>
-      </TooltipProvider>
+            <TooltipProvider>
+              <AppProvider>
+                <Router>
+                  <Suspense fallback={<PageLoader />}>
+                    <AppRoutes />
+                  </Suspense>
+                </Router>
+                <Toaster />
+                <Sonner />
+              </AppProvider>
+            </TooltipProvider>
           </ThemeProvider>
-    </QueryClientProvider>
+        </QueryClientProvider>
       </I18nextProvider>
     </ErrorBoundary>
   );

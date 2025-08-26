@@ -1,6 +1,5 @@
 import { processMercadoPagoWebhook } from './paymentService';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { firestore } from './firebase';
+
 
 // Tipos de webhook de Mercado Pago
 export interface MercadoPagoWebhook {
@@ -116,7 +115,7 @@ export const syncPaymentsFromMainSite = async (userEmail: string) => {
 // Función para verificar estado de pagos pendientes
 export const checkPendingPayments = async () => {
   try {
-    const { collection, query, where, getDocs } = await import('firebase/firestore');
+    
     
     const paymentsRef = collection(firestore, 'payments');
     const q = query(paymentsRef, where('status', '==', 'pending'));

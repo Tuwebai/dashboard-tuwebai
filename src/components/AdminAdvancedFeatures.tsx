@@ -43,20 +43,7 @@ import {
   Ticket,
   FolderKanban
 } from 'lucide-react';
-import { firestore } from '@/lib/firebase';
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  doc, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot,
-  serverTimestamp,
-  getDocs,
-  limit
-} from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { formatDateSafe } from '@/utils/formatDateSafe';
@@ -76,25 +63,49 @@ export function AdminNotificationSystem() {
   const [filterPriority, setFilterPriority] = useState('all');
 
   useEffect(() => {
-    const notificationsRef = collection(firestore, 'admin_notifications');
-    const q = query(notificationsRef, orderBy('timestamp', 'desc'), where('isActive', '==', true));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const notifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setNotifications(notifs);
-    });
+    const fetchNotifications = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('admin_notifications')
+          .select('*')
+          .eq('isActive', true)
+          .order('timestamp', { ascending: false });
+        
+        if (error) throw error;
+        setNotifications(data || []);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
 
-    return () => unsubscribe();
+    fetchNotifications();
+
+    // Suscripción en tiempo real
+    const subscription = supabase
+      .channel('admin_notifications')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'admin_notifications' },
+        () => fetchNotifications()
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const sendNotification = async () => {
     try {
-      await addDoc(collection(firestore, 'admin_notifications'), {
-        ...newNotification,
-        timestamp: serverTimestamp(),
-        isActive: true,
-        sentBy: 'admin'
-      });
+      const { error } = await supabase
+        .from('admin_notifications')
+        .insert({
+          ...newNotification,
+          timestamp: new Date().toISOString(),
+          isActive: true,
+          sentBy: 'admin'
+        });
+      
+      if (error) throw error;
       
       setShowNotificationModal(false);
       setNewNotification({ title: '', message: '', type: 'info', priority: 'normal', targetUsers: 'all' });
@@ -112,7 +123,12 @@ export function AdminNotificationSystem() {
   const deleteNotification = async (id: string) => {
     if (!window.confirm('¿Seguro que deseas eliminar esta notificación?')) return;
     try {
-      await updateDoc(doc(firestore, 'admin_notifications', id), { isActive: false });
+      const { error } = await supabase
+        .from('admin_notifications')
+        .update({ isActive: false })
+        .eq('id', id);
+      
+      if (error) throw error;
       toast({ title: 'Notificación eliminada', description: 'La notificación fue desactivada.' });
     } catch (error) {
       toast({ title: 'Error', description: 'No se pudo eliminar la notificación.', variant: 'destructive' });
@@ -354,11 +370,15 @@ export function AdminSettings() {
   const updateSetting = async (key: string, value: boolean) => {
     setSaving(true);
     try {
-      await addDoc(collection(firestore, 'admin_settings'), {
-        [key]: value,
-        updatedAt: serverTimestamp(),
-        updatedBy: 'admin'
-      });
+      const { error } = await supabase
+        .from('admin_settings')
+        .insert({
+          [key]: value,
+          updatedAt: new Date().toISOString(),
+          updatedBy: 'admin'
+        });
+      
+      if (error) throw error;
       toast({ title: 'Configuración guardada', description: 'El cambio se guardó correctamente.' });
     } catch (error) {
       toast({ title: 'Error', description: 'No se pudo guardar el cambio.', variant: 'destructive' });
@@ -447,15 +467,40 @@ export function AdminSystemLogs() {
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
 
   useEffect(() => {
-    const logsRef = collection(firestore, 'system_logs');
-    const q = query(logsRef, orderBy('timestamp', 'desc'), where('level', 'in', filter === 'all' ? ['info', 'warning', 'error'] : [filter]));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const logsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setLogs(logsData);
-    });
+    const fetchLogs = async () => {
+      try {
+        let query = supabase
+          .from('system_logs')
+          .select('*')
+          .order('timestamp', { ascending: false });
+        
+        if (filter !== 'all') {
+          query = query.eq('level', filter);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        setLogs(data || []);
+      } catch (error) {
+        console.error('Error fetching logs:', error);
+      }
+    };
 
-    return () => unsubscribe();
+    fetchLogs();
+
+    // Suscripción en tiempo real
+    const subscription = supabase
+      .channel('system_logs')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'system_logs' },
+        () => fetchLogs()
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [filter]);
 
   const exportLogs = () => {
@@ -542,28 +587,50 @@ export function AdminBackupSystem() {
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
 
   useEffect(() => {
-    const backupsRef = collection(firestore, 'system_backups');
-    const q = query(backupsRef, orderBy('createdAt', 'desc'));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const backupsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setBackups(backupsData);
-    });
+    const fetchBackups = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('system_backups')
+          .select('*')
+          .order('createdAt', { ascending: false });
+        
+        if (error) throw error;
+        setBackups(data || []);
+      } catch (error) {
+        console.error('Error fetching backups:', error);
+      }
+    };
 
-    return () => unsubscribe();
+    fetchBackups();
+
+    // Suscripción en tiempo real
+    const subscription = supabase
+      .channel('system_backups')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'system_backups' },
+        () => fetchBackups()
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const createBackup = async () => {
     setIsCreatingBackup(true);
     try {
-      await addDoc(collection(firestore, 'system_backups'), {
-        name: `Backup_${new Date().toISOString().split('T')[0]}`,
-        status: 'completed',
-        size: '2.5 MB',
-        createdAt: serverTimestamp(),
-        type: 'full'
-      });
+      const { error } = await supabase
+        .from('system_backups')
+        .insert({
+          name: `Backup_${new Date().toISOString().split('T')[0]}`,
+          status: 'completed',
+          size: '2.5 MB',
+          createdAt: new Date().toISOString(),
+          type: 'full'
+        });
       
+      if (error) throw error;
       toast({ title: 'Backup creado', description: 'El backup se creó correctamente.' });
     } catch (error) {
       toast({ title: 'Error', description: 'No se pudo crear el backup.', variant: 'destructive' });
@@ -761,28 +828,51 @@ export function AdminSecuritySystem() {
 
   useEffect(() => {
     // Cargar logs de seguridad
-    const securityLogsRef = collection(firestore, 'security_logs');
-    const q = query(securityLogsRef, orderBy('timestamp', 'desc'), limit(20));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const logsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setSecurityLogs(logsData);
-    });
+    const fetchSecurityLogs = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('security_logs')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(20);
+        
+        if (error) throw error;
+        setSecurityLogs(data || []);
+      } catch (error) {
+        console.error('Error fetching security logs:', error);
+      }
+    };
 
-    return () => unsubscribe();
+    fetchSecurityLogs();
+
+    // Suscripción en tiempo real
+    const subscription = supabase
+      .channel('security_logs')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'security_logs' },
+        () => fetchSecurityLogs()
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const updateSecuritySetting = async (key: string, value: any) => {
     try {
       setSecuritySettings(prev => ({ ...prev, [key]: value }));
       
-      await addDoc(collection(firestore, 'security_settings'), {
-        key,
-        value,
-        updatedAt: serverTimestamp(),
-        updatedBy: 'admin'
-      });
+      const { error } = await supabase
+        .from('security_settings')
+        .insert({
+          key,
+          value,
+          updatedAt: new Date().toISOString(),
+          updatedBy: 'admin'
+        });
       
+      if (error) throw error;
       toast({ title: 'Configuración actualizada', description: 'La configuración de seguridad se actualizó correctamente.' });
     } catch (error) {
       toast({ title: 'Error', description: 'No se pudo actualizar la configuración.', variant: 'destructive' });
@@ -791,14 +881,17 @@ export function AdminSecuritySystem() {
 
   const blockUser = async (userId: string, reason: string) => {
     try {
-      await addDoc(collection(firestore, 'security_actions'), {
-        action: 'block_user',
-        userId,
-        reason,
-        timestamp: serverTimestamp(),
-        performedBy: 'admin'
-      });
+      const { error } = await supabase
+        .from('security_actions')
+        .insert({
+          action: 'block_user',
+          userId,
+          reason,
+          timestamp: new Date().toISOString(),
+          performedBy: 'admin'
+        });
       
+      if (error) throw error;
       toast({ title: 'Usuario bloqueado', description: 'El usuario ha sido bloqueado por seguridad.' });
     } catch (error) {
       toast({ title: 'Error', description: 'No se pudo bloquear al usuario.', variant: 'destructive' });
@@ -1000,17 +1093,35 @@ export function AdminPerformanceSystem() {
     }, 5000);
 
     // Cargar logs de rendimiento
-    const performanceLogsRef = collection(firestore, 'performance_logs');
-    const q = query(performanceLogsRef, orderBy('timestamp', 'desc'), limit(10));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const logsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setPerformanceLogs(logsData);
-    });
+    const fetchPerformanceLogs = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('performance_logs')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(10);
+        
+        if (error) throw error;
+        setPerformanceLogs(data || []);
+      } catch (error) {
+        console.error('Error fetching performance logs:', error);
+      }
+    };
+
+    fetchPerformanceLogs();
+
+    // Suscripción en tiempo real
+    const subscription = supabase
+      .channel('performance_logs')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'performance_logs' },
+        () => fetchPerformanceLogs()
+      )
+      .subscribe();
 
     return () => {
       clearInterval(interval);
-      unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -1019,12 +1130,15 @@ export function AdminPerformanceSystem() {
       const taskData = {
         type: taskType,
         status: 'running',
-        startedAt: serverTimestamp(),
+        startedAt: new Date().toISOString(),
         performedBy: 'admin'
       };
 
-      await addDoc(collection(firestore, 'optimization_tasks'), taskData);
+      const { error } = await supabase
+        .from('optimization_tasks')
+        .insert(taskData);
       
+      if (error) throw error;
       toast({ title: 'Optimización iniciada', description: `La optimización de ${taskType} se está ejecutando.` });
     } catch (error) {
       toast({ title: 'Error', description: 'No se pudo iniciar la optimización.', variant: 'destructive' });
@@ -1268,15 +1382,35 @@ export function AdminReportsSystem() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
-    const reportsRef = collection(firestore, 'admin_reports');
-    const q = query(reportsRef, orderBy('createdAt', 'desc'), limit(10));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const reportsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setReports(reportsData);
-    });
+    const fetchReports = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('admin_reports')
+          .select('*')
+          .order('createdAt', { ascending: false })
+          .limit(10);
+        
+        if (error) throw error;
+        setReports(data || []);
+      } catch (error) {
+        console.error('Error fetching reports:', error);
+      }
+    };
 
-    return () => unsubscribe();
+    fetchReports();
+
+    // Suscripción en tiempo real
+    const subscription = supabase
+      .channel('admin_reports')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'admin_reports' },
+        () => fetchReports()
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const generateReport = async () => {
@@ -1286,12 +1420,15 @@ export function AdminReportsSystem() {
         type: selectedReport,
         dateRange,
         status: 'generating',
-        createdAt: serverTimestamp(),
+        createdAt: new Date().toISOString(),
         generatedBy: 'admin'
       };
 
-      await addDoc(collection(firestore, 'admin_reports'), reportData);
+      const { error } = await supabase
+        .from('admin_reports')
+        .insert(reportData);
       
+      if (error) throw error;
       toast({ title: 'Reporte generado', description: 'El reporte se está generando y estará disponible pronto.' });
     } catch (error) {
       toast({ title: 'Error', description: 'No se pudo generar el reporte.', variant: 'destructive' });

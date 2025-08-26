@@ -24,8 +24,7 @@ export default defineConfig({
           vendor: ['react', 'react-dom', 'react-router-dom'],
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs'],
           charts: ['recharts'],
-          utils: ['date-fns', 'clsx', 'tailwind-merge'],
-          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+          utils: ['date-fns', 'clsx', 'tailwind-merge']
         },
         
         // Optimizar nombres de archivos
@@ -61,11 +60,14 @@ export default defineConfig({
   
   // Optimizaciones de desarrollo
   server: {
-    port: 8082,
+    port: 8083,
     host: true,
+    strictPort: true, // Evitar que Vite cambie el puerto automáticamente
     // Configuración de HMR optimizada
     hmr: {
-      overlay: false
+      overlay: false,
+      port: 8083,
+      host: 'localhost'
     }
   },
   
@@ -82,9 +84,6 @@ export default defineConfig({
       'react-dom',
       'react-router-dom',
       '@tanstack/react-query',
-      'firebase/app',
-      'firebase/auth',
-      'firebase/firestore',
       'lucide-react',
       'recharts',
       'date-fns',

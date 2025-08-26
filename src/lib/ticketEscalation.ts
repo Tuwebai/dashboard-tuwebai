@@ -1,16 +1,4 @@
-import { firestore } from './firebase';
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  updateDoc, 
-  addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  serverTimestamp
-} from 'firebase/firestore';
+
 import { notificationService } from './notificationService';
 
 export interface TicketEscalation {

@@ -11,8 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { firestore } from '@/lib/firebase';
-import { doc, updateDoc, onSnapshot, collection, getDocs, query, where } from 'firebase/firestore';
+
 import { 
   Plus, 
   MessageSquare, 
@@ -52,10 +51,15 @@ interface ProjectPhase {
 interface Project {
   id: string;
   name: string;
-  description: string;
-  type: string;
-  ownerEmail: string;
-  createdAt: string;
+  description: string | null;
+  created_by: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  // Campos extendidos para compatibilidad
+  type?: string;
+  ownerEmail?: string;
+  createdAt?: string;
   fases?: ProjectPhase[];
 }
 
@@ -80,7 +84,7 @@ export default function Dashboard() {
 
 
   // Proyectos visibles para el usuario actual y validación temprana
-  const userProjects = realTimeProjects.filter(p => p.ownerEmail === user?.email && p.id);
+  const userProjects = realTimeProjects.filter(p => p.created_by === user?.id && p.id);
   const hasValidProjects = userProjects.length > 0;
 
   // Escuchar cambios en tiempo real de los proyectos del usuario
@@ -90,30 +94,15 @@ export default function Dashboard() {
       return;
     }
 
-    const userProjects = projects.filter(p => p.ownerEmail === user.email);
+    const userProjects = projects.filter(p => p.created_by === user.id);
     
     if (userProjects.length === 0) {
       setRealTimeProjects([]);
       return;
     }
 
-    const unsubscribe = userProjects.map(project => 
-      onSnapshot(doc(firestore, 'projects', project.id), (doc) => {
-        if (doc.exists()) {
-          const projectData = { id: doc.id, ...doc.data() } as Project;
-          setRealTimeProjects(prev => {
-            const filtered = prev.filter(p => p.id !== project.id);
-            return [...filtered, projectData];
-          });
-        }
-      }, (error) => {
-        console.warn('Error cargando proyecto en tiempo real:', error);
-      })
-    );
-
-    return () => {
-      unsubscribe.forEach(unsub => unsub());
-    };
+    // Usar los proyectos directamente desde el contexto de Supabase
+    setRealTimeProjects(userProjects);
   }, [user, projects]);
 
   // Limpiar estado del modal cuando se desmonte el componente
@@ -156,7 +145,7 @@ export default function Dashboard() {
     try {
       await addCommentToPhase(projectId, faseKey, {
         texto: comentarioInput[`${projectId}-${faseKey}`],
-        autor: user?.name || user?.email || 'Cliente',
+        autor: user?.full_name || user?.email || 'Cliente',
         tipo: 'cliente'
       });
       
@@ -270,7 +259,7 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">{t('Dashboard')}</h1>
-          <p className="text-muted-foreground">{t('Bienvenido, {name}', { name: user?.name || user?.email })}</p>
+                      <p className="text-muted-foreground">{t('Bienvenido, {name}', { name: user?.full_name || user?.email })}</p>
         </div>
 
       </div>
@@ -641,7 +630,6 @@ export default function Dashboard() {
           }}
         />
       )}
-
 
     </div>
   );

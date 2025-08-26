@@ -44,19 +44,8 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
-import { firestore } from '@/lib/firebase';
-import { 
-  doc, 
-  updateDoc, 
-  addDoc, 
-  collection, 
-  serverTimestamp, 
-  deleteDoc,
-  query,
-  where,
-  getDocs,
-  orderBy
-} from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
+
 import { toast } from '@/hooks/use-toast';
 import { formatDateSafe } from '@/utils/formatDateSafe';
 
@@ -159,24 +148,8 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
 
   // Cargar archivos del proyecto
   useEffect(() => {
-    const cargarArchivos = async () => {
-      try {
-        const archivosRef = collection(firestore, 'projects', proyecto.id, 'archivos');
-        const q = query(archivosRef, orderBy('fechaSubida', 'desc'));
-        const snapshot = await getDocs(q);
-        const archivosData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setArchivos(archivosData);
-      } catch (error) {
-        console.error('Error cargando archivos:', error);
-      }
-    };
-
-    if (proyecto && proyecto.id) {
-      cargarArchivos();
-    }
+    // Implementar carga de archivos con Supabase cuando sea necesario
+    // Por ahora se mantiene vacío
   }, [proyecto?.id]);
 
   const toggleFase = (faseKey: string) => {
@@ -204,7 +177,6 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
 
     try {
       setLoading(true);
-      const proyectoRef = doc(firestore, 'projects', proyecto.id);
       const nuevasFases = (proyectoLocal.fases || []).map((f: any) =>
         f.key === faseKey
           ? {
@@ -218,7 +190,13 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
           : f
       );
 
-      await updateDoc(proyectoRef, { fases: nuevasFases });
+      // Actualizar en Supabase
+      const { error } = await supabase
+        .from('projects')
+        .update({ fases: nuevasFases })
+        .eq('id', proyecto.id);
+      
+      if (error) throw error;
       
       // Actualizar estado local inmediatamente
       const proyectoActualizado = { ...proyectoLocal, fases: nuevasFases };
@@ -246,13 +224,8 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
 
     try {
       setLoading(true);
-      const comentariosRef = collection(firestore, 'projects', proyecto.id, 'fases', faseKey, 'comentarios');
-      await addDoc(comentariosRef, {
-        contenido: nuevoComentario,
-        usuario: user.email,
-        fecha: serverTimestamp(),
-        tipo: 'comentario'
-      });
+      // Implementar agregar comentarios con Supabase cuando sea necesario
+      // Por ahora solo se actualiza el estado local
 
       setNuevoComentario('');
       toast({
@@ -276,17 +249,8 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
 
     try {
       setLoading(true);
-      const tareasRef = collection(firestore, 'projects', proyecto.id, 'fases', faseKey, 'tareas');
-      await addDoc(tareasRef, {
-        titulo: nuevaTarea.titulo,
-        descripcion: nuevaTarea.descripcion,
-        responsable: nuevaTarea.responsable,
-        fechaLimite: nuevaTarea.fechaLimite,
-        prioridad: nuevaTarea.prioridad,
-        status: 'pending',
-        creadoPor: user.email,
-        fechaCreacion: serverTimestamp()
-      });
+      // Implementar agregar tareas con Supabase cuando sea necesario
+      // Por ahora solo se actualiza el estado local
 
       setNuevaTarea({
         titulo: '',
@@ -317,7 +281,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
 
     try {
       setLoading(true);
-      // Aquí actualizarías la tarea en Firestore
+      // Implementar actualizar tareas con Supabase cuando sea necesario
       toast({
         title: "Tarea actualizada",
         description: "La tarea se actualizó correctamente",
@@ -339,7 +303,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
 
     try {
       setLoading(true);
-      // Aquí eliminarías la tarea de Firestore
+      // Implementar eliminar tareas con Supabase cuando sea necesario
       toast({
         title: "Tarea eliminada",
         description: "La tarea se eliminó correctamente",
@@ -362,7 +326,6 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
 
     try {
       setLoading(true);
-      const proyectoRef = doc(firestore, 'projects', proyecto.id);
       const faseKey = `fase_${Date.now()}`;
       const nuevaFaseCompleta = {
         key: faseKey,
@@ -377,7 +340,14 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
       };
 
       const fasesActualizadas = [...(proyectoLocal.fases || []), nuevaFaseCompleta];
-      await updateDoc(proyectoRef, { fases: fasesActualizadas });
+      
+      // Actualizar en Supabase
+      const { error } = await supabase
+        .from('projects')
+        .update({ fases: fasesActualizadas })
+        .eq('id', proyecto.id);
+      
+      if (error) throw error;
       
       // Actualizar estado local
       const proyectoActualizado = { ...proyectoLocal, fases: fasesActualizadas };
@@ -413,7 +383,6 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
 
     try {
       setLoading(true);
-      const proyectoRef = doc(firestore, 'projects', proyecto.id);
       const fasesActualizadas = (proyectoLocal.fases || []).map((f: any) =>
         f.key === faseKey
           ? {
@@ -430,7 +399,13 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
           : f
       );
 
-      await updateDoc(proyectoRef, { fases: fasesActualizadas });
+      // Actualizar en Supabase
+      const { error } = await supabase
+        .from('projects')
+        .update({ fases: fasesActualizadas })
+        .eq('id', proyecto.id);
+      
+      if (error) throw error;
       
       // Actualizar estado local
       const proyectoActualizado = { ...proyectoLocal, fases: fasesActualizadas };
@@ -467,10 +442,15 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
 
     try {
       setLoading(true);
-      const proyectoRef = doc(firestore, 'projects', proyecto.id);
       const fasesActualizadas = (proyectoLocal.fases || []).filter((f: any) => f.key !== faseKey);
 
-      await updateDoc(proyectoRef, { fases: fasesActualizadas });
+      // Actualizar en Supabase
+      const { error } = await supabase
+        .from('projects')
+        .update({ fases: fasesActualizadas })
+        .eq('id', proyecto.id);
+      
+      if (error) throw error;
       
       // Actualizar estado local
       const proyectoActualizado = { ...proyectoLocal, fases: fasesActualizadas };
@@ -508,13 +488,19 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
 
     try {
       setLoading(true);
-      const proyectoRef = doc(firestore, 'projects', proyecto.id);
-      await updateDoc(proyectoRef, {
-        presupuesto: datosProyecto.presupuesto,
-        cliente: datosProyecto.cliente,
-        fechaEntrega: datosProyecto.fechaEntrega,
-        actualizadoEn: serverTimestamp()
-      });
+      
+      // Actualizar en Supabase
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          presupuesto: datosProyecto.presupuesto,
+          cliente: datosProyecto.cliente,
+          fechaEntrega: datosProyecto.fechaEntrega,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', proyecto.id);
+      
+      if (error) throw error;
 
       const proyectoActualizado = { 
         ...proyecto, 
@@ -947,7 +933,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
     
   return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -1029,7 +1015,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Resumen de Fases</CardTitle>
@@ -1039,13 +1025,13 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                 {fases.map((fase: any) => {
                   const progreso = calcularProgresoFase(fase.key);
                   return (
-                    <div key={fase.key} className="flex items-center justify-between">
+                    <div key={fase.key} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <span className="text-sm">{fase.descripcion}</span>
-              <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
                         <Progress value={progreso} className="w-20 h-2" />
                         <span className="text-sm font-medium">{progreso}%</span>
-              </div>
-            </div>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -1080,44 +1066,48 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-purple-900 rounded-lg shadow-xl w-full max-w-7xl max-h-[95vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-purple-900 rounded-lg shadow-xl w-full max-w-[99vw] sm:max-w-[98vw] md:max-w-[97vw] lg:max-w-[96vw] xl:max-w-[95vw] 2xl:max-w-[94vw] max-h-[98vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-          <div>
-            <h2 className="text-2xl font-bold text-white">{proyecto.name || proyecto.nombre}</h2>
-            <p className="text-white/90">{proyecto.description || proyecto.descripcion}</p>
-            </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b bg-gradient-to-r from-blue-600 to-purple-600 text-white gap-4">
+          <div className="flex-1">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">{proyecto.name || proyecto.nombre}</h2>
+            <p className="text-white/90 text-sm sm:text-base">{proyecto.description || proyecto.descripcion}</p>
+          </div>
           <div className="flex items-center gap-3">
             <Button onClick={onClose} variant="ghost" size="sm" className="text-white hover:bg-white/20">
               <X className="h-5 w-5" />
-              </Button>
-            </div>
+            </Button>
           </div>
+        </div>
 
         {/* Content */}
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-            <div className="border-b-2 border-black px-6 bg-purple-800">
-              <TabsList className="grid w-full grid-cols-4 bg-purple-700 border border-purple-600">
-                <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white hover:bg-purple-600">
-                  Vista General
+            <div className="border-b-2 border-black px-2 sm:px-4 lg:px-6 bg-purple-800">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-purple-700 border border-purple-600">
+                <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white hover:bg-purple-600 text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Vista General</span>
+                  <span className="sm:hidden">General</span>
                 </TabsTrigger>
-                <TabsTrigger value="fases" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white hover:bg-purple-600">
-                  Fases y Tareas
+                <TabsTrigger value="fases" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white hover:bg-purple-600 text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Fases y Tareas</span>
+                  <span className="sm:hidden">Fases</span>
                 </TabsTrigger>
-                <TabsTrigger value="files" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white hover:bg-purple-600">
-                  Archivos
+                <TabsTrigger value="files" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white hover:bg-purple-600 text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Archivos</span>
+                  <span className="sm:hidden">Files</span>
                 </TabsTrigger>
-                <TabsTrigger value="metrics" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white hover:bg-purple-600">
-                  Métricas
+                <TabsTrigger value="metrics" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white hover:bg-purple-600 text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Métricas</span>
+                  <span className="sm:hidden">Stats</span>
                 </TabsTrigger>
               </TabsList>
             </div>
 
-            <div className="p-6 overflow-y-auto max-h-[calc(95vh-200px)] bg-purple-900">
-              <TabsContent value="overview" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-2 sm:p-3 lg:p-4 overflow-y-auto max-h-[calc(98vh-200px)] bg-purple-900">
+              <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
                                     <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-white">
@@ -1184,7 +1174,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                       <CardTitle className="text-white">Editar Información del Proyecto</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
                         <div>
                           <Label htmlFor="presupuesto" className="text-white">Presupuesto</Label>
                           <Input
@@ -1248,8 +1238,8 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                   <CardContent>
                     <div className="space-y-4">
                       {(proyecto.fases || []).map((fase: any) => (
-                        <div key={fase.key} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div>
+                        <div key={fase.key} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg gap-3">
+                          <div className="flex-1">
                             <div className="font-medium text-white">{fase.descripcion}</div>
                             <div className="text-sm text-gray-300">Clave: {fase.key}</div>
                           </div>

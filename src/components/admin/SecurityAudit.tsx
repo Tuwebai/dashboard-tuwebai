@@ -35,7 +35,7 @@ import {
   FileText,
   Settings
 } from 'lucide-react';
-import { firestore } from '@/lib/firebase';
+
 import { 
   collection, 
   query, 
@@ -46,7 +46,7 @@ import {
   addDoc,
   serverTimestamp,
   onSnapshot
-} from 'firebase/firestore';
+
 
 interface SecurityLog {
   id: string;

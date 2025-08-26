@@ -5,21 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { firestore } from '@/lib/firebase';
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  onSnapshot, 
-  query, 
-  where, 
-  orderBy,
-  serverTimestamp,
-  deleteDoc,
-  setDoc,
-  getDocs
-} from 'firebase/firestore';
+
+import { supabase } from '@/lib/supabase';
+
 import { 
   Users, 
   User, 

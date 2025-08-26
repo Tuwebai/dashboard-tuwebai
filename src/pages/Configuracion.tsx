@@ -11,8 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { toast } from '@/hooks/use-toast';
-import { firestore } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+
 import { 
   Settings, 
   Palette, 

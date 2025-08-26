@@ -37,8 +37,7 @@ import { exportProjects, exportCompleteReport } from '@/utils/exportUtils';
 import { ErrorMessage } from '@/components/ErrorBoundary';
 import { SectionLoading } from '@/components/LoadingSpinner';
 import { useDebounce } from '@/hooks/usePerformance';
-import { firestore } from '@/lib/firebase';
-import { doc, deleteDoc } from 'firebase/firestore';
+
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import ProyectosNuevoModal from './ProyectosNuevo';
 import { formatDateSafe } from '@/utils/formatDateSafe';

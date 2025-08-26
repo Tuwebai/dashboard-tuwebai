@@ -7,15 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { Eye, EyeOff } from 'lucide-react';
-import { auth, googleProvider, githubProvider } from '@/lib/firebase';
-import { signInWithPopup } from 'firebase/auth';
+
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login, loginWithProvider } = useApp();
+  const { login, loginWithGoogle, loginWithGithub } = useApp();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,15 +42,26 @@ export default function Login() {
     setIsLoading(false);
   };
 
-  const handleSocialLogin = async (provider: any) => {
+  const handleGoogleLogin = async () => {
     setIsLoading(true);
-    const success = await loginWithProvider(provider);
+    const success = await loginWithGoogle();
     if (success) {
       toast({ title: '¡Bienvenido!', description: 'Has iniciado sesión correctamente.' });
-      // Redirigir según el rol (se detectará automáticamente en App.tsx)
       navigate('/');
     } else {
-      toast({ title: 'Error', description: 'No se pudo iniciar sesión con el proveedor.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'No se pudo iniciar sesión con Google.', variant: 'destructive' });
+    }
+    setIsLoading(false);
+  };
+
+  const handleGithubLogin = async () => {
+    setIsLoading(true);
+    const success = await loginWithGithub();
+    if (success) {
+      toast({ title: '¡Bienvenido!', description: 'Has iniciado sesión correctamente.' });
+      navigate('/');
+    } else {
+      toast({ title: 'Error', description: 'No se pudo iniciar sesión con GitHub.', variant: 'destructive' });
     }
     setIsLoading(false);
   };
@@ -138,19 +148,27 @@ export default function Login() {
               </Button>
             </form>
 
-            {/* Botones de login social - solo si Firebase está configurado */}
-            {auth && (
-              <div className="flex flex-col gap-2 mt-4">
-                <Button type="button" variant="outline" onClick={() => handleSocialLogin(googleProvider)}>
-                  Iniciar sesión con Google
-                </Button>
-                <Button type="button" variant="outline" onClick={() => handleSocialLogin(githubProvider)}>
-                  Iniciar sesión con GitHub
-                </Button>
-              </div>
-            )}
+            {/* Botones de login social */}
+            <div className="flex flex-col gap-2 mt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleGoogleLogin}
+                disabled={isLoading}
+              >
+                Iniciar sesión con Google
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleGithubLogin}
+                disabled={isLoading}
+              >
+                Iniciar sesión con GitHub
+              </Button>
+            </div>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-2">
               <p className="text-sm text-muted-foreground">
                 ¿No tienes cuenta?{' '}
                 <Link 
@@ -158,6 +176,22 @@ export default function Login() {
                   className="text-primary hover:text-primary-glow transition-colors font-medium"
                 >
                   Regístrate aquí
+                </Link>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Al continuar, aceptas nuestros{' '}
+                <Link 
+                  to="/terminos-condiciones" 
+                  className="text-primary hover:text-primary-glow transition-colors font-medium underline"
+                >
+                  Términos y Condiciones
+                </Link>
+                {' '}y{' '}
+                <Link 
+                  to="/politica-privacidad" 
+                  className="text-primary hover:text-primary-glow transition-colors font-medium underline"
+                >
+                  Política de Privacidad
                 </Link>
               </p>
             </div>

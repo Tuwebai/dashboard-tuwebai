@@ -47,19 +47,9 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { firestore } from '@/lib/firebase';
-import { 
-  collection, 
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  Timestamp,
-  doc,
-  getDoc
-} from 'firebase/firestore';
+
 import { useApp } from '@/contexts/AppContext';
+import { supabase } from '@/lib/supabase';
 
 interface AnalyticsData {
   projects: {
@@ -136,7 +126,7 @@ export default function AdvancedAnalytics() {
     
     setLoading(true);
     try {
-      // Obtener datos reales de Firebase
+      // Obtener datos reales de Supabase
       const projectsRef = collection(firestore, 'projects');
       const usersRef = collection(firestore, 'users');
       const paymentsRef = collection(firestore, 'payments');

@@ -24,7 +24,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
-import { firestore } from '@/lib/firebase';
+
 import { 
   collection, 
   addDoc, 
@@ -37,7 +37,7 @@ import {
   updateDoc,
   deleteDoc,
   limit
-} from 'firebase/firestore';
+
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';

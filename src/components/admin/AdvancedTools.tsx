@@ -33,8 +33,7 @@ import {
   MemoryStick,
   Network
 } from 'lucide-react';
-import { firestore } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, query, where, orderBy, getDocs } from 'firebase/firestore';
+
 
 interface FileItem {
   name: string;
