@@ -186,13 +186,12 @@ export default function Sidebar() {
               </div>
             </div>
 
-            {/* Sección Análisis */}
-            <div className="mb-4">
-              <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-4 py-2 mb-2">{t('Análisis')}</div>
-              <div className="space-y-1">
-                {adminNavItem('metricas', <TrendingUp className="h-5 w-5" />, t('Métricas'))}
-                {adminNavItem('advanced-analytics', <BarChart className="h-5 w-5" />, t('Analytics Avanzado'))}
-              </div>
+            {/* ANÁLISIS */}
+            <div className="space-y-2">
+              <h3 className="px-3 text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                {t('Análisis')}
+              </h3>
+              {adminNavItem('advanced-analytics', <BarChart className="h-5 w-5" />, t('Analytics Avanzado'))}
             </div>
 
             {/* Sección Sistema */}
