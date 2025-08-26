@@ -29,14 +29,16 @@ import {
   Edit,
   Trash2,
   Eye,
-  RefreshCw
+  RefreshCw,
+  FileText
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { notificationService } from '@/lib/notificationService';
 import { ProjectsManagement } from '@/components/admin/ProjectsManagement';
 import NotificationsManager from '@/components/admin/NotificationsManager';
 import NotificationBell from '@/components/admin/NotificationBell';
-
+import ExecutiveCharts from '@/components/admin/ExecutiveCharts';
+import ReportsSystem from '@/components/admin/ReportsSystem';
 
 
 export default function Admin() {
@@ -486,6 +488,17 @@ export default function Admin() {
                           <CreditCard className="h-4 w-4 mr-2" />
                           Gestionar Pagos
                         </Button>
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start"
+                          onClick={() => {
+                            setActiveSection('reports');
+                            window.location.hash = 'reports';
+                          }}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Sistema de Reportes
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -779,124 +792,18 @@ export default function Admin() {
         )}
 
         {activeSection === 'advanced-analytics' && (
-          <Card className="bg-zinc-800 border-zinc-700">
-            <CardHeader>
-              <CardTitle className="text-white">Analytics Avanzado</CardTitle>
-              <CardDescription className="text-gray-400">
-                Análisis avanzado y reportes detallados del sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {/* Métricas de crecimiento */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-zinc-700 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold text-white mb-4">Crecimiento de Usuarios</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Nuevos usuarios este mes:</span>
-                        <Badge variant="secondary">{usuariosNuevos}</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Crecimiento mensual:</span>
-                        <Badge variant="default">+{crecimientoUsuarios}%</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Total usuarios:</span>
-                        <Badge variant="outline">{usuariosActivos}</Badge>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-zinc-700 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold text-white mb-4">Rendimiento de Proyectos</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Proyectos completados:</span>
-                        <Badge variant="secondary">{proyectosCompletados}</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Tasa de éxito:</span>
-                        <Badge variant="default">{tasaCompletacionProyectos}%</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">En desarrollo:</span>
-                        <Badge variant="outline">{proyectosEnDesarrollo}</Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Métricas financieras */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-zinc-700 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold text-white mb-4">Análisis Financiero</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Ingresos totales:</span>
-                        <Badge variant="secondary">${ingresosTotales.toLocaleString()}</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Ingresos este mes:</span>
-                        <Badge variant="default">${ingresosEsteMes.toLocaleString()}</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Promedio por pago:</span>
-                        <Badge variant="outline">
-                          ${pagos.length > 0 ? Math.round(ingresosTotales / pagos.length) : 0}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-zinc-700 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold text-white mb-4">Gestión de Tickets</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Tickets abiertos:</span>
-                        <Badge variant="destructive">{ticketsAbiertos}</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Tasa de resolución:</span>
-                        <Badge variant="default">{tasaResolucionTickets}%</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Urgentes pendientes:</span>
-                        <Badge variant="outline">{ticketsUrgentes}</Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Resumen ejecutivo */}
-                <div className="bg-zinc-700 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-white mb-4">Resumen Ejecutivo</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="text-center p-3 bg-zinc-600 rounded-lg">
-                      <div className="text-lg font-bold text-green-400">{tasaCompletacionProyectos}%</div>
-                      <div className="text-xs text-gray-400">Éxito Proyectos</div>
-                    </div>
-                    <div className="text-center p-3 bg-zinc-600 rounded-lg">
-                      <div className="text-lg font-bold text-blue-400">{tasaResolucionTickets}%</div>
-                      <div className="text-xs text-gray-400">Resolución Tickets</div>
-                    </div>
-                    <div className="text-center p-3 bg-zinc-600 rounded-lg">
-                      <div className="text-lg font-bold text-purple-400">{crecimientoUsuarios}%</div>
-                      <div className="text-xs text-gray-400">Crecimiento</div>
-                    </div>
-                    <div className="text-center p-3 bg-zinc-600 rounded-lg">
-                      <div className="text-lg font-bold text-yellow-400">
-                        ${pagos.length > 0 ? Math.round(ingresosTotales / pagos.length) : 0}
-                      </div>
-                      <div className="text-xs text-gray-400">Ticket Promedio</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ExecutiveCharts 
+            refreshData={loadData}
+            lastUpdate={lastUpdate}
+          />
         )}
 
         {activeSection === 'notifications' && (
           <NotificationsManager />
+        )}
+
+        {activeSection === 'reports' && (
+          <ReportsSystem />
         )}
 
         {activeSection === 'settings' && (

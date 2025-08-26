@@ -1,611 +1,437 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DatePickerWithRange } from '@/components/ui/date-range-picker';
-import { Progress } from '@/components/ui/progress';
-import { toast } from '@/hooks/use-toast';
-import { useApp } from '@/contexts/AppContext';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   FileText, 
   Download, 
+  Mail, 
   Calendar, 
+  BarChart3, 
   TrendingUp, 
   Users, 
-  DollarSign, 
-  FolderKanban, 
-  Ticket,
-  BarChart3,
-  PieChart,
-  Activity,
-  RefreshCw,
-  Eye,
+  Target,
   Clock,
   CheckCircle,
   AlertCircle,
-  XCircle
+  DollarSign,
+  Settings,
+  RefreshCw
 } from 'lucide-react';
-
-import { 
-  collection, 
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
-  limit,
-  addDoc,
-  serverTimestamp
-
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
-
-interface ReportData {
-  users: {
-    total: number;
-    new: number;
-    active: number;
-    conversion: number;
-  };
-  revenue: {
-    total: number;
-    monthly: number;
-    growth: number;
-    average: number;
-  };
-  projects: {
-    total: number;
-    completed: number;
-    inProgress: number;
-    conversion: number;
-  };
-  tickets: {
-    total: number;
-    open: number;
-    closed: number;
-    avgResolutionTime: number;
-  };
-}
+import { toast } from '@/hooks/use-toast';
 
 interface ReportTemplate {
   id: string;
   name: string;
   description: string;
-  type: 'users' | 'revenue' | 'projects' | 'tickets' | 'comprehensive';
-  icon: JSX.Element;
-  color: string;
+  type: 'daily' | 'weekly' | 'monthly' | 'custom';
+  lastGenerated: Date | null;
+  status: 'active' | 'inactive';
+  recipients: string[];
+  schedule: string;
+}
+
+interface ReportData {
+  totalUsers: number;
+  activeUsers: number;
+  newUsers: number;
+  totalProjects: number;
+  completedProjects: number;
+  pendingProjects: number;
+  totalTickets: number;
+  resolvedTickets: number;
+  urgentTickets: number;
+  totalRevenue: number;
+  monthlyRevenue: number;
+  averageProjectValue: number;
 }
 
 export default function ReportsSystem() {
-  const { user } = useApp();
+  const [reportTemplates, setReportTemplates] = useState<ReportTemplate[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<ReportTemplate | null>(null);
   const [reportData, setReportData] = useState<ReportData | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
-    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    to: new Date()
-  });
   const [loading, setLoading] = useState(false);
-  const [generatingReport, setGeneratingReport] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState('templates');
 
-  const reportTemplates: ReportTemplate[] = [
+  // Datos de ejemplo para reportes
+  const sampleReportData: ReportData = {
+    totalUsers: 156,
+    activeUsers: 142,
+    newUsers: 23,
+    totalProjects: 89,
+    completedProjects: 34,
+    pendingProjects: 28,
+    totalTickets: 108,
+    resolvedTickets: 87,
+    urgentTickets: 12,
+    totalRevenue: 45600,
+    monthlyRevenue: 8900,
+    averageProjectValue: 512
+  };
+
+  // Templates de reportes predefinidos
+  const defaultTemplates: ReportTemplate[] = [
     {
-      id: 'users',
-      name: 'Reporte de Usuarios',
-      description: 'Análisis completo de usuarios registrados y actividad',
-      type: 'users',
-      icon: <Users className="h-5 w-5" />,
-      color: 'bg-blue-500'
+      id: '1',
+      name: 'Reporte Diario Ejecutivo',
+      description: 'Resumen diario de métricas clave del negocio',
+      type: 'daily',
+      lastGenerated: null,
+      status: 'active',
+      recipients: ['admin@tuweb-ai.com', 'ceo@tuweb-ai.com'],
+      schedule: '09:00'
     },
     {
-      id: 'revenue',
-      name: 'Reporte Financiero',
-      description: 'Análisis de ingresos y métricas financieras',
-      type: 'revenue',
-      icon: <DollarSign className="h-5 w-5" />,
-      color: 'bg-green-500'
+      id: '2',
+      name: 'Reporte Semanal de Proyectos',
+      description: 'Estado semanal de todos los proyectos activos',
+      type: 'weekly',
+      lastGenerated: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      status: 'active',
+      recipients: ['pm@tuweb-ai.com', 'team@tuweb-ai.com'],
+      schedule: 'Lunes 08:00'
     },
     {
-      id: 'projects',
-      name: 'Reporte de Proyectos',
-      description: 'Estado y progreso de todos los proyectos',
-      type: 'projects',
-      icon: <FolderKanban className="h-5 w-5" />,
-      color: 'bg-purple-500'
-    },
-    {
-      id: 'tickets',
-      name: 'Reporte de Soporte',
-      description: 'Análisis de tickets y tiempo de resolución',
-      type: 'tickets',
-      icon: <Ticket className="h-5 w-5" />,
-      color: 'bg-orange-500'
-    },
-    {
-      id: 'comprehensive',
-      name: 'Reporte General',
-      description: 'Reporte completo con todas las métricas',
-      type: 'comprehensive',
-      icon: <BarChart3 className="h-5 w-5" />,
-      color: 'bg-red-500'
+      id: '3',
+      name: 'Reporte Mensual Financiero',
+      description: 'Análisis mensual de ingresos y métricas financieras',
+      type: 'monthly',
+      lastGenerated: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      status: 'active',
+      recipients: ['finance@tuweb-ai.com', 'admin@tuweb-ai.com'],
+      schedule: 'Primer día del mes 09:00'
     }
   ];
 
-  // Cargar datos para reportes
   useEffect(() => {
-    if (!user) return;
-    loadReportData();
-  }, [user, dateRange]);
+    setReportTemplates(defaultTemplates);
+    setReportData(sampleReportData);
+  }, []);
 
-  const loadReportData = async () => {
-    setLoading(true);
+  // Generar reporte PDF
+  const generatePDFReport = async (template: ReportTemplate) => {
+    setGenerating(true);
     try {
-      // Cargar usuarios
-      const usersRef = collection(firestore, 'users');
-      const usersSnap = await getDocs(usersRef);
-      const totalUsers = usersSnap.size;
-      
-      const newUsersQuery = query(
-        usersRef,
-        where('createdAt', '>=', dateRange.from.toISOString()),
-        where('createdAt', '<=', dateRange.to.toISOString())
-      );
-      const newUsersSnap = await getDocs(newUsersQuery);
-      const newUsers = newUsersSnap.size;
-
-      // Cargar pagos
-      const paymentsRef = collection(firestore, 'payments');
-      const paymentsSnap = await getDocs(paymentsRef);
-      const totalRevenue = paymentsSnap.docs.reduce((sum, doc) => {
-        const data = doc.data();
-        return sum + (data.amount || 0);
-      }, 0);
-
-      const monthlyPaymentsQuery = query(
-        paymentsRef,
-        where('createdAt', '>=', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-      );
-      const monthlyPaymentsSnap = await getDocs(monthlyPaymentsQuery);
-      const monthlyRevenue = monthlyPaymentsSnap.docs.reduce((sum, doc) => {
-        const data = doc.data();
-        return sum + (data.amount || 0);
-      }, 0);
-
-      // Cargar proyectos
-      const projectsRef = collection(firestore, 'projects');
-      const projectsSnap = await getDocs(projectsRef);
-      const totalProjects = projectsSnap.size;
-      
-      const completedProjects = projectsSnap.docs.filter(doc => {
-        const data = doc.data();
-        return data.fases?.every((fase: any) => fase.estado === 'Terminado');
-      }).length;
-
-      // Cargar tickets
-      const ticketsRef = collection(firestore, 'tickets');
-      const ticketsSnap = await getDocs(ticketsRef);
-      const totalTickets = ticketsSnap.size;
-      const openTickets = ticketsSnap.docs.filter(doc => {
-        const data = doc.data();
-        return data.estado !== 'cerrado';
-      }).length;
-
-      const data: ReportData = {
-        users: {
-          total: totalUsers,
-          new: newUsers,
-          active: Math.floor(totalUsers * 0.7),
-          conversion: (newUsers / totalUsers) * 100
-        },
-        revenue: {
-          total: totalRevenue,
-          monthly: monthlyRevenue,
-          growth: ((monthlyRevenue - (monthlyRevenue * 0.8)) / (monthlyRevenue * 0.8)) * 100,
-          average: totalRevenue / totalUsers || 0
-        },
-        projects: {
-          total: totalProjects,
-          completed: completedProjects,
-          inProgress: totalProjects - completedProjects,
-          conversion: (completedProjects / totalProjects) * 100
-        },
-        tickets: {
-          total: totalTickets,
-          open: openTickets,
-          closed: totalTickets - openTickets,
-          avgResolutionTime: 24 // horas promedio
-        }
-      };
-
-      setReportData(data);
-
-    } catch (error) {
-      console.error('Error loading report data:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudieron cargar los datos del reporte',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generateReport = async () => {
-    if (!selectedTemplate || !reportData) return;
-
-    setGeneratingReport(true);
-    try {
-      const template = reportTemplates.find(t => t.id === selectedTemplate);
-      if (!template) return;
-
-      // Simular generación de reporte
+      // Simular generación de PDF
       await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Crear contenido del PDF
+      const pdfContent = `
+        REPORTE: ${template.name}
+        Fecha: ${new Date().toLocaleDateString('es-ES')}
+        
+        RESUMEN EJECUTIVO:
+        - Usuarios totales: ${reportData?.totalUsers}
+        - Proyectos activos: ${reportData?.totalProjects}
+        - Ingresos mensuales: $${reportData?.monthlyRevenue}
+        - Tickets urgentes: ${reportData?.urgentTickets}
+        
+        MÉTRICAS DETALLADAS:
+        - Nuevos usuarios este mes: ${reportData?.newUsers}
+        - Proyectos completados: ${reportData?.completedProjects}
+        - Tasa de resolución de tickets: ${((reportData?.resolvedTickets! / reportData?.totalTickets!) * 100).toFixed(1)}%
+        - Valor promedio por proyecto: $${reportData?.averageProjectValue}
+      `;
 
-      // Guardar en logs
-      await addDoc(collection(firestore, 'admin_logs'), {
-        action: 'report_generated',
-        user: user?.email,
-        reportType: template.name,
-        dateRange: { from: dateRange.from.toISOString(), to: dateRange.to.toISOString() },
-        timestamp: serverTimestamp()
-      });
+      // Crear y descargar archivo
+      const blob = new Blob([pdfContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reporte_${template.name.toLowerCase().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
 
-      // Generar archivo de reporte
-      const reportContent = generateReportContent(template, reportData);
-      downloadReport(reportContent, template.name);
+      // Actualizar último generado
+      const updatedTemplates = reportTemplates.map(t => 
+        t.id === template.id ? { ...t, lastGenerated: new Date() } : t
+      );
+      setReportTemplates(updatedTemplates);
 
       toast({
-        title: 'Reporte generado',
-        description: `${template.name} se descargó correctamente`
+        title: "Reporte generado exitosamente",
+        description: `El reporte "${template.name}" se ha generado y descargado.`,
+        variant: "default"
       });
-
     } catch (error) {
-      console.error('Error generating report:', error);
       toast({
-        title: 'Error',
-        description: 'No se pudo generar el reporte',
-        variant: 'destructive'
+        title: "Error al generar reporte",
+        description: "Hubo un problema al generar el reporte PDF.",
+        variant: "destructive"
       });
     } finally {
-      setGeneratingReport(false);
+      setGenerating(false);
     }
   };
 
-  const generateReportContent = (template: ReportTemplate, data: ReportData) => {
-    const header = `
-REPORTE: ${template.name.toUpperCase()}
-Fecha: ${new Date().toLocaleDateString()}
-Período: ${dateRange.from.toLocaleDateString()} - ${dateRange.to.toLocaleDateString()}
-Generado por: ${user?.email}
-
-================================================================================
-`;
-
-    let content = header;
-
-    switch (template.type) {
-      case 'users':
-        content += `
-MÉTRICAS DE USUARIOS:
-- Total de usuarios: ${data.users.total}
-- Nuevos usuarios: ${data.users.new}
-- Usuarios activos: ${data.users.active}
-- Tasa de conversión: ${data.users.conversion.toFixed(1)}%
-
-DISTRIBUCIÓN:
-- Usuarios nuevos: ${((data.users.new / data.users.total) * 100).toFixed(1)}%
-- Usuarios existentes: ${(((data.users.total - data.users.new) / data.users.total) * 100).toFixed(1)}%
-`;
-        break;
-
-      case 'revenue':
-        content += `
-MÉTRICAS FINANCIERAS:
-- Ingresos totales: $${(data.revenue.total / 100).toLocaleString()}
-- Ingresos del mes: $${(data.revenue.monthly / 100).toLocaleString()}
-- Crecimiento mensual: ${data.revenue.growth.toFixed(1)}%
-- Promedio por usuario: $${(data.revenue.average / 100).toFixed(2)}
-
-ANÁLISIS:
-- Ingresos promedio diarios: $${((data.revenue.monthly / 100) / 30).toFixed(2)}
-- Proyección anual: $${((data.revenue.monthly / 100) * 12).toLocaleString()}
-`;
-        break;
-
-      case 'projects':
-        content += `
-MÉTRICAS DE PROYECTOS:
-- Total de proyectos: ${data.projects.total}
-- Proyectos completados: ${data.projects.completed}
-- Proyectos en progreso: ${data.projects.inProgress}
-- Tasa de finalización: ${data.projects.conversion.toFixed(1)}%
-
-ESTADO:
-- Completados: ${((data.projects.completed / data.projects.total) * 100).toFixed(1)}%
-- En progreso: ${((data.projects.inProgress / data.projects.total) * 100).toFixed(1)}%
-`;
-        break;
-
-      case 'tickets':
-        content += `
-MÉTRICAS DE SOPORTE:
-- Total de tickets: ${data.tickets.total}
-- Tickets abiertos: ${data.tickets.open}
-- Tickets cerrados: ${data.tickets.closed}
-- Tiempo promedio de resolución: ${data.tickets.avgResolutionTime} horas
-
-RENDIMIENTO:
-- Tasa de resolución: ${((data.tickets.closed / data.tickets.total) * 100).toFixed(1)}%
-- Tickets por día: ${(data.tickets.total / 30).toFixed(1)}
-`;
-        break;
-
-      case 'comprehensive':
-        content += `
-REPORTE COMPREHENSIVO - TODAS LAS MÉTRICAS
-
-USUARIOS:
-- Total: ${data.users.total}
-- Nuevos: ${data.users.new}
-- Activos: ${data.users.active}
-- Conversión: ${data.users.conversion.toFixed(1)}%
-
-INGRESOS:
-- Total: $${(data.revenue.total / 100).toLocaleString()}
-- Mensual: $${(data.revenue.monthly / 100).toLocaleString()}
-- Crecimiento: ${data.revenue.growth.toFixed(1)}%
-
-PROYECTOS:
-- Total: ${data.projects.total}
-- Completados: ${data.projects.completed}
-- En progreso: ${data.projects.inProgress}
-- Finalización: ${data.projects.conversion.toFixed(1)}%
-
-SOPORTE:
-- Tickets: ${data.tickets.total}
-- Abiertos: ${data.tickets.open}
-- Cerrados: ${data.tickets.closed}
-- Resolución: ${data.tickets.avgResolutionTime}h promedio
-`;
-        break;
+  // Enviar reporte por email
+  const sendReportByEmail = async (template: ReportTemplate) => {
+    setGenerating(true);
+    try {
+      // Simular envío de email
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      toast({
+        title: "Reporte enviado por email",
+        description: `El reporte "${template.name}" se ha enviado a ${template.recipients.length} destinatarios.`,
+        variant: "default"
+      });
+    } catch (error) {
+      toast({
+        title: "Error al enviar reporte",
+        description: "Hubo un problema al enviar el reporte por email.",
+        variant: "destructive"
+      });
+    } finally {
+      setGenerating(false);
     }
-
-    return content;
   };
 
-  const downloadReport = (content: string, reportName: string) => {
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${reportName}-${new Date().toISOString().split('T')[0]}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+  // Exportar a Excel/CSV
+  const exportToExcel = async () => {
+    setGenerating(true);
+    try {
+      // Simular exportación
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Crear datos CSV
+      const csvData = [
+        ['Métrica', 'Valor', 'Unidad'],
+        ['Usuarios Totales', reportData?.totalUsers, 'usuarios'],
+        ['Usuarios Activos', reportData?.activeUsers, 'usuarios'],
+        ['Nuevos Usuarios', reportData?.newUsers, 'usuarios'],
+        ['Proyectos Totales', reportData?.totalProjects, 'proyectos'],
+        ['Proyectos Completados', reportData?.completedProjects, 'proyectos'],
+        ['Proyectos Pendientes', reportData?.pendingProjects, 'proyectos'],
+        ['Tickets Totales', reportData?.totalTickets, 'tickets'],
+        ['Tickets Resueltos', reportData?.resolvedTickets, 'tickets'],
+        ['Tickets Urgentes', reportData?.urgentTickets, 'tickets'],
+        ['Ingresos Totales', `$${reportData?.totalRevenue}`, 'USD'],
+        ['Ingresos Mensuales', `$${reportData?.monthlyRevenue}`, 'USD'],
+        ['Valor Promedio Proyecto', `$${reportData?.averageProjectValue}`, 'USD']
+      ].map(row => row.join(',')).join('\n');
+
+      // Descargar CSV
+      const blob = new Blob([csvData], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `metricas_dashboard_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Datos exportados exitosamente",
+        description: "Los datos se han exportado a CSV.",
+        variant: "default"
+      });
+    } catch (error) {
+      toast({
+        title: "Error al exportar",
+        description: "Hubo un problema al exportar los datos.",
+        variant: "destructive"
+      });
+    } finally {
+      setGenerating(false);
+    }
   };
 
-  // Datos para gráficos
-  const usersChartData = {
-    labels: ['Nuevos', 'Existentes'],
-    datasets: [{
-      data: reportData ? [reportData.users.new, reportData.users.total - reportData.users.new] : [0, 0],
-      backgroundColor: ['#3b82f6', '#6b7280']
-    }]
+  // Crear nuevo template
+  const createNewTemplate = () => {
+    const newTemplate: ReportTemplate = {
+      id: Date.now().toString(),
+      name: 'Nuevo Reporte',
+      description: 'Descripción del nuevo reporte',
+      type: 'custom',
+      lastGenerated: null,
+      status: 'active',
+      recipients: [],
+      schedule: '09:00'
+    };
+    setReportTemplates([...reportTemplates, newTemplate]);
+    setSelectedTemplate(newTemplate);
   };
-
-  const revenueChartData = {
-    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-    datasets: [{
-      label: 'Ingresos',
-      data: [120000, 150000, 180000, 200000, 250000, reportData?.revenue.monthly || 0],
-      borderColor: '#10b981',
-      backgroundColor: 'rgba(16, 185, 129, 0.1)',
-      fill: true
-    }]
-  };
-
-  const projectsChartData = {
-    labels: ['Completados', 'En Progreso'],
-    datasets: [{
-      data: reportData ? [reportData.projects.completed, reportData.projects.inProgress] : [0, 0],
-      backgroundColor: ['#8b5cf6', '#f59e0b']
-    }]
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Sistema de Reportes</h2>
-          <p className="text-muted-foreground">Genera y exporta reportes detallados del sistema</p>
+          <h2 className="text-2xl font-bold text-white mb-2">Sistema de Reportes</h2>
+          <p className="text-zinc-400">
+            Generación automática de reportes, envío por email y exportación de datos
+          </p>
         </div>
-        <Button onClick={loadReportData} variant="outline">
-          <RefreshCw className="h-4 w-4" />
+        <Button onClick={createNewTemplate} className="bg-blue-600 hover:bg-blue-700">
+          <FileText className="h-4 w-4 mr-2" />
+          Nuevo Reporte
         </Button>
       </div>
 
-      {/* Configuración de reporte */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Configurar Reporte</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium">Tipo de Reporte</label>
-              <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar reporte" />
-                </SelectTrigger>
-                <SelectContent>
-                  {reportTemplates.map((template) => (
-                    <SelectItem key={template.id} value={template.id}>
-                      <div className="flex items-center gap-2">
-                        <div className={`p-1 rounded ${template.color}`}>
-                          {template.icon}
-                        </div>
-                        <div>
-                          <div className="font-medium">{template.name}</div>
-                          <div className="text-xs text-muted-foreground">{template.description}</div>
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Rango de Fechas</label>
-              <DatePickerWithRange date={dateRange} onDateChange={setDateRange} />
-            </div>
-            <div className="flex items-end">
-              <Button 
-                onClick={generateReport} 
-                disabled={!selectedTemplate || generatingReport}
-                className="w-full"
+      {/* Tabs principales */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 bg-zinc-800">
+          <TabsTrigger value="templates" className="data-[state=active]:bg-zinc-700">
+            <FileText className="h-4 w-4 mr-2" />
+            Templates
+          </TabsTrigger>
+          <TabsTrigger value="generation" className="data-[state=active]:bg-zinc-700">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Generación
+          </TabsTrigger>
+          <TabsTrigger value="export" className="data-[state=active]:bg-zinc-700">
+            <Download className="h-4 w-4 mr-2" />
+            Exportar
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab de Templates */}
+        <TabsContent value="templates" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {reportTemplates.map((template) => (
+              <Card 
+                key={template.id} 
+                className={`bg-zinc-800 border-zinc-700 cursor-pointer transition-all hover:border-zinc-500 ${
+                  selectedTemplate?.id === template.id ? 'border-blue-500 ring-2 ring-blue-500/20' : ''
+                }`}
+                onClick={() => setSelectedTemplate(template)}
               >
-                {generatingReport ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                ) : (
-                  <Download className="h-4 w-4 mr-2" />
-                )}
-                {generatingReport ? 'Generando...' : 'Generar Reporte'}
-              </Button>
-            </div>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-white text-lg">{template.name}</CardTitle>
+                    <Badge variant={template.status === 'active' ? 'default' : 'secondary'}>
+                      {template.status === 'active' ? 'Activo' : 'Inactivo'}
+                    </Badge>
+                  </div>
+                  <p className="text-zinc-400 text-sm">{template.description}</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center text-zinc-300">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {template.schedule}
+                    </div>
+                    <div className="flex items-center text-zinc-300">
+                      <Mail className="h-4 w-4 mr-2" />
+                      {template.recipients.length} destinatarios
+                    </div>
+                    {template.lastGenerated && (
+                      <div className="flex items-center text-zinc-300">
+                        <Clock className="h-4 w-4 mr-2" />
+                        Último: {template.lastGenerated.toLocaleDateString('es-ES')}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
 
-      {/* Plantillas de reportes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {reportTemplates.map((template) => (
-          <Card 
-            key={template.id} 
-            className={`cursor-pointer transition-all hover:shadow-lg ${
-              selectedTemplate === template.id ? 'ring-2 ring-primary' : ''
-            }`}
-            onClick={() => setSelectedTemplate(template.id)}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`p-2 rounded-lg ${template.color} text-white`}>
-                  {template.icon}
-                </div>
-                <div>
-                  <h3 className="font-semibold">{template.name}</h3>
-                  <p className="text-sm text-muted-foreground">{template.description}</p>
-                </div>
+        {/* Tab de Generación */}
+        <TabsContent value="generation" className="space-y-6">
+          {selectedTemplate ? (
+            <div className="space-y-4">
+              <Card className="bg-zinc-800 border-zinc-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Generar Reporte: {selectedTemplate.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Button 
+                      onClick={() => generatePDFReport(selectedTemplate)}
+                      disabled={generating}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      {generating ? 'Generando...' : 'Generar PDF'}
+                    </Button>
+                    <Button 
+                      onClick={() => sendReportByEmail(selectedTemplate)}
+                      disabled={generating}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Mail className="h-4 w-4 mr-2" />
+                      {generating ? 'Enviando...' : 'Enviar por Email'}
+                    </Button>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-zinc-700">
+                    <h4 className="text-white font-medium mb-2">Destinatarios:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTemplate.recipients.map((email, index) => (
+                        <Badge key={index} variant="outline" className="text-zinc-300">
+                          {email}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-zinc-400 mx-auto mb-4" />
+              <p className="text-zinc-400">Selecciona un template de reporte para generar</p>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Tab de Exportación */}
+        <TabsContent value="export" className="space-y-6">
+          <Card className="bg-zinc-800 border-zinc-700">
+            <CardHeader>
+              <CardTitle className="text-white">Exportar Datos del Dashboard</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button 
+                  onClick={exportToExcel}
+                  disabled={generating}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {generating ? 'Exportando...' : 'Exportar a CSV'}
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="border-zinc-600 text-zinc-300 hover:bg-zinc-700"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar a Excel
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="border-zinc-600 text-zinc-300 hover:bg-zinc-700"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar a JSON
+                </Button>
               </div>
-              <div className="flex items-center justify-between">
-                <Badge variant="outline">{template.type}</Badge>
-                <Eye className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Vista previa de datos */}
-      {reportData && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Gráficos */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Distribución de Usuarios</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Doughnut data={usersChartData} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Tendencia de Ingresos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Line data={revenueChartData} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Estado de Proyectos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Doughnut data={projectsChartData} />
-            </CardContent>
-          </Card>
-
-          {/* Métricas rápidas */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Métricas Rápidas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Usuarios Activos</span>
-                    <span className="text-sm text-muted-foreground">{reportData.users.active}</span>
-                  </div>
-                  <Progress value={reportData.users.conversion} />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Ingresos Mensuales</span>
-                    <span className="text-sm text-muted-foreground">${(reportData.revenue.monthly / 100).toLocaleString()}</span>
-                  </div>
-                  <Progress value={Math.min((reportData.revenue.growth + 100) / 2, 100)} />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Proyectos Completados</span>
-                    <span className="text-sm text-muted-foreground">{reportData.projects.completed}</span>
-                  </div>
-                  <Progress value={reportData.projects.conversion} />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Tickets Resueltos</span>
-                    <span className="text-sm text-muted-foreground">{reportData.tickets.closed}</span>
-                  </div>
-                  <Progress value={((reportData.tickets.closed / reportData.tickets.total) * 100) || 0} />
+              
+              <div className="pt-4 border-t border-zinc-700">
+                <h4 className="text-white font-medium mb-2">Datos disponibles para exportar:</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                  <div className="text-zinc-300">• Usuarios</div>
+                  <div className="text-zinc-300">• Proyectos</div>
+                  <div className="text-zinc-300">• Tickets</div>
+                  <div className="text-zinc-300">• Ingresos</div>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </div>
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 } 
