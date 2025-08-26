@@ -183,7 +183,7 @@ export const usePWA = () => {
         if (permission === 'granted' && pwaState.registration) {
           const subscription = await pwaState.registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: process.env.VITE_VAPID_PUBLIC_KEY
+            applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY
           });
           
           // Aquí se enviaría la subscription al servidor

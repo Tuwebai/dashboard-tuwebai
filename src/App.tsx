@@ -254,13 +254,13 @@ function App() {
           <ThemeProvider>
             <TooltipProvider>
               <AppProvider>
-                <Router>
+                <Router basename={import.meta.env.BASE_URL || '/'}>
                   <Suspense fallback={<PageLoader />}>
                     <AppRoutes />
                   </Suspense>
+                  <Toaster />
+                  <Sonner />
                 </Router>
-                <Toaster />
-                <Sonner />
               </AppProvider>
             </TooltipProvider>
           </ThemeProvider>

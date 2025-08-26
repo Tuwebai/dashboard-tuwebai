@@ -58,7 +58,7 @@ class ErrorBoundaryClass extends Component<Props & { navigate: (path: string) =>
                 Ha ocurrido un error inesperado. Por favor, intenta de nuevo.
               </p>
               
-              {process.env.NODE_ENV === 'development' && this.state.error && (
+              {import.meta.env.DEV && this.state.error && (
                 <details className="bg-zinc-900 p-3 rounded text-xs">
                   <summary className="cursor-pointer text-zinc-400 mb-2">
                     Detalles del error (solo desarrollo)

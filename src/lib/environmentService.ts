@@ -245,7 +245,7 @@ export const environmentService = {
       { key: 'JWT_SECRET', value: 'your-super-secret-jwt-key-here', isSensitive: true, environment: 'production' },
       { key: 'API_KEY', value: 'your-api-key-here', isSensitive: true, environment: 'production' },
       { key: 'CORS_ORIGINS', value: 'https://yourdomain.com', isSensitive: false, environment: 'production' },
-      { key: 'REDIS_URL', value: 'redis://localhost:6379', isSensitive: false, environment: 'production' },
+      { key: 'REDIS_URL', value: 'redis://your-redis-host:6379', isSensitive: false, environment: 'production' },
       { key: 'AWS_ACCESS_KEY_ID', value: 'your-aws-access-key', isSensitive: true, environment: 'production' },
       { key: 'AWS_SECRET_ACCESS_KEY', value: 'your-aws-secret-key', isSensitive: true, environment: 'production' },
       { key: 'AWS_REGION', value: 'us-east-1', isSensitive: false, environment: 'production' }

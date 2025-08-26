@@ -9,7 +9,8 @@ export const setupErrorHandler = () => {
         if (message.includes('Download the React DevTools')) {
           return;
         }
-        if (message.includes('ERR_CONNECTION_REFUSED') && message.includes('localhost:8082')) {
+        // Detectar cualquier puerto de desarrollo local
+        if (message.includes('ERR_CONNECTION_REFUSED') && message.includes('localhost:')) {
           return;
         }
       }
@@ -21,7 +22,8 @@ export const setupErrorHandler = () => {
     console.warn = (...args) => {
       const message = args[0];
       if (typeof message === 'string') {
-        if (message.includes('ERR_CONNECTION_REFUSED') && message.includes('localhost:8082')) {
+        // Detectar cualquier puerto de desarrollo local
+        if (message.includes('ERR_CONNECTION_REFUSED') && message.includes('localhost:')) {
           return;
         }
       }
@@ -30,7 +32,8 @@ export const setupErrorHandler = () => {
 
     // Manejar errores no capturados
     window.addEventListener('error', (event) => {
-      if (event.message.includes('ERR_CONNECTION_REFUSED') && event.filename?.includes('localhost:8082')) {
+      // Detectar cualquier puerto de desarrollo local
+      if (event.message.includes('ERR_CONNECTION_REFUSED') && event.filename?.includes('localhost:')) {
         event.preventDefault();
         return false;
       }
@@ -38,8 +41,9 @@ export const setupErrorHandler = () => {
 
     // Manejar promesas rechazadas no capturadas
     window.addEventListener('unhandledrejection', (event) => {
+      // Detectar cualquier puerto de desarrollo local
       if (event.reason?.message?.includes('ERR_CONNECTION_REFUSED') && 
-          event.reason?.message?.includes('localhost:8082')) {
+          event.reason?.message?.includes('localhost:')) {
         event.preventDefault();
         return false;
       }
