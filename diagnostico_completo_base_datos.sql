@@ -42,7 +42,7 @@ ORDER BY tablename;
 SELECT 'ESTRUCTURA DE TABLAS' as seccion;
 
 -- Función para obtener estructura detallada de una tabla
-CREATE OR REPLACE FUNCTION get_table_structure(table_name text)
+CREATE OR REPLACE FUNCTION get_table_structure(p_table_name text)
 RETURNS TABLE (
     column_name text,
     data_type text,
@@ -77,7 +77,7 @@ BEGIN
         JOIN information_schema.key_column_usage kcu 
             ON tc.constraint_name = kcu.constraint_name
         WHERE tc.constraint_type = 'PRIMARY KEY' 
-            AND tc.table_name = table_name
+            AND tc.table_name = p_table_name
     ) pk ON c.column_name = pk.column_name
     LEFT JOIN (
         SELECT 
@@ -90,9 +90,9 @@ BEGIN
         JOIN information_schema.constraint_column_usage ccu 
             ON ccu.constraint_name = tc.constraint_name
         WHERE tc.constraint_type = 'FOREIGN KEY' 
-            AND tc.table_name = table_name
+            AND tc.table_name = p_table_name
     ) fk ON c.column_name = fk.column_name
-    WHERE c.table_name = table_name
+    WHERE c.table_name = p_table_name
     ORDER BY c.ordinal_position;
 END;
 $$ LANGUAGE plpgsql;
