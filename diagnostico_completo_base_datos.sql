@@ -286,19 +286,19 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 
 SELECT 'ESTADÍSTICAS DE TABLAS' as seccion;
 SELECT 
-    schemaname,
-    tablename,
-    n_tup_ins as inserciones,
-    n_tup_upd as actualizaciones,
-    n_tup_del as eliminaciones,
-    n_live_tup as filas_vivas,
-    n_dead_tup as filas_muertas,
-    last_vacuum,
-    last_autovacuum,
-    last_analyze,
-    last_autoanalyze
-FROM pg_stat_user_tables 
-ORDER BY schemaname, tablename;
+    s.schemaname,
+    s.tablename,
+    s.n_tup_ins as inserciones,
+    s.n_tup_upd as actualizaciones,
+    s.n_tup_del as eliminaciones,
+    s.n_live_tup as filas_vivas,
+    s.n_dead_tup as filas_muertas,
+    s.last_vacuum,
+    s.last_autovacuum,
+    s.last_analyze,
+    s.last_autoanalyze
+FROM pg_stat_user_tables s
+ORDER BY s.schemaname, s.tablename;
 
 -- =====================================================
 -- 15. RESUMEN FINAL
