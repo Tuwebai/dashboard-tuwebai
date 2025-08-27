@@ -130,11 +130,9 @@ SELECT
     t.tablename,
     i.indexname,
     i.indexdef,
-    a.attname as column_name
+    i.indexdef as definicion_completa
 FROM pg_indexes i
 JOIN pg_tables t ON i.tablename = t.tablename
-LEFT JOIN pg_index idx ON i.indexname = idx.indexname::text
-LEFT JOIN pg_attribute a ON idx.indexrelid = a.attrelid AND a.attnum = ANY(idx.indkey)
 WHERE t.schemaname = 'public'
 ORDER BY t.tablename, i.indexname;
 
