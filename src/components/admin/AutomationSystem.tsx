@@ -167,10 +167,35 @@ export default function AutomationSystem() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <Button onClick={refreshData} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Actualizar
-          </Button>
+                     <Button onClick={refreshData} variant="outline" size="sm">
+             <RefreshCw className="h-4 w-4 mr-2" />
+             Actualizar
+           </Button>
+           <Button 
+             onClick={async () => {
+               try {
+                 const results = await automationTaskService.executePendingTasks();
+                 const successCount = results.filter(r => r.success).length;
+                 toast({
+                   title: 'Tareas Ejecutadas',
+                   description: `${successCount}/${results.length} tareas ejecutadas exitosamente`
+                 });
+                 refreshData();
+               } catch (error) {
+                 toast({
+                   title: 'Error',
+                   description: 'Error ejecutando tareas pendientes',
+                   variant: 'destructive'
+                 });
+               }
+             }} 
+             variant="outline" 
+             size="sm"
+             className="bg-yellow-600 hover:bg-yellow-700 text-white"
+           >
+             <Zap className="h-4 w-4 mr-2" />
+             Ejecutar Tareas
+           </Button>
           <Button onClick={() => setShowWorkflowForm(true)} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="h-4 w-4 mr-2" />
             Nuevo Workflow
@@ -233,30 +258,34 @@ export default function AutomationSystem() {
         </Card>
       </div>
 
-      {/* Sistema de Pestañas */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 bg-zinc-800">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Resumen
-          </TabsTrigger>
-          <TabsTrigger value="workflows" className="data-[state=active]:bg-blue-600">
-                         <GitBranch className="h-4 w-4 mr-2" />
-            Workflows
-          </TabsTrigger>
-          <TabsTrigger value="triggers" className="data-[state=active]:bg-blue-600">
-                         <GitPullRequest className="h-4 w-4 mr-2" />
-            Triggers
-          </TabsTrigger>
-          <TabsTrigger value="tasks" className="data-[state=active]:bg-blue-600">
-                         <GitCommit className="h-4 w-4 mr-2" />
-            Tareas
-          </TabsTrigger>
-          <TabsTrigger value="pipelines" className="data-[state=active]:bg-blue-600">
-                            <GitBranch className="h-4 w-4 mr-2" />
-            CI/CD
-          </TabsTrigger>
-        </TabsList>
+             {/* Sistema de Pestañas */}
+       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+         <TabsList className="flex flex-wrap w-full bg-zinc-800 gap-1 p-1">
+           <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600 flex-shrink-0">
+             <BarChart3 className="h-4 w-4 mr-2" />
+             Resumen
+           </TabsTrigger>
+           <TabsTrigger value="workflows" className="data-[state=active]:bg-blue-600 flex-shrink-0">
+                          <GitBranch className="h-4 w-4 mr-2" />
+             Workflows
+           </TabsTrigger>
+           <TabsTrigger value="triggers" className="data-[state=active]:bg-blue-600 flex-shrink-0">
+                          <GitPullRequest className="h-4 w-4 mr-2" />
+             Triggers
+           </TabsTrigger>
+           <TabsTrigger value="tasks" className="data-[state=active]:bg-blue-600 flex-shrink-0">
+                          <GitCommit className="h-4 w-4 mr-2" />
+             Tareas
+           </TabsTrigger>
+                      <TabsTrigger value="pipelines" className="data-[state=active]:bg-blue-600 flex-shrink-0">
+                              <GitBranch className="h-4 w-4 mr-2" />
+              CI/CD
+            </TabsTrigger>
+            <TabsTrigger value="logs" className="data-[state=active]:bg-blue-600 flex-shrink-0">
+              <Activity className="h-4 w-4 mr-2" />
+              Logs
+            </TabsTrigger>
+         </TabsList>
 
         {/* Pestaña de Resumen */}
         <TabsContent value="overview" className="space-y-6">
@@ -268,34 +297,96 @@ export default function AutomationSystem() {
           />
         </TabsContent>
 
-        {/* Pestaña de Workflows */}
-        <TabsContent value="workflows" className="space-y-6">
-          <WorkflowsTab 
-            workflows={workflows}
-            onRefresh={loadAutomationData}
-          />
-        </TabsContent>
+                 {/* Pestaña de Workflows */}
+         <TabsContent value="workflows" className="space-y-6">
+           <WorkflowsTab 
+             workflows={workflows}
+             onRefresh={loadAutomationData}
+             onShowWorkflowForm={() => setShowWorkflowForm(true)}
+             onDeleteWorkflow={async (workflowId) => {
+               if (confirm('¿Estás seguro de que quieres eliminar este workflow?')) {
+                 try {
+                   await workflowService.deleteWorkflow(workflowId);
+                   await loadAutomationData();
+                   toast({
+                     title: 'Éxito',
+                     description: 'Workflow eliminado correctamente'
+                   });
+                 } catch (error) {
+                   toast({
+                     title: 'Error',
+                     description: 'No se pudo eliminar el workflow',
+                     variant: 'destructive'
+                   });
+                 }
+               }
+             }}
+           />
+         </TabsContent>
 
-        {/* Pestaña de Triggers */}
-        <TabsContent value="triggers" className="space-y-6">
-          <TriggersTab 
-            triggers={triggers}
-            onRefresh={loadAutomationData}
-          />
-        </TabsContent>
+                 {/* Pestaña de Triggers */}
+         <TabsContent value="triggers" className="space-y-6">
+           <TriggersTab 
+             triggers={triggers}
+             onRefresh={loadAutomationData}
+             onShowTriggerForm={() => setShowTriggerForm(true)}
+             onDeleteTrigger={async (triggerId) => {
+               if (confirm('¿Estás seguro de que quieres eliminar este trigger?')) {
+                 try {
+                   await triggerService.deleteTrigger(triggerId);
+                   await loadAutomationData();
+                   toast({
+                     title: 'Éxito',
+                     description: 'Trigger eliminado correctamente'
+                   });
+                 } catch (error) {
+                   toast({
+                     title: 'Error',
+                     description: 'No se pudo eliminar el trigger',
+                     variant: 'destructive'
+                   });
+                 }
+               }
+             }}
+           />
+         </TabsContent>
 
-        {/* Pestaña de Tareas */}
-        <TabsContent value="tasks" className="space-y-6">
-          <TasksTab 
-            tasks={tasks}
-            onRefresh={loadAutomationData}
-          />
-        </TabsContent>
+                 {/* Pestaña de Tareas */}
+         <TabsContent value="tasks" className="space-y-6">
+           <TasksTab 
+             tasks={tasks}
+             onRefresh={loadAutomationData}
+             onShowTaskForm={() => setShowTaskForm(true)}
+             onDeleteTask={async (taskId) => {
+               if (confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+                 try {
+                   await automationTaskService.deleteTask(taskId);
+                   await loadAutomationData();
+                   toast({
+                     title: 'Éxito',
+                     description: 'Tarea eliminada correctamente'
+                   });
+                 } catch (error) {
+                   toast({
+                     title: 'Error',
+                     description: 'No se pudo eliminar la tarea',
+                     variant: 'destructive'
+                   });
+                 }
+               }
+             }}
+           />
+         </TabsContent>
 
-        {/* Pestaña de CI/CD */}
-        <TabsContent value="pipelines" className="space-y-6">
-          <PipelinesTab />
-        </TabsContent>
+                 {/* Pestaña de CI/CD */}
+         <TabsContent value="pipelines" className="space-y-6">
+           <PipelinesTab />
+         </TabsContent>
+
+         {/* Pestaña de Logs */}
+         <TabsContent value="logs" className="space-y-6">
+           <LogsTab />
+         </TabsContent>
       </Tabs>
 
       {/* Formularios Modales */}
@@ -340,51 +431,79 @@ export default function AutomationSystem() {
 function OverviewTab({ workflows, triggers, tasks, stats }: any) {
   return (
     <div className="space-y-6">
-      {/* Actividad Reciente */}
-      <Card className="bg-zinc-800 border-zinc-700">
-        <CardHeader>
-          <CardTitle className="text-white">Actividad Reciente</CardTitle>
-          <CardDescription className="text-gray-400">
-            Últimas ejecuciones y eventos del sistema
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-zinc-700 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <CheckCircle className="h-5 w-5 text-green-400" />
-                <div>
-                  <p className="text-white font-medium">Backup diario completado</p>
-                  <p className="text-gray-400 text-sm">Hace 2 horas</p>
-                </div>
-              </div>
-              <Badge variant="default">Completado</Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-zinc-700 rounded-lg">
-              <div className="flex items-center space-x-3">
-                                 <GitPullRequest className="h-5 w-5 text-blue-400" />
-                <div>
-                  <p className="text-white font-medium">Trigger de proyecto ejecutado</p>
-                  <p className="text-gray-400 text-sm">Hace 4 horas</p>
-                </div>
-              </div>
-              <Badge variant="default">Ejecutado</Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-zinc-700 rounded-lg">
-              <div className="flex items-center space-x-3">
-                                 <GitBranch className="h-5 w-5 text-purple-400" />
-                <div>
-                  <p className="text-white font-medium">Workflow de aprobación iniciado</p>
-                  <p className="text-gray-400 text-sm">Hace 6 horas</p>
-                </div>
-              </div>
-              <Badge variant="secondary">En Progreso</Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+             {/* Actividad Reciente */}
+       <Card className="bg-zinc-800 border-zinc-700">
+         <CardHeader>
+           <CardTitle className="text-white">Actividad Reciente</CardTitle>
+           <CardDescription className="text-gray-400">
+             Últimas ejecuciones y eventos del sistema
+           </CardDescription>
+         </CardHeader>
+         <CardContent>
+           {workflows.length === 0 && triggers.length === 0 && tasks.length === 0 ? (
+             <div className="text-center py-8">
+               <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+               <p className="text-gray-400">No hay actividad reciente</p>
+               <p className="text-gray-500 text-sm mt-2">
+                 Crea workflows, triggers o tareas para ver actividad
+               </p>
+             </div>
+           ) : (
+             <div className="space-y-4">
+               {workflows.slice(0, 3).map((workflow) => (
+                 <div key={workflow.id} className="flex items-center justify-between p-3 bg-zinc-700 rounded-lg">
+                   <div className="flex items-center space-x-3">
+                     <GitBranch className="h-5 w-5 text-blue-400" />
+                     <div>
+                       <p className="text-white font-medium">{workflow.name}</p>
+                       <p className="text-gray-400 text-sm">
+                         Creado {new Date(workflow.created_at).toLocaleDateString()}
+                       </p>
+                     </div>
+                   </div>
+                   <Badge variant={workflow.is_active ? 'default' : 'secondary'}>
+                     {workflow.is_active ? 'Activo' : 'Inactivo'}
+                   </Badge>
+                 </div>
+               ))}
+               
+               {triggers.slice(0, 2).map((trigger) => (
+                 <div key={trigger.id} className="flex items-center justify-between p-3 bg-zinc-700 rounded-lg">
+                   <div className="flex items-center space-x-3">
+                     <GitPullRequest className="h-5 w-5 text-green-400" />
+                     <div>
+                       <p className="text-white font-medium">{trigger.name}</p>
+                       <p className="text-gray-400 text-sm">
+                         {trigger.event_type} • {trigger.trigger_count || 0} ejecuciones
+                       </p>
+                     </div>
+                   </div>
+                   <Badge variant={trigger.is_active ? 'default' : 'secondary'}>
+                     {trigger.is_active ? 'Activo' : 'Inactivo'}
+                   </Badge>
+                 </div>
+               ))}
+               
+               {tasks.slice(0, 2).map((task) => (
+                 <div key={task.id} className="flex items-center justify-between p-3 bg-zinc-700 rounded-lg">
+                   <div className="flex items-center space-x-3">
+                     <GitCommit className="h-5 w-5 text-yellow-400" />
+                     <div>
+                       <p className="text-white font-medium">{task.name}</p>
+                       <p className="text-gray-400 text-sm">
+                         {task.type} • {task.run_count || 0} ejecuciones
+                       </p>
+                     </div>
+                   </div>
+                   <Badge variant={task.is_active ? 'default' : 'secondary'}>
+                     {task.is_active ? 'Activa' : 'Inactiva'}
+                   </Badge>
+                 </div>
+               ))}
+             </div>
+           )}
+         </CardContent>
+       </Card>
 
       {/* Métricas de Rendimiento */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -414,45 +533,46 @@ function OverviewTab({ workflows, triggers, tasks, stats }: any) {
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-800 border-zinc-700">
-          <CardHeader>
-            <CardTitle className="text-white">Próximas Ejecuciones</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-2 bg-zinc-700 rounded">
-                <div>
-                  <p className="text-white text-sm">Backup Diario</p>
-                  <p className="text-gray-400 text-xs">Mañana 02:00</p>
-                </div>
-                <Clock className="h-4 w-4 text-yellow-400" />
-              </div>
-
-              <div className="flex items-center justify-between p-2 bg-zinc-700 rounded">
-                <div>
-                  <p className="text-white text-sm">Limpieza Semanal</p>
-                  <p className="text-gray-400 text-xs">Lunes 08:00</p>
-                </div>
-                <Clock className="h-4 w-4 text-yellow-400" />
-              </div>
-
-              <div className="flex items-center justify-between p-2 bg-zinc-700 rounded">
-                <div>
-                  <p className="text-white text-sm">Reporte Mensual</p>
-                  <p className="text-gray-400 text-xs">1 de Septiembre</p>
-                </div>
-                <Clock className="h-4 w-4 text-yellow-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                 <Card className="bg-zinc-800 border-zinc-700">
+           <CardHeader>
+             <CardTitle className="text-white">Próximas Ejecuciones</CardTitle>
+           </CardHeader>
+           <CardContent>
+             {tasks.filter(task => task.next_run && task.is_active).length === 0 ? (
+               <div className="text-center py-8">
+                 <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                 <p className="text-gray-400">No hay tareas programadas</p>
+                 <p className="text-gray-500 text-sm mt-2">
+                   Crea tareas automatizadas para ver programaciones
+                 </p>
+               </div>
+             ) : (
+               <div className="space-y-4">
+                 {tasks
+                   .filter(task => task.next_run && task.is_active)
+                   .slice(0, 5)
+                   .map((task) => (
+                     <div key={task.id} className="flex items-center justify-between p-2 bg-zinc-700 rounded">
+                       <div>
+                         <p className="text-white text-sm">{task.name}</p>
+                         <p className="text-gray-400 text-xs">
+                           {task.next_run ? new Date(task.next_run).toLocaleDateString() : 'No programada'}
+                         </p>
+                       </div>
+                       <Clock className="h-4 w-4 text-yellow-400" />
+                     </div>
+                   ))}
+               </div>
+             )}
+           </CardContent>
+         </Card>
       </div>
     </div>
   );
 }
 
 // Pestaña de Workflows
-function WorkflowsTab({ workflows, onRefresh }: any) {
+function WorkflowsTab({ workflows, onRefresh, onShowWorkflowForm, onDeleteWorkflow }: any) {
   const [selectedWorkflow, setSelectedWorkflow] = useState<any>(null);
 
   const executeWorkflow = async (workflowId: string, projectId: string) => {
@@ -474,13 +594,16 @@ function WorkflowsTab({ workflows, onRefresh }: any) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">Workflows de Proyectos</h2>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo Workflow
-          </Button>
-      </div>
+             <div className="flex items-center justify-between">
+         <h2 className="text-2xl font-bold text-white">Workflows de Proyectos</h2>
+         <Button 
+           onClick={onShowWorkflowForm} 
+           className="bg-blue-600 hover:bg-blue-700"
+         >
+           <Plus className="h-4 w-4 mr-2" />
+           Nuevo Workflow
+         </Button>
+       </div>
 
       {workflows.length === 0 ? (
         <Card className="bg-zinc-800 border-zinc-700">
@@ -521,24 +644,24 @@ function WorkflowsTab({ workflows, onRefresh }: any) {
                     </span>
                   </div>
 
-                  <div className="flex space-x-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => setSelectedWorkflow(workflow)}
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Editar
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => executeWorkflow(workflow.id, 'demo-project')}
-                    >
-                      <Play className="h-4 w-4 mr-1" />
-                      Ejecutar
-                    </Button>
-                  </div>
+                                     <div className="flex space-x-2">
+                     <Button 
+                       size="sm" 
+                       variant="outline"
+                       onClick={() => executeWorkflow(workflow.id, 'demo-project')}
+                     >
+                       <Play className="h-4 w-4 mr-1" />
+                       Ejecutar
+                     </Button>
+                     <Button 
+                       size="sm" 
+                       variant="destructive"
+                       onClick={() => onDeleteWorkflow(workflow.id)}
+                     >
+                       <Trash2 className="h-4 w-4 mr-1" />
+                       Eliminar
+                     </Button>
+                   </div>
                 </div>
               </CardContent>
             </Card>
@@ -550,7 +673,7 @@ function WorkflowsTab({ workflows, onRefresh }: any) {
 }
 
 // Pestaña de Triggers
-function TriggersTab({ triggers, onRefresh }: any) {
+function TriggersTab({ triggers, onRefresh, onShowTriggerForm, onDeleteTrigger }: any) {
   const toggleTrigger = async (triggerId: string, isActive: boolean) => {
     try {
       await triggerService.toggleTrigger(triggerId, isActive);
@@ -570,13 +693,16 @@ function TriggersTab({ triggers, onRefresh }: any) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">Triggers del Sistema</h2>
-        <Button className="bg-green-600 hover:bg-green-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo Trigger
-        </Button>
-      </div>
+             <div className="flex items-center justify-between">
+         <h2 className="text-2xl font-bold text-white">Triggers del Sistema</h2>
+         <Button 
+           onClick={onShowTriggerForm}
+           className="bg-green-600 hover:bg-green-700"
+         >
+           <Plus className="h-4 w-4 mr-2" />
+           Nuevo Trigger
+         </Button>
+       </div>
 
       {triggers.length === 0 ? (
         <Card className="bg-zinc-800 border-zinc-700">
@@ -634,28 +760,32 @@ function TriggersTab({ triggers, onRefresh }: any) {
                   </div>
                   
                   <div className="flex flex-col space-y-2 ml-4">
-                    <Button 
-                      size="sm" 
-                      variant={trigger.is_active ? 'destructive' : 'default'}
-                      onClick={() => toggleTrigger(trigger.id, !trigger.is_active)}
-                    >
-                      {trigger.is_active ? (
-                        <>
-                          <Pause className="h-4 w-4 mr-1" />
-                          Pausar
-                        </>
-                      ) : (
-                        <>
-                          <Play className="h-4 w-4 mr-1" />
-                          Activar
-                        </>
-                      )}
-                    </Button>
-                    
-                    <Button size="sm" variant="outline">
-                      <Edit className="h-4 w-4 mr-1" />
-                      Editar
-                    </Button>
+                                         <Button 
+                       size="sm" 
+                       variant={trigger.is_active ? 'destructive' : 'default'}
+                       onClick={() => toggleTrigger(trigger.id, !trigger.is_active)}
+                     >
+                       {trigger.is_active ? (
+                         <>
+                           <Pause className="h-4 w-4 mr-1" />
+                           Pausar
+                         </>
+                       ) : (
+                         <>
+                           <Play className="h-4 w-4 mr-1" />
+                           Activar
+                         </>
+                       )}
+                     </Button>
+                     
+                                           <Button 
+                        size="sm" 
+                        variant="destructive"
+                        onClick={() => onDeleteTrigger(trigger.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Eliminar
+                      </Button>
                   </div>
                 </div>
               </CardContent>
@@ -668,7 +798,7 @@ function TriggersTab({ triggers, onRefresh }: any) {
 }
 
 // Pestaña de Tareas
-function TasksTab({ tasks, onRefresh }: any) {
+function TasksTab({ tasks, onRefresh, onShowTaskForm, onDeleteTask }: any) {
   const executeTask = async (taskId: string) => {
     try {
       await automationTaskService.executeTask(taskId);
@@ -705,13 +835,16 @@ function TasksTab({ tasks, onRefresh }: any) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">Tareas Automatizadas</h2>
-        <Button className="bg-yellow-600 hover:bg-yellow-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Nueva Tarea
-        </Button>
-      </div>
+             <div className="flex items-center justify-between">
+         <h2 className="text-2xl font-bold text-white">Tareas Automatizadas</h2>
+         <Button 
+           onClick={onShowTaskForm}
+           className="bg-yellow-600 hover:bg-yellow-700"
+         >
+           <Plus className="h-4 w-4 mr-2" />
+           Nueva Tarea
+         </Button>
+       </div>
 
       {tasks.length === 0 ? (
         <Card className="bg-zinc-800 border-zinc-700">
@@ -799,10 +932,14 @@ function TasksTab({ tasks, onRefresh }: any) {
                       )}
                     </Button>
                     
-                    <Button size="sm" variant="outline">
-                      <Edit className="h-4 w-4 mr-1" />
-                      Editar
-                    </Button>
+                                         <Button 
+                       size="sm" 
+                       variant="destructive"
+                       onClick={() => onDeleteTask(task.id)}
+                     >
+                       <Trash2 className="h-4 w-4 mr-1" />
+                       Eliminar
+                     </Button>
                   </div>
                 </div>
               </CardContent>
@@ -828,13 +965,154 @@ function PipelinesTab() {
 
       <Card className="bg-zinc-800 border-zinc-700">
         <CardContent className="text-center py-8">
-                          <GitBranch className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                           <GitBranch className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-400">No hay pipelines CI/CD configurados</p>
           <p className="text-gray-500 text-sm mt-2">
             Configura pipelines para automatizar el deployment de tus proyectos
           </p>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+// Pestaña de Logs
+function LogsTab() {
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadLogs = async () => {
+    try {
+      setLoading(true);
+      // Por ahora, mostrar logs simulados hasta que se configure la base de datos
+      const mockLogs = [
+        {
+          id: '1',
+          action: 'Workflow ejecutado',
+          automation_type: 'workflow',
+          status: 'success',
+          message: 'Workflow de aprobación completado exitosamente',
+          created_at: new Date().toISOString(),
+          execution_time_ms: 245
+        },
+        {
+          id: '2',
+          action: 'Trigger activado',
+          automation_type: 'trigger',
+          status: 'success',
+          message: 'Notificación enviada al equipo',
+          created_at: new Date(Date.now() - 3600000).toISOString(),
+          execution_time_ms: 120
+        },
+        {
+          id: '3',
+          action: 'Tarea programada',
+          automation_type: 'task',
+          status: 'warning',
+          message: 'Tarea de backup programada para mañana',
+          created_at: new Date(Date.now() - 7200000).toISOString(),
+          execution_time_ms: 89
+        }
+      ];
+      
+      setLogs(mockLogs);
+    } catch (error) {
+      console.error('Error loading logs:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar los logs',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLogs();
+  }, []);
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'success':
+        return <CheckCircle className="h-4 w-4 text-green-400" />;
+      case 'error':
+        return <XCircle className="h-4 w-4 text-red-400" />;
+      case 'warning':
+        return <AlertTriangle className="h-4 w-4 text-yellow-400" />;
+      default:
+        return <Activity className="h-4 w-4 text-blue-400" />;
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'success':
+        return <Badge variant="default">Éxito</Badge>;
+      case 'error':
+        return <Badge variant="destructive">Error</Badge>;
+      case 'warning':
+        return <Badge variant="secondary">Advertencia</Badge>;
+      default:
+        return <Badge variant="outline">Info</Badge>;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-white">Logs de Automatización</h2>
+        <Button onClick={loadLogs} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Actualizar
+        </Button>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        </div>
+      ) : logs.length === 0 ? (
+        <Card className="bg-zinc-800 border-zinc-700">
+          <CardContent className="text-center py-8">
+            <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-400">No hay logs de automatización</p>
+            <p className="text-gray-500 text-sm mt-2">
+              Los logs aparecerán cuando ejecutes workflows, triggers o tareas
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {logs.map((log) => (
+            <Card key={log.id} className="bg-zinc-800 border-zinc-700">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-3 flex-1">
+                    {getStatusIcon(log.status)}
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-white font-medium">{log.action}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {log.automation_type}
+                        </Badge>
+                        {getStatusBadge(log.status)}
+                      </div>
+                      <p className="text-gray-400 text-sm mb-2">{log.message}</p>
+                      <div className="flex items-center space-x-4 text-xs text-gray-500">
+                        <span>{new Date(log.created_at).toLocaleString()}</span>
+                        {log.execution_time_ms && (
+                          <span>{log.execution_time_ms}ms</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
