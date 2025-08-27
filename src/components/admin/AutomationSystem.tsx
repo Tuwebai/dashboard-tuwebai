@@ -1009,18 +1009,6 @@ function TriggerForm({ onClose, onSuccess }: any) {
       });
     }
   };
-        title: 'Éxito',
-        description: 'Trigger creado correctamente'
-      });
-      onSuccess();
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo crear el trigger',
-        variant: 'destructive'
-      });
-    }
-  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
