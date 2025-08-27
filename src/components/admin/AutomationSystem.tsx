@@ -24,7 +24,7 @@ import {
   Workflow,
   Trigger,
   Task,
-  Pipeline,
+  GitBranch,
   BarChart3,
   RefreshCw
 } from 'lucide-react';
@@ -228,7 +228,7 @@ export default function AutomationSystem() {
             Tareas
           </TabsTrigger>
           <TabsTrigger value="pipelines" className="data-[state=active]:bg-blue-600">
-            <Pipeline className="h-4 w-4 mr-2" />
+                            <GitBranch className="h-4 w-4 mr-2" />
             CI/CD
           </TabsTrigger>
         </TabsList>
@@ -803,7 +803,7 @@ function PipelinesTab() {
 
       <Card className="bg-zinc-800 border-zinc-700">
         <CardContent className="text-center py-8">
-          <Pipeline className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <GitBranch className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-400">No hay pipelines CI/CD configurados</p>
           <p className="text-gray-500 text-sm mt-2">
             Configura pipelines para automatizar el deployment de tus proyectos
