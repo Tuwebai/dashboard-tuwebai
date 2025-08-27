@@ -48,9 +48,9 @@ RETURNS TABLE (
     data_type text,
     is_nullable text,
     column_default text,
-    character_maximum_length integer,
-    numeric_precision integer,
-    numeric_scale integer,
+    character_maximum_length text,
+    numeric_precision text,
+    numeric_scale text,
     is_primary_key boolean,
     is_foreign_key boolean,
     foreign_table text,
@@ -63,13 +63,13 @@ BEGIN
         c.data_type::text,
         c.is_nullable::text,
         c.column_default::text,
-        c.character_maximum_length,
-        c.numeric_precision,
-        c.numeric_scale,
+        COALESCE(c.character_maximum_length::text, 'N/A'),
+        COALESCE(c.numeric_precision::text, 'N/A'),
+        COALESCE(c.numeric_scale::text, 'N/A'),
         CASE WHEN pk.column_name IS NOT NULL THEN true ELSE false END as is_primary_key,
         CASE WHEN fk.column_name IS NOT NULL THEN true ELSE false END as is_foreign_key,
-        fk.foreign_table_name::text,
-        fk.foreign_column_name::text
+        COALESCE(fk.foreign_table_name::text, ''),
+        COALESCE(fk.foreign_column_name::text, '')
     FROM information_schema.columns c
     LEFT JOIN (
         SELECT kcu.column_name
