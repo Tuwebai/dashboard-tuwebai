@@ -301,7 +301,87 @@ CREATE TABLE IF NOT EXISTS client_preferences (
 );
 
 -- =====================================================
--- 16. CREAR ÍNDICES PARA OPTIMIZAR CONSULTAS
+-- 16. TABLAS DEL SISTEMA DE AUTOMATIZACIÓN
+-- =====================================================
+
+-- Tabla de flujos de trabajo de proyectos
+CREATE TABLE IF NOT EXISTS project_workflows (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    project_type VARCHAR(100),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Tabla de pasos de flujo de trabajo
+CREATE TABLE IF NOT EXISTS workflow_steps (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    workflow_id UUID REFERENCES project_workflows(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(100) NOT NULL CHECK (type IN ('approval', 'notification', 'status_change', 'email', 'assignment', 'condition')),
+    order_index INTEGER NOT NULL,
+    actions JSONB DEFAULT '[]',
+    conditions JSONB DEFAULT '{}',
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabla de disparadores del sistema
+CREATE TABLE IF NOT EXISTS system_triggers (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    event_type VARCHAR(100) NOT NULL CHECK (event_type IN (
+        'project_created', 'project_updated', 'project_deleted',
+        'ticket_created', 'ticket_updated', 'ticket_closed',
+        'payment_received', 'user_registered', 'user_login',
+        'file_uploaded', 'comment_added', 'deadline_approaching'
+    )),
+    conditions JSONB DEFAULT '{}',
+    actions JSONB DEFAULT '[]',
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Tabla de tareas automatizadas
+CREATE TABLE IF NOT EXISTS automation_tasks (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('daily', 'weekly', 'monthly', 'on_event', 'custom')),
+    schedule JSONB DEFAULT '{}',
+    script TEXT,
+    script_type VARCHAR(50) DEFAULT 'sql',
+    last_run TIMESTAMP WITH TIME ZONE,
+    next_run TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Tabla de logs de automatización
+CREATE TABLE IF NOT EXISTS automation_logs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    automation_type VARCHAR(50) NOT NULL CHECK (automation_type IN ('workflow', 'trigger', 'task', 'pipeline')),
+    reference_id UUID,
+    action VARCHAR(255) NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'failed', 'cancelled')),
+    result JSONB DEFAULT '{}',
+    error_message TEXT,
+    execution_time_ms INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- =====================================================
+-- 17. CREAR ÍNDICES PARA OPTIMIZAR CONSULTAS
 -- =====================================================
 
 -- Índices para users
@@ -359,8 +439,20 @@ CREATE INDEX IF NOT EXISTS idx_project_comments_phase_key ON project_comments(ph
 CREATE INDEX IF NOT EXISTS idx_project_metrics_project_id ON project_metrics(project_id);
 CREATE INDEX IF NOT EXISTS idx_project_metrics_metric_name ON project_metrics(metric_name);
 
+-- Índices para tablas de automatización
+CREATE INDEX IF NOT EXISTS idx_project_workflows_type ON project_workflows(project_type);
+CREATE INDEX IF NOT EXISTS idx_project_workflows_created_by ON project_workflows(created_by);
+CREATE INDEX IF NOT EXISTS idx_workflow_steps_workflow_id ON workflow_steps(workflow_id);
+CREATE INDEX IF NOT EXISTS idx_workflow_steps_type ON workflow_steps(type);
+CREATE INDEX IF NOT EXISTS idx_system_triggers_event_type ON system_triggers(event_type);
+CREATE INDEX IF NOT EXISTS idx_system_triggers_created_by ON system_triggers(created_by);
+CREATE INDEX IF NOT EXISTS idx_automation_tasks_type ON automation_tasks(type);
+CREATE INDEX IF NOT EXISTS idx_automation_tasks_next_run ON automation_tasks(next_run);
+CREATE INDEX IF NOT EXISTS idx_automation_logs_type ON automation_logs(automation_type);
+CREATE INDEX IF NOT EXISTS idx_automation_logs_status ON automation_logs(status);
+
 -- =====================================================
--- 17. FUNCIONES NECESARIAS
+-- 18. FUNCIONES NECESARIAS
 -- =====================================================
 
 -- Función para actualizar timestamp de actualización
@@ -405,7 +497,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =====================================================
--- 18. TRIGGERS PARA ACTUALIZAR TIMESTAMPS
+-- 19. TRIGGERS PARA ACTUALIZAR TIMESTAMPS
 -- =====================================================
 
 -- Trigger para users
@@ -456,8 +548,29 @@ CREATE TRIGGER update_client_preferences_updated_at
     BEFORE UPDATE ON client_preferences 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+-- Triggers para tablas de automatización
+DROP TRIGGER IF EXISTS update_project_workflows_updated_at ON project_workflows;
+CREATE TRIGGER update_project_workflows_updated_at 
+    BEFORE UPDATE ON project_workflows 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_workflow_steps_updated_at ON workflow_steps;
+CREATE TRIGGER update_workflow_steps_updated_at 
+    BEFORE UPDATE ON workflow_steps 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_system_triggers_updated_at ON system_triggers;
+CREATE TRIGGER update_system_triggers_updated_at 
+    BEFORE UPDATE ON system_triggers 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_automation_tasks_updated_at ON automation_tasks;
+CREATE TRIGGER update_automation_tasks_updated_at 
+    BEFORE UPDATE ON automation_tasks 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- =====================================================
--- 19. POLÍTICAS RLS (ROW LEVEL SECURITY)
+-- 20. POLÍTICAS RLS (ROW LEVEL SECURITY)
 -- =====================================================
 
 -- Habilitar RLS en todas las tablas
@@ -597,8 +710,51 @@ CREATE POLICY "Users can send messages to their chat rooms" ON chat_messages
         )
     );
 
+-- Políticas para tablas de automatización
+DROP POLICY IF EXISTS "Users can view their own workflows" ON project_workflows;
+CREATE POLICY "Users can view their own workflows" ON project_workflows
+    FOR SELECT USING (auth.uid() = created_by);
+
+DROP POLICY IF EXISTS "Users can create workflows" ON project_workflows;
+CREATE POLICY "Users can create workflows" ON project_workflows
+    FOR INSERT WITH CHECK (auth.uid() = created_by);
+
+DROP POLICY IF EXISTS "Users can update their own workflows" ON project_workflows;
+CREATE POLICY "Users can update their own workflows" ON project_workflows
+    FOR UPDATE USING (auth.uid() = created_by);
+
+DROP POLICY IF EXISTS "Users can view workflow steps from their workflows" ON workflow_steps;
+CREATE POLICY "Users can view workflow steps from their workflows" ON workflow_steps
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM project_workflows 
+            WHERE id = workflow_steps.workflow_id 
+            AND created_by = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Users can view their own triggers" ON system_triggers;
+CREATE POLICY "Users can view their own triggers" ON system_triggers
+    FOR SELECT USING (auth.uid() = created_by);
+
+DROP POLICY IF EXISTS "Users can create triggers" ON system_triggers;
+CREATE POLICY "Users can create triggers" ON system_triggers
+    FOR INSERT WITH CHECK (auth.uid() = created_by);
+
+DROP POLICY IF EXISTS "Users can view their own automation tasks" ON automation_tasks;
+CREATE POLICY "Users can view their own automation tasks" ON automation_tasks
+    FOR SELECT USING (auth.uid() = created_by);
+
+DROP POLICY IF EXISTS "Users can create automation tasks" ON automation_tasks;
+CREATE POLICY "Users can create automation tasks" ON automation_tasks
+    FOR INSERT WITH CHECK (auth.uid() = created_by);
+
+DROP POLICY IF EXISTS "Users can view their own automation logs" ON automation_logs;
+CREATE POLICY "Users can view their own automation logs" ON automation_logs
+    FOR SELECT USING (auth.uid() = created_by);
+
 -- =====================================================
--- 20. DATOS INICIALES (solo si no existen)
+-- 21. DATOS INICIALES (solo si no existen)
 -- =====================================================
 
 -- Insertar usuario admin si no existe
@@ -617,7 +773,7 @@ SELECT id, '{"layout": "default"}', 'auto' FROM users WHERE email = 'tuwebai@gma
 ON CONFLICT DO NOTHING;
 
 -- =====================================================
--- 21. VERIFICACIÓN FINAL
+-- 22. VERIFICACIÓN FINAL
 -- =====================================================
 
 -- Verificar que todas las tablas se crearon correctamente
@@ -683,10 +839,50 @@ SELECT
         WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'chat_messages') 
         THEN '✅ EXISTE' 
         ELSE '❌ NO EXISTE' 
+    END as status
+UNION ALL
+SELECT 
+    'project_workflows' as table_name,
+    CASE 
+        WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'project_workflows') 
+        THEN '✅ EXISTE' 
+        ELSE '❌ NO EXISTE' 
+    END as status
+UNION ALL
+SELECT 
+    'workflow_steps' as table_name,
+    CASE 
+        WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'workflow_steps') 
+        THEN '✅ EXISTE' 
+        ELSE '❌ NO EXISTE' 
+    END as status
+UNION ALL
+SELECT 
+    'system_triggers' as table_name,
+    CASE 
+        WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'system_triggers') 
+        THEN '✅ EXISTE' 
+        ELSE '❌ NO EXISTE' 
+    END as status
+UNION ALL
+SELECT 
+    'automation_tasks' as table_name,
+    CASE 
+        WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'automation_tasks') 
+        THEN '✅ EXISTE' 
+        ELSE '❌ NO EXISTE' 
+    END as status
+UNION ALL
+SELECT 
+    'automation_logs' as table_name,
+    CASE 
+        WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'automation_logs') 
+        THEN '✅ EXISTE' 
+        ELSE '❌ NO EXISTE' 
     END as status;
 
 -- =====================================================
--- 22. MENSAJE DE CONFIRMACIÓN
+-- 23. MENSAJE DE CONFIRMACIÓN
 -- =====================================================
 
 DO $$
@@ -709,6 +905,11 @@ BEGIN
     RAISE NOTICE '   • project_comments - Comentarios';
     RAISE NOTICE '   • project_metrics - Métricas';
     RAISE NOTICE '   • client_preferences - Preferencias';
+    RAISE NOTICE '   • project_workflows - Flujos de trabajo';
+    RAISE NOTICE '   • workflow_steps - Pasos de flujo';
+    RAISE NOTICE '   • system_triggers - Disparadores del sistema';
+    RAISE NOTICE '   • automation_tasks - Tareas automatizadas';
+    RAISE NOTICE '   • automation_logs - Logs de automatización';
     RAISE NOTICE '';
     RAISE NOTICE '🔒 Políticas RLS configuradas para seguridad';
     RAISE NOTICE '⚡ Índices creados para optimización';
