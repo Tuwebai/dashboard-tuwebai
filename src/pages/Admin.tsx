@@ -30,7 +30,9 @@ import {
   Trash2,
   Eye,
   RefreshCw,
-  FileText
+  FileText,
+  BarChart,
+  Zap
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { notificationService } from '@/lib/notificationService';
@@ -38,6 +40,7 @@ import { ProjectsManagement } from '@/components/admin/ProjectsManagement';
 import NotificationsManager from '@/components/admin/NotificationsManager';
 import NotificationBell from '@/components/admin/NotificationBell';
 import ExecutiveCharts from '@/components/admin/ExecutiveCharts';
+import AutomationSystem from '@/components/admin/AutomationSystem';
 
 
 export default function Admin() {
@@ -495,8 +498,20 @@ export default function Admin() {
                             window.location.hash = 'advanced-analytics';
                           }}
                         >
-                          <BarChart3 className="h-4 w-4 mr-2" />
+                          <BarChart className="h-4 w-4 mr-2" />
                           Analytics Avanzado
+                        </Button>
+
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start"
+                          onClick={() => {
+                            setActiveSection('automation');
+                            window.location.hash = 'automation';
+                          }}
+                        >
+                          <Zap className="h-4 w-4 mr-2" />
+                          Sistema de Automatización
                         </Button>
                       </div>
                     </div>
@@ -680,6 +695,10 @@ export default function Admin() {
             refreshData={loadData}
             lastUpdate={lastUpdate}
           />
+        )}
+
+        {activeSection === 'automation' && (
+          <AutomationSystem />
         )}
 
         {activeSection === 'notifications' && (
