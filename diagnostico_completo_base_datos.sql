@@ -287,7 +287,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 SELECT 'ESTADÍSTICAS DE TABLAS' as seccion;
 SELECT 
     s.schemaname,
-    s.tablename,
+    s.relname as tablename,
     s.n_tup_ins as inserciones,
     s.n_tup_upd as actualizaciones,
     s.n_tup_del as eliminaciones,
@@ -298,7 +298,7 @@ SELECT
     s.last_analyze,
     s.last_autoanalyze
 FROM pg_stat_user_tables s
-ORDER BY s.schemaname, s.tablename;
+ORDER BY s.schemaname, s.relname;
 
 -- =====================================================
 -- 15. RESUMEN FINAL
