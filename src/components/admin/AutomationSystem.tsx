@@ -21,10 +21,9 @@ import {
   XCircle,
   AlertTriangle,
   Activity,
-  Workflow,
-  Trigger,
-  Task,
   GitBranch,
+  GitCommit,
+  GitPullRequest,
   BarChart3,
   RefreshCw
 } from 'lucide-react';
@@ -32,6 +31,7 @@ import { toast } from '@/hooks/use-toast';
 import { workflowService } from '@/lib/workflowService';
 import { triggerService } from '@/lib/triggerService';
 import { automationTaskService } from '@/lib/automationTaskService';
+import { supabase } from '@/lib/supabase';
 
 // =====================================================
 // COMPONENTE PRINCIPAL DEL SISTEMA DE AUTOMATIZACIÓN
@@ -90,18 +90,35 @@ export default function AutomationSystem() {
 
   const getAutomationStats = async () => {
     try {
-      const [workflowStats, triggerStats, taskStats] = await Promise.all([
-        workflowService.getWorkflowLogs(),
-        triggerService.getTriggerStats(),
-        automationTaskService.getTaskStats()
+      // Obtener estadísticas reales de la base de datos
+      const [workflowsCount, triggersCount, tasksCount, executionsCount] = await Promise.all([
+        workflowService.getWorkflows().then(w => w.length),
+        triggerService.getTriggers().then(t => t.length),
+        automationTaskService.getTasks().then(t => t.length),
+        // Contar ejecuciones de workflows
+        supabase
+          .from('workflow_executions')
+          .select('id', { count: 'exact' })
+          .then(result => result.count || 0)
       ]);
 
+      // Calcular tasa de éxito basada en ejecuciones completadas vs fallidas
+      const { data: executionStats } = await supabase
+        .from('workflow_executions')
+        .select('status')
+        .in('status', ['completed', 'failed']);
+
+      const completed = executionStats?.filter(e => e.status === 'completed').length || 0;
+      const failed = executionStats?.filter(e => e.status === 'failed').length || 0;
+      const total = completed + failed;
+      const success_rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
       return {
-        workflows: workflowStats.length,
-        triggers: triggerStats.total_triggers,
-        tasks: taskStats.total_tasks,
-        executions: triggerStats.total_executions + taskStats.total_executions,
-        success_rate: taskStats.success_rate
+        workflows: workflowsCount,
+        triggers: triggersCount,
+        tasks: tasksCount,
+        executions: executionsCount,
+        success_rate
       };
     } catch (error) {
       console.error('Error getting automation stats:', error);
@@ -154,7 +171,15 @@ export default function AutomationSystem() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Actualizar
           </Button>
-          <Button onClick={() => setShowTaskForm(true)} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={() => setShowWorkflowForm(true)} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Nuevo Workflow
+          </Button>
+          <Button onClick={() => setShowTriggerForm(true)} className="bg-green-600 hover:bg-green-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Nuevo Trigger
+          </Button>
+          <Button onClick={() => setShowTaskForm(true)} className="bg-yellow-600 hover:bg-yellow-700">
             <Plus className="h-4 w-4 mr-2" />
             Nueva Tarea
           </Button>
@@ -166,7 +191,7 @@ export default function AutomationSystem() {
         <Card className="bg-zinc-800 border-zinc-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-300">Workflows Activos</CardTitle>
-            <Workflow className="h-4 w-4 text-blue-400" />
+                         <GitBranch className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">{stats.workflows || 0}</div>
@@ -177,7 +202,7 @@ export default function AutomationSystem() {
         <Card className="bg-zinc-800 border-zinc-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-300">Triggers Activos</CardTitle>
-            <Trigger className="h-4 w-4 text-green-400" />
+                         <GitPullRequest className="h-4 w-4 text-green-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">{stats.triggers || 0}</div>
@@ -188,7 +213,7 @@ export default function AutomationSystem() {
         <Card className="bg-zinc-800 border-zinc-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-300">Tareas Programadas</CardTitle>
-            <Task className="h-4 w-4 text-yellow-400" />
+                         <GitCommit className="h-4 w-4 text-yellow-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">{stats.tasks || 0}</div>
@@ -216,15 +241,15 @@ export default function AutomationSystem() {
             Resumen
           </TabsTrigger>
           <TabsTrigger value="workflows" className="data-[state=active]:bg-blue-600">
-            <Workflow className="h-4 w-4 mr-2" />
+                         <GitBranch className="h-4 w-4 mr-2" />
             Workflows
           </TabsTrigger>
           <TabsTrigger value="triggers" className="data-[state=active]:bg-blue-600">
-            <Trigger className="h-4 w-4 mr-2" />
+                         <GitPullRequest className="h-4 w-4 mr-2" />
             Triggers
           </TabsTrigger>
           <TabsTrigger value="tasks" className="data-[state=active]:bg-blue-600">
-            <Task className="h-4 w-4 mr-2" />
+                         <GitCommit className="h-4 w-4 mr-2" />
             Tareas
           </TabsTrigger>
           <TabsTrigger value="pipelines" className="data-[state=active]:bg-blue-600">
@@ -338,7 +363,7 @@ function OverviewTab({ workflows, triggers, tasks, stats }: any) {
 
             <div className="flex items-center justify-between p-3 bg-zinc-700 rounded-lg">
               <div className="flex items-center space-x-3">
-                <Trigger className="h-5 w-5 text-blue-400" />
+                                 <GitPullRequest className="h-5 w-5 text-blue-400" />
                 <div>
                   <p className="text-white font-medium">Trigger de proyecto ejecutado</p>
                   <p className="text-gray-400 text-sm">Hace 4 horas</p>
@@ -349,7 +374,7 @@ function OverviewTab({ workflows, triggers, tasks, stats }: any) {
 
             <div className="flex items-center justify-between p-3 bg-zinc-700 rounded-lg">
               <div className="flex items-center space-x-3">
-                <Workflow className="h-5 w-5 text-purple-400" />
+                                 <GitBranch className="h-5 w-5 text-purple-400" />
                 <div>
                   <p className="text-white font-medium">Workflow de aprobación iniciado</p>
                   <p className="text-gray-400 text-sm">Hace 6 horas</p>
@@ -460,7 +485,7 @@ function WorkflowsTab({ workflows, onRefresh }: any) {
       {workflows.length === 0 ? (
         <Card className="bg-zinc-800 border-zinc-700">
           <CardContent className="text-center py-8">
-            <Workflow className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                         <GitBranch className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-400">No hay workflows configurados</p>
             <p className="text-gray-500 text-sm mt-2">
               Crea tu primer workflow para automatizar procesos de proyectos
@@ -556,7 +581,7 @@ function TriggersTab({ triggers, onRefresh }: any) {
       {triggers.length === 0 ? (
         <Card className="bg-zinc-800 border-zinc-700">
           <CardContent className="text-center py-8">
-            <Trigger className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                         <GitPullRequest className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-400">No hay triggers configurados</p>
             <p className="text-gray-500 text-sm mt-2">
               Crea triggers para automatizar acciones basadas en eventos del sistema
@@ -691,7 +716,7 @@ function TasksTab({ tasks, onRefresh }: any) {
       {tasks.length === 0 ? (
         <Card className="bg-zinc-800 border-zinc-700">
           <CardContent className="text-center py-8">
-            <Task className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                         <GitCommit className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-400">No hay tareas automatizadas configuradas</p>
             <p className="text-gray-500 text-sm mt-2">
               Crea tareas para automatizar procesos del sistema
@@ -830,16 +855,36 @@ function WorkflowForm({ onClose, onSuccess }: any) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await workflowService.createWorkflow(formData);
+      // Validar datos antes de enviar
+      if (!formData.name.trim()) {
+        toast({
+          title: 'Error',
+          description: 'El nombre del workflow es obligatorio',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Crear workflow con datos reales
+      const newWorkflow = await workflowService.createWorkflow({
+        name: formData.name.trim(),
+        description: formData.description.trim() || undefined,
+        project_type: formData.project_type || undefined,
+        is_active: formData.is_active
+      });
+
       toast({
         title: 'Éxito',
-        description: 'Workflow creado correctamente'
+        description: `Workflow "${newWorkflow.name}" creado correctamente`
       });
+      
       onSuccess();
-    } catch (error) {
+      onClose();
+    } catch (error: any) {
+      console.error('Error creating workflow:', error);
       toast({
         title: 'Error',
-        description: 'No se pudo crear el workflow',
+        description: error.message || 'No se pudo crear el workflow',
         variant: 'destructive'
       });
     }
@@ -883,12 +928,13 @@ function WorkflowForm({ onClose, onSuccess }: any) {
                 <SelectTrigger className="bg-zinc-700 border-zinc-600 text-white">
                   <SelectValue placeholder="Seleccionar tipo" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-zinc-700 border-zinc-600">
                   <SelectItem value="web_development">Desarrollo Web</SelectItem>
                   <SelectItem value="mobile_app">Aplicación Móvil</SelectItem>
-                  <SelectItem value="desktop_app">Aplicación Desktop</SelectItem>
-                  <SelectItem value="api">API</SelectItem>
-                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="desktop_app">Aplicación de Escritorio</SelectItem>
+                  <SelectItem value="api_service">Servicio API</SelectItem>
+                  <SelectItem value="database">Base de Datos</SelectItem>
+                  <SelectItem value="other">Otro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -902,11 +948,11 @@ function WorkflowForm({ onClose, onSuccess }: any) {
               <Label htmlFor="is_active" className="text-white">Activo</Label>
             </div>
             
-            <div className="flex space-x-2">
-              <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
+            <div className="flex space-x-2 pt-4">
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 flex-1">
                 Crear Workflow
               </Button>
-              <Button type="button" variant="outline" onClick={onClose}>
+              <Button type="button" onClick={onClose} variant="outline" className="flex-1">
                 Cancelar
               </Button>
             </div>
@@ -929,8 +975,40 @@ function TriggerForm({ onClose, onSuccess }: any) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await triggerService.createTrigger(formData);
+      // Validar datos antes de enviar
+      if (!formData.name.trim()) {
+        toast({
+          title: 'Error',
+          description: 'El nombre del trigger es obligatorio',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Crear trigger con datos reales
+      const newTrigger = await triggerService.createTrigger({
+        name: formData.name.trim(),
+        description: formData.description.trim() || undefined,
+        event_type: formData.event_type,
+        is_active: formData.is_active
+      });
+
       toast({
+        title: 'Éxito',
+        description: `Trigger "${newTrigger.name}" creado correctamente`
+      });
+      
+      onSuccess();
+      onClose();
+    } catch (error: any) {
+      console.error('Error creating trigger:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo crear el trigger',
+        variant: 'destructive'
+      });
+    }
+  };
         title: 'Éxito',
         description: 'Trigger creado correctamente'
       });
@@ -1030,16 +1108,47 @@ function TaskForm({ onClose, onSuccess }: any) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await automationTaskService.createTask(formData);
+      // Validar datos antes de enviar
+      if (!formData.name.trim()) {
+        toast({
+          title: 'Error',
+          description: 'El nombre de la tarea es obligatorio',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      if (!formData.script.trim()) {
+        toast({
+          title: 'Error',
+          description: 'El script de la tarea es obligatorio',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Crear tarea con datos reales
+      const newTask = await automationTaskService.createTask({
+        name: formData.name.trim(),
+        description: formData.description.trim() || undefined,
+        type: formData.type,
+        script: formData.script.trim(),
+        script_type: formData.script_type,
+        is_active: formData.is_active
+      });
+
       toast({
         title: 'Éxito',
-        description: 'Tarea creada correctamente'
+        description: `Tarea "${newTask.name}" creada correctamente`
       });
+      
       onSuccess();
-    } catch (error) {
+      onClose();
+    } catch (error: any) {
+      console.error('Error creating task:', error);
       toast({
         title: 'Error',
-        description: 'No se pudo crear la tarea',
+        description: error.message || 'No se pudo crear la tarea',
         variant: 'destructive'
       });
     }
@@ -1116,7 +1225,7 @@ function TaskForm({ onClose, onSuccess }: any) {
                 id="script"
                 value={formData.script}
                 onChange={(e) => setFormData({ ...formData, script: e.target.value })}
-                className="bg-zinc-700 border-zinc-600 text-white h-24"
+                className="bg-zinc-700 border-zinc-600 text-white min-h-[100px]"
                 placeholder="Escribe tu script aquí..."
                 required
               />
@@ -1131,14 +1240,15 @@ function TaskForm({ onClose, onSuccess }: any) {
               <Label htmlFor="is_active" className="text-white">Activa</Label>
             </div>
             
-            <div className="flex space-x-2">
-              <Button type="submit" className="flex-1 bg-yellow-600 hover:bg-yellow-700">
+            <div className="flex space-x-2 pt-4">
+              <Button type="submit" className="bg-yellow-600 hover:bg-yellow-700 flex-1">
                 Crear Tarea
               </Button>
-              <Button type="button" variant="outline" onClick={onClose}>
+              <Button type="button" onClick={onClose} variant="outline" className="flex-1">
                 Cancelar
               </Button>
             </div>
+                
           </form>
         </CardContent>
       </Card>

@@ -733,6 +733,44 @@ export class AutomationTaskService {
   }
 
   /**
+   * Obtener estadísticas de tareas automatizadas
+   */
+  async getTaskStats(): Promise<any> {
+    try {
+      const { data, error } = await supabase
+        .from('automation_tasks')
+        .select('is_active, run_count, success_count, error_count')
+        .eq('is_active', true);
+
+      if (error) throw error;
+
+      const stats = {
+        total_tasks: data?.length || 0,
+        total_executions: data?.reduce((sum, task) => sum + (task.run_count || 0), 0) || 0,
+        total_success: data?.reduce((sum, task) => sum + (task.success_count || 0), 0) || 0,
+        total_errors: data?.reduce((sum, task) => sum + (task.error_count || 0), 0) || 0,
+        success_rate: 0
+      };
+
+      // Calcular tasa de éxito
+      if (stats.total_executions > 0) {
+        stats.success_rate = Math.round((stats.total_success / stats.total_executions) * 100);
+      }
+
+      return stats;
+    } catch (error) {
+      console.error('Error getting task stats:', error);
+      return {
+        total_tasks: 0,
+        total_executions: 0,
+        total_success: 0,
+        total_errors: 0,
+        success_rate: 0
+      };
+    }
+  }
+
+  /**
    * Obtener plantillas de tareas predefinidas
    */
   getTaskTemplates(): Record<string, CreateAutomationTaskDto> {
