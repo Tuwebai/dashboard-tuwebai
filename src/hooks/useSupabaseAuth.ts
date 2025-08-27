@@ -66,7 +66,7 @@ export function useSupabaseAuth() {
     }
   }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (): Promise<boolean> => {
     try {
       setError(null);
       setLoading(true);
@@ -82,15 +82,19 @@ export function useSupabaseAuth() {
         console.warn('Error en autenticación con Google:', error);
         setError(error.message);
         setLoading(false);
+        return false;
       }
+      
+      return true;
     } catch (error: any) {
       console.warn('Error en signInWithGoogle:', error);
       setError(error.message);
       setLoading(false);
+      return false;
     }
   };
 
-  const signInWithGithub = async () => {
+  const signInWithGithub = async (): Promise<boolean> => {
     try {
       setError(null);
       setLoading(true);
@@ -106,15 +110,19 @@ export function useSupabaseAuth() {
         console.warn('Error en autenticación con GitHub:', error);
         setError(error.message);
         setLoading(false);
+        return false;
       }
+      
+      return true;
     } catch (error: any) {
       console.warn('Error en signInWithGithub:', error);
       setError(error.message);
       setLoading(false);
+      return false;
     }
   };
 
-  const signInWithEmail = async (email: string, password: string) => {
+  const signInWithEmail = async (email: string, password: string): Promise<boolean> => {
     try {
       setError(null);
       setLoading(true);
@@ -128,12 +136,16 @@ export function useSupabaseAuth() {
         console.warn('Error en autenticación con email:', error);
         setError(error.message);
         setLoading(false);
+        return false;
       }
+      
+      return true;
     } catch (error: any) {
       console.warn('Error en signInWithEmail:', error);
       setError(error.message);
       setLoading(false);
-    }
+      return false;
+      }
   };
 
   const signUpWithEmail = async (email: string, password: string, metadata?: any) => {

@@ -249,14 +249,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setIsAuthenticated(true);
           setError(null);
 
-          // Mostrar toast de bienvenida solo una vez por sesión
-          if (!localStorage.getItem('tuwebai_welcome_back')) {
-            toastGlobal({
-              title: '¡Bienvenido de nuevo!',
-              description: 'Tu sesión sigue activa. Puedes continuar gestionando tus proyectos.'
-            });
-            localStorage.setItem('tuwebai_welcome_back', '1');
-          }
+          // No mostrar toast aquí - se mostrará después del login exitoso
           
         } catch (error) {
           console.error('Error in auth state change:', error);
@@ -343,8 +336,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       
-      await signInWithEmail(email, password);
-      return true;
+      const result = await signInWithEmail(email, password);
+      
+      // Solo mostrar toast de bienvenida si el login fue exitoso
+      if (result) {
+        // Esperar un momento para que se complete la autenticación
+        setTimeout(() => {
+          toastGlobal({
+            title: '¡Bienvenido!',
+            description: 'Has iniciado sesión correctamente.'
+          });
+        }, 500);
+      }
+      
+      return result;
     } catch (error: any) {
       console.error('Login error:', error);
       setError('Error al iniciar sesión');
@@ -377,8 +382,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       
-      await signInWithGoogle();
-      return true;
+      const result = await signInWithGoogle();
+      
+      // Solo mostrar toast de bienvenida si el login fue exitoso
+      if (result) {
+        // Esperar un momento para que se complete la autenticación
+        setTimeout(() => {
+          toastGlobal({
+            title: '¡Bienvenido!',
+            description: 'Has iniciado sesión correctamente con Google.'
+          });
+        }, 500);
+      }
+      
+      return result;
     } catch (error: any) {
       console.error('Google login error:', error);
       setError('Error al iniciar sesión con Google');
@@ -394,8 +411,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       
-      await signInWithGithub();
-      return true;
+      const result = await signInWithGithub();
+      
+      // Solo mostrar toast de bienvenida si el login fue exitoso
+      if (result) {
+        // Esperar un momento para que se complete la autenticación
+        setTimeout(() => {
+          toastGlobal({
+            title: '¡Bienvenido!',
+            description: 'Has iniciado sesión correctamente con GitHub.'
+          });
+        }, 500);
+      }
+      
+      return result;
     } catch (error: any) {
       console.error('GitHub login error:', error);
       setError('Error al iniciar sesión con GitHub');
