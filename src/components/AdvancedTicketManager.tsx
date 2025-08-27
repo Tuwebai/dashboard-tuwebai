@@ -37,6 +37,7 @@ import { toast } from '@/hooks/use-toast';
 import { ticketWorkflowService } from '@/lib/ticketWorkflow';
 import { ticketAssignmentService } from '@/lib/ticketAssignment';
 import { ticketEscalationService } from '@/lib/ticketEscalation';
+import { ticketService, Ticket as TicketType } from '@/lib/ticketService';
 
 interface Ticket {
   id: string;
@@ -105,43 +106,32 @@ export default function AdvancedTicketManager() {
   };
 
   const loadTickets = async (): Promise<Ticket[]> => {
-    // Simular carga de tickets desde Firestore
-    return [
-      {
-        id: 'TICKET-001',
-        subject: 'Error en el sistema de pagos',
-        description: 'Los usuarios no pueden completar transacciones',
-        priority: 'high',
-        status: 'in_progress',
-        stage: 'investigation',
-        assignedTo: 'user1',
-        clientId: 'client1',
-        clientEmail: 'cliente@ejemplo.com',
-        category: 'technical',
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date().toISOString(),
-        lastActivity: new Date().toISOString(),
-        escalationCount: 1,
-        tags: ['payment', 'urgent']
-      },
-      {
-        id: 'TICKET-002',
-        subject: 'Solicitud de nueva funcionalidad',
-        description: 'Necesitamos agregar exportación a PDF',
-        priority: 'medium',
-        status: 'new',
-        stage: 'new',
-        assignedTo: '',
-        clientId: 'client2',
-        clientEmail: 'cliente2@ejemplo.com',
-        category: 'feature',
-        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-        lastActivity: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-        escalationCount: 0,
-        tags: ['feature', 'pdf']
-      }
-    ];
+    try {
+      // Cargar tickets reales usando el servicio
+      const tickets = await ticketService.getTickets();
+      
+      // Mapear datos del servicio al formato del componente
+      return tickets.map(ticket => ({
+        id: ticket.id,
+        subject: ticket.subject,
+        description: ticket.description,
+        priority: ticket.priority,
+        status: ticket.status,
+        stage: ticket.stage,
+        assignedTo: ticket.assigned_to || '',
+        clientId: ticket.client_id || '',
+        clientEmail: ticket.client_email,
+        category: ticket.category || '',
+        createdAt: ticket.created_at,
+        updatedAt: ticket.updated_at,
+        lastActivity: ticket.last_activity,
+        escalationCount: ticket.escalation_count || 0,
+        tags: ticket.tags || []
+      }));
+    } catch (error) {
+      console.error('Error in loadTickets:', error);
+      return [];
+    }
   };
 
   const handleCreateTicket = async () => {

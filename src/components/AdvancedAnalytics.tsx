@@ -127,38 +127,23 @@ export default function AdvancedAnalytics() {
     setLoading(true);
     try {
       // Obtener datos reales de Supabase
-      const projectsRef = collection(firestore, 'projects');
-      const usersRef = collection(firestore, 'users');
-      const paymentsRef = collection(firestore, 'payments');
-      const ticketsRef = collection(firestore, 'tickets');
+      const [projectsResponse, usersResponse, paymentsResponse, ticketsResponse] = await Promise.all([
+        supabase.from('projects').select('*'),
+        supabase.from('users').select('*'),
+        supabase.from('payments').select('*'),
+        supabase.from('tickets').select('*')
+      ]);
 
-      // Obtener todos los proyectos
-      const projectsSnapshot = await getDocs(projectsRef);
-      const projects = projectsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as any[];
+      // Verificar errores
+      if (projectsResponse.error) throw projectsResponse.error;
+      if (usersResponse.error) throw usersResponse.error;
+      if (paymentsResponse.error) throw paymentsResponse.error;
+      if (ticketsResponse.error) throw ticketsResponse.error;
 
-      // Obtener todos los usuarios
-      const usersSnapshot = await getDocs(usersRef);
-      const users = usersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as any[];
-
-      // Obtener pagos
-      const paymentsSnapshot = await getDocs(paymentsRef);
-      const payments = paymentsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as any[];
-
-      // Obtener tickets
-      const ticketsSnapshot = await getDocs(ticketsRef);
-      const tickets = ticketsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as any[];
+      const projects = projectsResponse.data || [];
+      const users = usersResponse.data || [];
+      const payments = paymentsResponse.data || [];
+      const tickets = ticketsResponse.data || [];
 
       // Calcular métricas reales
       const now = new Date();
@@ -173,13 +158,13 @@ export default function AdvancedAnalytics() {
       
       // Proyectos del mes anterior para calcular crecimiento
       const lastMonthProjects = projects.filter(p => {
-        const createdAt = p.createdAt?.toDate?.() || new Date(p.createdAt);
+        const createdAt = new Date(p.created_at);
         return createdAt >= new Date(now.getFullYear(), now.getMonth() - 1, 1) && 
                createdAt < thisMonth;
       }).length;
       
       const thisMonthProjects = projects.filter(p => {
-        const createdAt = p.createdAt?.toDate?.() || new Date(p.createdAt);
+        const createdAt = new Date(p.created_at);
         return createdAt >= thisMonth;
       }).length;
       
@@ -188,15 +173,15 @@ export default function AdvancedAnalytics() {
 
       // Usuarios
       const totalUsers = users.length;
-      const activeUsers = users.filter(u => u.lastLoginAt && 
-        (u.lastLoginAt.toDate?.() || new Date(u.lastLoginAt)) > thirtyDaysAgo).length;
+      const activeUsers = users.filter(u => u.last_login && 
+        new Date(u.last_login) > thirtyDaysAgo).length;
       const newThisMonth = users.filter(u => {
-        const createdAt = u.createdAt?.toDate?.() || new Date(u.createdAt);
+        const createdAt = new Date(u.created_at);
         return createdAt >= thisMonth;
       }).length;
       
       const lastMonthUsers = users.filter(u => {
-        const createdAt = u.createdAt?.toDate?.() || new Date(u.createdAt);
+        const createdAt = new Date(u.created_at);
         return createdAt >= new Date(now.getFullYear(), now.getMonth() - 1, 1) && 
                createdAt < thisMonth;
       }).length;
@@ -207,12 +192,12 @@ export default function AdvancedAnalytics() {
       // Ingresos
       const totalRevenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
       const thisMonthRevenue = payments.filter(p => {
-        const createdAt = p.createdAt?.toDate?.() || new Date(p.createdAt);
+        const createdAt = new Date(p.created_at);
         return createdAt >= thisMonth;
       }).reduce((sum, p) => sum + (p.amount || 0), 0);
       
       const lastMonthRevenue = payments.filter(p => {
-        const createdAt = p.createdAt?.toDate?.() || new Date(p.createdAt);
+        const createdAt = new Date(p.created_at);
         return createdAt >= new Date(now.getFullYear(), now.getMonth() - 1, 1) && 
                createdAt < thisMonth;
       }).reduce((sum, p) => sum + (p.amount || 0), 0);

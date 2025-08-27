@@ -83,94 +83,62 @@ export default function AdvancedTools() {
   const terminalRef = useRef<HTMLDivElement>(null);
   const codeEditorRef = useRef<HTMLTextAreaElement>(null);
 
-  // Simular archivos del sistema
+  // Cargar archivos reales del sistema
   useEffect(() => {
-    const mockFiles: FileItem[] = [
-      {
-        name: 'index.html',
-        path: '/public/index.html',
-        type: 'file',
-        size: 2048,
-        modified: new Date().toISOString(),
-        content: '<!DOCTYPE html>\n<html>\n<head>\n  <title>TuWebAI</title>\n</head>\n<body>\n  <h1>Welcome</h1>\n</body>\n</html>'
-      },
-      {
-        name: 'styles.css',
-        path: '/src/styles.css',
-        type: 'file',
-        size: 1024,
-        modified: new Date().toISOString(),
-        content: 'body {\n  font-family: Arial, sans-serif;\n  margin: 0;\n  padding: 20px;\n}'
-      },
-      {
-        name: 'app.js',
-        path: '/src/app.js',
-        type: 'file',
-        size: 3072,
-        modified: new Date().toISOString(),
-        content: 'console.log("Hello World");\n\nfunction init() {\n  // Initialize app\n}'
-      },
-      {
-        name: 'src',
-        path: '/src',
-        type: 'directory',
-        modified: new Date().toISOString()
-      },
-      {
-        name: 'public',
-        path: '/public',
-        type: 'directory',
-        modified: new Date().toISOString()
+    const loadSystemFiles = async () => {
+      try {
+        // Aquí se cargarían archivos reales del sistema
+        // Por ahora, mostrar lista vacía hasta implementar
+        setFileList([]);
+      } catch (error) {
+        console.error('Error loading system files:', error);
+        setFileList([]);
       }
-    ];
-    setFileList(mockFiles);
-  }, []);
-
-  // Simular procesos del sistema
-  useEffect(() => {
-    const mockProcesses: ProcessInfo[] = [
-      {
-        id: '1',
-        name: 'node server.js',
-        cpu: 15.2,
-        memory: 256,
-        status: 'running',
-        uptime: '2h 15m'
-      },
-      {
-        id: '2',
-        name: 'nginx',
-        cpu: 2.1,
-        memory: 128,
-        status: 'running',
-        uptime: '1d 3h'
-      },
-      {
-        id: '3',
-        name: 'mysql',
-        cpu: 8.5,
-        memory: 512,
-        status: 'running',
-        uptime: '5d 12h'
-      }
-    ];
-    setProcesses(mockProcesses);
-  }, []);
-
-  // Simular estadísticas del sistema
-  useEffect(() => {
-    const updateStats = () => {
-      setSystemStats({
-        cpu: Math.random() * 100,
-        memory: Math.random() * 100,
-        disk: Math.random() * 100,
-        network: Math.random() * 100
-      });
     };
+    
+    loadSystemFiles();
+  }, []);
 
-    updateStats();
-    const interval = setInterval(updateStats, 5000);
-    return () => clearInterval(interval);
+  // Cargar procesos reales del sistema
+  useEffect(() => {
+    const loadSystemProcesses = async () => {
+      try {
+        // Aquí se cargarían procesos reales del sistema
+        // Por ahora, mostrar lista vacía hasta implementar
+        setProcesses([]);
+      } catch (error) {
+        console.error('Error loading system processes:', error);
+        setProcesses([]);
+      }
+    };
+    
+    loadSystemProcesses();
+  }, []);
+
+  // Cargar estadísticas reales del sistema
+  useEffect(() => {
+    const loadSystemStats = async () => {
+      try {
+        // Aquí se cargarían estadísticas reales del sistema
+        // Por ahora, mostrar valores en 0 hasta implementar
+        setSystemStats({
+          cpu: 0,
+          memory: 0,
+          disk: 0,
+          network: 0
+        });
+      } catch (error) {
+        console.error('Error loading system stats:', error);
+        setSystemStats({
+          cpu: 0,
+          memory: 0,
+          disk: 0,
+          network: 0
+        });
+      }
+    };
+    
+    loadSystemStats();
   }, []);
 
   // Ejecutar comando en terminal

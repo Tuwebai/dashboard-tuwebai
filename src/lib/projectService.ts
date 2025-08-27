@@ -23,37 +23,7 @@ async function checkTableSchema(): Promise<boolean> {
   }
 }
 
-// Datos de ejemplo para fallback
-const mockProjects: Project[] = [
-  {
-    id: '1',
-    name: 'Proyecto Demo 1',
-    description: 'Proyecto de demostración',
-    technologies: ['React', 'TypeScript', 'Node.js'],
-    environment_variables: {},
-    status: 'development',
-    github_repository_url: 'https://github.com/user/repo1',
-    customicon: 'FolderOpen',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    created_by: 'demo-user',
-    is_active: true
-  },
-  {
-    id: '2', 
-    name: 'Proyecto Demo 2',
-    description: 'Otro proyecto de demostración',
-    technologies: ['Vue.js', 'Python', 'PostgreSQL'],
-    environment_variables: {},
-    status: 'production',
-    github_repository_url: 'https://github.com/user/repo2',
-    customicon: 'FolderOpen',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    created_by: 'demo-user',
-    is_active: true
-  }
-];
+// No hay datos simulados - todo se obtiene de Supabase
 
 export const projectService = {
   // Obtener todos los proyectos con filtros y ordenamiento
@@ -62,30 +32,10 @@ export const projectService = {
       const hasValidSchema = await checkTableSchema();
       
       if (!hasValidSchema) {
-        console.warn('Using mock data due to database schema issues');
-        // Aplicar filtros a los datos mock
-        let filteredData = mockProjects;
-        
-        if (filters?.status) {
-          filteredData = filteredData.filter(p => p.status === filters.status);
-        }
-        
-        if (filters?.technology) {
-          filteredData = filteredData.filter(p => 
-            p.technologies.includes(filters.technology!)
-          );
-        }
-        
-        if (filters?.search) {
-          filteredData = filteredData.filter(p => 
-            p.name.toLowerCase().includes(filters.search!.toLowerCase()) ||
-            p.description?.toLowerCase().includes(filters.search!.toLowerCase())
-          );
-        }
-        
+        console.warn('Base de datos no disponible, retornando datos vacíos');
         return {
-          data: filteredData.slice((page - 1) * limit, page * limit),
-          count: filteredData.length
+          data: [],
+          count: 0
         };
       }
 
@@ -280,12 +230,8 @@ export const projectService = {
       const hasValidSchema = await checkTableSchema();
       
       if (!hasValidSchema) {
-        console.warn('Using mock technologies due to database schema issues');
-        // Retornar tecnologías de los datos mock
-        const allTechnologies = mockProjects
-          .flatMap(p => p.technologies || [])
-          .filter((tech, index, arr) => arr.indexOf(tech) === index);
-        return allTechnologies;
+        console.warn('Base de datos no disponible, retornando tecnologías vacías');
+        return [];
       }
 
       const { data, error } = await supabase
