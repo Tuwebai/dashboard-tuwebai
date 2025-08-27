@@ -347,11 +347,11 @@ SELECT 'VERIFICACIÓN DE PROBLEMAS' as seccion;
 -- Verificar tablas sin RLS habilitado
 SELECT 
     'TABLAS SIN RLS' as problema,
-    tablename as tabla
-FROM pg_tables 
-WHERE schemaname = 'public' 
-    AND NOT rowsecurity
-    AND tablename NOT IN ('schema_migrations', 'ar_internal_metadata') -- Tablas del sistema
+    t.tablename as tabla
+FROM pg_tables t
+WHERE t.schemaname = 'public' 
+    AND NOT t.rowsecurity
+    AND t.tablename NOT IN ('schema_migrations', 'ar_internal_metadata') -- Tablas del sistema
 UNION ALL
 -- Verificar tablas sin índices
 SELECT 
