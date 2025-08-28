@@ -547,41 +547,7 @@ export class AutomationTaskService {
     }
   }
 
-  /**
-   * Obtener estadísticas de tareas
-   */
-  async getTaskStats(): Promise<any> {
-    try {
-      const { data, error } = await supabase
-        .from('automation_tasks')
-        .select('is_active, run_count, success_count, error_count');
 
-      if (error) throw error;
-
-      const stats = {
-        total_tasks: data?.length || 0,
-        active_tasks: data?.filter(t => t.is_active).length || 0,
-        total_executions: data?.reduce((sum, task) => sum + (task.run_count || 0), 0) || 0,
-        total_successes: data?.reduce((sum, task) => sum + (task.success_count || 0), 0) || 0,
-        total_errors: data?.reduce((sum, task) => sum + (task.error_count || 0), 0) || 0,
-        success_rate: data && data.length > 0 ? 
-          (data.reduce((sum, task) => sum + (task.success_count || 0), 0) / 
-           data.reduce((sum, task) => sum + (task.run_count || 0), 0)) * 100 : 0
-      };
-
-      return stats;
-    } catch (error) {
-      console.error('Error getting task stats:', error);
-      return {
-        total_tasks: 0,
-        active_tasks: 0,
-        total_executions: 0,
-        total_successes: 0,
-        total_errors: 0,
-        success_rate: 0
-      };
-    }
-  }
 
   /**
    * Obtener tareas con mejor rendimiento

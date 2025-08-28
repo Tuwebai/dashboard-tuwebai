@@ -15,7 +15,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    flowType: 'pkce'
   },
   realtime: {
     params: {
@@ -28,32 +29,35 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 export type Database = {
   public: {
     Tables: {
-             users: {
-         Row: {
-           id: string;
-           email: string;
-           full_name: string | null;
-           role: string;
-           created_at: string;
-           updated_at: string;
-         };
-         Insert: {
-           id: string;
-           email: string;
-           full_name?: string | null;
-           role?: string;
-           created_at?: string;
-           updated_at?: string;
-         };
-         Update: {
-           id?: string;
-           email?: string;
-           full_name?: string | null;
-           role?: string;
-           created_at?: string;
-           updated_at?: string;
-         };
-       };
+                   users: {
+        Row: {
+          id: string;
+          email: string;
+          full_name: string | null;
+          role: string;
+          avatar_url: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          full_name?: string | null;
+          role?: string;
+          avatar_url?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          full_name?: string | null;
+          role?: string;
+          avatar_url?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       projects: {
         Row: {
           id: string;

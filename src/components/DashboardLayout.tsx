@@ -3,6 +3,7 @@ import { useApp } from '@/contexts/AppContext';
 import { Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import { useAvatarSync } from '@/hooks/useAvatarSync';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -22,6 +23,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const saved = localStorage.getItem('dashboard_widgets');
     return saved ? JSON.parse(saved) : WIDGETS.map(w => w.key);
   });
+
+  // Sincronizar avatar automáticamente
+  useAvatarSync();
 
   useEffect(() => {
     localStorage.setItem('dashboard_widgets', JSON.stringify(visibleWidgets));

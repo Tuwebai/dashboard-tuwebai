@@ -46,6 +46,8 @@ export interface User {
   role: 'admin' | 'user';
   created_at: string;
   updated_at: string;
+  // Avatar del usuario
+  avatar?: string;
   // Perfil extendido
   phone?: string;
   company?: string;
@@ -229,20 +231,55 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               let role: 'admin' | 'user' = 'user';
               if (email && email.toLowerCase() === 'tuwebai@gmail.com') role = 'admin';
               
-                             userData = {
-                 id: supabaseUser.id,
-                 email: email || '',
-                 full_name: user_metadata?.full_name || user_metadata?.name || email?.split('@')[0] || '',
-                 role,
-                 created_at: new Date().toISOString(),
-                 updated_at: new Date().toISOString()
-               };
+              // Obtener avatar del user_metadata
+              const avatar = user_metadata?.avatar_url || 
+                           user_metadata?.picture || 
+                           user_metadata?.photoURL ||
+                           user_metadata?.image;
+              
+              userData = {
+                id: supabaseUser.id,
+                email: email || '',
+                full_name: user_metadata?.full_name || user_metadata?.name || email?.split('@')[0] || '',
+                role,
+                avatar, // Incluir avatar
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              };
               
               await userService.upsertUser(userData);
             }
             
             // Guardar en cache por 10 minutos
             setCachedData(cacheKey, userData, 10 * 60 * 1000);
+          }
+          
+          // IMPORTANTE: Sincronizar avatar desde la base de datos
+          if (userData && supabaseUser.email) {
+            try {
+              // Obtener datos actualizados del usuario (incluyendo avatar_url)
+              const updatedUserData = await userService.getUserById(supabaseUser.id);
+              if (updatedUserData) {
+                // Usar el avatar_url de la base de datos si existe
+                if (updatedUserData.avatar_url && !userData.avatar) {
+                  userData.avatar = updatedUserData.avatar_url;
+                }
+                // Si no hay avatar en DB, sincronizarlo
+                else if (!updatedUserData.avatar_url && supabaseUser.email) {
+                  const { realAvatarService } = await import('@/lib/avatarProviders');
+                  await realAvatarService.syncUserAvatar(supabaseUser.email);
+                  
+                  // Recargar datos del usuario con avatar
+                  const finalUserData = await userService.getUserById(supabaseUser.id);
+                  if (finalUserData) {
+                    userData = finalUserData;
+                    setCachedData(cacheKey, userData, 10 * 60 * 1000);
+                  }
+                }
+              }
+            } catch (error) {
+              console.warn('Error sincronizando avatar:', error);
+            }
           }
           
           setUser(userData as User);
@@ -627,7 +664,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addLog = async (log: Omit<ProjectLog, 'id' | 'timestamp'>) => {
     try {
       // Implementar cuando tengas la tabla de logs en Supabase
-      console.log('Log functionality to be implemented with Supabase logs table');
+              // Log functionality to be implemented with Supabase logs table
       
       // Limpiar cache de logs
       if (user) {

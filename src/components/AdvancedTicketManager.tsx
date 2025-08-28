@@ -1,294 +1,618 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from '@/hooks/use-toast';
+import { useApp } from '@/contexts/AppContext';
+import { SupabaseService, type Ticket } from '@/lib/supabaseService';
 import { 
-  Ticket, 
+  Ticket as TicketIcon, 
   Plus, 
-  Filter, 
   Search, 
-  Clock, 
-  AlertTriangle,
+  Filter, 
+  SortAsc, 
+  SortDesc,
+  Calendar,
+  User,
+  Tag,
+  MessageSquare,
+  Clock,
+  AlertCircle,
   CheckCircle,
   XCircle,
-  User,
-  MessageSquare,
-  Activity,
-  TrendingUp,
-  Settings,
-  Eye,
-  Edit,
   Trash2,
-  ArrowRight,
-  Zap,
-  Shield,
-  Target,
-  MoreHorizontal,
+  Edit,
+  Eye,
   RefreshCw
 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
-import { ticketWorkflowService } from '@/lib/ticketWorkflow';
-import { ticketAssignmentService } from '@/lib/ticketAssignment';
-import { ticketEscalationService } from '@/lib/ticketEscalation';
-import { ticketService, Ticket as TicketType } from '@/lib/ticketService';
 
-interface Ticket {
-  id: string;
-  subject: string;
+interface TicketFormData {
+  title: string;
   description: string;
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  status: string;
-  stage: string;
-  assignedTo: string;
-  clientId: string;
-  clientEmail: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
   category: string;
-  createdAt: string;
-  updatedAt: string;
-  lastActivity: string;
-  escalationCount: number;
-  tags: string[];
+  assigned_to: string;
 }
 
-export default function AdvancedTicketManager() {
+interface TicketStats {
+  total: number;
+  open: number;
+  inProgress: number;
+  resolved: number;
+  closed: number;
+  highPriority: number;
+  urgentPriority: number;
+}
+
+interface AdvancedTicketManagerProps {
+  tickets?: Ticket[];
+  updateTicketStatus?: (ticketId: string, status: string) => void;
+  updateUserRole?: (userId: string, role: string) => void;
+  refreshData?: () => void;
+  lastUpdate?: Date;
+}
+
+export default function AdvancedTicketManager({ 
+  tickets: externalTickets,
+  updateTicketStatus,
+  refreshData,
+  lastUpdate
+}: AdvancedTicketManagerProps) {
+  const { user } = useApp();
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [workflows, setWorkflows] = useState<any[]>([]);
+  const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('tickets');
+  const [showForm, setShowForm] = useState(false);
+  const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
+  const [formData, setFormData] = useState<TicketFormData>({
+    title: '',
+    description: '',
+    priority: 'medium',
+    status: 'open',
+    category: '',
+    assigned_to: ''
+  });
+
+  // Filters and search
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showTicketModal, setShowTicketModal] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [sortBy, setSortBy] = useState<string>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // Estados para formularios
-  const [ticketData, setTicketData] = useState({
-    subject: '',
-    description: '',
-    priority: 'medium' as 'low' | 'medium' | 'high' | 'critical',
-    category: '',
-    clientEmail: '',
-    tags: [] as string[]
+  // Stats
+  const [stats, setStats] = useState<TicketStats>({
+    total: 0,
+    open: 0,
+    inProgress: 0,
+    resolved: 0,
+    closed: 0,
+    highPriority: 0,
+    urgentPriority: 0
   });
 
+  // Load tickets - use external tickets if provided, otherwise load from Supabase
   useEffect(() => {
-    loadData();
-  }, []);
+    if (externalTickets) {
+      setTickets(externalTickets);
+      setLoading(false);
+    } else if (user) {
+      loadTickets();
+    }
+  }, [externalTickets, user]);
 
-  const loadData = async () => {
+  // Apply filters and search
+  useEffect(() => {
+    let filtered = [...tickets];
+
+    // Search
+    if (searchTerm) {
+      filtered = filtered.filter(ticket =>
+        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.assigned_to?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(ticket => ticket.status === statusFilter);
+    }
+
+    // Priority filter
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter(ticket => ticket.priority === priorityFilter);
+    }
+
+    // Category filter
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(ticket => ticket.category === categoryFilter);
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      let aValue: any = a[sortBy as keyof Ticket];
+      let bValue: any = b[sortBy as keyof Ticket];
+
+      if (sortBy === 'created_at' || sortBy === 'updated_at') {
+        aValue = new Date(aValue).getTime();
+        bValue = new Date(bValue).getTime();
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    setFilteredTickets(filtered);
+  }, [tickets, searchTerm, statusFilter, priorityFilter, categoryFilter, sortBy, sortOrder]);
+
+  // Calculate stats
+  useEffect(() => {
+    const newStats: TicketStats = {
+      total: tickets.length,
+      open: tickets.filter(t => t.status === 'open').length,
+      inProgress: tickets.filter(t => t.status === 'in_progress').length,
+      resolved: tickets.filter(t => t.status === 'resolved').length,
+      closed: tickets.filter(t => t.status === 'closed').length,
+      highPriority: tickets.filter(t => t.priority === 'high').length,
+      urgentPriority: tickets.filter(t => t.priority === 'urgent').length
+    };
+
+    setStats(newStats);
+  }, [tickets]);
+
+  const loadTickets = async () => {
     setLoading(true);
     try {
-      const [ticketsData, workflowsData] = await Promise.all([
-        loadTickets(),
-        ticketWorkflowService.getWorkflows()
-      ]);
-
+      const ticketsData = await SupabaseService.getTickets();
       setTickets(ticketsData);
-      setWorkflows(workflowsData);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading tickets:', error);
       toast({
         title: 'Error',
-        description: 'No se pudieron cargar los datos',
+        description: 'No se pudieron cargar los tickets.',
         variant: 'destructive'
       });
-    }
-    setLoading(false);
-  };
-
-  const loadTickets = async (): Promise<Ticket[]> => {
-    try {
-      // Cargar tickets reales usando el servicio
-      const tickets = await ticketService.getTickets();
-      
-      // Mapear datos del servicio al formato del componente
-      return tickets.map(ticket => ({
-        id: ticket.id,
-        subject: ticket.subject,
-        description: ticket.description,
-        priority: ticket.priority,
-        status: ticket.status,
-        stage: ticket.stage,
-        assignedTo: ticket.assigned_to || '',
-        clientId: ticket.client_id || '',
-        clientEmail: ticket.client_email,
-        category: ticket.category || '',
-        createdAt: ticket.created_at,
-        updatedAt: ticket.updated_at,
-        lastActivity: ticket.last_activity,
-        escalationCount: ticket.escalation_count || 0,
-        tags: ticket.tags || []
-      }));
-    } catch (error) {
-      console.error('Error in loadTickets:', error);
-      return [];
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleCreateTicket = async () => {
-    if (!ticketData.subject || !ticketData.description) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.title.trim() || !formData.description.trim()) {
       toast({
         title: 'Error',
-        description: 'Por favor completa todos los campos requeridos',
+        description: 'Por favor completa todos los campos obligatorios.',
         variant: 'destructive'
       });
       return;
     }
 
     try {
-      // Crear ticket
-      const newTicket: Omit<Ticket, 'id'> = {
-        subject: ticketData.subject,
-        description: ticketData.description,
-        priority: ticketData.priority,
-        status: 'new',
-        stage: 'new',
-        assignedTo: '',
-        clientId: 'client',
-        clientEmail: ticketData.clientEmail,
-        category: ticketData.category,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        lastActivity: new Date().toISOString(),
-        escalationCount: 0,
-        tags: ticketData.tags
-      };
+      if (editingTicket) {
+        // Update existing ticket
+        await SupabaseService.updateTicket(editingTicket.id, {
+          title: formData.title,
+          description: formData.description,
+          priority: formData.priority,
+          status: formData.status,
+          category: formData.category,
+          assigned_to: formData.assigned_to
+        });
 
-      // Aquí se guardaría en Firestore
-      console.log('Creating ticket:', newTicket);
+        toast({
+          title: 'Ticket actualizado',
+          description: 'El ticket ha sido actualizado correctamente.'
+        });
+      } else {
+        // Create new ticket
+        await SupabaseService.createTicket({
+          title: formData.title,
+          description: formData.description,
+          priority: formData.priority,
+          status: formData.status,
+          user_id: user?.email || '',
+          assigned_to: formData.assigned_to,
+          category: formData.category
+        });
 
-      // Asignar automáticamente
-      const assignedUserId = await ticketAssignmentService.autoAssignTicket(newTicket as any);
-      if (assignedUserId) {
-        newTicket.assignedTo = assignedUserId;
-        newTicket.status = 'assigned';
-        newTicket.stage = 'assigned';
+        toast({
+          title: 'Ticket creado',
+          description: 'El ticket ha sido creado correctamente.'
+        });
       }
 
-      toast({
-        title: 'Ticket creado',
-        description: 'Se ha creado el nuevo ticket'
-      });
-
-      setTicketData({
-        subject: '',
+      // Reset form and reload tickets
+      setFormData({
+        title: '',
         description: '',
         priority: 'medium',
+        status: 'open',
         category: '',
-        clientEmail: '',
-        tags: []
+        assigned_to: ''
       });
-      setShowCreateModal(false);
-      loadData();
+      setShowForm(false);
+      setEditingTicket(null);
+      
+      // Refresh data if callback provided
+      if (refreshData) {
+        refreshData();
+      } else {
+        loadTickets();
+      }
     } catch (error) {
-      console.error('Error creating ticket:', error);
+      console.error('Error saving ticket:', error);
       toast({
         title: 'Error',
-        description: 'No se pudo crear el ticket',
+        description: 'No se pudo guardar el ticket.',
         variant: 'destructive'
       });
     }
   };
 
-  const handleViewTicket = (ticket: Ticket) => {
-    setSelectedTicket(ticket);
-    setShowTicketModal(true);
+  const handleEdit = (ticket: Ticket) => {
+    setEditingTicket(ticket);
+    setFormData({
+      title: ticket.title,
+      description: ticket.description || '',
+      priority: ticket.priority as any,
+      status: ticket.status as any,
+      category: ticket.category || '',
+      assigned_to: ticket.assigned_to || ''
+    });
+    setShowForm(true);
   };
 
-  const handleEscalateTicket = async (ticketId: string) => {
+  const handleDelete = async (ticketId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este ticket?')) return;
+
     try {
-      const result = await ticketEscalationService.checkEscalations();
+      await SupabaseService.updateTicket(ticketId, { status: 'closed' });
       toast({
-        title: 'Escalación iniciada',
-        description: 'Se ha iniciado el proceso de escalación'
+        title: 'Ticket cerrado',
+        description: 'El ticket ha sido cerrado.'
       });
-      loadData();
+      
+      // Refresh data if callback provided
+      if (refreshData) {
+        refreshData();
+      } else {
+        loadTickets();
+      }
     } catch (error) {
-      console.error('Error escalating ticket:', error);
+      console.error('Error deleting ticket:', error);
       toast({
         title: 'Error',
-        description: 'No se pudo escalar el ticket',
+        description: 'No se pudo eliminar el ticket.',
         variant: 'destructive'
       });
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'critical': return 'bg-red-100 text-red-800';
-      case 'high': return 'bg-orange-100 text-orange-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const handleStatusChange = async (ticketId: string, newStatus: string) => {
+    try {
+      if (updateTicketStatus) {
+        // Use external callback if provided
+        updateTicketStatus(ticketId, newStatus);
+      } else {
+        // Update directly in Supabase
+        await SupabaseService.updateTicket(ticketId, { status: newStatus });
+        toast({
+          title: 'Estado actualizado',
+          description: 'El estado del ticket ha sido actualizado.'
+        });
+      }
+      
+      // Refresh data
+      if (refreshData) {
+        refreshData();
+      } else {
+        loadTickets();
+      }
+    } catch (error) {
+      console.error('Error updating ticket status:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo actualizar el estado del ticket.',
+        variant: 'destructive'
+      });
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-800';
-      case 'in_progress': return 'bg-yellow-100 text-yellow-800';
-      case 'waiting': return 'bg-purple-100 text-purple-800';
-      case 'resolved': return 'bg-green-100 text-green-800';
-      case 'closed': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'open': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'in_progress': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      case 'resolved': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'closed': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
     }
   };
 
-  const filteredTickets = tickets.filter(ticket => {
-    const matchesSearch = ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
-    const matchesCategory = categoryFilter === 'all' || ticket.category === categoryFilter;
-    
-    return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
-  });
-
-  const getTicketStats = () => {
-    const total = tickets.length;
-    const newTickets = tickets.filter(t => t.status === 'new').length;
-    const inProgress = tickets.filter(t => t.status === 'in_progress').length;
-    const escalated = tickets.filter(t => t.escalationCount > 0).length;
-    const resolved = tickets.filter(t => t.status === 'resolved').length;
-
-    return { total, newTickets, inProgress, escalated, resolved };
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'low': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      case 'high': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
+      case 'urgent': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+    }
   };
 
-  const stats = getTicketStats();
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'open': return <AlertCircle className="h-4 w-4" />;
+      case 'in_progress': return <Clock className="h-4 w-4" />;
+      case 'resolved': return <CheckCircle className="h-4 w-4" />;
+      case 'closed': return <XCircle className="h-4 w-4" />;
+      default: return <AlertCircle className="h-4 w-4" />;
+    }
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="ml-3 text-muted-foreground">Cargando tickets...</p>
+      </div>
+    );
+  }
+
+  // Si no hay tickets, mostrar mensaje apropiado
+  if (tickets.length === 0) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Gestión de Tickets</h1>
+            <p className="text-muted-foreground">Administra y rastrea todos los tickets del sistema</p>
+            {lastUpdate && (
+              <p className="text-sm text-muted-foreground mt-1">
+                Última actualización: {lastUpdate.toLocaleString()}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {refreshData && (
+              <Button variant="outline" onClick={refreshData}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Actualizar
+              </Button>
+            )}
+            <Button onClick={() => setShowForm(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuevo Ticket
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats Cards - Empty State */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total</p>
+                  <p className="text-2xl font-bold">0</p>
+                </div>
+                <TicketIcon className="h-8 w-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Abiertos</p>
+                  <p className="text-2xl font-bold text-blue-500">0</p>
+                </div>
+                <AlertCircle className="h-8 w-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">En Progreso</p>
+                  <p className="text-2xl font-bold text-yellow-500">0</p>
+                </div>
+                <Clock className="h-8 w-8 text-yellow-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Resueltos</p>
+                  <p className="text-2xl font-bold text-green-500">0</p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Empty State */}
+        <Card>
+          <CardContent className="p-12 text-center">
+            <TicketIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">No hay tickets registrados</h3>
+            <p className="text-muted-foreground mb-4">
+              Cuando se creen tickets de soporte, aparecerán aquí para su gestión.
+            </p>
+            <Button onClick={() => setShowForm(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Crear Primer Ticket
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Ticket Form Modal */}
+        {showForm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-background p-6 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">
+                  {editingTicket ? 'Editar Ticket' : 'Nuevo Ticket'}
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditingTicket(null);
+                    setFormData({
+                      title: '',
+                      description: '',
+                      priority: 'medium',
+                      status: 'open',
+                      category: '',
+                      assigned_to: ''
+                    });
+                  }}
+                >
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="title">Título *</Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      placeholder="Título del ticket"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="priority">Prioridad</Label>
+                    <Select value={formData.priority} onValueChange={(value: any) => setFormData({ ...formData, priority: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Baja</SelectItem>
+                        <SelectItem value="medium">Media</SelectItem>
+                        <SelectItem value="high">Alta</SelectItem>
+                        <SelectItem value="urgent">Urgente</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="status">Estado</Label>
+                    <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="open">Abierto</SelectItem>
+                        <SelectItem value="in_progress">En Progreso</SelectItem>
+                        <SelectItem value="resolved">Resuelto</SelectItem>
+                        <SelectItem value="closed">Cerrado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="assigned_to">Asignado a</Label>
+                    <Input
+                      id="assigned_to"
+                      value={formData.assigned_to}
+                      onChange={(e) => setFormData({ ...formData, assigned_to: e.target.value })}
+                      placeholder="Email del usuario"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="category">Categoría</Label>
+                    <Input
+                      id="category"
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      placeholder="Categoría del ticket"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Descripción *</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Descripción detallada del ticket"
+                    rows={4}
+                    required
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowForm(false);
+                      setEditingTicket(null);
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit">
+                    {editingTicket ? 'Actualizar' : 'Crear'} Ticket
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Gestión Avanzada de Tickets</h1>
-          <p className="text-muted-foreground">
-            Administra tickets con workflow personalizable y escalación automática
-          </p>
+          <h1 className="text-3xl font-bold">Gestión de Tickets</h1>
+          <p className="text-muted-foreground">Administra y rastrea todos los tickets del sistema</p>
+          {lastUpdate && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Última actualización: {lastUpdate.toLocaleString()}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={loadData}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Actualizar
-          </Button>
-          <Button onClick={() => setShowCreateModal(true)}>
+          {refreshData && (
+            <Button variant="outline" onClick={refreshData}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Actualizar
+            </Button>
+          )}
+          <Button onClick={() => setShowForm(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Nuevo Ticket
           </Button>
@@ -296,7 +620,7 @@ export default function AdvancedTicketManager() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -304,53 +628,41 @@ export default function AdvancedTicketManager() {
                 <p className="text-sm font-medium text-muted-foreground">Total</p>
                 <p className="text-2xl font-bold">{stats.total}</p>
               </div>
-              <Ticket className="h-8 w-8 text-blue-500" />
+              <TicketIcon className="h-8 w-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Nuevos</p>
-                <p className="text-2xl font-bold">{stats.newTickets}</p>
+                <p className="text-sm font-medium text-muted-foreground">Abiertos</p>
+                <p className="text-2xl font-bold text-blue-500">{stats.open}</p>
               </div>
-              <Activity className="h-8 w-8 text-green-500" />
+              <AlertCircle className="h-8 w-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">En Progreso</p>
-                <p className="text-2xl font-bold">{stats.inProgress}</p>
+                <p className="text-2xl font-bold text-yellow-500">{stats.inProgress}</p>
               </div>
               <Clock className="h-8 w-8 text-yellow-500" />
             </div>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Escalados</p>
-                <p className="text-2xl font-bold">{stats.escalated}</p>
-              </div>
-              <AlertTriangle className="h-8 w-8 text-red-500" />
-            </div>
-          </CardContent>
-        </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Resueltos</p>
-                <p className="text-2xl font-bold">{stats.resolved}</p>
+                <p className="text-2xl font-bold text-green-500">{stats.resolved}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
@@ -358,404 +670,293 @@ export default function AdvancedTicketManager() {
         </Card>
       </div>
 
-      {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="tickets">Tickets</TabsTrigger>
-          <TabsTrigger value="workflow">Workflow</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="tickets" className="space-y-4">
-          {/* Filters */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar tickets..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los estados</SelectItem>
-                    <SelectItem value="new">Nuevos</SelectItem>
-                    <SelectItem value="in_progress">En Progreso</SelectItem>
-                    <SelectItem value="waiting">En Espera</SelectItem>
-                    <SelectItem value="resolved">Resueltos</SelectItem>
-                    <SelectItem value="closed">Cerrados</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Prioridad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas las prioridades</SelectItem>
-                    <SelectItem value="low">Baja</SelectItem>
-                    <SelectItem value="medium">Media</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
-                    <SelectItem value="critical">Crítica</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas las categorías</SelectItem>
-                    <SelectItem value="technical">Técnico</SelectItem>
-                    <SelectItem value="feature">Funcionalidad</SelectItem>
-                    <SelectItem value="bug">Error</SelectItem>
-                    <SelectItem value="support">Soporte</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button variant="outline" onClick={() => {
-                  setSearchTerm('');
-                  setStatusFilter('all');
-                  setPriorityFilter('all');
-                  setCategoryFilter('all');
-                }}>
-                  <Filter className="h-4 w-4 mr-2" />
-                  Limpiar
-                </Button>
+      {/* Filters and Search */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-2">
+              <Label htmlFor="search">Buscar</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="search"
+                  placeholder="Buscar tickets..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Tickets List */}
-          <div className="space-y-4">
-            {filteredTickets.map(ticket => (
-              <Card key={ticket.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-medium">{ticket.subject}</h3>
-                          <Badge className={getPriorityColor(ticket.priority)}>
-                            {ticket.priority}
-                          </Badge>
+            <div>
+              <Label htmlFor="status">Estado</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="open">Abierto</SelectItem>
+                  <SelectItem value="in_progress">En Progreso</SelectItem>
+                  <SelectItem value="resolved">Resuelto</SelectItem>
+                  <SelectItem value="closed">Cerrado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="priority">Prioridad</Label>
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="low">Baja</SelectItem>
+                  <SelectItem value="medium">Media</SelectItem>
+                  <SelectItem value="high">Alta</SelectItem>
+                  <SelectItem value="urgent">Urgente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="order">Orden</Label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="w-full"
+              >
+                {sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tickets List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tickets ({filteredTickets.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[600px]">
+            <div className="space-y-4">
+              {filteredTickets.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <TicketIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No se encontraron tickets</p>
+                </div>
+              ) : (
+                filteredTickets.map((ticket) => (
+                  <div key={ticket.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{ticket.title}</h3>
                           <Badge className={getStatusColor(ticket.status)}>
-                            {ticket.status}
+                            {getStatusIcon(ticket.status)}
+                            {ticket.status === 'open' && 'Abierto'}
+                            {ticket.status === 'in_progress' && 'En Progreso'}
+                            {ticket.status === 'resolved' && 'Resuelto'}
+                            {ticket.status === 'closed' && 'Cerrado'}
                           </Badge>
-                          {ticket.escalationCount > 0 && (
-                            <Badge variant="destructive">
-                              <AlertTriangle className="h-3 w-3 mr-1" />
-                              Escalado
-                            </Badge>
-                          )}
+                          <Badge className={getPriorityColor(ticket.priority)}>
+                            {ticket.priority === 'low' && 'Baja'}
+                            {ticket.priority === 'medium' && 'Media'}
+                            {ticket.priority === 'high' && 'Alta'}
+                            {ticket.priority === 'urgent' && 'Urgente'}
+                          </Badge>
                         </div>
                         
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {ticket.description.substring(0, 100)}...
-                        </p>
-                        
+                        {ticket.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {ticket.description}
+                          </p>
+                        )}
+
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>#{ticket.id}</span>
-                          <span>•</span>
-                          <span>{ticket.category}</span>
-                          <span>•</span>
-                          <span>{new Date(ticket.createdAt).toLocaleDateString('es-ES')}</span>
-                          {ticket.assignedTo && (
-                            <>
-                              <span>•</span>
-                              <span>Asignado a: {ticket.assignedTo}</span>
-                            </>
+                          <span className="flex items-center gap-1">
+                            <User className="h-3 w-3" />
+                            {ticket.assigned_to || 'Sin asignar'}
+                          </span>
+                          {ticket.category && (
+                            <span className="flex items-center gap-1">
+                              <Tag className="h-3 w-3" />
+                              {ticket.category}
+                            </span>
                           )}
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'N/A'}
+                          </span>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewTicket(ticket)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      
-                      {ticket.escalationCount === 0 && (
+
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={ticket.status}
+                          onValueChange={(value) => handleStatusChange(ticket.id, value)}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="open">Abierto</SelectItem>
+                            <SelectItem value="in_progress">En Progreso</SelectItem>
+                            <SelectItem value="resolved">Resuelto</SelectItem>
+                            <SelectItem value="closed">Cerrado</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEscalateTicket(ticket.id)}
+                          onClick={() => handleEdit(ticket)}
                         >
-                          <AlertTriangle className="h-4 w-4" />
+                          <Edit className="h-4 w-4" />
                         </Button>
-                      )}
-                      
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="workflow" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Workflows Activos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {workflows.map(workflow => (
-                  <div key={workflow.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-medium">{workflow.name}</h3>
-                      <Badge variant={workflow.isActive ? "default" : "secondary"}>
-                        {workflow.isActive ? 'Activo' : 'Inactivo'}
-                      </Badge>
-                    </div>
-                    
-                    <p className="text-sm text-muted-foreground mb-4">{workflow.description}</p>
-                    
-                    <div className="flex items-center space-x-4 overflow-x-auto">
-                      {workflow.stages.map((stage: any, index: number) => (
-                        <div key={stage.id} className="flex items-center">
-                          <div className={`px-3 py-2 rounded-lg border ${getStatusColor(stage.name)}`}>
-                            <span className="text-sm font-medium">{stage.name}</span>
-                          </div>
-                          {index < workflow.stages.length - 1 && (
-                            <ArrowRight className="h-4 w-4 mx-2 text-gray-400" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Estadísticas de Tickets</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>Tiempo promedio de resolución</span>
-                    <span className="font-medium">2.5 días</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Tickets escalados</span>
-                    <span className="font-medium">{stats.escalated}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Satisfacción del cliente</span>
-                    <span className="font-medium">4.2/5</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Distribución por Prioridad</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {['critical', 'high', 'medium', 'low'].map(priority => {
-                    const count = tickets.filter(t => t.priority === priority).length;
-                    const percentage = tickets.length > 0 ? (count / tickets.length) * 100 : 0;
-                    
-                    return (
-                      <div key={priority} className="flex items-center justify-between">
-                        <span className="capitalize">{priority}</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-20 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full ${getPriorityColor(priority).replace('bg-', 'bg-').replace('text-', '')}`}
-                              style={{ width: `${percentage}%` }}
-                            ></div>
-                          </div>
-                          <span className="text-sm">{count}</span>
-                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(ticket.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
 
-      {/* Create Ticket Modal */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Crear Nuevo Ticket</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="ticket-subject">Asunto</Label>
-              <Input
-                id="ticket-subject"
-                value={ticketData.subject}
-                onChange={(e) => setTicketData({ ...ticketData, subject: e.target.value })}
-                placeholder="Describe brevemente el problema..."
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="ticket-description">Descripción</Label>
-              <Textarea
-                id="ticket-description"
-                value={ticketData.description}
-                onChange={(e) => setTicketData({ ...ticketData, description: e.target.value })}
-                placeholder="Describe el problema en detalle..."
-                rows={4}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="ticket-priority">Prioridad</Label>
-                <Select 
-                  value={ticketData.priority} 
-                  onValueChange={(value: 'low' | 'medium' | 'high' | 'critical') => 
-                    setTicketData({ ...ticketData, priority: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Baja</SelectItem>
-                    <SelectItem value="medium">Media</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
-                    <SelectItem value="critical">Crítica</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="ticket-category">Categoría</Label>
-                <Select 
-                  value={ticketData.category} 
-                  onValueChange={(value) => setTicketData({ ...ticketData, category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="technical">Técnico</SelectItem>
-                    <SelectItem value="feature">Funcionalidad</SelectItem>
-                    <SelectItem value="bug">Error</SelectItem>
-                    <SelectItem value="support">Soporte</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="ticket-email">Email del Cliente</Label>
-              <Input
-                id="ticket-email"
-                type="email"
-                value={ticketData.clientEmail}
-                onChange={(e) => setTicketData({ ...ticketData, clientEmail: e.target.value })}
-                placeholder="cliente@ejemplo.com"
-              />
-            </div>
-            
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowCreateModal(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleCreateTicket}>
-                <Plus className="h-4 w-4 mr-2" />
-                Crear Ticket
+      {/* Ticket Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background p-6 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">
+                {editingTicket ? 'Editar Ticket' : 'Nuevo Ticket'}
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingTicket(null);
+                  setFormData({
+                    title: '',
+                    description: '',
+                    priority: 'medium',
+                    status: 'open',
+                    category: '',
+                    assigned_to: ''
+                  });
+                }}
+              >
+                <XCircle className="h-4 w-4" />
               </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
-      {/* View Ticket Modal */}
-      <Dialog open={showTicketModal} onOpenChange={setShowTicketModal}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Detalles del Ticket</DialogTitle>
-          </DialogHeader>
-          {selectedTicket && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="font-medium mb-2">{selectedTicket.subject}</h3>
-                  <p className="text-sm text-muted-foreground">{selectedTicket.description}</p>
+                  <Label htmlFor="title">Título *</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Título del ticket"
+                    required
+                  />
                 </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Badge className={getPriorityColor(selectedTicket.priority)}>
-                      {selectedTicket.priority}
-                    </Badge>
-                    <Badge className={getStatusColor(selectedTicket.status)}>
-                      {selectedTicket.status}
-                    </Badge>
-                    {selectedTicket.escalationCount > 0 && (
-                      <Badge variant="destructive">
-                        Escalado {selectedTicket.escalationCount} veces
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>ID:</span>
-                      <span>{selectedTicket.id}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Categoría:</span>
-                      <span>{selectedTicket.category}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Creado:</span>
-                      <span>{new Date(selectedTicket.createdAt).toLocaleString('es-ES')}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Última actividad:</span>
-                      <span>{new Date(selectedTicket.lastActivity).toLocaleString('es-ES')}</span>
-                    </div>
-                  </div>
+
+                <div>
+                  <Label htmlFor="priority">Prioridad</Label>
+                  <Select value={formData.priority} onValueChange={(value: any) => setFormData({ ...formData, priority: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Baja</SelectItem>
+                      <SelectItem value="medium">Media</SelectItem>
+                      <SelectItem value="high">Alta</SelectItem>
+                      <SelectItem value="urgent">Urgente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="status">Estado</Label>
+                  <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="open">Abierto</SelectItem>
+                      <SelectItem value="in_progress">En Progreso</SelectItem>
+                      <SelectItem value="resolved">Resuelto</SelectItem>
+                      <SelectItem value="closed">Cerrado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="assigned_to">Asignado a</Label>
+                  <Input
+                    id="assigned_to"
+                    value={formData.assigned_to}
+                    onChange={(e) => setFormData({ ...formData, assigned_to: e.target.value })}
+                    placeholder="Email del usuario"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="category">Categoría</Label>
+                  <Input
+                    id="category"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    placeholder="Categoría del ticket"
+                  />
                 </div>
               </div>
-              
+
+              <div>
+                <Label htmlFor="description">Descripción *</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Descripción detallada del ticket"
+                  rows={4}
+                  required
+                />
+              </div>
+
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowTicketModal(false)}>
-                  Cerrar
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditingTicket(null);
+                  }}
+                >
+                  Cancelar
                 </Button>
-                <Button>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar
+                <Button type="submit">
+                  {editingTicket ? 'Actualizar' : 'Crear'} Ticket
                 </Button>
               </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

@@ -80,24 +80,7 @@ export default function Perfil() {
     
     setLoading(true);
     try {
-      // Actualizar perfil en Supabase
-      await updateProfile(auth.currentUser!, {
-        displayName: profileData.name
-      });
-
-      // Actualizar datos en Firestore
-      const userRef = doc(firestore, 'users', user.uid);
-      await updateDoc(userRef, {
-        name: profileData.name,
-        phone: profileData.phone,
-        company: profileData.company,
-        position: profileData.position,
-        bio: profileData.bio,
-        location: profileData.location,
-        website: profileData.website,
-        updatedAt: new Date().toISOString()
-      });
-
+      // TODO: Implementar actualización de perfil con Supabase
       toast({
         title: 'Perfil actualizado',
         description: 'Los datos de tu perfil han sido actualizados correctamente.'
@@ -116,66 +99,12 @@ export default function Perfil() {
   };
 
   const handlePasswordChange = async () => {
-    if (!user || !auth.currentUser) return;
-    
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast({
-        title: 'Error',
-        description: 'Las contraseñas no coinciden.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    if (passwordData.newPassword.length < 6) {
-      toast({
-        title: 'Error',
-        description: 'La nueva contraseña debe tener al menos 6 caracteres.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Reautenticar usuario
-      const credential = EmailAuthProvider.credential(
-        user.email,
-        passwordData.currentPassword
-      );
-      await reauthenticateWithCredential(auth.currentUser, credential);
-
-      // Cambiar contraseña
-      await updatePassword(auth.currentUser, passwordData.newPassword);
-
-      toast({
-        title: 'Contraseña actualizada',
-        description: 'Tu contraseña ha sido cambiada correctamente.'
-      });
-
-      setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
-      setIsChangingPassword(false);
-    } catch (error: any) {
-      if (error.code === 'auth/wrong-password') {
-        toast({
-          title: 'Error',
-          description: 'La contraseña actual es incorrecta.',
-          variant: 'destructive'
-        });
-      } else {
-        toast({
-          title: 'Error',
-          description: 'No se pudo cambiar la contraseña. Inténtalo de nuevo.',
-          variant: 'destructive'
-        });
-      }
-    } finally {
-      setLoading(false);
-    }
+    // TODO: Implementar cambio de contraseña con Supabase
+    toast({
+      title: 'Función en desarrollo',
+      description: 'El cambio de contraseña estará disponible próximamente.',
+      variant: 'default'
+    });
   };
 
 
@@ -460,9 +389,9 @@ export default function Perfil() {
             <CardContent className="space-y-4">
               <div className="flex flex-col items-center space-y-4">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={user.photoURL} alt={user.name} />
+                  <AvatarImage src={user.avatar} alt={user.full_name || user.email} />
                   <AvatarFallback className="text-2xl">
-                    {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                    {user.full_name ? user.full_name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 
@@ -507,7 +436,7 @@ export default function Perfil() {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Miembro desde:</span>
-                <span>{new Date(user.createdAt || Date.now()).toLocaleDateString('es-ES')}</span>
+                <span>{new Date(user.created_at || Date.now()).toLocaleDateString('es-ES')}</span>
               </div>
               {user.lastLogin && (
                 <div className="flex items-center justify-between text-sm">

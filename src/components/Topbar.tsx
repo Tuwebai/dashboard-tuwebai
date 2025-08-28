@@ -93,7 +93,15 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Avatar className="h-8 w-8 sm:h-10 sm:w-10 cursor-pointer border-2 border-primary">
-                <AvatarFallback>{(user?.full_name || user?.email || '').charAt(0).toUpperCase()}</AvatarFallback>
+                {user?.avatar ? (
+                  <AvatarImage 
+                    src={user.avatar} 
+                    alt={`Avatar de ${user.full_name || user.email}`}
+                  />
+                ) : null}
+                <AvatarFallback>
+                  {(user?.full_name || user?.email || '').charAt(0).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

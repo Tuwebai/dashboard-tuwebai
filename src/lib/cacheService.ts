@@ -167,14 +167,14 @@ export const preloadCriticalData = async (): Promise<void> => {
     const userKey = generateCacheKey('user', 'current');
     if (!userCache.has(userKey)) {
       // Aquí se cargarían los datos del usuario actual
-      console.log('Precargando datos del usuario...');
+              // Precargando datos del usuario
     }
 
     // Preload config
     const configKey = generateCacheKey('config', 'app');
     if (!configCache.has(configKey)) {
       // Aquí se cargarían las configuraciones de la app
-      console.log('Precargando configuraciones...');
+              // Precargando configuraciones
     }
   } catch (error) {
     console.error('Error precargando datos críticos:', error);
@@ -190,7 +190,7 @@ export const startCacheCleanup = (interval: number = 5 * 60 * 1000): NodeJS.Time
     configCache.cleanup();
     assetCache.cleanup();
     
-    console.log('Cache cleanup completed');
+          // Cache cleanup completed
   }, interval);
 };
 

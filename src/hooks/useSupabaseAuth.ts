@@ -1,17 +1,10 @@
 import { useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { config } from '@/config/environment';
 
 // Función para obtener la URL base correcta según el entorno
-const getBaseUrl = () => {
-  // En desarrollo, usar localhost
-  if (import.meta.env.DEV) {
-    return 'http://localhost:8083';
-  }
-  
-  // En producción, usar la URL de Netlify o la URL actual
-  return import.meta.env.VITE_PUBLIC_URL || window.location.origin;
-};
+const getBaseUrl = () => config.getBaseUrl();
 
 export function useSupabaseAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -71,10 +64,15 @@ export function useSupabaseAuth() {
       setError(null);
       setLoading(true);
       
+      const redirectUrl = `${getBaseUrl()}/auth/callback`;
+      console.log('🔐 Redirección a:', redirectUrl);
+      console.log('🌍 Entorno:', import.meta.env.DEV ? 'Desarrollo' : 'Producción');
+      console.log('📍 Hostname:', window.location.hostname);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${getBaseUrl()}/auth/callback`
+          redirectTo: redirectUrl
         }
       });
 
@@ -99,10 +97,12 @@ export function useSupabaseAuth() {
       setError(null);
       setLoading(true);
       
+      const redirectUrl = config.getAuthRedirectUrl();
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${getBaseUrl()}/auth/callback`
+          redirectTo: redirectUrl
         }
       });
 
@@ -193,7 +193,7 @@ export function useSupabaseAuth() {
       setLoading(true);
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${getBaseUrl()}/auth/reset-password`
+        redirectTo: config.getResetPasswordUrl()
       });
 
       if (error) {

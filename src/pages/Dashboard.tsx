@@ -11,7 +11,6 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-
 import { 
   Plus, 
   MessageSquare, 
@@ -259,9 +258,8 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">{t('Dashboard')}</h1>
-                      <p className="text-muted-foreground">{t('Bienvenido, {name}', { name: user?.full_name || user?.email })}</p>
+          <p className="text-muted-foreground">Bienvenido, {user?.full_name || user?.email}</p>
         </div>
-
       </div>
 
       {/* Estadísticas rápidas */}

@@ -41,17 +41,15 @@ import {
   userManagementService, 
   UserProfile, 
   UserRole, 
-  UserInvitation, 
-  UserAuditLog,
-  PERMISSIONS,
-  DEFAULT_ROLES
+  Invitation, 
+  AuditLog
 } from '@/lib/userManagement';
 
 export default function AdvancedUserManagement() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [roles, setRoles] = useState<UserRole[]>([]);
-  const [invitations, setInvitations] = useState<UserInvitation[]>([]);
-  const [auditLogs, setAuditLogs] = useState<UserAuditLog[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('users');
   const [searchTerm, setSearchTerm] = useState('');
@@ -72,12 +70,13 @@ export default function AdvancedUserManagement() {
     message: ''
   });
   const [userData, setUserData] = useState({
-    displayName: '',
+    display_name: '',
     phone: '',
     department: '',
     position: '',
     bio: '',
-    skills: [] as string[]
+    skills: [] as string[],
+    role: ''
   });
   const [roleData, setRoleData] = useState({
     name: '',
@@ -99,10 +98,10 @@ export default function AdvancedUserManagement() {
         userManagementService.getAuditLogs()
       ]);
 
-      setUsers(usersData);
+      setUsers(usersData.users || []);
       setRoles(rolesData);
       setInvitations(invitationsData);
-      setAuditLogs(auditData);
+      setAuditLogs(auditData.logs || []);
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -125,11 +124,13 @@ export default function AdvancedUserManagement() {
     }
 
     try {
-      await userManagementService.inviteUser({
+      await userManagementService.createInvitation({
         email: invitationData.email,
         role: invitationData.role,
-        invitedBy: 'current-user-id', // Esto vendría del contexto de usuario
-        message: invitationData.message
+        invited_by: 'current-user-id', // Esto vendría del contexto de usuario
+        message: invitationData.message,
+        token: Math.random().toString(36).substring(2, 15),
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
       });
 
       toast({
@@ -190,12 +191,13 @@ export default function AdvancedUserManagement() {
 
     try {
       await userManagementService.updateUser(editingUser.id, {
-        displayName: userData.displayName,
+        display_name: userData.display_name,
         phone: userData.phone,
         department: userData.department,
         position: userData.position,
         bio: userData.bio,
-        skills: userData.skills
+        skills: userData.skills,
+        role: userData.role
       });
 
       toast({
@@ -275,7 +277,7 @@ export default function AdvancedUserManagement() {
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.displayName?.toLowerCase().includes(searchTerm.toLowerCase());
+                         user.display_name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     
@@ -411,8 +413,8 @@ export default function AdvancedUserManagement() {
                   <SelectContent>
                     <SelectItem value="all">Todos los roles</SelectItem>
                     {roles.map(role => (
-                      <SelectItem key={role.id} value={role.id}>
-                        {role.name}
+                      <SelectItem key={role.id} value={role.name}>
+                        {role.display_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -436,15 +438,15 @@ export default function AdvancedUserManagement() {
                       <Avatar>
                         <AvatarImage src={user.avatar} />
                         <AvatarFallback>
-                          {user.displayName?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                          {user.display_name?.charAt(0) || user.email.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       
                       <div>
-                        <h3 className="font-medium">{user.displayName || 'Sin nombre'}</h3>
+                        <h3 className="font-medium">{user.display_name || 'Sin nombre'}</h3>
                         <p className="text-sm text-muted-foreground">{user.email}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline">{roles.find(r => r.id === user.role)?.name || user.role}</Badge>
+                          <Badge variant="outline">{roles.find(r => r.name === user.role)?.display_name || user.role}</Badge>
                           <Badge className={getStatusColor(user.status)}>
                             {getStatusIcon(user.status)}
                             <span className="ml-1">{user.status}</span>
@@ -459,14 +461,15 @@ export default function AdvancedUserManagement() {
                         size="sm"
                         onClick={() => {
                           setEditingUser(user);
-                          setUserData({
-                            displayName: user.displayName || '',
-                            phone: user.phone || '',
-                            department: user.department || '',
-                            position: user.position || '',
-                            bio: user.bio || '',
-                            skills: user.skills || []
-                          });
+                                                     setUserData({
+                             display_name: user.display_name || '',
+                             phone: user.phone || '',
+                             department: user.department || '',
+                             position: user.position || '',
+                             bio: user.bio || '',
+                             skills: user.skills || [],
+                             role: user.role || ''
+                           });
                           setShowUserModal(true);
                         }}
                       >
@@ -509,7 +512,7 @@ export default function AdvancedUserManagement() {
                     <p className="text-sm font-medium">Permisos ({role.permissions.length})</p>
                     <div className="flex flex-wrap gap-1">
                       {role.permissions.slice(0, 5).map(permissionId => {
-                        const permission = PERMISSIONS.find(p => p.id === permissionId);
+                        const permission = userManagementService.getAllPermissions().find(p => p.id === permissionId);
                         return permission ? (
                           <Badge key={permissionId} variant="secondary" className="text-xs">
                             {permission.name}
@@ -685,7 +688,7 @@ export default function AdvancedUserManagement() {
             <div>
               <Label>Permisos</Label>
               <div className="grid grid-cols-2 gap-4 mt-2 max-h-60 overflow-y-auto">
-                {PERMISSIONS.map(permission => (
+                {userManagementService.getAllPermissions().map(permission => (
                   <div key={permission.id} className="flex items-center space-x-2">
                     <Switch
                       id={permission.id}
@@ -736,8 +739,8 @@ export default function AdvancedUserManagement() {
               <Label htmlFor="user-name">Nombre</Label>
               <Input
                 id="user-name"
-                value={userData.displayName}
-                onChange={(e) => setUserData({ ...userData, displayName: e.target.value })}
+                value={userData.display_name}
+                onChange={(e) => setUserData({ ...userData, display_name: e.target.value })}
                 placeholder="Nombre completo"
               />
             </div>
@@ -780,6 +783,25 @@ export default function AdvancedUserManagement() {
                 onChange={(e) => setUserData({ ...userData, bio: e.target.value })}
                 placeholder="Breve descripción del usuario..."
               />
+            </div>
+            
+            <div>
+              <Label htmlFor="user-role">Rol</Label>
+              <Select 
+                value={userData.role || ''} 
+                onValueChange={(value) => setUserData({ ...userData, role: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar rol" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map(role => (
+                    <SelectItem key={role.id} value={role.name}>
+                      {role.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="flex justify-end gap-2">

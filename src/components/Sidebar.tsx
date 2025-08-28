@@ -116,14 +116,24 @@ export default function Sidebar() {
     return (
       <button
         onClick={() => {
-          navigate('/admin');
-          setTimeout(() => {
+          if (location.pathname !== '/admin') {
+            // Si no estamos en /admin, navegar primero
+            navigate('/admin');
+            setTimeout(() => {
+              if (hash === 'dashboard') {
+                window.location.hash = '';
+              } else {
+                window.location.hash = hash;
+              }
+            }, 100);
+          } else {
+            // Si ya estamos en /admin, solo cambiar el hash
             if (hash === 'dashboard') {
               window.location.hash = '';
             } else {
               window.location.hash = hash;
             }
-          }, 100);
+          }
         }}
         className={`flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition-colors text-base w-full
         ${isActive ? 'bg-gradient-to-r from-blue-700 to-purple-700 text-white shadow' : 'text-zinc-200 hover:bg-zinc-800 hover:text-white'}`}
@@ -161,12 +171,38 @@ export default function Sidebar() {
           
           {/* Información del usuario */}
           <div className="flex flex-col items-center gap-2">
-            <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold text-white">
-              {user?.name?.charAt(0).toUpperCase()}
+            {/* Avatar del usuario - usar imagen real si existe */}
+            {user?.avatar ? (
+              <img 
+                src={user.avatar} 
+                alt={`Avatar de ${user.full_name || user.email}`}
+                className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover border-2 border-zinc-700"
+                onError={(e) => {
+                  // Fallback a iniciales si la imagen falla
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            
+            {/* Fallback a iniciales si no hay avatar o falla la imagen */}
+            <div 
+              className={`h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold text-white ${
+                user?.avatar ? 'hidden' : ''
+              }`}
+            >
+              {user?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
             </div>
+            
             <div className="text-center">
-              <div className="font-semibold text-white truncate max-w-[140px] sm:max-w-[180px] text-sm sm:text-base">{user?.name}</div>
-              <div className="text-xs text-zinc-400 truncate max-w-[140px] sm:max-w-[180px]">{user?.email}</div>
+              <div className="font-semibold text-white truncate max-w-[140px] sm:max-w-[180px] text-sm sm:text-base">
+                {user?.full_name || 'Usuario'}
+              </div>
+              <div className="text-xs text-zinc-400 truncate max-w-[140px] sm:max-w-[180px]">
+                {user?.email}
+              </div>
             </div>
           </div>
         </div>
@@ -191,7 +227,7 @@ export default function Sidebar() {
               <h3 className="px-3 text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                 {t('Análisis')}
               </h3>
-              {adminNavItem('advanced-analytics', <BarChart className="h-5 w-5" />, t('Analytics Avanzado'))}
+              {navItem('/admin/analytics', <BarChart className="h-5 w-5" />, t('Analytics Avanzado'))}
             </div>
 
             {/* Sección Sistema */}
@@ -201,8 +237,8 @@ export default function Sidebar() {
                 {navItem('/code-editor', <Code className="h-5 w-5" />, 'Código')}
                 {navItem('/user-management', <Users className="h-5 w-5" />, 'Gestión de Usuarios')}
                 {navItem('/environment', <Key className="h-5 w-5" />, 'Variables de Entorno')}
-                {adminNavItem('notifications', <Bell className="h-5 w-5" />, 'Notificaciones')}
-                {adminNavItem('settings', <Settings className="h-5 w-5" />, 'Configuración')}
+                {navItem('/admin/notifications', <Bell className="h-5 w-5" />, 'Notificaciones')}
+                {navItem('/admin/settings', <Settings className="h-5 w-5" />, 'Configuración')}
               </div>
             </div>
           </nav>

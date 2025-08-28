@@ -22,7 +22,7 @@ export class CacheManager {
       localStorage.clear();
       sessionStorage.clear();
 
-      console.log('✅ Cache limpiado exitosamente');
+      // Cache limpiado exitosamente
       return true;
     } catch (error) {
       console.error('❌ Error limpiando cache:', error);
@@ -37,7 +37,7 @@ export class CacheManager {
         for (const registration of registrations) {
           await registration.unregister();
         }
-        console.log('✅ Service Worker cache limpiado');
+        // Service Worker cache limpiado
         return true;
       }
       return false;
@@ -54,7 +54,7 @@ export class CacheManager {
         await Promise.all(
           cacheNames.map(cacheName => caches.delete(cacheName))
         );
-        console.log('✅ Browser cache limpiado');
+        // Browser cache limpiado
         return true;
       }
       return false;

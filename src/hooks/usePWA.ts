@@ -68,11 +68,7 @@ export const usePWA = () => {
                 
                 toast({
                   title: 'Actualización disponible',
-                  description: 'Hay una nueva versión disponible. Recarga la página para actualizar.',
-                  action: {
-                    label: 'Actualizar',
-                    onClick: () => window.location.reload()
-                  }
+                  description: 'Hay una nueva versión disponible. Recarga la página para actualizar.'
                 });
               }
             });
@@ -99,11 +95,7 @@ export const usePWA = () => {
 
     toast({
       title: 'Instalar TuWebAI',
-      description: 'Puedes instalar esta app en tu dispositivo para un mejor acceso',
-      action: {
-        label: 'Instalar',
-        onClick: () => installApp()
-      }
+      description: 'Puedes instalar esta app en tu dispositivo para un mejor acceso'
     });
   }, []);
 

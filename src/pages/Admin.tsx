@@ -41,6 +41,7 @@ import NotificationsManager from '@/components/admin/NotificationsManager';
 import NotificationBell from '@/components/admin/NotificationBell';
 import ExecutiveCharts from '@/components/admin/ExecutiveCharts';
 import AutomationSystem from '@/components/admin/AutomationSystem';
+import AdvancedTicketManager from '@/components/AdvancedTicketManager';
 
 
 export default function Admin() {
@@ -581,58 +582,13 @@ export default function Admin() {
         )}
 
         {activeSection === 'tickets' && (
-          <Card className="bg-zinc-800 border-zinc-700">
-            <CardHeader>
-              <CardTitle className="text-white">Gestión de Tickets</CardTitle>
-              <CardDescription className="text-gray-400">
-                Administra los tickets de soporte
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {tickets.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Ticket className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-400">No hay tickets registrados</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {tickets.map((ticket) => (
-                      <div key={ticket.id} className="flex items-center justify-between p-4 bg-zinc-700 rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className="h-10 w-10 bg-gradient-to-br from-yellow-600 to-orange-600 rounded-full flex items-center justify-center text-white">
-                            <Ticket className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <p className="text-white font-medium">{ticket.title || 'Sin título'}</p>
-                            <p className="text-gray-400 text-sm">{ticket.description}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={ticket.status === 'closed' ? 'default' : 'destructive'}>
-                            {ticket.status || 'open'}
-                          </Badge>
-                          <Select
-                            value={ticket.status || 'open'}
-                            onValueChange={(value) => updateTicketStatus(ticket.id, value)}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="open">Abierto</SelectItem>
-                              <SelectItem value="in_progress">En Progreso</SelectItem>
-                              <SelectItem value="closed">Cerrado</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <AdvancedTicketManager 
+            tickets={tickets}
+            updateTicketStatus={updateTicketStatus}
+            updateUserRole={updateUserRole}
+            refreshData={loadData}
+            lastUpdate={lastUpdate}
+          />
         )}
 
         {activeSection === 'pagos' && (
