@@ -54,15 +54,15 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'development':
-        return 'bg-blue-500 text-white';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'production':
-        return 'bg-green-500 text-white';
+        return 'bg-green-100 text-green-800 border-green-200';
       case 'paused':
-        return 'bg-yellow-500 text-white';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'maintenance':
-        return 'bg-orange-500 text-white';
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       default:
-        return 'bg-gray-500 text-white';
+        return 'bg-slate-100 text-slate-800 border-slate-200';
     }
   };
 
@@ -108,7 +108,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
   return (
     <Card 
-      className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors cursor-pointer group"
+      className="bg-white border-slate-200 hover:border-slate-300 transition-colors cursor-pointer group shadow-sm hover:shadow-md"
       onClick={(e) => {
         // Evitar que se active cuando se hace click en botones
         if (!(e.target as HTMLElement).closest('button')) {
@@ -130,7 +130,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                {React.createElement(getIconComponent(selectedIcon), { className: "h-5 w-5 text-white" })}
              </button>
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold text-white truncate group-hover:text-blue-300 transition-colors">
+              <h3 className="text-lg font-semibold text-slate-800 truncate group-hover:text-blue-600 transition-colors">
                 {project.name}
               </h3>
               <div className="flex items-center gap-2 mt-1">
@@ -155,7 +155,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 e.stopPropagation();
                 onEdit(project);
               }}
-              className="text-gray-400 hover:text-blue-400 hover:bg-zinc-700"
+              className="text-slate-500 hover:text-blue-600 hover:bg-slate-100"
             >
               <Edit className="h-4 w-4" />
             </Button>
@@ -166,7 +166,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 e.stopPropagation();
                 setShowConfirmDelete(true);
               }}
-              className="text-gray-400 hover:text-red-400 hover:bg-zinc-700"
+              className="text-slate-500 hover:text-red-600 hover:bg-slate-100"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -177,7 +177,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       <CardContent className="space-y-4">
         {/* Descripción */}
         {project.description && (
-          <p className="text-gray-300 text-sm leading-relaxed">
+          <p className="text-slate-600 text-sm leading-relaxed">
             {truncateText(project.description, 150)}
           </p>
         )}
@@ -185,7 +185,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {/* Tecnologías */}
         {project.technologies && project.technologies.length > 0 && (
           <div className="space-y-2 group/tech">
-            <h4 className="text-sm font-medium text-gray-400 hover:text-blue-300 transition-colors cursor-pointer">
+            <h4 className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors cursor-pointer">
               Tecnologías
             </h4>
             <div className="flex flex-wrap gap-1 opacity-0 group-hover/tech:opacity-100 transition-opacity duration-200">
@@ -193,13 +193,13 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <Badge
                   key={index}
                   variant="secondary"
-                  className="bg-blue-500/5 text-blue-100 border-blue-500/10 text-xs"
+                  className="bg-blue-50 text-blue-700 border-blue-200 text-xs"
                 >
                   {tech}
                 </Badge>
               ))}
               {project.technologies.length > 5 && (
-                <Badge variant="secondary" className="bg-gray-500/5 text-gray-100 border-gray-500/10 text-xs">
+                <Badge variant="secondary" className="bg-slate-100 text-slate-700 border-slate-300 text-xs">
                   +{project.technologies.length - 5} más
                 </Badge>
               )}
@@ -210,7 +210,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {/* Variables de entorno */}
         {project.environment_variables && Object.keys(project.environment_variables).length > 0 && (
           <div className="space-y-2 group/env">
-            <h4 className="text-sm font-medium text-gray-400 hover:text-purple-300 transition-colors cursor-pointer">
+            <h4 className="text-sm font-medium text-slate-600 hover:text-purple-600 transition-colors cursor-pointer">
               Variables de Entorno
             </h4>
             <div className="flex flex-wrap gap-1 opacity-0 group-hover/env:opacity-100 transition-opacity duration-200">
@@ -218,13 +218,13 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <Badge
                   key={key}
                   variant="secondary"
-                  className="bg-purple-500/5 text-purple-100 border-purple-500/10 text-xs"
+                  className="bg-purple-50 text-purple-700 border-purple-200 text-xs"
                 >
                   {key}
                 </Badge>
               ))}
               {Object.keys(project.environment_variables).length > 3 && (
-                <Badge variant="secondary" className="bg-gray-500/5 text-gray-100 border-gray-500/10 text-xs">
+                <Badge variant="secondary" className="bg-slate-100 text-slate-700 border-slate-300 text-xs">
                   +{Object.keys(project.environment_variables).length - 3} más
                 </Badge>
               )}
@@ -235,12 +235,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {/* GitHub Repository */}
         {project.github_repository_url && (
           <div className="flex items-center gap-2">
-            <ExternalLink className="h-4 w-4 text-gray-400" />
+            <ExternalLink className="h-4 w-4 text-slate-500" />
             <a
               href={project.github_repository_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300 text-sm truncate"
+              className="text-blue-600 hover:text-blue-700 text-sm truncate"
             >
               Ver en GitHub
             </a>
@@ -248,7 +248,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         )}
 
         {/* Fechas */}
-        <div className="flex items-center justify-between text-xs text-gray-400 pt-2 border-t border-zinc-700">
+        <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-200">
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             <span>Creado: {formatDateSafe(project.created_at)}</span>
@@ -265,9 +265,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       {/* Confirmación de eliminación */}
       {showConfirmDelete && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-          <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 max-w-sm mx-4">
-            <h3 className="text-white font-semibold mb-2">Confirmar eliminación</h3>
-            <p className="text-gray-300 text-sm mb-4">
+          <div className="bg-white border border-slate-200 rounded-lg p-4 max-w-sm mx-4 shadow-xl">
+            <h3 className="text-slate-800 font-semibold mb-2">Confirmar eliminación</h3>
+            <p className="text-slate-600 text-sm mb-4">
               ¿Estás seguro de que quieres eliminar el proyecto "{project.name}"? Esta acción no se puede deshacer.
             </p>
             <div className="flex gap-2 justify-end">
@@ -275,7 +275,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => setShowConfirmDelete(false)}
-                className="bg-zinc-700 border-zinc-600 text-white hover:bg-zinc-600"
+                className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
               >
                 Cancelar
               </Button>
@@ -294,14 +294,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       {/* Modal de selección de iconos */}
       {showIconPicker && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-6 max-w-md mx-4">
+          <div className="bg-white border border-slate-200 rounded-lg p-6 max-w-md mx-4 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-semibold">Personalizar Icono</h3>
+              <h3 className="text-slate-800 font-semibold">Personalizar Icono</h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowIconPicker(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-slate-500 hover:text-slate-700"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -318,15 +318,15 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                   }}
                   className={`p-3 rounded-lg border-2 transition-all duration-200 ${
                     selectedIcon === iconData.name
-                      ? 'border-blue-500 bg-blue-500/20'
-                      : 'border-zinc-600 bg-zinc-700 hover:border-zinc-500'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-slate-300 bg-slate-50 hover:border-slate-400'
                   }`}
                 >
                   <div className="flex flex-col items-center gap-2">
                     <div className="h-8 w-8 bg-gradient-to-br from-green-600 to-blue-600 rounded flex items-center justify-center">
                       {React.createElement(iconData.icon, { className: "h-4 w-4 text-white" })}
                     </div>
-                    <span className="text-xs text-gray-300">{iconData.label}</span>
+                    <span className="text-xs text-slate-700">{iconData.label}</span>
                   </div>
                 </button>
               ))}
@@ -336,7 +336,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               <Button
                 variant="outline"
                 onClick={() => setShowIconPicker(false)}
-                className="bg-zinc-700 border-zinc-600 text-white hover:bg-zinc-600"
+                className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
               >
                 Cancelar
               </Button>

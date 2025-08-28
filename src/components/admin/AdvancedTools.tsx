@@ -242,8 +242,8 @@ export default function AdvancedTools() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Herramientas Avanzadas</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold text-slate-800">Herramientas Avanzadas</h1>
+          <p className="text-slate-600">
             Gestión de herramientas y utilidades del sistema
           </p>
         </div>
@@ -255,49 +255,49 @@ export default function AdvancedTools() {
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Wrench className="h-5 w-5 text-blue-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Total Herramientas</p>
-                <p className="text-2xl font-bold">{stats.totalTools || 0}</p>
+                <p className="text-sm text-slate-500">Total Herramientas</p>
+                <p className="text-2xl font-bold text-slate-800">{stats.totalTools || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-green-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Herramientas Activas</p>
-                <p className="text-2xl font-bold">{stats.activeTools || 0}</p>
+                <p className="text-sm text-slate-500">Herramientas Activas</p>
+                <p className="text-2xl font-bold text-slate-800">{stats.activeTools || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-orange-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Total Logs</p>
-                <p className="text-2xl font-bold">{stats.totalLogs || 0}</p>
+                <p className="text-sm text-slate-500">Total Logs</p>
+                <p className="text-2xl font-bold text-slate-800">{stats.totalLogs || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <RefreshCw className="h-5 w-5 text-purple-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Última Actualización</p>
-                <p className="text-sm font-medium">{stats.lastUpdate || 'N/A'}</p>
+                <p className="text-sm text-slate-500">Última Actualización</p>
+                <p className="text-sm font-medium text-slate-800">{stats.lastUpdate || 'N/A'}</p>
               </div>
             </div>
           </CardContent>
@@ -306,7 +306,7 @@ export default function AdvancedTools() {
 
       {/* Tabs principales */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-3 bg-slate-100 border-slate-200">
           <TabsTrigger value="overview">Vista General</TabsTrigger>
           <TabsTrigger value="tools">Herramientas</TabsTrigger>
           <TabsTrigger value="logs">Logs del Sistema</TabsTrigger>
@@ -314,36 +314,36 @@ export default function AdvancedTools() {
 
         {/* Vista General */}
         <TabsContent value="overview" className="space-y-4">
-          <Card>
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Resumen del Sistema</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-slate-800">Resumen del Sistema</CardTitle>
+              <CardDescription className="text-slate-600">
                 Estado general de las herramientas avanzadas
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
                   <div className="flex items-center gap-3">
                     <Wrench className="h-5 w-5 text-blue-600" />
                     <div>
-                      <p className="font-medium">Herramientas Disponibles</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium text-slate-800">Herramientas Disponibles</p>
+                      <p className="text-sm text-slate-600">
                         {stats.totalTools || 0} herramientas configuradas
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline">
+                  <Badge variant="outline" className="border-slate-300 text-slate-700">
                     {stats.activeTools || 0} activas
                   </Badge>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
                   <div className="flex items-center gap-3">
                     <Activity className="h-5 w-5 text-green-600" />
                     <div>
-                      <p className="font-medium">Estado del Sistema</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium text-slate-800">Estado del Sistema</p>
+                      <p className="text-sm text-slate-600">
                         Todas las herramientas funcionando correctamente
                       </p>
                     </div>
@@ -359,22 +359,22 @@ export default function AdvancedTools() {
 
         {/* Herramientas */}
         <TabsContent value="tools" className="space-y-4">
-          <Card>
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Lista de Herramientas</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-slate-800">Lista de Herramientas</CardTitle>
+              <CardDescription className="text-slate-600">
                 Gestiona las herramientas avanzadas del sistema
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {tools.map((tool) => (
-                  <div key={tool.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={tool.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-white">
                     <div className="flex items-center gap-3">
                       <Wrench className="h-5 w-5 text-blue-600" />
                       <div>
-                        <p className="font-medium">{tool.name}</p>
-                        <p className="text-sm text-muted-foreground">{tool.description}</p>
+                        <p className="font-medium text-slate-800">{tool.name}</p>
+                        <p className="text-sm text-slate-600">{tool.description}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -405,29 +405,29 @@ export default function AdvancedTools() {
 
         {/* Logs del Sistema */}
         <TabsContent value="logs" className="space-y-4">
-          <Card>
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Logs del Sistema</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-slate-800">Logs del Sistema</CardTitle>
+              <CardDescription className="text-slate-600">
                 Registro de actividades y eventos del sistema
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 max-h-96 overflow-y-auto">
                 {logs.map((log) => (
-                  <div key={log.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                  <div key={log.id} className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg bg-white">
                     <div className={`w-2 h-2 rounded-full ${
                       log.level === 'error' ? 'bg-red-500' :
                       log.level === 'warning' ? 'bg-yellow-500' :
                       log.level === 'info' ? 'bg-blue-500' : 'bg-gray-500'
                     }`} />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{log.message}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm font-medium text-slate-800">{log.message}</p>
+                      <p className="text-xs text-slate-600">
                         {new Date(log.created_at).toLocaleString()}
                       </p>
                     </div>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-xs border-slate-300 text-slate-700">
                       {log.level}
                     </Badge>
                   </div>

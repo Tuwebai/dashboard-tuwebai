@@ -52,6 +52,34 @@ h1, .text-3xl, .text-2xl, .font-bold, .font-semibold {
   margin-bottom: 2rem;
 }
 
+/* Animaciones para el diseño claro */
+@keyframes gradient-x {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 3s ease infinite;
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 2s linear infinite;
+}
+
 @keyframes avatar-glow {
   0%,100% { box-shadow: 0 0 0 0 #fff0, 0 0 8px 2px #a259ff80; }
   50% { box-shadow: 0 0 0 4px #fff2, 0 0 24px 8px #a259ffcc; }
@@ -71,15 +99,15 @@ h1, .text-3xl, .text-2xl, .font-bold, .font-semibold {
 
 @layer base {
   :root {
-    /* TuWeb.ai Theme - Colores actualizados con fondo gradiente */
-    --background: 0 0% 100% / 0.1; /* Transparente para mostrar el gradiente */
-    --foreground: 0 0% 100%; /* #ffffff */
+    /* TuWeb.ai Theme - Diseño Claro por defecto */
+    --background: 0 0% 100%; /* #ffffff - Fondo blanco */
+    --foreground: 0 0% 10%; /* #1a1a1a - Texto negro */
 
-    --card: 0 0% 8% / 0.95; /* Más opaco y oscuro */
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 100%; /* #ffffff - Tarjetas blancas */
+    --card-foreground: 0 0% 10%;
 
-    --popover: 0 0% 8% / 0.95;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
 
     /* Primary Blue */
     --primary: 195 100% 50%; /* #00CCFF */
@@ -90,8 +118,8 @@ h1, .text-3xl, .text-2xl, .font-bold, .font-semibold {
     --secondary: 270 100% 60%; /* #9933FF */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 10% / 0.95; /* Más opaco y oscuro */
-    --muted-foreground: 0 0% 90%; /* #e6e6e6 */
+    --muted: 0 0% 96%; /* #f5f5f5 - Gris muy claro */
+    --muted-foreground: 0 0% 45%; /* #737373 - Texto gris */
 
     --accent: 270 100% 60%; /* Purple accent */
     --accent-foreground: 0 0% 100%;
@@ -99,28 +127,28 @@ h1, .text-3xl, .text-2xl, .font-bold, .font-semibold {
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 15% / 0.95; /* Más opaco y oscuro */
-    --input: 0 0% 10% / 0.95;
+    --border: 0 0% 88%; /* #e0e0e0 - Bordes grises claros */
+    --input: 0 0% 100%; /* #ffffff - Inputs blancos */
     --ring: 195 100% 50%;
 
     --radius: 1rem;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(195 100% 8%), hsl(270 100% 12%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 8% / 0.95), hsl(0 0% 5% / 0.95));
+    --gradient-primary: linear-gradient(135deg, hsl(195 100% 95%), hsl(270 100% 97%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(0 0% 98%));
     
     /* Shadows */
-    --shadow-glow: 0 0 40px hsl(195 100% 50% / 0.3);
-    --shadow-card: 0 10px 30px -10px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 40px hsl(195 100% 50% / 0.1);
+    --shadow-card: 0 10px 30px -10px hsl(0 0% 0% / 0.1);
     
     /* Sidebar */
-    --sidebar-background: 0 0% 5% / 0.95;
-    --sidebar-foreground: 0 0% 100%;
+    --sidebar-background: 0 0% 98%; /* #fafafa - Sidebar muy claro */
+    --sidebar-foreground: 0 0% 10%;
     --sidebar-primary: 195 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 8% / 0.95;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 15% / 0.95;
+    --sidebar-accent: 0 0% 95%; /* #f2f2f2 */
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 88%; /* #e0e0e0 */
     --sidebar-ring: 195 100% 50%;
     --accent-electric: #00ccff;
     --accent-violet: #a259ff;
@@ -155,7 +183,7 @@ h1, .text-3xl, .text-2xl, .font-bold, .font-semibold {
   }
 
   .dark {
-    /* Dark theme is default - Colores actualizados con fondo gradiente */
+    /* Dark theme - Solo cuando se active explícitamente */
     --background: 0 0% 100% / 0.1; /* Transparente para mostrar el gradiente */
     --foreground: 0 0% 100%; /* #ffffff */
     --card: 0 0% 8% / 0.95; /* Más opaco y oscuro */
@@ -192,7 +220,7 @@ h1, .text-3xl, .text-2xl, .font-bold, .font-semibold {
   }
 
   body {
-    background: linear-gradient(135deg, hsl(195 100% 8%), hsl(270 100% 12%));
+    background: linear-gradient(135deg, hsl(195 100% 98%), hsl(270 100% 99%));
     background-attachment: fixed;
     min-height: 100vh;
     @apply text-foreground;

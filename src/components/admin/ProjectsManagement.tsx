@@ -134,8 +134,8 @@ export const ProjectsManagement: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Gestión de Proyectos</h1>
-          <p className="text-gray-400">Administra los proyectos del sistema</p>
+          <h1 className="text-3xl font-bold text-slate-800">Gestión de Proyectos</h1>
+          <p className="text-slate-600">Administra los proyectos del sistema</p>
         </div>
         <Button
           onClick={() => setShowForm(true)}
@@ -157,23 +157,23 @@ export const ProjectsManagement: React.FC = () => {
 
       {/* Error */}
       {error && (
-        <Card className="bg-red-900/20 border-red-700">
+        <Card className="bg-red-50 border-red-200">
           <CardContent className="p-4">
-            <p className="text-red-400">{error}</p>
+            <p className="text-red-700">{error}</p>
           </CardContent>
         </Card>
       )}
 
       {/* Lista de proyectos */}
       {projects.length === 0 ? (
-        <Card className="bg-zinc-800 border-zinc-700">
+        <Card className="bg-white border-slate-200">
           <CardContent className="p-8">
             <div className="text-center">
-              <FolderOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-300 mb-2">
+              <FolderOpen className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-slate-700 mb-2">
                 No hay proyectos registrados
               </h3>
-              <p className="text-gray-400 mb-4">
+              <p className="text-slate-600 mb-4">
                 Comienza creando tu primer proyecto para gestionar tus desarrollos.
               </p>
               <Button
@@ -217,7 +217,7 @@ export const ProjectsManagement: React.FC = () => {
       {/* Formulario de proyecto */}
       {(showForm || editingProject) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white border border-slate-200 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
             <ProjectForm
               project={editingProject || undefined}
               onSubmit={editingProject ? handleUpdateProject : handleCreateProject}

@@ -176,232 +176,443 @@ export default function AutomationSystem() {
 
   return (
     <div className="space-y-6">
-      {/* Header del Sistema de Automatización */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Sistema de Automatización</h1>
-          <p className="text-gray-400">
-            Workflows, triggers y tareas automatizadas para optimizar tu flujo de trabajo
+          <h1 className="text-3xl font-bold text-slate-800">Sistema de Automatización</h1>
+          <p className="text-slate-600">
+            Gestiona workflows, triggers y tareas automatizadas del sistema
           </p>
         </div>
         <div className="flex items-center space-x-3">
-                     <Button onClick={refreshData} variant="outline" size="sm">
-             <RefreshCw className="h-4 w-4 mr-2" />
-             Actualizar
-           </Button>
            <Button 
-             onClick={async () => {
-               try {
-                 const results = await automationTaskService.executePendingTasks();
-                 const successCount = results.filter(r => r.success).length;
-                 toast({
-                   title: 'Tareas Ejecutadas',
-                   description: `${successCount}/${results.length} tareas ejecutadas exitosamente`
-                 });
-                 refreshData();
-               } catch (error) {
-                 toast({
-                   title: 'Error',
-                   description: 'Error ejecutando tareas pendientes',
-                   variant: 'destructive'
-                 });
-               }
-             }} 
+            onClick={loadAutomationData}
              variant="outline" 
              size="sm"
-             className="bg-yellow-600 hover:bg-yellow-700 text-white"
+            className="border-slate-200 text-slate-700 hover:bg-slate-50"
            >
-             <Zap className="h-4 w-4 mr-2" />
-             Ejecutar Tareas
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Actualizar
            </Button>
-          <Button onClick={() => setShowWorkflowForm(true)} className="bg-blue-600 hover:bg-blue-700">
+          <Button
+            onClick={() => setShowWorkflowForm(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Nuevo Workflow
-          </Button>
-          <Button onClick={() => setShowTriggerForm(true)} className="bg-green-600 hover:bg-green-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Nuevo Trigger
-          </Button>
-          <Button onClick={() => setShowTaskForm(true)} className="bg-yellow-600 hover:bg-yellow-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Nueva Tarea
           </Button>
         </div>
       </div>
 
-      {/* Estadísticas Rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-zinc-800 border-zinc-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">Workflows Activos</CardTitle>
-                         <GitBranch className="h-4 w-4 text-blue-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.workflows || 0}</div>
-            <p className="text-xs text-gray-400">Flujos de trabajo automatizados</p>
+      {/* Estadísticas principales */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-white border-slate-200">
+          <CardContent className="p-4">
+            <CardTitle className="text-sm font-medium text-slate-700">Workflows Activos</CardTitle>
+            <div className="mt-2">
+              <div className="text-2xl font-bold text-slate-800">{stats.workflows || 0}</div>
+              <p className="text-xs text-slate-500">Flujos de trabajo automatizados</p>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-800 border-zinc-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">Triggers Activos</CardTitle>
-                         <GitPullRequest className="h-4 w-4 text-green-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.triggers || 0}</div>
-            <p className="text-xs text-gray-400">Eventos automáticos configurados</p>
+        <Card className="bg-white border-slate-200">
+          <CardContent className="p-4">
+            <CardTitle className="text-sm font-medium text-slate-700">Triggers Activos</CardTitle>
+            <div className="mt-2">
+              <div className="text-2xl font-bold text-slate-800">{stats.triggers || 0}</div>
+              <p className="text-xs text-slate-500">Eventos automáticos configurados</p>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-800 border-zinc-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">Tareas Programadas</CardTitle>
-                         <GitCommit className="h-4 w-4 text-yellow-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.tasks || 0}</div>
-            <p className="text-xs text-gray-400">Tareas automatizadas activas</p>
+        <Card className="bg-white border-slate-200">
+          <CardContent className="p-4">
+            <CardTitle className="text-sm font-medium text-slate-700">Tareas Programadas</CardTitle>
+            <div className="mt-2">
+              <div className="text-2xl font-bold text-slate-800">{stats.tasks || 0}</div>
+              <p className="text-xs text-slate-500">Tareas automatizadas activas</p>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-800 border-zinc-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">Tasa de Éxito</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.success_rate?.toFixed(1) || 0}%</div>
-            <p className="text-xs text-gray-400">Ejecuciones exitosas</p>
+        <Card className="bg-white border-slate-200">
+          <CardContent className="p-4">
+            <CardTitle className="text-sm font-medium text-slate-700">Tasa de Éxito</CardTitle>
+            <div className="mt-2">
+              <div className="text-2xl font-bold text-slate-800">{stats.success_rate?.toFixed(1) || 0}%</div>
+              <p className="text-xs text-slate-500">Ejecuciones exitosas</p>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-             {/* Sistema de Pestañas */}
+      {/* Tabs principales */}
        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-         <TabsList className="flex flex-wrap w-full bg-zinc-800 gap-1 p-1">
-           <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600 flex-shrink-0">
-             <BarChart3 className="h-4 w-4 mr-2" />
-             Resumen
-           </TabsTrigger>
-           <TabsTrigger value="workflows" className="data-[state=active]:bg-blue-600 flex-shrink-0">
-                          <GitBranch className="h-4 w-4 mr-2" />
-             Workflows
-           </TabsTrigger>
-           <TabsTrigger value="triggers" className="data-[state=active]:bg-blue-600 flex-shrink-0">
-                          <GitPullRequest className="h-4 w-4 mr-2" />
-             Triggers
-           </TabsTrigger>
-           <TabsTrigger value="tasks" className="data-[state=active]:bg-blue-600 flex-shrink-0">
-                          <GitCommit className="h-4 w-4 mr-2" />
-             Tareas
-           </TabsTrigger>
-                      <TabsTrigger value="pipelines" className="data-[state=active]:bg-blue-600 flex-shrink-0">
-                              <GitBranch className="h-4 w-4 mr-2" />
-              CI/CD
-            </TabsTrigger>
-            <TabsTrigger value="logs" className="data-[state=active]:bg-blue-600 flex-shrink-0">
-              <Activity className="h-4 w-4 mr-2" />
-              Logs
-            </TabsTrigger>
+        <TabsList className="flex flex-wrap w-full bg-slate-100 gap-1 p-1">
+          <TabsTrigger value="overview" className="text-xs">Resumen</TabsTrigger>
+          <TabsTrigger value="workflows" className="text-xs">Workflows</TabsTrigger>
+          <TabsTrigger value="triggers" className="text-xs">Triggers</TabsTrigger>
+          <TabsTrigger value="tasks" className="text-xs">Tareas</TabsTrigger>
+          <TabsTrigger value="logs" className="text-xs">Logs</TabsTrigger>
+          <TabsTrigger value="settings" className="text-xs">Configuración</TabsTrigger>
          </TabsList>
 
-        {/* Pestaña de Resumen */}
+        {/* Tab de Resumen */}
         <TabsContent value="overview" className="space-y-6">
-          <OverviewTab 
-            workflows={workflows}
-            triggers={triggers}
-            tasks={tasks}
-            stats={stats}
-          />
+          {/* Actividad Reciente */}
+          <Card className="bg-white border-slate-200">
+            <CardHeader>
+              <CardTitle className="text-slate-800">Actividad Reciente</CardTitle>
+              <CardDescription className="text-slate-600">
+                Últimas ejecuciones y eventos del sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {automationLogs.length === 0 ? (
+                <div className="text-center py-8">
+                  <Activity className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                  <p className="text-slate-500">No hay actividad reciente</p>
+                  <p className="text-slate-400 text-sm mt-2">
+                    Los logs aparecerán aquí cuando se ejecuten automatizaciones
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {automationLogs.slice(0, 5).map((workflow: any) => (
+                    <div key={workflow.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div>
+                          <p className="text-slate-800 font-medium">{workflow.name}</p>
+                          <p className="text-slate-500 text-sm">
+                            {workflow.description || 'Sin descripción'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-slate-400">
+                          {new Date(workflow.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {triggers.slice(0, 3).map((trigger: any) => (
+                    <div key={trigger.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <div>
+                          <p className="text-slate-800 font-medium">{trigger.name}</p>
+                          <p className="text-slate-500 text-sm">
+                            {trigger.description || 'Sin descripción'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-slate-400">
+                          {new Date(trigger.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {tasks.slice(0, 3).map((task: any) => (
+                    <div key={task.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <div>
+                          <p className="text-slate-800 font-medium">{task.name}</p>
+                          <p className="text-slate-500 text-sm">
+                            {task.description || 'Sin descripción'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-slate-400">
+                          {new Date(task.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Rendimiento del Sistema */}
+          <Card className="bg-white border-slate-200">
+            <CardHeader>
+              <CardTitle className="text-slate-800">Rendimiento del Sistema</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-slate-800">{stats.tasks || 0}</div>
+                  <span className="text-slate-600">Tareas Activas</span>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-slate-800">{stats.triggers || 0}</div>
+                  <span className="text-slate-600">Triggers Activos</span>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-slate-800">{stats.workflows || 0}</div>
+                  <span className="text-slate-600">Workflows Activos</span>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-slate-800">{stats.success_rate?.toFixed(1) || 0}%</div>
+                  <span className="text-slate-600">Tasa de Éxito</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Próximas Ejecuciones */}
+          <Card className="bg-white border-slate-200">
+            <CardHeader>
+              <CardTitle className="text-slate-800">Próximas Ejecuciones</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {tasks.filter((task: any) => task.next_execution).length === 0 ? (
+                <div className="text-center py-8">
+                  <Clock className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                  <p className="text-slate-500">No hay tareas programadas</p>
+                  <p className="text-slate-400 text-sm mt-2">
+                    Las tareas programadas aparecerán aquí
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {tasks
+                    .filter((task: any) => task.next_execution)
+                    .slice(0, 5)
+                    .map((task: any) => (
+                      <div key={task.id} className="flex items-center justify-between p-2 bg-slate-50 rounded">
+                        <div>
+                          <p className="text-slate-800 text-sm">{task.name}</p>
+                          <p className="text-slate-500 text-xs">
+                            {task.description || 'Sin descripción'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-slate-400">
+                            {new Date(task.next_execution).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
-                 {/* Pestaña de Workflows */}
+        {/* Tab de Workflows */}
          <TabsContent value="workflows" className="space-y-6">
-           <WorkflowsTab 
-             workflows={workflows}
-             onRefresh={loadAutomationData}
-             onShowWorkflowForm={() => setShowWorkflowForm(true)}
-             onDeleteWorkflow={async (workflowId) => {
-               if (confirm('¿Estás seguro de que quieres eliminar este workflow?')) {
-                 try {
-                   await workflowService.deleteWorkflow(workflowId);
-                   await loadAutomationData();
-                   toast({
-                     title: 'Éxito',
-                     description: 'Workflow eliminado correctamente'
-                   });
-                 } catch (error) {
-                   toast({
-                     title: 'Error',
-                     description: 'No se pudo eliminar el workflow',
-                     variant: 'destructive'
-                   });
-                 }
-               }
-             }}
-           />
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-slate-800">Workflows de Proyectos</h2>
+            <Button
+              onClick={() => setShowWorkflowForm(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nuevo Workflow
+            </Button>
+          </div>
+
+          {workflows.length === 0 ? (
+            <Card className="bg-white border-slate-200">
+              <CardContent className="text-center py-8">
+                <GitBranch className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                <p className="text-slate-500">No hay workflows configurados</p>
+                <p className="text-slate-400 text-sm mt-2">
+                  Crea tu primer workflow para automatizar procesos
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {workflows.map((workflow: any) => (
+                <Card key={workflow.id} className="bg-white border-slate-200">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-slate-800">{workflow.name}</CardTitle>
+                      <Badge variant={workflow.status === 'active' ? 'default' : 'secondary'}>
+                        {workflow.status === 'active' ? 'Activo' : 'Inactivo'}
+                      </Badge>
+                    </div>
+                    <CardDescription className="text-slate-600">
+                      {workflow.description || 'Sin descripción'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Tipo:</span>
+                      <span className="text-slate-700">{workflow.project_type || 'General'}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Creado:</span>
+                      <span className="text-slate-700">
+                        {new Date(workflow.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Ejecuciones:</span>
+                      <span className="text-slate-700">{workflow.execution_count || 0}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
          </TabsContent>
 
-                 {/* Pestaña de Triggers */}
+        {/* Tab de Triggers */}
          <TabsContent value="triggers" className="space-y-6">
-           <TriggersTab 
-             triggers={triggers}
-             onRefresh={loadAutomationData}
-             onShowTriggerForm={() => setShowTriggerForm(true)}
-             onDeleteTrigger={async (triggerId) => {
-               if (confirm('¿Estás seguro de que quieres eliminar este trigger?')) {
-                 try {
-                   await triggerService.deleteTrigger(triggerId);
-                   await loadAutomationData();
-                   toast({
-                     title: 'Éxito',
-                     description: 'Trigger eliminado correctamente'
-                   });
-                 } catch (error) {
-                   toast({
-                     title: 'Error',
-                     description: 'No se pudo eliminar el trigger',
-                     variant: 'destructive'
-                   });
-                 }
-               }
-             }}
-           />
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-slate-800">Triggers del Sistema</h2>
+            <Button
+              onClick={() => setShowTriggerForm(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nuevo Trigger
+            </Button>
+          </div>
+
+          {triggers.length === 0 ? (
+            <Card className="bg-white border-slate-200">
+              <CardContent className="text-center py-8">
+                <GitPullRequest className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                <p className="text-slate-500">No hay triggers configurados</p>
+                <p className="text-slate-400 text-sm mt-2">
+                  Crea triggers para automatizar acciones en eventos específicos
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {triggers.map((trigger: any) => (
+                <Card key={trigger.id} className="bg-white border-slate-200">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-slate-800">{trigger.name}</h3>
+                      <Badge variant={trigger.status === 'active' ? 'default' : 'secondary'}>
+                        {trigger.status === 'active' ? 'Activo' : 'Inactivo'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-slate-600 mb-3">
+                      {trigger.description || 'Sin descripción'}
+                    </p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Evento:</span>
+                        <p className="text-slate-700">{trigger.event_type}</p>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Ejecuciones:</span>
+                        <p className="text-slate-700">{trigger.trigger_count}</p>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Última:</span>
+                        <p className="text-slate-700">
+                          {trigger.last_triggered 
+                            ? new Date(trigger.last_triggered).toLocaleDateString()
+                            : 'Nunca'
+                          }
+                        </p>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Creado:</span>
+                        <p className="text-slate-700">
+                          {new Date(trigger.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
          </TabsContent>
 
-                 {/* Pestaña de Tareas */}
+        {/* Tab de Tareas */}
          <TabsContent value="tasks" className="space-y-6">
-           <TasksTab 
-             tasks={tasks}
-             onRefresh={loadAutomationData}
-             onShowTaskForm={() => setShowTaskForm(true)}
-             onDeleteTask={async (taskId) => {
-               if (confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
-                 try {
-                   await automationTaskService.deleteTask(taskId);
-                   await loadAutomationData();
-                   toast({
-                     title: 'Éxito',
-                     description: 'Tarea eliminada correctamente'
-                   });
-                 } catch (error) {
-                   toast({
-                     title: 'Error',
-                     description: 'No se pudo eliminar la tarea',
-                     variant: 'destructive'
-                   });
-                 }
-               }
-             }}
-           />
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-slate-800">Tareas Automatizadas</h2>
+            <Button
+              onClick={() => setShowTaskForm(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nueva Tarea
+            </Button>
+          </div>
+
+          {tasks.length === 0 ? (
+            <Card className="bg-white border-slate-200">
+              <CardContent className="text-center py-8">
+                <GitCommit className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                <p className="text-slate-500">No hay tareas automatizadas configuradas</p>
+                <p className="text-slate-400 text-sm mt-2">
+                  Crea tareas para ejecutar scripts y procesos automáticamente
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {tasks.map((task: any) => (
+                <Card key={task.id} className="bg-white border-slate-200">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-slate-800">{task.name}</h3>
+                      <Badge variant={task.status === 'active' ? 'default' : 'secondary'}>
+                        {task.status === 'active' ? 'Activo' : 'Inactivo'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-slate-600 mb-3">
+                      {task.description || 'Sin descripción'}
+                    </p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Tipo:</span>
+                        <p className="text-slate-700">{task.script_type}</p>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Frecuencia:</span>
+                        <p className="text-slate-700">{task.frequency}</p>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Última:</span>
+                        <p className="text-slate-700">
+                          {task.last_executed 
+                            ? new Date(task.last_executed).toLocaleDateString()
+                            : 'Nunca'
+                          }
+                        </p>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Próxima:</span>
+                        <p className="text-slate-700">
+                          {task.next_execution 
+                            ? new Date(task.next_execution).toLocaleDateString()
+                            : 'No programada'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
          </TabsContent>
 
-                 {/* Pestaña de CI/CD */}
-         <TabsContent value="pipelines" className="space-y-6">
-           <PipelinesTab />
-         </TabsContent>
-
-         {/* Pestaña de Logs */}
+        {/* Tab de Logs */}
          <TabsContent value="logs" className="space-y-6">
            <LogsTab />
          </TabsContent>
@@ -450,31 +661,31 @@ function OverviewTab({ workflows, triggers, tasks, stats }: any) {
   return (
     <div className="space-y-6">
              {/* Actividad Reciente */}
-       <Card className="bg-zinc-800 border-zinc-700">
+       <Card className="bg-white border-slate-200">
          <CardHeader>
-           <CardTitle className="text-white">Actividad Reciente</CardTitle>
-           <CardDescription className="text-gray-400">
+           <CardTitle className="text-slate-800">Actividad Reciente</CardTitle>
+           <CardDescription className="text-slate-600">
              Últimas ejecuciones y eventos del sistema
            </CardDescription>
          </CardHeader>
          <CardContent>
            {workflows.length === 0 && triggers.length === 0 && tasks.length === 0 ? (
              <div className="text-center py-8">
-               <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-               <p className="text-gray-400">No hay actividad reciente</p>
-               <p className="text-gray-500 text-sm mt-2">
+               <Activity className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+               <p className="text-slate-500">No hay actividad reciente</p>
+               <p className="text-slate-400 text-sm mt-2">
                  Crea workflows, triggers o tareas para ver actividad
                </p>
              </div>
            ) : (
              <div className="space-y-4">
                {workflows.slice(0, 3).map((workflow) => (
-                 <div key={workflow.id} className="flex items-center justify-between p-3 bg-zinc-700 rounded-lg">
+                 <div key={workflow.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                    <div className="flex items-center space-x-3">
-                     <GitBranch className="h-5 w-5 text-blue-400" />
+                     <GitBranch className="h-5 w-5 text-blue-500" />
                      <div>
-                       <p className="text-white font-medium">{workflow.name}</p>
-                       <p className="text-gray-400 text-sm">
+                       <p className="text-slate-800 font-medium">{workflow.name}</p>
+                       <p className="text-slate-500 text-sm">
                          Creado {new Date(workflow.created_at).toLocaleDateString()}
                        </p>
                      </div>
@@ -486,12 +697,12 @@ function OverviewTab({ workflows, triggers, tasks, stats }: any) {
                ))}
                
                {triggers.slice(0, 2).map((trigger) => (
-                 <div key={trigger.id} className="flex items-center justify-between p-3 bg-zinc-700 rounded-lg">
+                 <div key={trigger.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                    <div className="flex items-center space-x-3">
-                     <GitPullRequest className="h-5 w-5 text-green-400" />
+                     <GitPullRequest className="h-5 w-5 text-green-500" />
                      <div>
-                       <p className="text-white font-medium">{trigger.name}</p>
-                       <p className="text-gray-400 text-sm">
+                       <p className="text-slate-800 font-medium">{trigger.name}</p>
+                       <p className="text-slate-500 text-sm">
                          {trigger.event_type} • {trigger.trigger_count || 0} ejecuciones
                        </p>
                      </div>
@@ -503,12 +714,12 @@ function OverviewTab({ workflows, triggers, tasks, stats }: any) {
                ))}
                
                {tasks.slice(0, 2).map((task) => (
-                 <div key={task.id} className="flex items-center justify-between p-3 bg-zinc-700 rounded-lg">
+                 <div key={task.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                    <div className="flex items-center space-x-3">
-                     <GitCommit className="h-5 w-5 text-yellow-400" />
+                     <GitCommit className="h-5 w-5 text-yellow-500" />
                      <div>
-                       <p className="text-white font-medium">{task.name}</p>
-                       <p className="text-gray-400 text-sm">
+                       <p className="text-slate-800 font-medium">{task.name}</p>
+                       <p className="text-slate-500 text-sm">
                          {task.type} • {task.run_count || 0} ejecuciones
                        </p>
                      </div>
@@ -525,22 +736,22 @@ function OverviewTab({ workflows, triggers, tasks, stats }: any) {
 
       {/* Métricas de Rendimiento */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-zinc-800 border-zinc-700">
+        <Card className="bg-white border-slate-200">
           <CardHeader>
-            <CardTitle className="text-white">Rendimiento del Sistema</CardTitle>
+            <CardTitle className="text-slate-800">Rendimiento del Sistema</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-gray-300">Tareas Activas</span>
+                <span className="text-slate-600">Tareas Activas</span>
                 <Badge variant="secondary">{stats.tasks || 0}</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-300">Triggers Activos</span>
+                <span className="text-slate-600">Triggers Activos</span>
                 <Badge variant="secondary">{stats.triggers || 0}</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-300">Workflows Activos</span>
+                <span className="text-slate-600">Workflows Activos</span>
                 <Badge variant="secondary">{stats.workflows || 0}</Badge>
               </div>
               <div className="flex justify-between items-center">
@@ -723,7 +934,7 @@ function TriggersTab({ triggers, onRefresh, onShowTriggerForm, onDeleteTrigger }
        </div>
 
       {triggers.length === 0 ? (
-        <Card className="bg-zinc-800 border-zinc-700">
+        <Card className="bg-white border-slate-200">
           <CardContent className="text-center py-8">
                          <GitPullRequest className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-400">No hay triggers configurados</p>
@@ -1167,43 +1378,43 @@ function WorkflowForm({ onClose, onSuccess }: any) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-md bg-zinc-800 border-zinc-700">
+      <Card className="w-full max-w-md bg-white border-slate-200">
         <CardHeader>
-          <CardTitle className="text-white">Nuevo Workflow</CardTitle>
+          <CardTitle className="text-slate-800">Nuevo Workflow</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="name" className="text-white">Nombre</Label>
+              <Label htmlFor="name" className="text-slate-700">Nombre</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="bg-zinc-700 border-zinc-600 text-white"
+                className="bg-white border-slate-200 text-slate-800"
                 required
               />
             </div>
             
             <div>
-              <Label htmlFor="description" className="text-white">Descripción</Label>
+              <Label htmlFor="description" className="text-slate-700">Descripción</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="bg-zinc-700 border-zinc-600 text-white"
+                className="bg-white border-slate-200 text-slate-800"
               />
             </div>
             
             <div>
-              <Label htmlFor="project_type" className="text-white">Tipo de Proyecto</Label>
+              <Label htmlFor="project_type" className="text-slate-700">Tipo de Proyecto</Label>
               <Select
                 value={formData.project_type}
                 onValueChange={(value) => setFormData({ ...formData, project_type: value })}
               >
-                <SelectTrigger className="bg-zinc-700 border-zinc-600 text-white">
+                <SelectTrigger className="bg-white border-slate-200 text-slate-800">
                   <SelectValue placeholder="Seleccionar tipo" />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-700 border-zinc-600">
+                <SelectContent className="bg-white border-slate-200">
                   <SelectItem value="web_development">Desarrollo Web</SelectItem>
                   <SelectItem value="mobile_app">Aplicación Móvil</SelectItem>
                   <SelectItem value="desktop_app">Aplicación de Escritorio</SelectItem>
@@ -1220,7 +1431,7 @@ function WorkflowForm({ onClose, onSuccess }: any) {
                 checked={formData.is_active}
                 onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
               />
-              <Label htmlFor="is_active" className="text-white">Activo</Label>
+              <Label htmlFor="is_active" className="text-slate-700">Activo</Label>
             </div>
             
             <div className="flex space-x-2 pt-4">

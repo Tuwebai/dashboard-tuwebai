@@ -56,20 +56,20 @@ interface VerDetallesProyectoProps {
 }
 
 const ESTADOS_FASE = [
-  { value: 'Pendiente', label: 'Pendiente', color: 'bg-gray-500' },
-  { value: 'En Progreso', label: 'En Progreso', color: 'bg-blue-500' },
-  { value: 'En Revisión', label: 'En Revisión', color: 'bg-yellow-500' },
-  { value: 'Aprobada', label: 'Aprobada', color: 'bg-green-500' },
-  { value: 'Bloqueada', label: 'Bloqueada', color: 'bg-red-500' },
-  { value: 'Terminado', label: 'Terminado', color: 'bg-purple-500' },
+  { value: 'Pendiente', label: 'Pendiente', color: 'bg-gray-100 text-gray-800 border-gray-200' },
+  { value: 'En Progreso', label: 'En Progreso', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+  { value: 'En Revisión', label: 'En Revisión', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  { value: 'Aprobada', label: 'Aprobada', color: 'bg-green-100 text-green-800 border-green-200' },
+  { value: 'Bloqueada', label: 'Bloqueada', color: 'bg-red-100 text-red-800 border-red-200' },
+  { value: 'Terminado', label: 'Terminado', color: 'bg-purple-100 text-purple-800 border-purple-200' },
 ];
 
 const ESTADOS_TAREA = [
-  { value: 'pending', label: 'Pendiente', color: 'bg-gray-500' },
-  { value: 'in_progress', label: 'En Progreso', color: 'bg-blue-500' },
-  { value: 'review', label: 'En Revisión', color: 'bg-yellow-500' },
-  { value: 'completed', label: 'Completada', color: 'bg-green-500' },
-  { value: 'blocked', label: 'Bloqueada', color: 'bg-red-500' },
+  { value: 'pending', label: 'Pendiente', color: 'bg-gray-100 text-gray-800 border-gray-200' },
+  { value: 'in_progress', label: 'En Progreso', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+  { value: 'review', label: 'En Revisión', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  { value: 'completed', label: 'Completada', color: 'bg-green-100 text-green-800 border-green-200' },
+  { value: 'blocked', label: 'Bloqueada', color: 'bg-red-100 text-red-800 border-red-200' },
 ];
 
 export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: VerDetallesProyectoProps) {
@@ -116,11 +116,11 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
     console.warn('VerDetallesProyecto: Proyecto inválido recibido:', proyecto);
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+        <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full border border-slate-200">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Error</h3>
-            <p className="text-gray-600 mb-4">No se pudo cargar la información del proyecto.</p>
+            <h3 className="text-lg font-semibold text-slate-800 mb-2">Error</h3>
+            <p className="text-slate-600 mb-4">No se pudo cargar la información del proyecto.</p>
             <Button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white">
               Cerrar
             </Button>
@@ -547,25 +547,25 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
 
   const getStatusColor = (estado: string) => {
     const estadoObj = ESTADOS_FASE.find(e => e.value === estado);
-    return estadoObj ? estadoObj.color : 'bg-gray-500';
+    return estadoObj ? estadoObj.color : 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
   const getTareaStatusColor = (status: string) => {
     const statusObj = ESTADOS_TAREA.find(s => s.value === status);
-    return statusObj ? statusObj.color : 'bg-gray-500';
+    return statusObj ? statusObj.color : 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
   const renderFases = () => {
     const fases = proyectoLocal.fases || [];
     
-  return (
+    return (
       <div className="space-y-6">
         {/* Formulario para agregar nueva fase */}
         {user?.role === 'admin' && (
-          <Card>
+          <Card className="border border-slate-200/50">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white">
-                <Plus className="h-5 w-5 text-blue-400" />
+              <CardTitle className="flex items-center gap-2 text-slate-800">
+                <Plus className="h-5 w-5 text-blue-600" />
                 Agregar Nueva Fase
               </CardTitle>
             </CardHeader>
@@ -576,13 +576,13 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                     placeholder="Descripción de la fase"
                     value={nuevaFase.descripcion}
                     onChange={(e) => setNuevaFase({...nuevaFase, descripcion: e.target.value})}
-                    className="text-white placeholder-gray-400"
+                    className="border-slate-200 text-slate-700 placeholder-slate-400"
                   />
                   <Select 
                     value={nuevaFase.estado} 
                     onValueChange={(value) => setNuevaFase({...nuevaFase, estado: value})}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="border-slate-200">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -598,20 +598,20 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                     placeholder="Fecha de inicio"
                     value={nuevaFase.fechaInicio}
                     onChange={(e) => setNuevaFase({...nuevaFase, fechaInicio: e.target.value})}
-                    className="text-white placeholder-gray-400"
+                    className="border-slate-200 text-slate-700 placeholder-slate-400"
                   />
                   <Input
                     type="date"
                     placeholder="Fecha de fin"
                     value={nuevaFase.fechaFin}
                     onChange={(e) => setNuevaFase({...nuevaFase, fechaFin: e.target.value})}
-                    className="text-white placeholder-gray-400"
+                    className="border-slate-200 text-slate-700 placeholder-slate-400"
                   />
                 </div>
                 <Button 
                   onClick={handleAgregarFase}
                   disabled={!nuevaFase.descripcion.trim() || loading}
-                  className="w-full"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Agregar Fase
@@ -627,7 +627,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
           const tareasExpanded = expandedTareas.has(fase.key);
           
           return (
-            <Card key={fase.key}>
+            <Card key={fase.key} className="border border-slate-200/50">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -635,13 +635,13 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleFase(fase.key)}
-                      className="p-1"
+                      className="p-1 text-slate-600 hover:text-slate-800"
                     >
                       {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                     </Button>
-              <div>
-                      <CardTitle className="text-lg text-white">{fase.descripcion}</CardTitle>
-                      <p className="text-sm text-gray-300">Clave: {fase.key}</p>
+                    <div>
+                      <CardTitle className="text-lg text-slate-800">{fase.descripcion}</CardTitle>
+                      <p className="text-sm text-slate-500">Clave: {fase.key}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -651,7 +651,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                         onValueChange={(value) => handleEstadoFase(fase.key, value)}
                         disabled={loading}
                       >
-                        <SelectTrigger className="w-32">
+                        <SelectTrigger className="w-32 border-slate-200">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -670,7 +670,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                           variant="ghost"
                           size="sm"
                           onClick={() => iniciarEdicionFase(fase)}
-                          className="p-1"
+                          className="p-1 text-slate-600 hover:text-slate-800"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -678,7 +678,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEliminarFase(fase.key)}
-                          className="p-1 text-red-400 hover:text-red-300"
+                          className="p-1 text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -686,7 +686,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                     )}
                     
                     <div className="text-right">
-                      <div className="text-sm font-medium text-white">{progreso}%</div>
+                      <div className="text-sm font-medium text-slate-700">{progreso}%</div>
                       <Progress value={progreso} className="w-20 h-2" />
                     </div>
                   </div>
@@ -697,21 +697,21 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                 <CardContent className="space-y-4">
                   {/* Formulario de edición de fase */}
                   {editandoFase === fase.key && user?.role === 'admin' && (
-                    <Card className="p-4 border border-blue-500">
+                    <Card className="p-4 border border-blue-200 bg-blue-50">
                       <div className="space-y-3">
-                        <h4 className="font-medium text-white">Editar Fase</h4>
+                        <h4 className="font-medium text-slate-800">Editar Fase</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <Input
                             placeholder="Descripción de la fase"
                             value={faseEditando.descripcion}
                             onChange={(e) => setFaseEditando({...faseEditando, descripcion: e.target.value})}
-                            className="text-white placeholder-gray-400"
+                            className="border-slate-200 text-slate-700 placeholder-slate-400"
                           />
                           <Select 
                             value={faseEditando.estado} 
                             onValueChange={(value) => setFaseEditando({...faseEditando, estado: value})}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className="border-slate-200">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -727,14 +727,14 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                             placeholder="Fecha de inicio"
                             value={faseEditando.fechaInicio}
                             onChange={(e) => setFaseEditando({...faseEditando, fechaInicio: e.target.value})}
-                            className="text-white placeholder-gray-400"
+                            className="border-slate-200 text-slate-700 placeholder-slate-400"
                           />
                           <Input
                             type="date"
                             placeholder="Fecha de fin"
                             value={faseEditando.fechaFin}
                             onChange={(e) => setFaseEditando({...faseEditando, fechaFin: e.target.value})}
-                            className="text-white placeholder-gray-400"
+                            className="border-slate-200 text-slate-700 placeholder-slate-400"
                           />
                         </div>
                         <div className="flex gap-2">
@@ -742,6 +742,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                             onClick={() => handleEditarFase(fase.key)}
                             disabled={!faseEditando.descripcion.trim() || loading}
                             size="sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
                           >
                             Guardar
                           </Button>
@@ -749,6 +750,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                             variant="outline"
                             onClick={() => setEditandoFase(null)}
                             size="sm"
+                            className="border-slate-300 text-slate-700 hover:bg-slate-50"
                           >
                             Cancelar
                           </Button>
@@ -760,12 +762,12 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                   {/* Comentarios */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-white">Comentarios</h4>
+                      <h4 className="font-medium text-slate-800">Comentarios</h4>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleTareas(fase.key)}
-                        className="p-1"
+                        className="p-1 text-slate-600 hover:text-slate-800"
                       >
                         {tareasExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                         Tareas
@@ -778,12 +780,13 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                           placeholder="Agregar comentario..."
                           value={nuevoComentario}
                           onChange={(e) => setNuevoComentario(e.target.value)}
-                          className="flex-1"
+                          className="flex-1 border-slate-200 text-slate-700 placeholder-slate-400"
                         />
                         <Button 
                           onClick={() => handleAgregarComentario(fase.key)}
                           disabled={!nuevoComentario.trim() || loading}
                           size="sm"
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
                         >
                           <Send className="h-4 w-4" />
                         </Button>
@@ -793,32 +796,35 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
 
                   {/* Tareas */}
                   {tareasExpanded && (
-                                         <div className="space-y-3">
-                       <h4 className="font-medium text-white">Tareas</h4>
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-slate-800">Tareas</h4>
                       
-                                             {/* Agregar nueva tarea */}
-                       <Card className="p-4">
+                      {/* Agregar nueva tarea */}
+                      <Card className="p-4 border border-slate-200">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <Input
                             placeholder="Título de la tarea"
                             value={nuevaTarea.titulo}
                             onChange={(e) => setNuevaTarea({...nuevaTarea, titulo: e.target.value})}
+                            className="border-slate-200 text-slate-700 placeholder-slate-400"
                           />
                           <Input
                             placeholder="Responsable"
                             value={nuevaTarea.responsable}
                             onChange={(e) => setNuevaTarea({...nuevaTarea, responsable: e.target.value})}
+                            className="border-slate-200 text-slate-700 placeholder-slate-400"
                           />
                           <Input
                             type="date"
                             value={nuevaTarea.fechaLimite}
                             onChange={(e) => setNuevaTarea({...nuevaTarea, fechaLimite: e.target.value})}
+                            className="border-slate-200 text-slate-700 placeholder-slate-400"
                           />
                           <Select 
                             value={nuevaTarea.prioridad} 
                             onValueChange={(value) => setNuevaTarea({...nuevaTarea, prioridad: value})}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className="border-slate-200">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -832,12 +838,12 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                           placeholder="Descripción de la tarea"
                           value={nuevaTarea.descripcion}
                           onChange={(e) => setNuevaTarea({...nuevaTarea, descripcion: e.target.value})}
-                          className="mt-3"
+                          className="mt-3 border-slate-200 text-slate-700 placeholder-slate-400"
                         />
                         <Button 
                           onClick={() => handleAgregarTarea(fase.key)}
                           disabled={!nuevaTarea.titulo.trim() || loading}
-                          className="mt-3"
+                          className="mt-3 bg-blue-600 hover:bg-blue-700 text-white"
                           size="sm"
                         >
                           <Plus className="h-4 w-4 mr-2" />
@@ -845,27 +851,27 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                         </Button>
                       </Card>
 
-                                               {/* Lista de tareas */}
-                         <div className="space-y-2">
-                           {(fase.tareas || []).map((tarea: any) => (
-                             <Card key={tarea.id} className="p-3">
+                      {/* Lista de tareas */}
+                      <div className="space-y-2">
+                        {(fase.tareas || []).map((tarea: any) => (
+                          <Card key={tarea.id} className="p-3 border border-slate-200">
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
-                                                                 <div className="font-medium text-white">{tarea.titulo}</div>
-                                 <div className="text-sm text-gray-300">{tarea.descripcion}</div>
-                <div className="flex items-center gap-2 mt-1">
-                                  <Badge variant="outline" className="text-xs">{tarea.responsable}</Badge>
-                                  <Badge variant="outline" className="text-xs">{tarea.prioridad}</Badge>
+                                <div className="font-medium text-slate-800">{tarea.titulo}</div>
+                                <div className="text-sm text-slate-600">{tarea.descripcion}</div>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <Badge variant="outline" className="text-xs border-slate-300 text-slate-600">{tarea.responsable}</Badge>
+                                  <Badge variant="outline" className="text-xs border-slate-300 text-slate-600">{tarea.prioridad}</Badge>
                                   <Badge className={`text-xs ${getTareaStatusColor(tarea.status)}`}>
                                     {ESTADOS_TAREA.find(s => s.value === tarea.status)?.label}
-                  </Badge>
+                                  </Badge>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="sm">
+                                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-800">
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm">
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -887,41 +893,41 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
   const renderArchivos = () => {
     return (
       <div className="space-y-6">
-                 <Card>
-           <CardHeader>
-             <CardTitle className="flex items-center gap-2 text-white">
-               <FileText className="h-5 w-5 text-blue-400" />
-               Archivos del Proyecto
-             </CardTitle>
-           </CardHeader>
-           <CardContent>
-             {archivos.length === 0 ? (
-               <div className="text-center py-8">
-                 <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                 <p className="text-gray-300">No hay archivos subidos aún</p>
-               </div>
-             ) : (
-               <div className="space-y-2">
-                 {archivos.map((archivo) => (
-                   <div key={archivo.id} className="flex items-center justify-between p-3 border rounded-lg">
-                     <div className="flex items-center gap-3">
-                       <File className="h-5 w-5 text-blue-400" />
-                       <div>
-                         <div className="font-medium text-white">{archivo.nombre}</div>
-                         <div className="text-sm text-gray-300">
-                           {formatDateSafe(archivo.fechaSubida)}
-                         </div>
-                       </div>
-                     </div>
-                     <Button variant="ghost" size="sm">
-                       <Download className="h-4 w-4" />
-                     </Button>
-                   </div>
-                 ))}
-               </div>
-             )}
-           </CardContent>
-         </Card>
+        <Card className="border border-slate-200/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-slate-800">
+              <FileText className="h-5 w-5 text-blue-600" />
+              Archivos del Proyecto
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {archivos.length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                <p className="text-slate-500">No hay archivos subidos aún</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {archivos.map((archivo) => (
+                  <div key={archivo.id} className="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-slate-50">
+                    <div className="flex items-center gap-3">
+                      <File className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <div className="font-medium text-slate-800">{archivo.nombre}</div>
+                        <div className="text-sm text-slate-500">
+                          {formatDateSafe(archivo.fechaSubida)}
+                        </div>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-800">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   };
@@ -931,13 +937,13 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
     const tareas = fases.flatMap((f: any) => f.tareas || []);
     const comentarios = fases.flatMap((f: any) => f.comentarios || []);
     
-  return (
+    return (
       <div className="space-y-6">
-                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-          <Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+          <Card className="border border-slate-200/50">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-slate-800">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
                 Progreso General
               </CardTitle>
             </CardHeader>
@@ -947,78 +953,78 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                   {calcularProgresoProyecto()}%
                 </div>
                 <Progress value={calcularProgresoProyecto()} className="h-3" />
-                <p className="text-sm text-gray-600 mt-2">
+                <p className="text-sm text-slate-600 mt-2">
                   {fases.length} fases • {tareas.length} tareas
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border border-slate-200/50">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-slate-800">
+                <Activity className="h-5 w-5 text-blue-600" />
                 Actividad
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-sm">Fases Completadas</span>
-                  <span className="font-medium">
+                  <span className="text-sm text-slate-600">Fases Completadas</span>
+                  <span className="font-medium text-slate-800">
                     {fases.filter((f: any) => f.estado === 'Terminado').length}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm">Tareas Pendientes</span>
-                  <span className="font-medium">
+                  <span className="text-sm text-slate-600">Tareas Pendientes</span>
+                  <span className="font-medium text-slate-800">
                     {tareas.filter((t: any) => t.status !== 'completed').length}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm">Comentarios</span>
-                  <span className="font-medium">{comentarios.length}</span>
+                  <span className="text-sm text-slate-600">Comentarios</span>
+                  <span className="font-medium text-slate-800">{comentarios.length}</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border border-slate-200/50">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-slate-800">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
                 Rendimiento
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-sm">Tareas Completadas</span>
-                  <span className="font-medium">
+                  <span className="text-sm text-slate-600">Tareas Completadas</span>
+                  <span className="font-medium text-slate-800">
                     {tareas.filter((t: any) => t.status === 'completed').length}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm">Tareas en Progreso</span>
-                  <span className="font-medium">
+                  <span className="text-sm text-slate-600">Tareas en Progreso</span>
+                  <span className="font-medium text-slate-800">
                     {tareas.filter((t: any) => t.status === 'in_progress').length}
                   </span>
-            </div>
+                </div>
                 <div className="flex justify-between">
-                  <span className="text-sm">Tareas Bloqueadas</span>
-                  <span className="font-medium">
+                  <span className="text-sm text-slate-600">Tareas Bloqueadas</span>
+                  <span className="font-medium text-slate-800">
                     {tareas.filter((t: any) => t.status === 'blocked').length}
                   </span>
-            </div>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-          <Card>
+          <Card className="border border-slate-200/50">
             <CardHeader>
-              <CardTitle className="text-lg">Resumen de Fases</CardTitle>
+              <CardTitle className="text-lg text-slate-800">Resumen de Fases</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -1026,10 +1032,10 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                   const progreso = calcularProgresoFase(fase.key);
                   return (
                     <div key={fase.key} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <span className="text-sm">{fase.descripcion}</span>
+                      <span className="text-sm text-slate-600">{fase.descripcion}</span>
                       <div className="flex items-center gap-2">
                         <Progress value={progreso} className="w-20 h-2" />
-                        <span className="text-sm font-medium">{progreso}%</span>
+                        <span className="text-sm font-medium text-slate-700">{progreso}%</span>
                       </div>
                     </div>
                   );
@@ -1038,25 +1044,25 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border border-slate-200/50">
             <CardHeader>
-              <CardTitle className="text-lg">Actividad Reciente</CardTitle>
+              <CardTitle className="text-lg text-slate-800">Actividad Reciente</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-sm">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Proyecto iniciado</span>
-                  <span className="text-gray-500 ml-auto">{formatDateSafe(proyecto.createdAt || proyecto.fechaInicio)}</span>
+                  <span className="text-slate-700">Proyecto iniciado</span>
+                  <span className="text-slate-500 ml-auto">{formatDateSafe(proyecto.createdAt || proyecto.fechaInicio)}</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span>{comentarios.length} comentarios agregados</span>
+                  <span className="text-slate-700">{comentarios.length} comentarios agregados</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                   <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <span>{tareas.length} tareas creadas</span>
-            </div>
+                  <span className="text-slate-700">{tareas.length} tareas creadas</span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -1067,9 +1073,9 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-purple-900 rounded-lg shadow-xl w-full max-w-[99vw] sm:max-w-[98vw] md:max-w-[97vw] lg:max-w-[96vw] xl:max-w-[95vw] 2xl:max-w-[94vw] max-h-[98vh] overflow-hidden">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-[99vw] sm:max-w-[98vw] md:max-w-[97vw] lg:max-w-[96vw] xl:max-w-[95vw] 2xl:max-w-[94vw] max-h-[98vh] overflow-hidden border border-slate-200">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b bg-gradient-to-r from-blue-600 to-purple-600 text-white gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b border-slate-200 bg-gradient-to-r from-blue-600 to-purple-600 text-white gap-4">
           <div className="flex-1">
             <h2 className="text-xl sm:text-2xl font-bold text-white">{proyecto.name || proyecto.nombre}</h2>
             <p className="text-white/90 text-sm sm:text-base">{proyecto.description || proyecto.descripcion}</p>
@@ -1084,60 +1090,60 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
         {/* Content */}
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-            <div className="border-b-2 border-black px-2 sm:px-4 lg:px-6 bg-purple-800">
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-purple-700 border border-purple-600">
-                <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white hover:bg-purple-600 text-xs sm:text-sm">
+            <div className="border-b-2 border-slate-200 px-2 sm:px-4 lg:px-6 bg-slate-50">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-white border border-slate-200">
+                <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-700 hover:bg-slate-100 text-xs sm:text-sm">
                   <span className="hidden sm:inline">Vista General</span>
                   <span className="sm:hidden">General</span>
                 </TabsTrigger>
-                <TabsTrigger value="fases" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white hover:bg-purple-600 text-xs sm:text-sm">
+                <TabsTrigger value="fases" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-700 hover:bg-slate-100 text-xs sm:text-sm">
                   <span className="hidden sm:inline">Fases y Tareas</span>
                   <span className="sm:hidden">Fases</span>
                 </TabsTrigger>
-                <TabsTrigger value="files" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white hover:bg-purple-600 text-xs sm:text-sm">
+                <TabsTrigger value="files" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-700 hover:bg-slate-100 text-xs sm:text-sm">
                   <span className="hidden sm:inline">Archivos</span>
                   <span className="sm:hidden">Files</span>
                 </TabsTrigger>
-                <TabsTrigger value="metrics" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white hover:bg-purple-600 text-xs sm:text-sm">
+                <TabsTrigger value="metrics" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-700 hover:bg-slate-100 text-xs sm:text-sm">
                   <span className="hidden sm:inline">Métricas</span>
                   <span className="sm:hidden">Stats</span>
                 </TabsTrigger>
               </TabsList>
             </div>
 
-            <div className="p-2 sm:p-3 lg:p-4 overflow-y-auto max-h-[calc(98vh-200px)] bg-purple-900">
+            <div className="p-2 sm:p-3 lg:p-4 overflow-y-auto max-h-[calc(98vh-200px)] bg-white">
               <TabsContent value="overview" className="space-y-4 sm:space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
-                                    <Card>
+                  <Card className="border border-slate-200/50">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-white">
-                        <FileText className="h-5 w-5 text-blue-400" />
+                      <CardTitle className="flex items-center gap-2 text-slate-800">
+                        <FileText className="h-5 w-5 text-blue-600" />
                         Información del Proyecto
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-blue-400" />
-                        <span className="text-sm text-white">Fecha de inicio: {formatDateSafe(proyecto.createdAt || proyecto.fechaInicio)}</span>
+                        <Calendar className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm text-slate-700">Fecha de inicio: {formatDateSafe(proyecto.createdAt || proyecto.fechaInicio)}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Target className="h-4 w-4 text-blue-400" />
-                        <span className="text-sm text-white">Fecha de entrega: {formatDateSafe(proyecto.fechaEntrega) || 'Fecha no disponible'}</span>
+                        <Target className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm text-slate-700">Fecha de entrega: {formatDateSafe(proyecto.fechaEntrega) || 'Fecha no disponible'}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-blue-400" />
-                        <span className="text-sm text-white">Presupuesto: ${datosProyecto.presupuesto || 'No definido'}</span>
-                    </div>
+                        <DollarSign className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm text-slate-700">Presupuesto: ${datosProyecto.presupuesto || 'No definido'}</span>
+                      </div>
                       <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-blue-400" />
-                        <span className="text-sm text-white">Cliente: {datosProyecto.cliente || 'No definido'}</span>
+                        <Users className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm text-slate-700">Cliente: {datosProyecto.cliente || 'No definido'}</span>
                       </div>
                       {user?.role === 'admin' && (
                         <Button 
                           onClick={() => setEditandoProyecto(!editandoProyecto)}
                           variant="outline" 
                           size="sm"
-                          className="mt-2"
+                          className="mt-2 border-slate-300 text-slate-700 hover:bg-slate-50"
                         >
                           <Edit className="h-4 w-4 mr-2" />
                           {editandoProyecto ? 'Cancelar' : 'Editar'}
@@ -1146,64 +1152,64 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                     </CardContent>
                   </Card>
 
-                                    <Card>
+                  <Card className="border border-slate-200/50">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-white">
-                        <BarChart3 className="h-5 w-5 text-blue-400" />
+                      <CardTitle className="flex items-center gap-2 text-slate-800">
+                        <BarChart3 className="h-5 w-5 text-blue-600" />
                         Progreso General
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-center">
-                        <div className="text-4xl font-bold text-blue-400 mb-2">
+                        <div className="text-4xl font-bold text-blue-600 mb-2">
                           {calcularProgresoProyecto()}%
                         </div>
                         <Progress value={calcularProgresoProyecto()} className="h-3" />
-                        <p className="text-sm text-gray-300 mt-2">
+                        <p className="text-sm text-slate-600 mt-2">
                           {proyecto.fases?.length || 0} fases • {(proyecto.fases || []).reduce((acc: number, fase: any) => acc + (fase.tareas?.length || 0), 0)} tareas
                         </p>
-                              </div>
+                      </div>
                     </CardContent>
                   </Card>
-                                </div>
+                </div>
 
-                                {/* Formulario de edición */}
+                {/* Formulario de edición */}
                 {editandoProyecto && user?.role === 'admin' && (
-                  <Card>
+                  <Card className="border border-slate-200/50">
                     <CardHeader>
-                      <CardTitle className="text-white">Editar Información del Proyecto</CardTitle>
+                      <CardTitle className="text-slate-800">Editar Información del Proyecto</CardTitle>
                     </CardHeader>
                     <CardContent>
-                                             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
                         <div>
-                          <Label htmlFor="presupuesto" className="text-white">Presupuesto</Label>
+                          <Label htmlFor="presupuesto" className="text-slate-700">Presupuesto</Label>
                           <Input
                             id="presupuesto"
                             type="number"
                             placeholder="Ingrese el presupuesto"
                             value={datosProyecto.presupuesto}
                             onChange={(e) => setDatosProyecto({...datosProyecto, presupuesto: e.target.value})}
-                            className="text-white placeholder-gray-400"
+                            className="border-slate-200 text-slate-700 placeholder-slate-400"
                           />
-                              </div>
+                        </div>
                         <div>
-                          <Label htmlFor="cliente" className="text-white">Cliente</Label>
+                          <Label htmlFor="cliente" className="text-slate-700">Cliente</Label>
                           <Input
                             id="cliente"
                             placeholder="Nombre del cliente"
                             value={datosProyecto.cliente}
                             onChange={(e) => setDatosProyecto({...datosProyecto, cliente: e.target.value})}
-                            className="text-white placeholder-gray-400"
+                            className="border-slate-200 text-slate-700 placeholder-slate-400"
                           />
-                            </div>
+                        </div>
                         <div>
-                          <Label htmlFor="fechaEntrega" className="text-white">Fecha de Entrega</Label>
+                          <Label htmlFor="fechaEntrega" className="text-slate-700">Fecha de Entrega</Label>
                           <Input
                             id="fechaEntrega"
                             type="date"
                             value={datosProyecto.fechaEntrega}
                             onChange={(e) => setDatosProyecto({...datosProyecto, fechaEntrega: e.target.value})}
-                            className="text-white placeholder-gray-400"
+                            className="border-slate-200 text-slate-700 placeholder-slate-400"
                           />
                         </div>
                       </div>
@@ -1211,7 +1217,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                         <Button 
                           onClick={handleGuardarProyecto}
                           disabled={loading}
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
                         >
                           <Save className="h-4 w-4 mr-2" />
                           Guardar Cambios
@@ -1219,7 +1225,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                         <Button 
                           onClick={() => setEditandoProyecto(false)}
                           variant="outline"
-                          className="text-white"
+                          className="border-slate-300 text-slate-700 hover:bg-slate-50"
                         >
                           Cancelar
                         </Button>
@@ -1228,31 +1234,31 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                   </Card>
                 )}
 
-                                <Card>
+                <Card className="border border-slate-200/50">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-white">
-                      <Activity className="h-5 w-5 text-blue-400" />
+                    <CardTitle className="flex items-center gap-2 text-slate-800">
+                      <Activity className="h-5 w-5 text-blue-600" />
                       Fases del Proyecto
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       {(proyecto.fases || []).map((fase: any) => (
-                        <div key={fase.key} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg gap-3">
+                        <div key={fase.key} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-slate-200 rounded-lg bg-slate-50 gap-3">
                           <div className="flex-1">
-                            <div className="font-medium text-white">{fase.descripcion}</div>
-                            <div className="text-sm text-gray-300">Clave: {fase.key}</div>
+                            <div className="font-medium text-slate-800">{fase.descripcion}</div>
+                            <div className="text-sm text-slate-500">Clave: {fase.key}</div>
                           </div>
                           <div className="flex items-center gap-3">
                             <Badge className={getStatusColor(fase.estado)}>{fase.estado}</Badge>
                             <div className="text-right">
-                              <div className="text-sm font-medium text-white">{calcularProgresoFase(fase.key)}%</div>
+                              <div className="text-sm font-medium text-slate-700">{calcularProgresoFase(fase.key)}%</div>
                               <Progress value={calcularProgresoFase(fase.key)} className="w-20 h-2" />
                             </div>
                           </div>
                         </div>
                       ))}
-                  </div>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

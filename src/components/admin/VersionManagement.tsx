@@ -58,6 +58,7 @@ import { versionService } from '@/lib/versionService';
 import { workflowService } from '@/lib/workflowService';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { WorkflowActions } from './WorkflowActions';
 
 interface VersionManagementProps {
   projectId: string;
@@ -697,12 +698,12 @@ export const VersionManagement: React.FC<VersionManagementProps> = ({ projectId 
                   </div>
                                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
                      <div className="w-full sm:w-40">
-                    <Label htmlFor="status">Estado</Label>
+                    <Label htmlFor="status" className="text-slate-700">Estado</Label>
                     <Select
                       value={safeFilters.status}
                       onValueChange={(value) => applyFilters({ ...filters, status: value === 'all' ? undefined : value })}
                     >
-                        <SelectTrigger className="w-full bg-zinc-700 border-zinc-600 text-white">
+                        <SelectTrigger className="w-full bg-white border-slate-200 text-slate-800">
                         <SelectValue placeholder="Todos" />
                       </SelectTrigger>
                       <SelectContent>
@@ -718,7 +719,7 @@ export const VersionManagement: React.FC<VersionManagementProps> = ({ projectId 
                   <Button
                     onClick={clearFilters}
                     variant="outline"
-                    className="border-zinc-600 text-zinc-300 hover:bg-zinc-800 w-full sm:w-auto"
+                    className="border-slate-200 text-slate-700 hover:bg-slate-50 w-full sm:w-auto"
                   >
                     Limpiar
                   </Button>
@@ -729,14 +730,14 @@ export const VersionManagement: React.FC<VersionManagementProps> = ({ projectId 
             {/* Lista de versiones */}
             <div className="grid gap-4">
               {safeVersions.map((version) => (
-                <Card key={version.id} className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors">
+                <Card key={version.id} className="bg-white border-slate-200 shadow-sm hover:border-slate-300 transition-colors">
                   <CardContent className="p-4 sm:p-6">
                     {/* Header responsive */}
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         {/* Versión y badges */}
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
-                          <h3 className="text-lg font-semibold text-white break-words">{version.version}</h3>
+                          <h3 className="text-lg font-semibold text-slate-800 break-words">{version.version}</h3>
                           <div className="flex flex-wrap gap-2">
                           <Badge className={getStatusColor(version.status)}>
                             {getStatusIcon(version.status)}
@@ -754,10 +755,10 @@ export const VersionManagement: React.FC<VersionManagementProps> = ({ projectId 
                         </div>
                         
                         {/* Descripción */}
-                        <p className="text-gray-300 mb-4 text-sm sm:text-base break-words">{version.description}</p>
+                        <p className="text-slate-600 mb-4 text-sm sm:text-base break-words">{version.description}</p>
                         
                         {/* Información de commit y fecha */}
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-400 mb-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-slate-500 mb-4">
                           <div className="flex items-center gap-1">
                              <GitCommit className="h-3 w-3 flex-shrink-0" />
                              <span className="truncate">{version.commitHash ? version.commitHash.substring(0, 7) : 'Sin commit'}</span>
@@ -774,7 +775,7 @@ export const VersionManagement: React.FC<VersionManagementProps> = ({ projectId 
 
                         {/* Cambios */}
                         <div className="space-y-3">
-                          <h4 className="text-sm font-medium text-gray-300">Cambios:</h4>
+                          <h4 className="text-sm font-medium text-slate-700">Cambios:</h4>
                           <div className="space-y-2">
                             {version.changes.map((change, index) => (
                               <div key={index} className="flex flex-col sm:flex-row sm:items-start gap-2 text-sm">
@@ -790,7 +791,7 @@ export const VersionManagement: React.FC<VersionManagementProps> = ({ projectId 
                                   </span>
                                 </Badge>
                                 <div className="flex-1 min-w-0">
-                                  <span className="font-medium text-white break-words">{change.title}</span>
+                                  <span className="font-medium text-slate-800 break-words">{change.title}</span>
                                   {change.breakingChange && (
                                     <Badge className="ml-2 bg-red-500 text-white text-xs">
                                       Breaking

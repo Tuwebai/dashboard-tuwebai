@@ -24,7 +24,10 @@ import {
   Eye,
   Key,
   ChevronRight,
-  Search
+  Search,
+  GitBranch,
+  GitCommit,
+  Wrench
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -282,6 +285,21 @@ export default function Sidebar() {
               <div className="h-px bg-gradient-to-r from-gray-200 to-transparent mb-2"></div>
               <div className="space-y-1">
                 {adminNavItem('advanced-analytics', <BarChart size={18} />, t('Analytics Avanzado'))}
+                {adminNavItem('version-management', <GitBranch size={18} />, 'Gestión de Versiones')}
+                {adminNavItem('security-audit', <Shield size={18} />, 'Auditoría de Seguridad')}
+              </div>
+            </div>
+
+            {/* AUTOMATIZACIÓN */}
+            <div className="mb-8 px-2">
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2 mb-2">
+                Automatización
+              </div>
+              <div className="h-px bg-gradient-to-r from-gray-200 to-transparent mb-2"></div>
+              <div className="space-y-1">
+                {adminNavItem('automation', <Zap size={18} />, 'Sistema de Automatización')}
+                {adminNavItem('auto-version', <GitCommit size={18} />, 'Auto Versiones')}
+                {adminNavItem('advanced-tools', <Wrench size={18} />, 'Herramientas Avanzadas')}
               </div>
             </div>
 
@@ -290,7 +308,6 @@ export default function Sidebar() {
               <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2 mb-2">Sistema</div>
               <div className="h-px bg-gradient-to-r from-gray-200 to-transparent mb-2"></div>
               <div className="space-y-1">
-                {adminNavItem('usuarios', <Users size={18} />, 'Gestión de Usuarios')}
                 {navItem('/environment', <Key size={18} />, 'Variables de Entorno')}
                 {adminNavItem('notifications', <Bell size={18} />, 'Notificaciones')}
                 {adminNavItem('settings', <Settings size={18} />, 'Configuración')}

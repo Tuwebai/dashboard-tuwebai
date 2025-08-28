@@ -1,9 +1,9 @@
-import { Bell, Search, Menu } from 'lucide-react';
+import { Bell, Search, Menu, Clock, RefreshCw } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -15,24 +15,35 @@ import {
 
 import { LogOut, User as UserIcon, FolderOpen, CreditCard, Settings as SettingsIcon } from 'lucide-react';
 
-
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useTranslation } from 'react-i18next';
+import NotificationBell from '@/components/admin/NotificationBell';
 
 interface TopbarProps {
   onMenuClick?: () => void;
   showMobileMenu?: boolean;
+  onRefreshData?: () => void;
+  lastUpdate?: Date;
+  isAdmin?: boolean;
 }
 
-export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarProps) {
+export default function Topbar({ 
+  onMenuClick, 
+  showMobileMenu = false, 
+  onRefreshData,
+  lastUpdate,
+  isAdmin = false
+}: TopbarProps) {
   const { t } = useTranslation();
   const { user, projects, logout } = useApp();
   const navigate = useNavigate();
+  const location = useLocation();
 
+  const isAdminPage = location.pathname === '/admin';
 
   return (
-    <header className="h-16 sm:h-18 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/50 shadow-2xl">
-      <div className="flex items-center justify-between px-6 sm:px-8 h-full">
+    <header className={`${isAdminPage ? 'h-auto' : 'h-16 sm:h-18'} bg-white border-b border-slate-200 shadow-sm`}>
+      <div className={`flex items-center justify-between px-6 sm:px-8 ${isAdminPage ? 'py-6' : 'h-full'}`}>
         <div className="flex items-center gap-6">
           {/* Mobile menu button */}
           {showMobileMenu && (
@@ -43,7 +54,7 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
                     variant="ghost"
                     size="sm"
                     onClick={onMenuClick}
-                    className="md:hidden text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-xl transition-all duration-300"
+                    className="md:hidden text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all duration-300"
                   >
                     <Menu className="h-5 w-5" />
                   </Button>
@@ -53,47 +64,74 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
             </TooltipProvider>
           )}
 
-          {/* Search */}
-          <div className="relative max-w-xs sm:max-w-md w-full">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                </TooltipTrigger>
-                <TooltipContent>Buscar</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <Input
-              placeholder="Buscar proyectos..."
-              className="pl-12 bg-slate-800/50 border-slate-600/50 text-slate-200 placeholder:text-slate-400 text-sm sm:text-base rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 hover:bg-slate-800/70"
-            />
-          </div>
+          {/* Admin Panel Header */}
+          {isAdminPage ? (
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-slate-800">
+                Panel de Administración
+              </h1>
+              <p className="text-slate-600 text-base font-medium mt-1">
+                Gestiona usuarios, proyectos, tickets y pagos
+              </p>
+              {lastUpdate && (
+                <div className="text-slate-500 text-sm flex items-center space-x-2 mt-2">
+                  <Clock size={16} />
+                  <span>Última actualización: {lastUpdate.toLocaleTimeString()}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Regular Search */
+            <div className="relative max-w-xs sm:max-w-md w-full">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  </TooltipTrigger>
+                  <TooltipContent>Buscar</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <Input
+                placeholder="Buscar proyectos..."
+                className="pl-12 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-500 text-sm sm:text-base rounded-lg focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300 hover:bg-slate-100"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-6">
-          {/* Stats */}
-          <div className="hidden sm:flex items-center gap-4">
-            <div className="text-sm">
-              <span className="text-slate-400 font-medium">{t('Proyectos')}: </span>
-              <Badge variant="secondary" className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 px-3 py-1.5 rounded-xl font-semibold shadow-lg">
-                {projects.length}
-              </Badge>
+          {/* Admin Panel Actions */}
+          {isAdminPage ? (
+            <div className="flex items-center space-x-4">
+              <NotificationBell />
+              {onRefreshData && (
+                <Button
+                  onClick={onRefreshData}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Actualizar
+                </Button>
+              )}
             </div>
-          </div>
+          ) : (
+            /* Regular Stats */
+            <div className="hidden sm:flex items-center gap-4">
+              <div className="text-sm">
+                <span className="text-slate-600 font-medium">{t('Proyectos')}: </span>
+                <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-0 px-3 py-1.5 rounded-lg font-semibold">
+                  {projects.length}
+                </Badge>
+              </div>
+            </div>
+          )}
 
           {/* User info */}
           <div className="flex items-center gap-3 sm:gap-4">
-            {/* Badge Admin */}
-            {user.role === 'admin' && (
-              <Badge className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-xs font-bold uppercase rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105">
-                ADMIN
-              </Badge>
-            )}
-            
             {/* Avatar */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Avatar className="h-10 w-10 sm:h-12 sm:w-12 cursor-pointer border-2 border-slate-600 hover:border-blue-500 transition-all duration-300 transform hover:scale-110 shadow-lg">
+                <Avatar className="h-10 w-10 sm:h-12 sm:w-12 cursor-pointer border-2 border-slate-200 hover:border-blue-300 transition-all duration-300 transform hover:scale-110 shadow-sm">
                   {user?.avatar ? (
                     <AvatarImage 
                       src={user.avatar} 
@@ -105,44 +143,44 @@ export default function Topbar({ onMenuClick, showMobileMenu = false }: TopbarPr
                   </AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 bg-slate-800 border-slate-700 shadow-2xl rounded-xl">
+              <DropdownMenuContent align="end" className="w-64 bg-white border-slate-200 shadow-lg rounded-lg">
                 <DropdownMenuItem 
                   onClick={() => navigate('/perfil')}
-                  className="text-slate-200 hover:text-white hover:bg-slate-700 rounded-lg transition-all duration-200"
+                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all duration-200"
                 >
-                  <UserIcon className="h-4 w-4 mr-3 text-blue-400" /> {t('Mi perfil')}
+                  <UserIcon className="h-4 w-4 mr-3 text-blue-500" /> {t('Mi perfil')}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => navigate('/proyectos')}
-                  className="text-slate-200 hover:text-white hover:bg-slate-700 rounded-lg transition-all duration-200"
+                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all duration-200"
                 >
-                  <FolderOpen className="h-4 w-4 mr-3 text-emerald-400" /> {t('Mis proyectos')}
+                  <FolderOpen className="h-4 w-4 mr-3 text-emerald-500" /> {t('Mis proyectos')}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => navigate('/facturacion')}
-                  className="text-slate-200 hover:text-white hover:bg-slate-700 rounded-lg transition-all duration-200"
+                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all duration-200"
                 >
-                  <CreditCard className="h-4 w-4 mr-3 text-amber-400" /> {t('Facturación / Pagos')}
+                  <CreditCard className="h-4 w-4 mr-3 text-amber-500" /> {t('Facturación / Pagos')}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => navigate('/soporte')}
-                  className="text-slate-200 hover:text-white hover:bg-slate-700 rounded-lg transition-all duration-200"
+                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all duration-200"
                 >
-                  <SettingsIcon className="h-4 w-4 mr-3 text-purple-400" /> {t('Soporte')}
+                  <SettingsIcon className="h-4 w-4 mr-3 text-purple-500" /> {t('Soporte')}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => navigate('/configuracion')}
-                  className="text-slate-200 hover:text-white hover:bg-slate-700 rounded-lg transition-all duration-200"
+                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all duration-200"
                 >
-                  <SettingsIcon className="h-4 w-4 mr-3 text-slate-400" /> {t('Configuración')}
+                  <SettingsIcon className="h-4 w-4 mr-3 text-slate-500" /> {t('Configuración')}
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-slate-600" />
+                <DropdownMenuSeparator className="bg-slate-200" />
                 <DropdownMenuItem
                   onClick={async () => {
                     await logout();
                     navigate('/login');
                   }}
-                  className="text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
                 >
                   <LogOut className="h-4 w-4 mr-3" /> {t('Cerrar sesión')}
                 </DropdownMenuItem>

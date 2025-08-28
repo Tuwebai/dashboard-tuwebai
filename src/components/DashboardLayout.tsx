@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import { useAvatarSync } from '@/hooks/useAvatarSync';
@@ -23,6 +23,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const saved = localStorage.getItem('dashboard_widgets');
     return saved ? JSON.parse(saved) : WIDGETS.map(w => w.key);
   });
+  const location = useLocation();
 
   // Sincronizar avatar automáticamente
   useAvatarSync();
@@ -47,6 +48,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+
+  // Detectar si estamos en la página de admin
+  const isAdminPage = location.pathname === '/admin';
+
+  // Función para refrescar datos (solo para admin)
+  const handleRefreshData = () => {
+    if (isAdminPage) {
+      window.location.reload();
+    }
+  };
 
   return (
     <div className="h-screen bg-background flex">
@@ -73,6 +84,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <Topbar 
           onMenuClick={() => setIsMobileMenuOpen(true)}
           showMobileMenu={true}
+          onRefreshData={isAdminPage ? handleRefreshData : undefined}
+          lastUpdate={isAdminPage ? new Date() : undefined}
+          isAdmin={isAdminPage}
         />
         <main className="flex-1 overflow-y-auto">
           {children}

@@ -543,18 +543,18 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'development': return 'bg-blue-500';
-      case 'production': return 'bg-green-500';
-      case 'paused': return 'bg-yellow-500';
-      case 'maintenance': return 'bg-orange-500';
-      default: return 'bg-gray-500';
+      case 'development': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'production': return 'bg-green-100 text-green-800 border-green-200';
+      case 'paused': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'maintenance': return 'bg-orange-100 text-orange-800 border-orange-200';
+      default: return 'bg-slate-100 text-slate-800 border-slate-200';
     }
   };
 
   return (
-    <Card className="bg-zinc-800 border-zinc-700">
+    <Card className="bg-white border-slate-200">
       <CardHeader>
-        <CardTitle className="text-white">
+        <CardTitle className="text-slate-800">
           {project ? 'Editar Proyecto' : 'Nuevo Proyecto'}
         </CardTitle>
       </CardHeader>
@@ -562,38 +562,38 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Nombre del proyecto */}
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-gray-300">Nombre del Proyecto *</Label>
+            <Label htmlFor="name" className="text-slate-700">Nombre del Proyecto *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
               placeholder="Ingresa el nombre del proyecto"
-              className="bg-zinc-700 border-zinc-600 text-white"
+              className="bg-white border-slate-200 text-slate-800"
               required
             />
           </div>
 
           {/* Descripción */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-gray-300">Descripción</Label>
+            <Label htmlFor="description" className="text-slate-700">Descripción</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Describe el proyecto..."
-              className="bg-zinc-700 border-zinc-600 text-white"
+              className="bg-white border-slate-200 text-slate-800"
               rows={4}
             />
           </div>
 
           {/* Estado del proyecto */}
           <div className="space-y-2">
-            <Label htmlFor="status" className="text-gray-300">Estado</Label>
+            <Label htmlFor="status" className="text-slate-700">Estado</Label>
             <Select
               value={formData.status}
               onValueChange={(value) => handleInputChange('status', value)}
             >
-              <SelectTrigger className="bg-zinc-700 border-zinc-600 text-white">
+              <SelectTrigger className="bg-white border-slate-200 text-slate-800">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -607,7 +607,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
           {/* URL de GitHub con Auto-llenado */}
           <div className="space-y-2">
-            <Label htmlFor="github_url" className="text-gray-300 flex items-center gap-2">
+            <Label htmlFor="github_url" className="text-slate-700 flex items-center gap-2">
               <Github className="h-4 w-4" />
               URL del Repositorio GitHub
             </Label>
@@ -619,7 +619,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                 onChange={handleGitHubUrlChange}
                 onBlur={handleGitHubUrlBlur}
                 placeholder="https://github.com/usuario/repositorio"
-                className={`bg-zinc-700 border-zinc-600 text-white pr-10 ${
+                className={`bg-white border-slate-200 text-slate-800 pr-10 ${
                   githubLoading ? 'border-blue-500' : 
                   detectedInfo ? 'border-green-500' : ''
                 }`}
@@ -637,7 +637,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               )}
             </div>
             {githubLoading && (
-              <div className="flex items-center gap-2 text-sm text-blue-400">
+              <div className="flex items-center gap-2 text-sm text-blue-600">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Analizando repositorio...
               </div>
@@ -646,9 +646,9 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
           {/* Vista Previa de Información Detectada */}
           {showDetectedPreview && detectedInfo && (
-            <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 space-y-4">
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-semibold text-white flex items-center gap-2">
+                <h4 className="font-semibold text-slate-800 flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
                   Información detectada del repositorio
                 </h4>
@@ -657,7 +657,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={dismissDetectedInfo}
-                  className="text-gray-400 hover:text-white"
+                  className="text-slate-500 hover:text-slate-700"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -665,11 +665,11 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-400">📁 Nombre:</span>
-                  <span className="text-white ml-2">{detectedInfo.name}</span>
+                  <span className="text-slate-600">📁 Nombre:</span>
+                  <span className="text-slate-800 ml-2">{detectedInfo.name}</span>
                 </div>
                 <div>
-                  <span className="text-gray-400">📊 Estado sugerido:</span>
+                  <span className="text-slate-600">📊 Estado sugerido:</span>
                   <Badge 
                     variant="secondary" 
                     className={`ml-2 ${getStatusColor(detectedInfo.status)}`}
@@ -680,11 +680,11 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                   </Badge>
                 </div>
                 <div className="md:col-span-2">
-                  <span className="text-gray-400">📝 Descripción:</span>
-                  <p className="text-white ml-2 mt-1">{detectedInfo.description}</p>
+                  <span className="text-slate-600">📝 Descripción:</span>
+                  <p className="text-slate-800 ml-2 mt-1">{detectedInfo.description}</p>
                 </div>
                 <div className="md:col-span-2">
-                  <span className="text-gray-400">🏷️ Tecnologías detectadas:</span>
+                  <span className="text-slate-600">🏷️ Tecnologías detectadas:</span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {detectedInfo.technologies.map((tech, index) => (
                       <Badge key={index} variant="outline" className="text-xs">
@@ -694,8 +694,8 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                   </div>
                 </div>
                 <div className="md:col-span-2">
-                  <span className="text-gray-400">🔧 Variables de entorno encontradas:</span>
-                  <span className="text-white ml-2">
+                  <span className="text-slate-600">🔧 Variables de entorno encontradas:</span>
+                  <span className="text-slate-800 ml-2">
                     {Object.keys(detectedInfo.environmentVariables).length} variables
                   </span>
                 </div>
@@ -715,7 +715,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                   type="button"
                   variant="outline"
                   onClick={dismissDetectedInfo}
-                  className="border-zinc-600 text-white hover:bg-zinc-700"
+                  className="border-slate-300 text-slate-700 hover:bg-slate-50"
                   size="sm"
                 >
                   Ignorar
@@ -726,13 +726,13 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
           {/* Tecnologías */}
           <div className="space-y-2">
-            <Label className="text-gray-300">Tecnologías</Label>
+            <Label className="text-slate-700">Tecnologías</Label>
             <div className="flex gap-2">
               <Input
                 value={newTechnology}
                 onChange={(e) => setNewTechnology(e.target.value)}
                 placeholder="Agregar tecnología... (Enter o , para agregar)"
-                className="bg-zinc-700 border-zinc-600 text-white"
+                className="bg-white border-slate-200 text-slate-800"
                 onKeyDown={handleTechnologyKeyPress}
               />
               <Button
@@ -740,7 +740,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                 onClick={addTechnology}
                 variant="outline"
                 size="sm"
-                className="bg-zinc-700 border-zinc-600 text-white hover:bg-zinc-600"
+                className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -770,7 +770,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
           {/* Variables de entorno */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-gray-300">Variables de Entorno</Label>
+              <Label className="text-slate-700">Variables de Entorno</Label>
               <Button
                 type="button"
                 onClick={addEnvironmentVariable}
@@ -785,28 +785,28 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
             
             <div className="space-y-2">
               {envVars.length === 0 && (
-                <div className="text-center py-8 text-gray-400 bg-zinc-800 rounded-lg border border-zinc-700">
+                <div className="text-center py-8 text-slate-500 bg-slate-50 rounded-lg border border-slate-200">
                   <p>No hay variables de entorno configuradas</p>
                   <p className="text-sm mt-1">Haz clic en "Agregar Variable" para empezar</p>
                 </div>
               )}
               
               {envVars.map((env, index) => (
-                <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-zinc-800 rounded-lg border border-zinc-700">
+                <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
                   <div className="col-span-4">
                     <Input
                       value={env.key}
                       onChange={(e) => updateEnvironmentVariable(index, 'key', e.target.value)}
                       onPaste={(e) => handleKeyPaste(e, index)}
                       placeholder="Clave (ej: API_KEY)"
-                      className={`bg-zinc-700 text-white ${
+                      className={`bg-white text-slate-800 ${
                         isDuplicateKey(env.key, index) 
                           ? 'border-red-500 border-2' 
-                          : 'border-zinc-600'
+                          : 'border-slate-200'
                       }`}
                     />
                     {isDuplicateKey(env.key, index) && (
-                      <div className="text-red-400 text-xs mt-1">⚠️ Clave duplicada</div>
+                      <div className="text-red-600 text-xs mt-1">⚠️ Clave duplicada</div>
                     )}
                   </div>
                   <div className="col-span-7">
@@ -816,14 +816,14 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                         onChange={(e) => updateEnvironmentVariable(index, 'value', e.target.value)}
                         placeholder="Valor"
                         type={showEnvValues[`${index}-${env.key}`] ? 'text' : 'password'}
-                        className="bg-zinc-700 border-zinc-600 text-white"
+                        className="bg-white border-slate-200 text-slate-800"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleEnvValueVisibility(`${index}-${env.key}`)}
-                        className="text-gray-400 hover:text-white px-2"
+                        className="text-slate-500 hover:text-slate-700 px-2"
                       >
                         {showEnvValues[`${index}-${env.key}`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
@@ -835,7 +835,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => removeEnvironmentVariable(index)}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-900/20 w-full"
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50 w-full"
                       title="Eliminar variable"
                     >
                       <X className="h-4 w-4" />
@@ -850,16 +850,16 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
           {/* Archivos del proyecto */}
           <div className="space-y-2">
-            <Label className="text-gray-300">Archivos del Proyecto (Opcional)</Label>
-            <div className="border-2 border-dashed border-zinc-700 rounded-lg p-6 text-center">
-              <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-400 mb-2">Arrastra archivos aquí o haz clic para seleccionar</p>
+            <Label className="text-slate-700">Archivos del Proyecto (Opcional)</Label>
+            <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+              <Upload className="h-12 w-12 mx-auto text-slate-400 mb-4" />
+              <p className="text-slate-600 mb-2">Arrastra archivos aquí o haz clic para seleccionar</p>
               <Button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
                 variant="outline"
-                className="bg-zinc-700 border-zinc-600 text-white hover:bg-zinc-600"
+                className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
               >
                 <Upload className="h-4 w-4 mr-2" />
                 Seleccionar archivos
@@ -876,14 +876,14 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
             {/* Lista de archivos seleccionados */}
             {selectedFiles.length > 0 && (
               <div className="space-y-2">
-                <h4 className="text-sm font-medium text-gray-300">Archivos seleccionados ({selectedFiles.length})</h4>
+                <h4 className="text-sm font-medium text-slate-700">Archivos seleccionados ({selectedFiles.length})</h4>
                 <div className="space-y-2">
                   {selectedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center gap-3 p-3 bg-zinc-800 rounded-lg border border-zinc-700">
+                    <div key={index} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
                       {getFileIcon(file)}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{file.name}</p>
-                        <p className="text-xs text-gray-400">{formatBytes(file.size)}</p>
+                        <p className="text-sm font-medium text-slate-800 truncate">{file.name}</p>
+                        <p className="text-xs text-slate-600">{formatBytes(file.size)}</p>
                       </div>
                       
                       {/* Vista previa para imágenes */}
@@ -892,7 +892,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                           <img
                             src={filePreviews[file.name]}
                             alt={file.name}
-                            className="h-12 w-12 object-cover rounded border border-zinc-600"
+                            className="h-12 w-12 object-cover rounded border border-slate-300"
                           />
                         </div>
                       )}
@@ -902,7 +902,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => removeFile(file.name)}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -913,12 +913,12 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                 {/* Progreso de subida */}
                 {Object.keys(uploadProgress).length > 0 && (
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-300">Subiendo archivos...</h4>
+                    <h4 className="text-sm font-medium text-slate-700">Subiendo archivos...</h4>
                     {Object.entries(uploadProgress).map(([fileName, progress]) => (
                       <div key={fileName} className="space-y-1">
                         <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">{fileName}</span>
-                          <span className="text-gray-400">{Math.round(progress)}%</span>
+                          <span className="text-slate-600">{fileName}</span>
+                          <span className="text-slate-600">{Math.round(progress)}%</span>
                         </div>
                         <Progress value={progress} className="h-2" />
                       </div>
@@ -935,7 +935,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               type="button"
               variant="outline"
               onClick={onCancel}
-              className="bg-zinc-700 border-zinc-600 text-white hover:bg-zinc-600"
+              className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
               disabled={loading}
             >
               Cancelar

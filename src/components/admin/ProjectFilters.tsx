@@ -31,7 +31,7 @@ export const ProjectFiltersComponent: React.FC<ProjectFiltersProps> = ({
     const loadTechnologies = async () => {
       try {
         const techs = await projectService.getUniqueTechnologies();
-        setTechnologies(techs);
+        setTechnologies(techs.map(t => t.technology));
       } catch (error) {
         console.error('Error loading technologies:', error);
       }
@@ -74,24 +74,24 @@ export const ProjectFiltersComponent: React.FC<ProjectFiltersProps> = ({
   };
 
   return (
-    <Card className="bg-zinc-800 border-zinc-700">
+    <Card className="bg-white border-slate-200">
       <CardContent className="p-4">
         <div className="space-y-4">
           {/* Búsqueda principal */}
           <div className="flex gap-3">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 h-4 w-4" />
               <Input
                 value={filters.search || ''}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
                 placeholder="Buscar proyectos por nombre o descripción..."
-                className="pl-10 bg-zinc-700 border-zinc-600 text-white"
+                className="pl-10 bg-white border-slate-200 text-slate-800"
               />
             </div>
             <Button
               variant="outline"
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className="bg-zinc-700 border-zinc-600 text-white hover:bg-zinc-600"
+              className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
             >
               <Filter className="h-4 w-4 mr-2" />
               Filtros
@@ -100,7 +100,7 @@ export const ProjectFiltersComponent: React.FC<ProjectFiltersProps> = ({
               <Button
                 variant="outline"
                 onClick={onClearFilters}
-                className="bg-zinc-700 border-zinc-600 text-white hover:bg-zinc-600"
+                className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
               >
                 <X className="h-4 w-4 mr-2" />
                 Limpiar
@@ -110,15 +110,15 @@ export const ProjectFiltersComponent: React.FC<ProjectFiltersProps> = ({
 
           {/* Filtros avanzados */}
           {showAdvancedFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-zinc-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-slate-200">
               {/* Filtro por estado */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">Estado</label>
+                <label className="text-sm font-medium text-slate-700">Estado</label>
                 <Select
                   value={filters.status || ''}
                   onValueChange={(value) => handleFilterChange('status', value)}
                 >
-                  <SelectTrigger className="bg-zinc-700 border-zinc-600 text-white">
+                  <SelectTrigger className="bg-white border-slate-200 text-slate-800">
                     <SelectValue placeholder="Todos los estados" />
                   </SelectTrigger>
                   <SelectContent>
@@ -133,12 +133,12 @@ export const ProjectFiltersComponent: React.FC<ProjectFiltersProps> = ({
 
               {/* Filtro por tecnología */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">Tecnología</label>
+                <label className="text-sm font-medium text-slate-700">Tecnología</label>
                 <Select
                   value={filters.technology || ''}
                   onValueChange={(value) => handleFilterChange('technology', value)}
                 >
-                  <SelectTrigger className="bg-zinc-700 border-zinc-600 text-white">
+                  <SelectTrigger className="bg-white border-slate-200 text-slate-800">
                     <SelectValue placeholder="Todas las tecnologías" />
                   </SelectTrigger>
                   <SelectContent>
@@ -154,28 +154,28 @@ export const ProjectFiltersComponent: React.FC<ProjectFiltersProps> = ({
 
               {/* Filtro por fecha desde */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">Desde</label>
+                <label className="text-sm font-medium text-slate-700">Desde</label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 h-4 w-4" />
                   <Input
                     type="date"
                     value={filters.dateFrom || ''}
                     onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                    className="pl-10 bg-zinc-700 border-zinc-600 text-white"
+                    className="pl-10 bg-white border-slate-200 text-slate-800"
                   />
                 </div>
               </div>
 
               {/* Filtro por fecha hasta */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">Hasta</label>
+                <label className="text-sm font-medium text-slate-700">Hasta</label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 h-4 w-4" />
                   <Input
                     type="date"
                     value={filters.dateTo || ''}
                     onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                    className="pl-10 bg-zinc-700 border-zinc-600 text-white"
+                    className="pl-10 bg-white border-slate-200 text-slate-800"
                   />
                 </div>
               </div>
@@ -183,8 +183,8 @@ export const ProjectFiltersComponent: React.FC<ProjectFiltersProps> = ({
           )}
 
           {/* Ordenamiento */}
-          <div className="flex items-center gap-4 pt-4 border-t border-zinc-700">
-            <span className="text-sm font-medium text-gray-300">Ordenar por:</span>
+          <div className="flex items-center gap-4 pt-4 border-t border-slate-200">
+            <span className="text-sm font-medium text-slate-700">Ordenar por:</span>
             <div className="flex gap-2">
               {[
                 { field: 'name' as const, label: 'Nombre' },
@@ -200,7 +200,7 @@ export const ProjectFiltersComponent: React.FC<ProjectFiltersProps> = ({
                   className={
                     sort.field === field
                       ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                      : 'bg-zinc-700 border-zinc-600 text-white hover:bg-zinc-600'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                   }
                 >
                   {label}
@@ -217,49 +217,49 @@ export const ProjectFiltersComponent: React.FC<ProjectFiltersProps> = ({
           {/* Filtros activos */}
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2 pt-2">
-              <span className="text-sm text-gray-400">Filtros activos:</span>
+              <span className="text-sm text-slate-600">Filtros activos:</span>
               {filters.search && (
-                <Badge variant="secondary" className="bg-blue-500/10 text-blue-100 border-blue-500/20">
+                <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
                   Búsqueda: "{filters.search}"
                   <button
                     onClick={() => handleFilterChange('search', '')}
-                    className="ml-1 hover:text-red-300"
+                    className="ml-1 hover:text-red-600"
                   >
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>
               )}
               {filters.status && (
-                <Badge variant="secondary" className="bg-green-500/10 text-green-100 border-green-500/20">
+                <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
                   Estado: {getStatusLabel(filters.status)}
                   <button
                     onClick={() => handleFilterChange('status', '')}
-                    className="ml-1 hover:text-red-300"
+                    className="ml-1 hover:text-red-600"
                   >
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>
               )}
               {filters.technology && (
-                <Badge variant="secondary" className="bg-purple-500/10 text-purple-100 border-purple-500/20">
+                <Badge variant="secondary" className="bg-purple-50 text-purple-700 border-purple-200">
                   Tecnología: {filters.technology}
                   <button
                     onClick={() => handleFilterChange('technology', '')}
-                    className="ml-1 hover:text-red-300"
+                    className="ml-1 hover:text-red-600"
                   >
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>
               )}
               {(filters.dateFrom || filters.dateTo) && (
-                <Badge variant="secondary" className="bg-orange-500/10 text-orange-100 border-orange-500/20">
+                <Badge variant="secondary" className="bg-orange-50 text-orange-700 border-orange-200">
                   Fecha: {filters.dateFrom || 'Inicio'} - {filters.dateTo || 'Fin'}
                   <button
                     onClick={() => {
                       handleFilterChange('dateFrom', '');
                       handleFilterChange('dateTo', '');
                     }}
-                    className="ml-1 hover:text-red-300"
+                    className="ml-1 hover:text-red-600"
                   >
                     <X className="h-3 w-3" />
                   </button>

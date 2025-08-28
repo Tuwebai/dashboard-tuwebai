@@ -250,7 +250,7 @@ export const WorkflowActions: React.FC<WorkflowActionsProps> = ({ version, onAct
 
       {/* Información adicional */}
       {version.reviewedBy && (
-        <div className="text-sm text-gray-400">
+        <div className="text-sm text-slate-600">
           <span>Revisado por: {version.reviewedBy}</span>
           {version.reviewedAt && (
             <span className="ml-2">el {new Date(version.reviewedAt).toLocaleDateString()}</span>
@@ -259,7 +259,7 @@ export const WorkflowActions: React.FC<WorkflowActionsProps> = ({ version, onAct
       )}
 
       {version.deployedBy && (
-        <div className="text-sm text-gray-400">
+        <div className="text-sm text-slate-600">
           <span>Desplegado por: {version.deployedBy}</span>
           {version.deployedAt && (
             <span className="ml-2">el {new Date(version.deployedAt).toLocaleDateString()}</span>
@@ -269,22 +269,22 @@ export const WorkflowActions: React.FC<WorkflowActionsProps> = ({ version, onAct
 
       {/* Dialog para acciones */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-white border-slate-200">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-slate-800">
               {getAvailableActions().find(a => a.key === selectedAction)?.icon}
               {getAvailableActions().find(a => a.key === selectedAction)?.label}
             </DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-600">
               {getActionDescription(selectedAction)}
             </p>
             
             {(selectedAction === 'approve' || selectedAction === 'rollback') && (
               <div className="space-y-2">
-                <Label htmlFor="comments">Comentarios</Label>
+                <Label htmlFor="comments" className="text-slate-700">Comentarios</Label>
                 <Textarea
                   id="comments"
                   placeholder="Agregar comentarios sobre la acción..."
@@ -300,6 +300,7 @@ export const WorkflowActions: React.FC<WorkflowActionsProps> = ({ version, onAct
                 variant="outline"
                 onClick={() => setShowDialog(false)}
                 disabled={loading}
+                className="border-slate-200 text-slate-700 hover:bg-slate-50"
               >
                 Cancelar
               </Button>

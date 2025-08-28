@@ -94,15 +94,15 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'success':
-        return 'bg-green-500/10 text-green-400 border-green-500/20';
+        return 'bg-green-100 text-green-800 border-green-200';
       case 'warning':
-        return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'error':
-        return 'bg-red-500/10 text-red-400 border-red-500/20';
+        return 'bg-red-100 text-red-800 border-red-200';
       case 'critical':
-        return 'bg-red-600/10 text-red-500 border-red-600/20';
+        return 'bg-red-200 text-red-900 border-red-300';
       default:
-        return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
     }
   };
 
@@ -123,7 +123,7 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
       <Button
         variant="ghost"
         size="sm"
-        className="relative h-10 w-10 p-0 text-zinc-300 hover:text-white hover:bg-zinc-800"
+        className="relative h-10 w-10 p-0 text-slate-600 hover:text-slate-800 hover:bg-slate-100"
         onClick={() => setShowDropdown(!showDropdown)}
       >
         <Bell className="h-5 w-5" />
@@ -147,18 +147,18 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
 
       {/* Dropdown de notificaciones */}
       {showDropdown && (
-        <div className="absolute right-0 top-12 w-80 z-50">
-          <Card className="bg-zinc-800 border-zinc-700 shadow-xl">
+        <div className="absolute right-0 top-12 w-96 z-50">
+          <Card className="bg-white border-slate-200 shadow-xl">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-white text-lg">Notificaciones</CardTitle>
+                <CardTitle className="text-slate-800 text-lg">Notificaciones</CardTitle>
                 <div className="flex items-center space-x-2">
                   {unreadCount > 0 && (
                     <Button
                       onClick={markAllAsRead}
                       variant="ghost"
                       size="sm"
-                      className="h-7 px-2 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                      className="h-7 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                     >
                       Marcar todas
                     </Button>
@@ -166,82 +166,82 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
                 </div>
               </div>
               {unreadCount > 0 && (
-                <div className="flex items-center space-x-2 text-sm text-gray-400">
+                <div className="flex items-center space-x-2 text-sm text-slate-500">
                   <span>{unreadCount} no leídas</span>
                   {urgentCount > 0 && (
                     <>
                       <span>•</span>
-                      <span className="text-red-400">{urgentCount} urgentes</span>
+                      <span className="text-red-600">{urgentCount} urgentes</span>
                     </>
                   )}
                 </div>
               )}
             </CardHeader>
-                         <CardContent className="p-0">
-               <div className="max-h-80 overflow-y-auto">
-                 {loading ? (
-                   <div className="flex items-center justify-center p-8">
-                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                   </div>
-                 ) : notifications.length === 0 ? (
-                   <div className="text-center py-8">
-                     <Bell className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                     <p className="text-gray-400 text-sm">No hay notificaciones nuevas</p>
-                   </div>
-                 ) : (
-                   <div className="space-y-1 p-2">
-                     {notifications.map((notification) => (
-                       <div
-                         key={notification.id}
-                         className={`p-3 rounded-lg border transition-colors cursor-pointer ${
-                           notification.is_urgent 
-                             ? 'border-red-500/50 bg-red-500/10' 
-                             : 'border-zinc-600 bg-zinc-700'
-                         } hover:bg-zinc-600`}
-                         onClick={() => markAsRead(notification.id)}
-                       >
-                         <div className="flex items-start space-x-3">
-                           <div className="text-lg">{getTypeIcon(notification.type)}</div>
-                           <div className="flex-1 min-w-0">
-                             <div className="flex items-center space-x-2 mb-1">
-                               <h4 className={`font-medium text-sm ${
-                                 notification.is_urgent ? 'text-red-300' : 'text-white'
-                               }`}>
-                                 {notification.title}
-                               </h4>
-                               <Badge 
-                                 variant="outline" 
-                                 className={`text-xs ${getTypeColor(notification.type)}`}
-                               >
-                                 {notification.type}
-                               </Badge>
-                               {notification.is_urgent && (
-                                 <Badge variant="destructive" className="text-xs">
-                                   Urgente
-                                 </Badge>
-                               )}
-                             </div>
-                             <p className="text-xs text-gray-400 line-clamp-2">
-                               {notification.message}
-                             </p>
-                             <div className="flex items-center justify-between mt-2">
-                               <span className="text-xs text-gray-500">
-                                 {formatDate(notification.created_at)}
-                               </span>
-                               {notification.category !== 'system' && (
-                                 <Badge variant="outline" className="text-xs text-gray-400">
-                                   {notification.category}
-                                 </Badge>
-                               )}
-                             </div>
-                           </div>
-                         </div>
-                       </div>
-                     ))}
-                   </div>
-                 )}
-               </div>
-             </CardContent>
+            <CardContent className="p-0">
+              <div className="max-h-80 overflow-y-auto">
+                {loading ? (
+                  <div className="flex items-center justify-center p-8">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-600"></div>
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Bell className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                    <p className="text-slate-500 text-sm">No hay notificaciones nuevas</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1 p-2">
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-3 rounded-lg border transition-colors cursor-pointer ${
+                          notification.is_urgent 
+                            ? 'border-red-200 bg-red-50' 
+                            : 'border-slate-200 bg-slate-50'
+                        } hover:bg-slate-100`}
+                        onClick={() => markAsRead(notification.id)}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className="text-lg">{getTypeIcon(notification.type)}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <h4 className={`font-medium text-sm ${
+                                notification.is_urgent ? 'text-red-700' : 'text-slate-800'
+                              }`}>
+                                {notification.title}
+                              </h4>
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs ${getTypeColor(notification.type)}`}
+                              >
+                                {notification.type}
+                              </Badge>
+                              {notification.is_urgent && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Urgente
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-600 line-clamp-2">
+                              {notification.message}
+                            </p>
+                            <div className="flex items-center justify-between mt-2">
+                              <span className="text-xs text-slate-500">
+                                {formatDate(notification.created_at)}
+                              </span>
+                              {notification.category !== 'system' && (
+                                <Badge variant="outline" className="text-xs text-slate-500 border-slate-300">
+                                  {notification.category}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
           </Card>
         </div>
       )}

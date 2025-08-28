@@ -324,8 +324,8 @@ export default function AutoVersionCreator() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Gestor de Versiones</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold text-slate-800">Gestor de Versiones</h1>
+          <p className="text-slate-600">
             Creación automática y gestión de versiones de proyectos
           </p>
         </div>
@@ -337,49 +337,49 @@ export default function AutoVersionCreator() {
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <GitBranch className="h-5 w-5 text-blue-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Total Versiones</p>
-                <p className="text-2xl font-bold">{stats.totalVersions || 0}</p>
+                <p className="text-sm text-slate-500">Total Versiones</p>
+                <p className="text-2xl font-bold text-slate-800">{stats.totalVersions || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Code className="h-5 w-5 text-green-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Proyectos</p>
-                <p className="text-2xl font-bold">{stats.totalProjects || 0}</p>
+                <p className="text-sm text-slate-500">Proyectos</p>
+                <p className="text-2xl font-bold text-slate-800">{stats.totalProjects || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <GitCommit className="h-5 w-5 text-orange-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Despliegues</p>
-                <p className="text-2xl font-bold">{stats.totalDeployments || 0}</p>
+                <p className="text-sm text-slate-500">Despliegues</p>
+                <p className="text-2xl font-bold text-slate-800">{stats.totalDeployments || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-purple-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Activos</p>
-                <p className="text-2xl font-bold">{stats.activeDeployments || 0}</p>
+                <p className="text-sm text-slate-500">Activos</p>
+                <p className="text-2xl font-bold text-slate-800">{stats.activeDeployments || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -388,7 +388,7 @@ export default function AutoVersionCreator() {
 
       {/* Tabs principales */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-4 bg-slate-100 border-slate-200">
           <TabsTrigger value="overview">Vista General</TabsTrigger>
           <TabsTrigger value="versions">Versiones</TabsTrigger>
           <TabsTrigger value="deployments">Despliegues</TabsTrigger>
@@ -397,36 +397,36 @@ export default function AutoVersionCreator() {
 
         {/* Vista General */}
         <TabsContent value="overview" className="space-y-4">
-          <Card>
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Estado del Sistema de Versiones</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-slate-800">Estado del Sistema de Versiones</CardTitle>
+              <CardDescription className="text-slate-600">
                 Resumen general del gestor de versiones
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
                   <div className="flex items-center gap-3">
                     <GitBranch className="h-5 w-5 text-blue-600" />
                     <div>
-                      <p className="font-medium">Versiones Disponibles</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium text-slate-800">Versiones Disponibles</p>
+                      <p className="text-sm text-slate-600">
                         {stats.totalVersions || 0} versiones en el sistema
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline">
+                  <Badge variant="outline" className="border-slate-300 text-slate-700">
                     {stats.totalVersions || 0} total
                   </Badge>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
                   <div className="flex items-center gap-3">
                     <GitCommit className="h-5 w-5 text-green-600" />
                     <div>
-                      <p className="font-medium">Estado de Despliegues</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium text-slate-800">Estado de Despliegues</p>
+                      <p className="text-sm text-slate-600">
                         {stats.activeDeployments || 0} despliegues activos
                       </p>
                     </div>
@@ -442,22 +442,22 @@ export default function AutoVersionCreator() {
 
         {/* Versiones */}
         <TabsContent value="versions" className="space-y-4">
-          <Card>
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Lista de Versiones</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-slate-800">Lista de Versiones</CardTitle>
+              <CardDescription className="text-slate-600">
                 Gestiona las versiones de los proyectos
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {versions.map((version) => (
-                  <div key={version.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={version.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-white">
                     <div className="flex items-center gap-3">
                       <Tag className="h-5 w-5 text-blue-600" />
                       <div>
-                        <p className="font-medium">{version.version_number}</p>
-                        <p className="text-sm text-muted-foreground">{version.description}</p>
+                        <p className="font-medium text-slate-800">{version.version_number}</p>
+                        <p className="text-sm text-slate-600">{version.description}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -495,22 +495,22 @@ export default function AutoVersionCreator() {
 
         {/* Despliegues */}
         <TabsContent value="deployments" className="space-y-4">
-          <Card>
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Historial de Despliegues</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-slate-800">Historial de Despliegues</CardTitle>
+              <CardDescription className="text-slate-600">
                 Monitoreo de despliegues y rollbacks
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {deployments.map((deployment) => (
-                  <div key={deployment.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={deployment.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-white">
                     <div className="flex items-center gap-3">
                       <GitCommit className="h-5 w-5 text-blue-600" />
                       <div>
-                        <p className="font-medium">Versión {deployment.version_id}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-medium text-slate-800">Versión {deployment.version_id}</p>
+                        <p className="text-sm text-slate-600">
                           {new Date(deployment.created_at).toLocaleString()}
                         </p>
                       </div>
@@ -542,22 +542,22 @@ export default function AutoVersionCreator() {
 
         {/* Proyectos */}
         <TabsContent value="projects" className="space-y-4">
-          <Card>
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Proyectos Disponibles</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-slate-800">Proyectos Disponibles</CardTitle>
+              <CardDescription className="text-slate-600">
                 Lista de proyectos para crear versiones
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {projects.map((project) => (
-                  <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={project.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-white">
                     <div className="flex items-center gap-3">
                       <Code className="h-5 w-5 text-blue-600" />
                       <div>
-                        <p className="font-medium">{project.name}</p>
-                        <p className="text-sm text-muted-foreground">{project.description}</p>
+                        <p className="font-medium text-slate-800">{project.name}</p>
+                        <p className="text-sm text-slate-600">{project.description}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

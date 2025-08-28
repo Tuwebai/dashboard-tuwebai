@@ -44,6 +44,10 @@ import NotificationBell from '@/components/admin/NotificationBell';
 import ExecutiveCharts from '@/components/admin/ExecutiveCharts';
 import AutomationSystem from '@/components/admin/AutomationSystem';
 import AdvancedTicketManager from '@/components/AdvancedTicketManager';
+import AutoVersionCreator from '@/components/admin/AutoVersionCreator';
+import AdvancedTools from '@/components/admin/AdvancedTools';
+import { VersionManagement } from '@/components/admin/VersionManagement';
+import SecurityAudit from '@/components/admin/SecurityAudit';
 
 
 export default function Admin() {
@@ -304,7 +308,7 @@ export default function Admin() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 flex items-center justify-center">
+      <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-slate-600 text-lg">Cargando panel de administración...</p>
@@ -318,36 +322,7 @@ export default function Admin() {
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-y-auto">
           
-          {/* Header Superior Modernizado */}
-          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/50 shadow-2xl">
-            <div className="px-8 py-6 flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-                  Panel de Administración
-                </h1>
-                <p className="text-slate-400 text-base font-medium mt-1">
-                  Gestiona usuarios, proyectos, tickets y pagos
-                </p>
-                <div className="text-slate-500 text-sm flex items-center space-x-2 mt-2">
-                  <Clock size={16} />
-                  <span>Última actualización: {lastUpdate.toLocaleTimeString()}</span>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <NotificationBell />
-                <Button
-                  onClick={refreshData}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Actualizar
-                </Button>
-                <Badge className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                  Admin
-                </Badge>
-              </div>
-            </div>
-          </div>
+
 
           {/* Cards de Estadísticas Principales */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 px-8 py-6">
@@ -745,6 +720,22 @@ export default function Admin() {
 
             {activeSection === 'automation' && (
               <AutomationSystem />
+            )}
+
+            {activeSection === 'auto-version' && (
+              <AutoVersionCreator />
+            )}
+
+            {activeSection === 'advanced-tools' && (
+              <AdvancedTools />
+            )}
+
+            {activeSection === 'version-management' && (
+              <VersionManagement projectId="default" />
+            )}
+
+            {activeSection === 'security-audit' && (
+              <SecurityAudit />
             )}
 
             {activeSection === 'notifications' && (

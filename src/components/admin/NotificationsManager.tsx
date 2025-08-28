@@ -283,8 +283,8 @@ export default function NotificationsManager() {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
-          <p className="mt-4 text-gray-400">Cargando notificaciones...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600 mx-auto"></div>
+          <p className="mt-4 text-slate-600">Cargando notificaciones...</p>
         </div>
       </div>
     );
@@ -295,15 +295,15 @@ export default function NotificationsManager() {
       {/* Header con acciones */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Gestión de Notificaciones</h2>
-          <p className="text-gray-400">Administra las notificaciones del sistema</p>
+          <h2 className="text-2xl font-bold text-slate-800">Gestión de Notificaciones</h2>
+          <p className="text-slate-600">Administra las notificaciones del sistema</p>
         </div>
         <div className="flex items-center space-x-3">
           <Button
             onClick={loadNotifications}
             variant="outline"
             size="sm"
-            className="border-zinc-600 text-zinc-300 hover:bg-zinc-800"
+            className="border-slate-200 text-slate-700 hover:bg-slate-50"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Actualizar
@@ -312,7 +312,7 @@ export default function NotificationsManager() {
             onClick={() => setShowSettings(!showSettings)}
             variant="outline"
             size="sm"
-            className="border-zinc-600 text-zinc-300 hover:bg-zinc-800"
+            className="border-slate-200 text-slate-700 hover:bg-slate-50"
           >
             <Settings className="h-4 w-4 mr-2" />
             Configuración
@@ -322,17 +322,17 @@ export default function NotificationsManager() {
 
       {/* Configuración de notificaciones */}
       {showSettings && settings && (
-        <Card className="bg-zinc-800 border-zinc-700">
+        <Card className="bg-white border-slate-200">
           <CardHeader>
-            <CardTitle className="text-white">Configuración de Notificaciones</CardTitle>
+            <CardTitle className="text-slate-800">Configuración de Notificaciones</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Tipos de Notificaciones</h3>
+                <h3 className="text-lg font-semibold text-slate-800">Tipos de Notificaciones</h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="project-updates" className="text-gray-300">
+                    <Label htmlFor="project-updates" className="text-slate-700">
                       Actualizaciones de Proyectos
                     </Label>
                     <Switch
@@ -342,7 +342,7 @@ export default function NotificationsManager() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="ticket-updates" className="text-gray-300">
+                    <Label htmlFor="ticket-updates" className="text-slate-700">
                       Actualizaciones de Tickets
                     </Label>
                     <Switch
@@ -352,7 +352,7 @@ export default function NotificationsManager() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="payment-updates" className="text-gray-300">
+                    <Label htmlFor="payment-updates" className="text-slate-700">
                       Actualizaciones de Pagos
                     </Label>
                     <Switch
@@ -362,7 +362,7 @@ export default function NotificationsManager() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="security-alerts" className="text-gray-300">
+                    <Label htmlFor="security-alerts" className="text-slate-700">
                       Alertas de Seguridad
                     </Label>
                     <Switch
@@ -374,10 +374,10 @@ export default function NotificationsManager() {
                 </div>
               </div>
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Configuración General</h3>
+                <h3 className="text-lg font-semibold text-slate-800">Configuración General</h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="email-notifications" className="text-gray-300">
+                    <Label htmlFor="email-notifications" className="text-slate-700">
                       Notificaciones por Email
                     </Label>
                     <Switch
@@ -387,7 +387,7 @@ export default function NotificationsManager() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="push-notifications" className="text-gray-300">
+                    <Label htmlFor="push-notifications" className="text-slate-700">
                       Notificaciones Push
                     </Label>
                     <Switch
@@ -397,7 +397,7 @@ export default function NotificationsManager() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="daily-summary" className="text-gray-300">
+                    <Label htmlFor="daily-summary" className="text-slate-700">
                       Resumen Diario
                     </Label>
                     <Switch
@@ -407,7 +407,7 @@ export default function NotificationsManager() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="weekly-report" className="text-gray-300">
+                    <Label htmlFor="weekly-report" className="text-slate-700">
                       Reporte Semanal
                     </Label>
                     <Switch
@@ -424,17 +424,17 @@ export default function NotificationsManager() {
       )}
 
       {/* Filtros y búsqueda */}
-      <Card className="bg-zinc-800 border-zinc-700">
+      <Card className="bg-white border-slate-200">
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
                 <Input
                   placeholder="Buscar notificaciones..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-zinc-700 border-zinc-600 text-white"
+                  className="pl-10 bg-white border-slate-200 text-slate-800"
                 />
               </div>
             </div>
@@ -443,7 +443,7 @@ export default function NotificationsManager() {
                 value={filters.type || 'all'}
                 onValueChange={(value) => setFilters(prev => ({ ...prev, type: value === 'all' ? undefined : value }))}
               >
-                <SelectTrigger className="w-32 bg-zinc-700 border-zinc-600 text-white">
+                <SelectTrigger className="w-32 bg-white border-slate-200 text-slate-800">
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -462,7 +462,7 @@ export default function NotificationsManager() {
                   is_read: value === 'all' ? undefined : value === 'read' 
                 }))}
               >
-                <SelectTrigger className="w-32 bg-zinc-700 border-zinc-600 text-white">
+                <SelectTrigger className="w-32 bg-white border-slate-200 text-slate-800">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -477,17 +477,17 @@ export default function NotificationsManager() {
       </Card>
 
       {/* Tabs de notificaciones */}
-      <Card className="bg-zinc-800 border-zinc-700">
+      <Card className="bg-white border-slate-200">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-white">Notificaciones</CardTitle>
+            <CardTitle className="text-slate-800">Notificaciones</CardTitle>
             <div className="flex items-center space-x-2">
               {selectedNotifications.length > 0 && (
                 <Button
                   onClick={markMultipleAsRead}
                   variant="outline"
                   size="sm"
-                  className="border-zinc-600 text-zinc-300 hover:bg-zinc-800"
+                  className="border-slate-200 text-slate-700 hover:bg-slate-50"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Marcar como leídas ({selectedNotifications.length})
@@ -497,7 +497,7 @@ export default function NotificationsManager() {
                 onClick={markAllAsRead}
                 variant="outline"
                 size="sm"
-                className="border-zinc-600 text-zinc-300 hover:bg-zinc-800"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Marcar todas
@@ -507,7 +507,7 @@ export default function NotificationsManager() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-8 bg-zinc-700">
+            <TabsList className="grid w-full grid-cols-8 bg-slate-100">
               <TabsTrigger value="all" className="text-xs">Todas</TabsTrigger>
               <TabsTrigger value="unread" className="text-xs">No leídas</TabsTrigger>
               <TabsTrigger value="urgent" className="text-xs">Urgentes</TabsTrigger>
@@ -518,105 +518,105 @@ export default function NotificationsManager() {
               <TabsTrigger value="security" className="text-xs">Seguridad</TabsTrigger>
             </TabsList>
 
-                         <TabsContent value={activeTab} className="mt-4">
-               <div className="max-h-96 overflow-y-auto">
-                 {filteredNotifications.length === 0 ? (
-                   <div className="text-center py-8">
-                     <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                     <p className="text-gray-400">No hay notificaciones en esta categoría</p>
-                   </div>
-                 ) : (
-                   <div className="space-y-3">
-                     {filteredNotifications.map((notification) => (
-                       <div
-                         key={notification.id}
-                         className={`p-4 rounded-lg border transition-colors ${
-                           notification.is_read 
-                             ? 'bg-zinc-700 border-zinc-600' 
-                             : 'bg-zinc-600 border-zinc-500'
-                         } ${
-                           notification.is_urgent 
-                             ? 'border-red-500/50 bg-red-500/10' 
-                             : ''
-                         }`}
-                       >
-                         <div className="flex items-start justify-between">
-                           <div className="flex items-start space-x-3 flex-1">
-                             <div className="flex items-center space-x-2">
-                               {getTypeIcon(notification.type)}
-                               {getCategoryIcon(notification.category)}
-                             </div>
-                             <div className="flex-1 min-w-0">
-                               <div className="flex items-center space-x-2 mb-1">
-                                 <h3 className={`font-medium ${
-                                   notification.is_read ? 'text-gray-300' : 'text-white'
-                                 }`}>
-                                   {notification.title}
-                                 </h3>
-                                 <div className="flex items-center space-x-2">
-                                   <Badge 
-                                     variant="outline" 
-                                     className={`text-xs ${getTypeColor(notification.type)}`}
-                                   >
-                                     {notification.type}
-                                   </Badge>
-                                   {notification.is_urgent && (
-                                     <Badge variant="destructive" className="text-xs">
-                                       Urgente
-                                     </Badge>
-                                   )}
-                                 </div>
-                               </div>
-                               <p className={`text-sm ${
-                                 notification.is_read ? 'text-gray-400' : 'text-gray-300'
-                               }`}>
-                                 {notification.message}
-                               </p>
-                               <div className="flex items-center space-x-2 mt-2 text-xs text-gray-500">
-                                 <Clock className="h-3 w-3" />
-                                 <span>{new Date(notification.created_at).toLocaleString()}</span>
-                               </div>
-                             </div>
-                           </div>
-                           <div className="flex items-center space-x-2 ml-4">
-                             <input
-                               type="checkbox"
-                               checked={selectedNotifications.includes(notification.id)}
-                               onChange={(e) => {
-                                 if (e.target.checked) {
-                                   setSelectedNotifications(prev => [...prev, notification.id]);
-                                 } else {
-                                   setSelectedNotifications(prev => prev.filter(id => id !== notification.id));
-                                 }
-                               }}
-                               className="rounded border-zinc-500 bg-zinc-600 text-blue-600 focus:ring-blue-500"
-                             />
-                             {!notification.is_read && (
-                               <Button
-                                 onClick={() => markAsRead(notification.id)}
-                                 variant="ghost"
-                                 size="sm"
-                                 className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-zinc-600"
-                               >
-                                                                 <Eye className="h-4 w-4" />
-                                </Button>
-                             )}
-                             <Button
-                               onClick={() => deleteNotification(notification.id)}
-                               variant="ghost"
-                               size="sm"
-                               className="h-8 w-8 p-0 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
-                             >
-                               <Trash2 className="h-4 w-4" />
-                             </Button>
-                           </div>
-                         </div>
-                       </div>
-                     ))}
-                   </div>
-                 )}
-               </div>
-             </TabsContent>
+            <TabsContent value={activeTab} className="mt-4">
+              <div className="max-h-96 overflow-y-auto">
+                {filteredNotifications.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Bell className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <p className="text-slate-500">No hay notificaciones en esta categoría</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredNotifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 rounded-lg border transition-colors ${
+                          notification.is_read 
+                            ? 'bg-slate-50 border-slate-200' 
+                            : 'bg-white border-slate-300'
+                        } ${
+                          notification.is_urgent 
+                            ? 'border-red-300 bg-red-50' 
+                            : ''
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start space-x-3 flex-1">
+                            <div className="flex items-center space-x-2">
+                              {getTypeIcon(notification.type)}
+                              {getCategoryIcon(notification.category)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <h3 className={`font-medium ${
+                                  notification.is_read ? 'text-slate-600' : 'text-slate-800'
+                                }`}>
+                                  {notification.title}
+                                </h3>
+                                <div className="flex items-center space-x-2">
+                                  <Badge 
+                                    variant="outline" 
+                                    className={`text-xs ${getTypeColor(notification.type)}`}
+                                  >
+                                    {notification.type}
+                                  </Badge>
+                                  {notification.is_urgent && (
+                                    <Badge variant="destructive" className="text-xs">
+                                      Urgente
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <p className={`text-sm ${
+                                notification.is_read ? 'text-slate-500' : 'text-slate-600'
+                              }`}>
+                                {notification.message}
+                              </p>
+                              <div className="flex items-center space-x-2 mt-2 text-xs text-slate-400">
+                                <Clock className="h-3 w-3" />
+                                <span>{new Date(notification.created_at).toLocaleString()}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2 ml-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedNotifications.includes(notification.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedNotifications(prev => [...prev, notification.id]);
+                                } else {
+                                  setSelectedNotifications(prev => prev.filter(id => id !== notification.id));
+                                }
+                              }}
+                              className="rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500"
+                            />
+                            {!notification.is_read && (
+                              <Button
+                                onClick={() => markAsRead(notification.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              onClick={() => deleteNotification(notification.id)}
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-slate-500 hover:text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>

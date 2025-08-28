@@ -274,62 +274,62 @@ export default function SecurityAudit() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Auditoría de Seguridad</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold text-slate-800">Auditoría de Seguridad</h1>
+          <p className="text-slate-600">
             Monitoreo y análisis de la seguridad del sistema
           </p>
         </div>
-        <Button onClick={exportSecurityReport}>
-          <Download className="h-4 w-4 mr-2" />
-          Exportar Reporte
+        <Button onClick={loadSecurityData}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Actualizar
         </Button>
       </div>
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-blue-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Total Logs</p>
-                <p className="text-2xl font-bold">{stats.totalLogs || 0}</p>
+                <p className="text-sm text-slate-500">Total Logs</p>
+                <p className="text-2xl font-bold text-slate-800">{stats.totalLogs || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-green-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Sesiones Activas</p>
-                <p className="text-2xl font-bold">{stats.activeSessions || 0}</p>
+                <p className="text-sm text-slate-500">Sesiones Activas</p>
+                <p className="text-2xl font-bold text-slate-800">{stats.activeSessions || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-orange-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Problemas</p>
-                <p className="text-2xl font-bold">{stats.totalIssues || 0}</p>
+                <p className="text-sm text-slate-500">Problemas</p>
+                <p className="text-2xl font-bold text-slate-800">{stats.totalIssues || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <XCircle className="h-5 w-5 text-red-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Críticos</p>
-                <p className="text-2xl font-bold">{stats.criticalIssues || 0}</p>
+                <p className="text-sm text-slate-500">Críticos</p>
+                <p className="text-2xl font-bold text-slate-800">{stats.criticalIssues || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -338,7 +338,7 @@ export default function SecurityAudit() {
 
       {/* Tabs principales */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-4 bg-slate-100 border-slate-200">
           <TabsTrigger value="overview">Vista General</TabsTrigger>
           <TabsTrigger value="logs">Logs de Seguridad</TabsTrigger>
           <TabsTrigger value="sessions">Sesiones</TabsTrigger>
@@ -347,21 +347,21 @@ export default function SecurityAudit() {
 
         {/* Vista General */}
         <TabsContent value="overview" className="space-y-4">
-          <Card>
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Estado de Seguridad</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-slate-800">Estado de Seguridad</CardTitle>
+              <CardDescription className="text-slate-600">
                 Resumen general de la seguridad del sistema
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
                   <div className="flex items-center gap-3">
                     <Shield className="h-5 w-5 text-green-600" />
                     <div>
-                      <p className="font-medium">Estado General</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium text-slate-800">Estado General</p>
+                      <p className="text-sm text-slate-600">
                         Sistema seguro y operativo
                       </p>
                     </div>
@@ -371,17 +371,17 @@ export default function SecurityAudit() {
                   </Badge>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
                   <div className="flex items-center gap-3">
                     <Activity className="h-5 w-5 text-blue-600" />
                     <div>
-                      <p className="font-medium">Actividad Reciente</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium text-slate-800">Actividad Reciente</p>
+                      <p className="text-sm text-slate-600">
                         {stats.totalLogs || 0} eventos en las últimas 24h
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline">
+                  <Badge variant="outline" className="border-slate-300 text-slate-700">
                     Normal
                   </Badge>
                 </div>
@@ -392,29 +392,29 @@ export default function SecurityAudit() {
 
         {/* Logs de Seguridad */}
         <TabsContent value="logs" className="space-y-4">
-          <Card>
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Logs de Seguridad</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-slate-800">Logs de Seguridad</CardTitle>
+              <CardDescription className="text-slate-600">
                 Registro de eventos y actividades de seguridad
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 max-h-96 overflow-y-auto">
                 {securityLogs.map((log) => (
-                  <div key={log.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                  <div key={log.id} className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg bg-white">
                     <div className={`w-2 h-2 rounded-full ${
                       log.level === 'error' ? 'bg-red-500' :
                       log.level === 'warning' ? 'bg-yellow-500' :
                       log.level === 'info' ? 'bg-blue-500' : 'bg-gray-500'
                     }`} />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{log.message}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm font-medium text-slate-800">{log.message}</p>
+                      <p className="text-xs text-slate-600">
                         {new Date(log.created_at).toLocaleString()} - {log.user_id}
                       </p>
                     </div>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-xs border-slate-300 text-slate-700">
                       {log.level}
                     </Badge>
                   </div>
@@ -426,22 +426,22 @@ export default function SecurityAudit() {
 
         {/* Sesiones de Usuario */}
         <TabsContent value="sessions" className="space-y-4">
-          <Card>
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Sesiones Activas</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-slate-800">Sesiones Activas</CardTitle>
+              <CardDescription className="text-slate-600">
                 Monitoreo de sesiones de usuario activas
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {userSessions.map((session) => (
-                  <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={session.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-white">
                     <div className="flex items-center gap-3">
                       <Users className="h-5 w-5 text-blue-600" />
                       <div>
-                        <p className="font-medium">{session.user_id}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-medium text-slate-800">{session.user_id}</p>
+                        <p className="text-sm text-slate-600">
                           {new Date(session.created_at).toLocaleString()}
                         </p>
                       </div>
@@ -469,22 +469,22 @@ export default function SecurityAudit() {
 
         {/* Problemas de Seguridad */}
         <TabsContent value="issues" className="space-y-4">
-          <Card>
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Problemas de Seguridad</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-slate-800">Problemas de Seguridad</CardTitle>
+              <CardDescription className="text-slate-600">
                 Problemas identificados y su estado de resolución
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {securityIssues.map((issue) => (
-                  <div key={issue.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={issue.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-white">
                     <div className="flex items-center gap-3">
                       <AlertTriangle className="h-5 w-5 text-red-600" />
                       <div>
-                        <p className="font-medium">{issue.title}</p>
-                        <p className="text-sm text-muted-foreground">{issue.description}</p>
+                        <p className="font-medium text-slate-800">{issue.title}</p>
+                        <p className="text-sm text-slate-600">{issue.description}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

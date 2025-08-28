@@ -399,7 +399,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -407,8 +407,8 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
   if (!chartData) {
     return (
       <div className="text-center py-8">
-        <Activity className="h-12 w-12 text-zinc-400 mx-auto mb-4" />
-        <p className="text-zinc-400">No hay datos disponibles para mostrar</p>
+        <Activity className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+        <p className="text-slate-500">No hay datos disponibles para mostrar</p>
       </div>
     );
   }
@@ -418,23 +418,23 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
       {/* Header con controles */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Dashboard Ejecutivo</h2>
-          <p className="text-zinc-400">
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Dashboard Ejecutivo</h2>
+          <p className="text-slate-600">
             Análisis visual de métricas clave • Última actualización: {lastUpdate.toLocaleTimeString()}
           </p>
         </div>
         <div className="flex items-center space-x-3">
           <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-32 bg-zinc-800 border-zinc-600 text-white">
+            <SelectTrigger className="w-32 bg-white border-slate-200 text-slate-800">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-800 border-zinc-600">
+            <SelectContent className="bg-white border-slate-200">
               <SelectItem value="7d">Últimos 7 días</SelectItem>
               <SelectItem value="30d">Últimos 30 días</SelectItem>
               <SelectItem value="90d">Últimos 90 días</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={refreshData} variant="outline" size="sm" className="border-zinc-600 text-zinc-300 hover:bg-zinc-800">
+          <Button onClick={refreshData} variant="outline" size="sm" className="border-slate-200 text-slate-700 hover:bg-slate-50">
             <TrendingUp className="h-4 w-4 mr-2" />
             Actualizar
           </Button>
@@ -444,10 +444,10 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
       {/* Gráficos en grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Crecimiento de Usuarios */}
-        <Card className="bg-zinc-800 border-zinc-700">
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-white">
-              <Users className="h-5 w-5 mr-2 text-blue-400" />
+            <CardTitle className="flex items-center text-slate-800">
+              <Users className="h-5 w-5 mr-2 text-blue-500" />
               Crecimiento de Usuarios
             </CardTitle>
           </CardHeader>
@@ -459,10 +459,10 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
         </Card>
 
         {/* Ingresos Mensuales */}
-        <Card className="bg-zinc-800 border-zinc-700">
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-white">
-              <DollarSign className="h-5 w-5 mr-2 text-green-400" />
+            <CardTitle className="flex items-center text-slate-800">
+              <DollarSign className="h-5 w-5 mr-2 text-green-500" />
               Ingresos
             </CardTitle>
           </CardHeader>
@@ -474,10 +474,10 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
         </Card>
 
         {/* Distribución de Proyectos */}
-        <Card className="bg-zinc-800 border-zinc-700">
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-white">
-              <Target className="h-5 w-5 mr-2 text-purple-400" />
+            <CardTitle className="flex items-center text-slate-800">
+              <Target className="h-5 w-5 mr-2 text-purple-500" />
               Distribución de Proyectos
             </CardTitle>
           </CardHeader>
@@ -489,10 +489,10 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
         </Card>
 
         {/* Tickets por Prioridad */}
-        <Card className="bg-zinc-800 border-zinc-700">
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-white">
-              <Activity className="h-5 w-5 mr-2 text-orange-400" />
+            <CardTitle className="flex items-center text-slate-800">
+              <Activity className="h-5 w-5 mr-2 text-orange-500" />
               Tickets por Prioridad
             </CardTitle>
           </CardHeader>
@@ -505,10 +505,10 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
       </div>
 
       {/* Gráfico de Actividad del Sistema (ancho completo) */}
-      <Card className="bg-zinc-800 border-zinc-700">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center text-white">
-            <Activity className="h-5 w-5 mr-2 text-purple-400" />
+          <CardTitle className="flex items-center text-slate-800">
+            <Activity className="h-5 w-5 mr-2 text-purple-500" />
             Actividad del Sistema (Última Semana)
           </CardTitle>
         </CardHeader>
