@@ -173,8 +173,8 @@ export default function AdvancedAnalytics() {
 
       // Usuarios
       const totalUsers = users.length;
-      const activeUsers = users.filter(u => u.last_login && 
-        new Date(u.last_login) > thirtyDaysAgo).length;
+      const activeUsers = users.filter(u => u.lastLoginAt && 
+        new Date(u.lastLoginAt) > thirtyDaysAgo).length;
       const newThisMonth = users.filter(u => {
         const createdAt = new Date(u.created_at);
         return createdAt >= thisMonth;

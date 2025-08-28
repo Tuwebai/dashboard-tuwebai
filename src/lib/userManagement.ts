@@ -1,6 +1,21 @@
 
 import { supabase } from './supabase';
-import { UserProfile, UserRole, Permission, Invitation, AuditLog, UserFilters, UserSort } from '../types/user.types';
+import { User, UserRole, UserPermission, UserAuditLog } from '../types/user.types';
+
+// Tipos simples para funcionalidades que no están en user.types.ts
+interface Invitation {
+  id: string;
+  email: string;
+  role: string;
+  invited_by: string;
+  status: string;
+  token: string;
+  expires_at: string;
+  accepted_at?: string;
+  message?: string;
+  created_at?: string;
+  updated_at?: string;
+}
 import { realAvatarService, AvatarResult } from './avatarProviders';
 
 // =====================================================
@@ -8,21 +23,21 @@ import { realAvatarService, AvatarResult } from './avatarProviders';
 // =====================================================
 
 // Permisos del sistema
-const PERMISSIONS: Permission[] = [
-  { id: 'all', name: 'Todos los permisos', description: 'Acceso completo al sistema' },
-  { id: 'users', name: 'Gestión de usuarios', description: 'Crear, editar y eliminar usuarios' },
-  { id: 'roles', name: 'Gestión de roles', description: 'Crear, editar y eliminar roles' },
-  { id: 'projects', name: 'Gestión de proyectos', description: 'Crear, editar y eliminar proyectos' },
-  { id: 'teams', name: 'Gestión de equipos', description: 'Crear, editar y eliminar equipos' },
-  { id: 'analytics', name: 'Analytics', description: 'Acceso a reportes y estadísticas' },
-  { id: 'collaboration', name: 'Colaboración', description: 'Chat, comentarios y archivos' },
-  { id: 'files', name: 'Gestión de archivos', description: 'Subir, descargar y gestionar archivos' },
-  { id: 'billing', name: 'Facturación', description: 'Acceso a facturas y pagos' },
-  { id: 'settings', name: 'Configuración', description: 'Configuración del sistema' }
+const PERMISSIONS: UserPermission[] = [
+  { id: 'all', name: 'Todos los permisos', description: 'Acceso completo al sistema', resource: 'system', action: 'all' },
+  { id: 'users', name: 'Gestión de usuarios', description: 'Crear, editar y eliminar usuarios', resource: 'users', action: 'manage' },
+  { id: 'roles', name: 'Gestión de roles', description: 'Crear, editar y eliminar roles', resource: 'roles', action: 'manage' },
+  { id: 'projects', name: 'Gestión de proyectos', description: 'Crear, editar y eliminar proyectos', resource: 'projects', action: 'manage' },
+  { id: 'teams', name: 'Gestión de equipos', description: 'Crear, editar y eliminar equipos', resource: 'teams', action: 'manage' },
+  { id: 'analytics', name: 'Analytics', description: 'Acceso a reportes y estadísticas', resource: 'analytics', action: 'read' },
+  { id: 'collaboration', name: 'Colaboración', description: 'Chat, comentarios y archivos', resource: 'collaboration', action: 'manage' },
+  { id: 'files', name: 'Gestión de archivos', description: 'Subir, descargar y gestionar archivos', resource: 'files', action: 'manage' },
+  { id: 'billing', name: 'Facturación', description: 'Acceso a facturas y pagos', resource: 'billing', action: 'read' },
+  { id: 'settings', name: 'Configuración', description: 'Configuración del sistema', resource: 'settings', action: 'manage' }
 ];
 
 export class UserManagementService {
-  private permissions: Permission[] = PERMISSIONS;
+  private permissions: UserPermission[] = PERMISSIONS;
 
   constructor() {
     this.initializeRoles();
@@ -160,7 +175,7 @@ export class UserManagementService {
     return Math.abs(hash).toString();
   }
 
-  public async getUsers(filters?: UserFilters, sort?: UserSort, page: number = 1, limit: number = 50): Promise<{ users: UserProfile[]; total: number; page: number; totalPages: number }> {
+  public async getUsers(filters?: any, sort?: any, page: number = 1, limit: number = 50): Promise<{ users: User[]; total: number; page: number; totalPages: number }> {
     try {
       console.log('🔍 Cargando usuarios desde Supabase...');
       
@@ -219,8 +234,8 @@ export class UserManagementService {
       const endIndex = startIndex + limit;
       const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
 
-      // Convertir a UserProfile usando solo los campos disponibles en Supabase
-      const users: UserProfile[] = await Promise.all(paginatedUsers.map(async (user) => {
+      // Convertir a User usando solo los campos disponibles en Supabase
+      const users: User[] = await Promise.all(paginatedUsers.map(async (user) => {
         // Obtener avatar REAL del correo registrado usando el nuevo servicio:
         // 1. Avatar guardado en la base de datos (si ya se sincronizó)
         // 2. Avatar del usuario autenticado (si es el mismo email)
@@ -240,17 +255,11 @@ export class UserManagementService {
         return {
           id: user.id,
           email: user.email,
-          display_name: user.full_name || user.email,
+          full_name: user.full_name || user.email,
           role: user.role || 'user', // Valor por defecto si no hay role
-          status: 'active',
-          phone: '',
-          department: '',
-          position: '',
-          bio: '',
-          skills: [],
-          avatar: avatar, // Avatar único para cada usuario
           created_at: user.created_at,
-          updated_at: user.updated_at
+          updated_at: user.updated_at,
+          avatar: avatar // Avatar único para cada usuario
         };
       }));
 
@@ -266,7 +275,7 @@ export class UserManagementService {
 
 
 
-  public async getUserById(userId: string): Promise<UserProfile | null> {
+  public async getUserById(userId: string): Promise<User | null> {
     try {
       console.log(`🔍 Buscando usuario con ID: ${userId}`);
       
@@ -302,14 +311,8 @@ export class UserManagementService {
       return {
         id: data.id,
         email: data.email,
-        display_name: data.full_name || data.email,
+        full_name: data.full_name || data.email,
         role: data.role || 'user',
-        status: 'active',
-        phone: '',
-        department: '',
-        position: '',
-        bio: '',
-        skills: [],
         avatar: avatar, // Usar avatar de Auth, luego de DB, luego generado
         created_at: data.created_at,
         updated_at: data.updated_at
@@ -320,13 +323,13 @@ export class UserManagementService {
     }
   }
 
-  public async createUser(userData: Omit<UserProfile, 'id' | 'created_at' | 'updated_at'>): Promise<UserProfile | null> {
+  public async createUser(userData: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User | null> {
     try {
       const { data, error } = await supabase
         .from('users')
         .insert({
           email: userData.email,
-          full_name: userData.display_name,
+          full_name: userData.full_name,
           role: userData.role,
                      avatar_url: userData.avatar || await this.getRealAvatarForUser(userData.email),
           created_at: new Date().toISOString(),
@@ -343,14 +346,8 @@ export class UserManagementService {
       return {
         id: data.id,
         email: data.email,
-        display_name: data.full_name || data.email,
+        full_name: data.full_name || data.email,
         role: data.role,
-        status: 'active',
-        phone: userData.phone,
-        department: userData.department,
-        position: userData.position,
-        bio: userData.bio,
-        skills: userData.skills,
         avatar: userData.avatar,
         created_at: data.created_at,
         updated_at: data.updated_at
@@ -361,7 +358,7 @@ export class UserManagementService {
     }
   }
 
-  public async updateUser(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | null> {
+  public async updateUser(userId: string, updates: Partial<User>): Promise<User | null> {
     try {
       console.log(`🔧 Actualizando usuario con ID: ${userId}`, updates);
       
@@ -370,7 +367,7 @@ export class UserManagementService {
       };
 
       if (updates.email) updateData.email = updates.email;
-      if (updates.display_name) updateData.full_name = updates.display_name;
+      if (updates.full_name) updateData.full_name = updates.full_name;
       if (updates.role) updateData.role = updates.role;
       if (updates.avatar) updateData.avatar_url = updates.avatar;
 
@@ -466,50 +463,26 @@ export class UserManagementService {
       {
         id: 'role_1',
         name: 'admin',
-        display_name: 'Administrador',
         description: 'Acceso completo al sistema',
-        permissions: ['all'],
-        is_system: true,
-        can_delete: false,
-        can_edit: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        permissions: ['all']
       },
       {
         id: 'role_2',
         name: 'manager',
-        display_name: 'Gerente',
         description: 'Gestión de proyectos y equipos',
-        permissions: ['projects', 'teams', 'users', 'analytics'],
-        is_system: false,
-        can_delete: true,
-        can_edit: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        permissions: ['projects', 'teams', 'users', 'analytics']
       },
       {
         id: 'role_3',
         name: 'developer',
-        display_name: 'Desarrollador',
         description: 'Desarrollo y colaboración en proyectos',
-        permissions: ['projects', 'collaboration', 'files'],
-        is_system: false,
-        can_delete: true,
-        can_edit: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        permissions: ['projects', 'collaboration', 'files']
       },
       {
         id: 'role_4',
         name: 'client',
-        display_name: 'Cliente',
         description: 'Acceso a proyectos asignados',
-        permissions: ['projects', 'collaboration'],
-        is_system: false,
-        can_delete: true,
-        can_edit: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        permissions: ['projects', 'collaboration']
       }
     ];
   }
@@ -725,7 +698,7 @@ export class UserManagementService {
   // MÉTODOS DE AUDITORÍA (REALES DESDE SUPABASE)
   // =====================================================
 
-  public async getAuditLogs(filters?: any, page: number = 1, limit: number = 50): Promise<{ logs: AuditLog[]; total: number; page: number; totalPages: number }> {
+  public async getAuditLogs(filters?: any, page: number = 1, limit: number = 50): Promise<{ logs: UserAuditLog[]; total: number; page: number; totalPages: number }> {
     try {
       let query = supabase
         .from('security_logs')
@@ -756,17 +729,15 @@ export class UserManagementService {
         return { logs: [], total: 0, page, totalPages: 0 };
       }
 
-      // Convertir a formato AuditLog
-      const logs: AuditLog[] = (data || []).map(log => ({
+      // Convertir a formato UserAuditLog
+      const logs: UserAuditLog[] = (data || []).map(log => ({
         id: log.id,
-        user_id: log.user_id,
+        userId: log.user_id,
         action: log.action,
-        resource: log.resource,
-        resource_id: log.resource_id,
         details: log.details,
-        ip_address: log.ip_address,
-        user_agent: log.user_agent,
-        created_at: log.created_at
+        ipAddress: log.ip_address,
+        userAgent: log.user_agent,
+        timestamp: log.created_at
       }));
 
       const total = count || logs.length;
@@ -779,39 +750,35 @@ export class UserManagementService {
     }
   }
 
-  public async createAuditLog(logData: Omit<AuditLog, 'id' | 'created_at'>): Promise<AuditLog | null> {
+  public async createAuditLog(logData: Omit<UserAuditLog, 'id' | 'timestamp'>): Promise<UserAuditLog | null> {
     try {
-      const { data, error } = await supabase
-        .from('security_logs')
-        .insert({
-          user_id: logData.user_id,
-          action: logData.action,
-          resource: logData.resource,
-          resource_id: logData.resource_id,
-          details: logData.details,
-          ip_address: logData.ip_address,
-          user_agent: logData.user_agent,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+              const { data, error } = await supabase
+          .from('security_logs')
+          .insert({
+            user_id: logData.userId,
+            action: logData.action,
+            details: logData.details,
+            ip_address: logData.ipAddress,
+            user_agent: logData.userAgent,
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
 
       if (error || !data) {
         console.error('Error creating audit log:', error);
         return null;
       }
 
-      return {
-        id: data.id,
-        user_id: data.user_id,
-        action: data.action,
-        resource: data.resource,
-        resource_id: data.resource_id,
-        details: data.details,
-        ip_address: data.ip_address,
-        user_agent: data.user_agent,
-        created_at: data.created_at
-      };
+              return {
+          id: data.id,
+          userId: data.user_id,
+          action: data.action,
+          details: data.details,
+          ipAddress: data.ip_address,
+          userAgent: data.user_agent,
+          timestamp: data.created_at
+        };
     } catch (error) {
       console.error('Error creating audit log:', error);
       return null;
@@ -1081,7 +1048,7 @@ export class UserManagementService {
     }
   }
 
-  public getAllPermissions(): Permission[] {
+  public getAllPermissions(): UserPermission[] {
     return this.permissions;
   }
 

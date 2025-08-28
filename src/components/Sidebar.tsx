@@ -20,14 +20,14 @@ import {
   TrendingUp,
   FileText,
   Zap,
-  Code,
   BarChart,
   Eye,
-  Key
+  Key,
+  ChevronRight,
+  Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import Logo from './Logo';
 import { useEffect, useState } from 'react';
 
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -85,29 +85,55 @@ export default function Sidebar() {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition-colors text-base w-full
-        ${isActive ? 'bg-gradient-to-r from-blue-700 to-purple-700 text-white shadow' : 'text-zinc-200 hover:bg-zinc-800 hover:text-white'}`
+        `relative group cursor-pointer transition-all duration-300 ease-out hover:bg-gray-50 w-full
+        ${isActive ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500' : ''}`
       }
     >
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>{icon}</TooltipTrigger>
-          <TooltipContent>{t(label.split(' ')[0])}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <span className="truncate flex-1">{t(label)}</span>
-      <div className="flex items-center gap-1 ml-auto">
-        {count !== undefined && (
-          <Badge variant="secondary" className="text-xs min-w-[20px] justify-center">
-            {count}
-          </Badge>
-        )}
-        {badge && (
-          <Badge variant="destructive" className="text-xs">
-            {badge}
-          </Badge>
-        )}
+      <div className="flex items-center px-4 py-3.5 space-x-4">
+        <div className={`relative p-2 rounded-xl transition-all duration-300 ${
+          location.pathname === to 
+            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25' 
+            : 'bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600'
+        }`}>
+          {location.pathname === to && (
+            <div className="absolute inset-0 bg-blue-400 rounded-xl animate-ping opacity-25"></div>
+          )}
+          <div className="transition-transform duration-300 group-hover:scale-110">
+            {icon}
+          </div>
+        </div>
+        <span className={`font-medium text-sm flex-1 ${
+          location.pathname === to ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
+        }`}>
+          {t(label)}
+        </span>
+        <div className="flex items-center gap-1 ml-auto">
+          {count !== undefined && (
+            <Badge variant="secondary" className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+              location.pathname === to 
+                ? 'bg-blue-500 text-white' 
+                : 'bg-red-100 text-red-600 group-hover:bg-red-500 group-hover:text-white'
+            }`}>
+              {count}
+            </Badge>
+          )}
+          {badge && (
+            <Badge variant="destructive" className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+              location.pathname === to 
+                ? 'bg-blue-500 text-white' 
+                : 'bg-red-100 text-red-600 group-hover:bg-red-500 group-hover:text-white'
+            }`}>
+              {badge}
+            </Badge>
+          )}
+          {location.pathname === to && (
+            <ChevronRight size={16} className="text-blue-500 animate-pulse" />
+          )}
+        </div>
       </div>
+      {location.pathname === to && (
+        <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-blue-400 to-blue-600 rounded-r-full"></div>
+      )}
     </NavLink>
   );
 
@@ -135,142 +161,173 @@ export default function Sidebar() {
             }
           }
         }}
-        className={`flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition-colors text-base w-full
-        ${isActive ? 'bg-gradient-to-r from-blue-700 to-purple-700 text-white shadow' : 'text-zinc-200 hover:bg-zinc-800 hover:text-white'}`}
+        className={`relative group cursor-pointer transition-all duration-300 ease-out hover:bg-gray-50 w-full
+        ${isActive ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500' : ''}`}
       >
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>{icon}</TooltipTrigger>
-            <TooltipContent>{t(label.split(' ')[0])}</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <span className="truncate flex-1">{t(label)}</span>
-        <div className="flex items-center gap-1 ml-auto">
-          {count !== undefined && (
-            <Badge variant="secondary" className="text-xs min-w-[20px] justify-center">
-              {count}
-            </Badge>
-          )}
-          {badge && (
-            <Badge variant="destructive" className="text-xs">
-              {badge}
-            </Badge>
-          )}
+        <div className="flex items-center px-4 py-3.5 space-x-4">
+          <div className={`relative p-2 rounded-xl transition-all duration-300 ${
+            isActive 
+              ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25' 
+              : 'bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600'
+          }`}>
+            {isActive && (
+              <div className="absolute inset-0 bg-blue-400 rounded-xl animate-ping opacity-25"></div>
+            )}
+            <div className="transition-transform duration-300 group-hover:scale-110">
+              {icon}
+            </div>
+          </div>
+          <span className={`font-medium text-sm flex-1 ${
+            isActive ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
+          }`}>
+            {t(label)}
+          </span>
+          <div className="flex items-center gap-1 ml-auto">
+            {count !== undefined && (
+              <Badge variant="secondary" className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                isActive 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-red-100 text-red-600 group-hover:bg-red-500 group-hover:text-white'
+              }`}>
+                {count}
+              </Badge>
+            )}
+            {badge && (
+              <Badge variant="destructive" className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                isActive 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-red-100 text-red-600 group-hover:bg-red-500 group-hover:text-white'
+              }`}>
+                {badge}
+              </Badge>
+            )}
+            {isActive && (
+              <ChevronRight size={16} className="text-blue-500 animate-pulse" />
+            )}
+          </div>
         </div>
+        {isActive && (
+          <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-blue-400 to-blue-600 rounded-r-full"></div>
+        )}
       </button>
     );
   };
 
   return (
-    <aside className="h-screen w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col lg:w-64 md:w-56 sm:w-48 overflow-hidden">
+    <aside className="w-80 h-screen bg-white border-r border-gray-200 flex flex-col shadow-xl">
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* Logo y usuario */}
-        <div className="flex flex-col items-center gap-4 p-4 sm:p-6 border-b border-zinc-800">
-          {/* Logo TuWebAI */}
-          <Logo size="lg" showText={true} />
-          
+        {/* Header visual mejorado */}
+        <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
           {/* Información del usuario */}
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-3">
             {/* Avatar del usuario - usar imagen real si existe */}
             {user?.avatar ? (
-              <img 
-                src={user.avatar} 
-                alt={`Avatar de ${user.full_name || user.email}`}
-                className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover border-2 border-zinc-700"
-                onError={(e) => {
-                  // Fallback a iniciales si la imagen falla
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const fallback = target.nextElementSibling as HTMLElement;
-                  if (fallback) fallback.style.display = 'flex';
-                }}
-              />
-            ) : null}
-            
-            {/* Fallback a iniciales si no hay avatar o falla la imagen */}
-            <div 
-              className={`h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold text-white ${
-                user?.avatar ? 'hidden' : ''
-              }`}
-            >
-              {user?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
-            </div>
+              <div className="relative">
+                <img 
+                  src={user.avatar} 
+                  alt={`Avatar de ${user.full_name || user.email}`}
+                  className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg object-cover border-2 border-white"
+                  onError={(e) => {
+                    // Fallback a iniciales si la imagen falla
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
+              </div>
+            ) : (
+              <div className="relative">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg flex items-center justify-center text-xl font-bold text-white">
+                  {user?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
+              </div>
+            )}
             
             <div className="text-center">
-              <div className="font-semibold text-white truncate max-w-[140px] sm:max-w-[180px] text-sm sm:text-base">
+              <div className="font-bold text-xl text-gray-900 truncate max-w-[200px]">
                 {user?.full_name || 'Usuario'}
               </div>
-              <div className="text-xs text-zinc-400 truncate max-w-[140px] sm:max-w-[180px]">
+              <div className="text-sm text-gray-500 truncate max-w-[200px]">
                 {user?.email}
               </div>
             </div>
           </div>
         </div>
+
         {/* Menú según rol */}
         {user?.role === 'admin' ? (
           // Menú completo para admin con todas las funcionalidades avanzadas
-          <nav className="flex flex-col gap-1 p-3 sm:p-4 overflow-y-auto max-h-[calc(100vh-200px)]">
+          <nav className="flex-1 overflow-y-auto py-2">
             {/* Sección Principal */}
-            <div className="mb-4">
-              <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-4 py-2 mb-2">{t('Principal')}</div>
+            <div className="mb-8 px-2">
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2 mb-2">{t('Principal')}</div>
+              <div className="h-px bg-gradient-to-r from-gray-200 to-transparent mb-2"></div>
               <div className="space-y-1">
-                {adminNavItem('dashboard', <BarChart3 className="h-5 w-5" />, t('Dashboard'))}
-                {adminNavItem('usuarios', <Users className="h-5 w-5" />, t('Usuarios'), counts.users)}
-                {adminNavItem('proyectos', <FolderKanban className="h-5 w-5" />, t('Proyectos'), counts.projects)}
-                {adminNavItem('tickets', <Ticket className="h-5 w-5" />, t('Tickets'), counts.tickets)}
-                {adminNavItem('pagos', <CreditCard className="h-5 w-5" />, t('Pagos'), counts.payments)}
+                {adminNavItem('dashboard', <BarChart3 size={18} />, t('Dashboard'))}
+                {adminNavItem('usuarios', <Users size={18} />, t('Usuarios'), counts.users)}
+                {adminNavItem('proyectos', <FolderKanban size={18} />, t('Proyectos'), counts.projects)}
+                {adminNavItem('tickets', <Ticket size={18} />, t('Tickets'), counts.tickets)}
+                {adminNavItem('pagos', <CreditCard size={18} />, t('Pagos'), counts.payments)}
               </div>
             </div>
 
             {/* ANÁLISIS */}
-            <div className="space-y-2">
-              <h3 className="px-3 text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+            <div className="mb-8 px-2">
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2 mb-2">
                 {t('Análisis')}
-              </h3>
-              {navItem('/admin/analytics', <BarChart className="h-5 w-5" />, t('Analytics Avanzado'))}
+              </div>
+              <div className="h-px bg-gradient-to-r from-gray-200 to-transparent mb-2"></div>
+              <div className="space-y-1">
+                {adminNavItem('advanced-analytics', <BarChart size={18} />, t('Analytics Avanzado'))}
+              </div>
             </div>
 
             {/* Sección Sistema */}
-            <div className="mb-4">
-              <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-4 py-2 mb-2">Sistema</div>
+            <div className="mb-8 px-2">
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2 mb-2">Sistema</div>
+              <div className="h-px bg-gradient-to-r from-gray-200 to-transparent mb-2"></div>
               <div className="space-y-1">
-                {navItem('/code-editor', <Code className="h-5 w-5" />, 'Código')}
-                {navItem('/user-management', <Users className="h-5 w-5" />, 'Gestión de Usuarios')}
-                {navItem('/environment', <Key className="h-5 w-5" />, 'Variables de Entorno')}
-                {navItem('/admin/notifications', <Bell className="h-5 w-5" />, 'Notificaciones')}
-                {navItem('/admin/settings', <Settings className="h-5 w-5" />, 'Configuración')}
+                {adminNavItem('usuarios', <Users size={18} />, 'Gestión de Usuarios')}
+                {navItem('/environment', <Key size={18} />, 'Variables de Entorno')}
+                {adminNavItem('notifications', <Bell size={18} />, 'Notificaciones')}
+                {adminNavItem('settings', <Settings size={18} />, 'Configuración')}
               </div>
             </div>
           </nav>
         ) : (
           // Menú solo para clientes
-          <nav className="flex flex-col gap-1 p-3 sm:p-4">
-            {navItem('/dashboard', <Home className="h-5 w-5" />, t('Dashboard'))}
-            {navItem('/proyectos', <FolderKanban className="h-5 w-5" />, t('Proyectos'))}
-
-            {navItem('/perfil', <User className="h-5 w-5" />, t('Mi Perfil'))}
-            {navItem('/facturacion', <CreditCard className="h-5 w-5" />, t('Facturación'))}
-            {navItem('/soporte', <HelpCircle className="h-5 w-5" />, t('Soporte'))}
-            {navItem('/configuracion', <Settings className="h-5 w-5" />, t('Configuración'))}
+          <nav className="flex-1 overflow-y-auto py-2 px-2">
+            <div className="space-y-1">
+              {navItem('/dashboard', <Home size={18} />, t('Dashboard'))}
+              {navItem('/proyectos', <FolderKanban size={18} />, t('Proyectos'))}
+              {navItem('/perfil', <User size={18} />, t('Mi Perfil'))}
+              {navItem('/facturacion', <CreditCard size={18} />, t('Facturación'))}
+              {navItem('/soporte', <HelpCircle size={18} />, t('Soporte'))}
+              {navItem('/configuracion', <Settings size={18} />, t('Configuración'))}
+            </div>
           </nav>
         )}
       </div>
-      {/* Botón cerrar sesión */}
-      <div className="p-4 border-t border-zinc-800 mt-auto">
+
+      {/* Footer mejorado */}
+      <div className="p-4 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white">
         <Button
           onClick={logout}
           variant="ghost"
-          className="w-full justify-start text-zinc-400 hover:bg-red-600 hover:text-white transition-colors"
+          className="w-full flex items-center space-x-3 px-3 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-300 group"
         >
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <LogOut className="h-5 w-5 mr-3" />
+                <LogOut size={18} />
               </TooltipTrigger>
               <TooltipContent>{t('Salir')}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          {t('Cerrar Sesión')}
+          <span>{t('Cerrar Sesión')}</span>
         </Button>
       </div>
     </aside>

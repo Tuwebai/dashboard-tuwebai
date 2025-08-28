@@ -153,7 +153,9 @@ export default function SharedTasks({
     // Cargar datos iniciales
     loadTasks();
     
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [projectId, phaseKey]);
 
   // Filter and sort tasks

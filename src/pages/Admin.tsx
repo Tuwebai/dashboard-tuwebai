@@ -32,7 +32,9 @@ import {
   RefreshCw,
   FileText,
   BarChart,
-  Zap
+  Zap,
+  UserCog,
+  Cog
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { notificationService } from '@/lib/notificationService';
@@ -198,26 +200,49 @@ export default function Admin() {
       if (error) throw error;
       
       // Crear notificación automática
-      try {
-        const user = usuarios.find(u => u.id === userId);
-        if (user) {
-          await notificationService.createNotification({
-            user_id: userId,
-            title: 'Rol Actualizado',
-            message: `Tu rol ha sido cambiado a: ${newRole}`,
-            type: 'info',
-            category: 'user',
-            action_url: '/admin/usuarios'
-          });
-        }
-      } catch (notificationError) {
-        console.error('Error creating notification:', notificationError);
-      }
+      await notificationService.createNotification({
+        title: 'Rol de Usuario Actualizado',
+        message: `El rol del usuario ha sido cambiado a ${newRole}`,
+        type: 'info',
+        user_id: userId,
+        category: 'user'
+      });
+
+      // Recargar datos
+      await loadData();
       
-      toast({ title: 'Éxito', description: 'Rol de usuario actualizado.' });
-      loadData(); // Recargar datos
+      toast({ title: 'Éxito', description: 'Rol de usuario actualizado correctamente.' });
     } catch (error) {
-      toast({ title: 'Error', description: 'No se pudo actualizar el rol.', variant: 'destructive' });
+      console.error('Error updating user role:', error);
+      toast({ title: 'Error', description: 'No se pudo actualizar el rol del usuario.', variant: 'destructive' });
+    }
+  };
+
+  const updateProjectStatus = async (projectId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ status: newStatus })
+        .eq('id', projectId);
+      
+      if (error) throw error;
+      
+      // Crear notificación automática
+      await notificationService.createNotification({
+        title: 'Estado de Proyecto Actualizado',
+        message: `El proyecto ha sido marcado como ${newStatus}`,
+        type: 'info',
+        user_id: user.id,
+        category: 'project'
+      });
+
+      // Recargar datos
+      await loadData();
+      
+      toast({ title: 'Éxito', description: 'Estado del proyecto actualizado correctamente.' });
+    } catch (error) {
+      console.error('Error updating project status:', error);
+      toast({ title: 'Error', description: 'No se pudo actualizar el estado del proyecto.', variant: 'destructive' });
     }
   };
 
@@ -231,28 +256,21 @@ export default function Admin() {
       if (error) throw error;
       
       // Crear notificación automática
-      try {
-        const ticket = tickets.find(t => t.id === ticketId);
-        if (ticket) {
-          const isUrgent = ticket.priority === 'high';
-          await notificationService.createNotification({
-            user_id: ticket.user_id || ticket.owner_id || user.id,
-            title: `Ticket ${newStatus}`,
-            message: `El ticket "${ticket.title || 'Sin título'}" ha sido marcado como ${newStatus}`,
-            type: newStatus === 'closed' ? 'success' : 'info',
-            category: 'ticket',
-            is_urgent: isUrgent,
-            action_url: '/admin/tickets'
-          });
-        }
-      } catch (notificationError) {
-        console.error('Error creating notification:', notificationError);
-      }
+      await notificationService.createNotification({
+        title: 'Estado de Ticket Actualizado',
+        message: `El ticket ha sido marcado como ${newStatus}`,
+        type: 'info',
+        user_id: user.id,
+        category: 'ticket'
+      });
+
+      // Recargar datos
+      await loadData();
       
-      toast({ title: 'Éxito', description: 'Estado del ticket actualizado.' });
-      loadData(); // Recargar datos
+      toast({ title: 'Éxito', description: 'Estado del ticket actualizado correctamente.' });
     } catch (error) {
-      toast({ title: 'Error', description: 'No se pudo actualizar el ticket.', variant: 'destructive' });
+      console.error('Error updating ticket status:', error);
+      toast({ title: 'Error', description: 'No se pudo actualizar el estado del ticket.', variant: 'destructive' });
     }
   };
 
@@ -266,365 +284,439 @@ export default function Admin() {
       if (error) throw error;
       
       // Crear notificación automática
-      try {
-        const payment = pagos.find(p => p.id === paymentId);
-        if (payment) {
-          await notificationService.createNotification({
-            user_id: payment.user_id || payment.owner_id || user.id,
-            title: `Pago ${newStatus}`,
-            message: `El pago de $${payment.amount || 0} ha sido marcado como ${newStatus}`,
-            type: newStatus === 'completed' ? 'success' : newStatus === 'failed' ? 'error' : 'info',
-            category: 'payment',
-            action_url: '/admin/pagos'
-          });
-        }
-      } catch (notificationError) {
-        console.error('Error creating notification:', notificationError);
-      }
+      await notificationService.createNotification({
+        title: 'Estado de Pago Actualizado',
+        message: `El pago ha sido marcado como ${newStatus}`,
+        type: 'info',
+        user_id: user.id,
+        category: 'payment'
+      });
+
+      // Recargar datos
+      await loadData();
       
-      toast({ title: 'Éxito', description: 'Estado del pago actualizado.' });
-      loadData(); // Recargar datos
+      toast({ title: 'Éxito', description: 'Estado del pago actualizado correctamente.' });
     } catch (error) {
-      toast({ title: 'Error', description: 'No se pudo actualizar el pago.', variant: 'destructive' });
+      console.error('Error updating payment status:', error);
+      toast({ title: 'Error', description: 'No se pudo actualizar el estado del pago.', variant: 'destructive' });
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
-          <p className="mt-4 text-white">Cargando panel de administración...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-slate-600 text-lg">Cargando panel de administración...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Panel de Administración</h1>
-          <p className="text-gray-400">Gestiona usuarios, proyectos, tickets y pagos</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <div className="text-right">
-            <div className="text-xs text-gray-400">
-              Última actualización: {lastUpdate.toLocaleTimeString()}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto">
+          
+          {/* Header Superior Modernizado */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/50 shadow-2xl">
+            <div className="px-8 py-6 flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+                  Panel de Administración
+                </h1>
+                <p className="text-slate-400 text-base font-medium mt-1">
+                  Gestiona usuarios, proyectos, tickets y pagos
+                </p>
+                <div className="text-slate-500 text-sm flex items-center space-x-2 mt-2">
+                  <Clock size={16} />
+                  <span>Última actualización: {lastUpdate.toLocaleTimeString()}</span>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <NotificationBell />
+                <Button
+                  onClick={refreshData}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Actualizar
+                </Button>
+                <Badge className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                  Admin
+                </Badge>
+              </div>
             </div>
           </div>
-          <NotificationBell />
-          <Button
-            onClick={refreshData}
-            variant="outline"
-            size="sm"
-            className="border-zinc-600 text-zinc-300 hover:bg-zinc-800"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Actualizar
-          </Button>
-          <Badge variant="secondary" className="text-sm">
-            Admin
-          </Badge>
-        </div>
-      </div>
 
-      {/* Métricas principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-zinc-800 border-zinc-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">Usuarios Activos</CardTitle>
-            <Users className="h-4 w-4 text-blue-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{usuariosActivos}</div>
-            <div className="flex items-center space-x-2 mt-1">
-              <span className="text-xs text-green-400">+{usuariosNuevos} este mes</span>
-              <span className="text-xs text-gray-400">({crecimientoUsuarios}%)</span>
+          {/* Cards de Estadísticas Principales */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 px-8 py-6">
+            
+            {/* Card Usuarios */}
+            <div className="relative group cursor-pointer">
+              <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-blue-50 via-blue-25 to-indigo-50">
+                <div className="flex items-center justify-center w-14 h-14 rounded-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                  <Users size={28} />
+                </div>
+                <div className="text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
+                  {usuariosActivos}
+                </div>
+                <div className="text-lg font-semibold text-slate-600 mb-1">
+                  Usuarios Activos
+                </div>
+                <div className="text-sm text-slate-500 flex items-center space-x-1">
+                  <span className="text-green-600 font-semibold">+{usuariosNuevos}</span>
+                  <span>este mes ({crecimientoUsuarios}%)</span>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+              </div>
             </div>
-            <p className="text-xs text-gray-400">Total de usuarios registrados</p>
-          </CardContent>
-        </Card>
 
-        <Card className="bg-zinc-800 border-zinc-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">Proyectos en Curso</CardTitle>
-            <FolderOpen className="h-4 w-4 text-green-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{proyectosEnCurso}</div>
-            <div className="flex items-center space-x-2 mt-1">
-              <span className="text-xs text-blue-400">{proyectosEnDesarrollo} desarrollo</span>
-              <span className="text-xs text-yellow-400">{proyectosPendientes} pendientes</span>
+            {/* Card Proyectos */}
+            <div className="relative group cursor-pointer">
+              <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-emerald-50 via-emerald-25 to-teal-50">
+                <div className="flex items-center justify-center w-14 h-14 rounded-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+                  <FolderOpen size={28} />
+                </div>
+                <div className="text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
+                  {proyectosEnCurso}
+                </div>
+                <div className="text-lg font-semibold text-slate-600 mb-1">
+                  Proyectos en Curso
+                </div>
+                <div className="text-sm text-slate-500 flex items-center space-x-1">
+                  <span className="text-blue-600 font-semibold">{proyectosEnDesarrollo}</span>
+                  <span>desarrollo, </span>
+                  <span className="text-yellow-600 font-semibold">{proyectosPendientes}</span>
+                  <span>pendientes</span>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+              </div>
             </div>
-            <p className="text-xs text-gray-400">Tasa: {tasaCompletacionProyectos}% completados</p>
-          </CardContent>
-        </Card>
 
-        <Card className="bg-zinc-800 border-zinc-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">Tickets Abiertos</CardTitle>
-            <Ticket className="h-4 w-4 text-yellow-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{ticketsAbiertos}</div>
-            <div className="flex items-center space-x-2 mt-1">
-              <span className="text-xs text-red-400">{ticketsUrgentes} urgentes</span>
-              <span className="text-xs text-blue-400">{ticketsEnProgreso} en progreso</span>
+            {/* Card Tickets */}
+            <div className="relative group cursor-pointer">
+              <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-amber-50 via-amber-25 to-orange-50">
+                <div className="flex items-center justify-center w-14 h-14 rounded-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-amber-500 to-amber-600 text-white">
+                  <Ticket size={28} />
+                </div>
+                <div className="text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
+                  {ticketsAbiertos}
+                </div>
+                <div className="text-lg font-semibold text-slate-600 mb-1">
+                  Tickets Abiertos
+                </div>
+                <div className="text-sm text-slate-500 flex items-center space-x-1">
+                  <span className="text-red-600 font-semibold">{ticketsUrgentes}</span>
+                  <span>urgentes, </span>
+                  <span className="text-blue-600 font-semibold">{ticketsEnProgreso}</span>
+                  <span>en progreso</span>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+              </div>
             </div>
-            <p className="text-xs text-gray-400">Tasa: {tasaResolucionTickets}% resueltos</p>
-          </CardContent>
-        </Card>
 
-        <Card className="bg-zinc-800 border-zinc-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">Ingresos Totales</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">${ingresosTotales.toLocaleString()}</div>
-            <div className="flex items-center space-x-2 mt-1">
-              <span className="text-xs text-green-400">${ingresosEsteMes.toLocaleString()} este mes</span>
+            {/* Card Ingresos */}
+            <div className="relative group cursor-pointer">
+              <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-violet-50 via-violet-25 to-purple-50">
+                <div className="flex items-center justify-center w-14 h-14 rounded-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-violet-500 to-violet-600 text-white">
+                  <DollarSign size={28} />
+                </div>
+                <div className="text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
+                  ${ingresosTotales.toLocaleString()}
+                </div>
+                <div className="text-lg font-semibold text-slate-600 mb-1">
+                  Ingresos Totales
+                </div>
+                <div className="text-sm text-slate-500 flex items-center space-x-1">
+                  <span className="text-green-600 font-semibold">${ingresosEsteMes.toLocaleString()}</span>
+                  <span>este mes</span>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+              </div>
             </div>
-            <p className="text-xs text-gray-400">Total de pagos</p>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
 
-      {/* Contenido principal */}
-      <div className="space-y-6">
+          {/* Contenido Principal */}
+          <div className="px-8 py-6 space-y-6">
 
-        {activeSection === 'dashboard' && (
-          <div className="grid grid-cols-1 gap-6">
-            <div>
-              <Card className="bg-zinc-800 border-zinc-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Resumen General</CardTitle>
-                  <CardDescription className="text-gray-400">
+            {activeSection === 'dashboard' && (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                
+                {/* Card Estadísticas Rápidas */}
+                <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50">
+                  <div className="text-2xl font-bold text-slate-800 mb-2 flex items-center space-x-3">
+                    <TrendingUp size={24} className="text-blue-600" />
+                    <span>Estadísticas Rápidas</span>
+                  </div>
+                  <p className="text-slate-500 text-base mb-8">
                     Vista general de la actividad del sistema
+                  </p>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between py-4 border-b border-slate-100 last:border-b-0 group hover:bg-slate-50 rounded-lg transition-all duration-200 px-4">
+                      <span className="text-slate-600 font-medium flex items-center space-x-3">
+                        <Users size={16} className="text-blue-500" />
+                        <span>Usuarios totales:</span>
+                      </span>
+                      <Badge className="px-5 py-3 rounded-2xl text-base font-bold transition-all duration-200 bg-blue-500 text-white shadow-lg group-hover:bg-blue-600 group-hover:scale-105">
+                        {usuariosActivos}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between py-4 border-b border-slate-100 last:border-b-0 group hover:bg-slate-50 rounded-lg transition-all duration-200 px-4">
+                      <span className="text-slate-600 font-medium flex items-center space-x-3">
+                        <Users size={16} className="text-green-500" />
+                        <span>Nuevos este mes:</span>
+                      </span>
+                      <Badge className="px-5 py-3 rounded-2xl text-base font-bold transition-all duration-200 bg-emerald-500 text-white shadow-lg group-hover:bg-emerald-600 group-hover:scale-105">
+                        +{usuariosNuevos}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between py-4 border-b border-slate-100 last:border-b-0 group hover:bg-slate-50 rounded-lg transition-all duration-200 px-4">
+                      <span className="text-slate-600 font-medium flex items-center space-x-3">
+                        <FolderOpen size={16} className="text-emerald-500" />
+                        <span>Proyectos activos:</span>
+                      </span>
+                      <Badge className="px-5 py-3 rounded-2xl text-base font-bold transition-all duration-200 bg-emerald-500 text-white shadow-lg group-hover:bg-emerald-600 group-hover:scale-105">
+                        {proyectosEnCurso}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between py-4 border-b border-slate-100 last:border-b-0 group hover:bg-slate-50 rounded-lg transition-all duration-200 px-4">
+                      <span className="text-slate-600 font-medium flex items-center space-x-3">
+                        <CheckCircle size={16} className="text-green-500" />
+                        <span>Tasa éxito:</span>
+                      </span>
+                      <Badge className="px-5 py-3 rounded-2xl text-base font-bold transition-all duration-200 bg-green-500 text-white shadow-lg group-hover:bg-green-600 group-hover:scale-105">
+                        {tasaCompletacionProyectos}%
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between py-4 border-b border-slate-100 last:border-b-0 group hover:bg-slate-50 rounded-lg transition-all duration-200 px-4">
+                      <span className="text-slate-600 font-medium flex items-center space-x-3">
+                        <Ticket size={16} className="text-amber-500" />
+                        <span>Tickets abiertos:</span>
+                      </span>
+                      <Badge className="px-5 py-3 rounded-2xl text-base font-bold transition-all duration-200 bg-amber-500 text-white shadow-lg group-hover:bg-amber-600 group-hover:scale-105">
+                        {ticketsAbiertos}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between py-4 border-b border-slate-100 last:border-b-0 group hover:bg-slate-50 rounded-lg transition-all duration-200 px-4">
+                      <span className="text-slate-600 font-medium flex items-center space-x-3">
+                        <AlertCircle size={16} className="text-red-500" />
+                        <span>Urgentes:</span>
+                      </span>
+                      <Badge className="px-5 py-3 rounded-2xl text-base font-bold transition-all duration-200 bg-red-500 text-white shadow-lg group-hover:bg-red-600 group-hover:scale-105">
+                        {ticketsUrgentes}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between py-4 border-b border-slate-100 last:border-b-0 group hover:bg-slate-50 rounded-lg transition-all duration-200 px-4">
+                      <span className="text-slate-600 font-medium flex items-center space-x-3">
+                        <DollarSign size={16} className="text-violet-500" />
+                        <span>Ingresos totales:</span>
+                      </span>
+                      <Badge className="px-5 py-3 rounded-2xl text-base font-bold transition-all duration-200 bg-violet-500 text-white shadow-lg group-hover:bg-violet-600 group-hover:scale-105">
+                        ${ingresosTotales.toLocaleString()}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between py-4 border-b border-slate-100 last:border-b-0 group hover:bg-slate-50 rounded-lg transition-all duration-200 px-4">
+                      <span className="text-slate-600 font-medium flex items-center space-x-3">
+                        <Calendar size={16} className="text-blue-500" />
+                        <span>Este mes:</span>
+                      </span>
+                      <Badge className="px-5 py-3 rounded-2xl text-base font-bold transition-all duration-200 bg-blue-500 text-white shadow-lg group-hover:bg-blue-600 group-hover:scale-105">
+                        ${ingresosEsteMes.toLocaleString()}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card Acciones Rápidas */}
+                <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50">
+                  <div className="text-2xl font-bold text-slate-800 mb-2 flex items-center space-x-3">
+                    <Zap size={24} className="text-amber-600" />
+                    <span>Acciones Rápidas</span>
+                  </div>
+                  <p className="text-slate-500 text-base mb-8">
+                    Acceso directo a las funciones principales
+                  </p>
+                  <div className="space-y-10">
+                                         <Button 
+                       variant="outline" 
+                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
+                       onClick={() => {
+                         setActiveSection('usuarios');
+                         window.location.hash = 'usuarios';
+                       }}
+                     >
+                       <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-blue-100 text-blue-600 group-hover:bg-blue-500 group-hover:text-white mr-6">
+                         <Users size={28} />
+                       </div>
+                       <span className="text-slate-700 font-bold text-lg group-hover:text-slate-900 transition-colors duration-300">
+                         Gestionar Usuarios
+                       </span>
+                       <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-blue-500 text-white shadow-lg group-hover:bg-blue-600 group-hover:scale-105">
+                         {usuariosActivos}
+                       </Badge>
+                     </Button>
+                     <Button 
+                       variant="outline" 
+                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
+                       onClick={() => {
+                         setActiveSection('proyectos');
+                         window.location.hash = 'proyectos';
+                       }}
+                     >
+                       <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-emerald-100 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white mr-6">
+                         <FolderOpen size={28} />
+                       </div>
+                       <span className="text-slate-700 font-bold text-lg group-hover:text-slate-900 transition-colors duration-300">
+                         Ver Proyectos
+                       </span>
+                       <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-emerald-500 text-white shadow-lg group-hover:bg-emerald-600 group-hover:scale-105">
+                         {proyectosEnCurso}
+                       </Badge>
+                     </Button>
+                     <Button 
+                       variant="outline" 
+                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
+                       onClick={() => {
+                         setActiveSection('tickets');
+                         window.location.hash = 'tickets';
+                       }}
+                     >
+                       <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-amber-100 text-amber-600 group-hover:bg-amber-500 group-hover:text-white mr-6">
+                         <Ticket size={28} />
+                       </div>
+                       <span className="text-slate-700 font-bold text-lg group-hover:text-slate-900 transition-colors duration-300">
+                         Revisar Tickets
+                       </span>
+                       <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-amber-500 text-white shadow-lg group-hover:bg-amber-600 group-hover:scale-105">
+                         {ticketsAbiertos}
+                       </Badge>
+                     </Button>
+                     <Button 
+                       variant="outline" 
+                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
+                       onClick={() => {
+                         setActiveSection('pagos');
+                         window.location.hash = 'pagos';
+                       }}
+                     >
+                       <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-violet-100 text-violet-600 group-hover:bg-violet-500 group-hover:text-white mr-6">
+                         <CreditCard size={28} />
+                       </div>
+                       <span className="text-slate-700 font-bold text-lg group-hover:text-slate-900 transition-colors duration-300">
+                         Gestionar Pagos
+                       </span>
+                       <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-violet-500 text-white shadow-lg group-hover:bg-violet-600 group-hover:scale-105">
+                         {pagos.length}
+                       </Badge>
+                     </Button>
+                     <Button 
+                       variant="outline" 
+                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
+                       onClick={() => {
+                         setActiveSection('advanced-analytics');
+                         window.location.hash = 'advanced-analytics';
+                       }}
+                     >
+                       <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-indigo-100 text-indigo-600 group-hover:bg-indigo-500 group-hover:text-white mr-6">
+                         <BarChart3 size={28} />
+                       </div>
+                       <span className="text-slate-700 font-bold text-lg group-hover:text-slate-900 transition-colors duration-300">
+                         Analytics Avanzado
+                       </span>
+                       <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-indigo-500 text-white shadow-lg group-hover:bg-indigo-600 group-hover:scale-105">
+                         <BarChart3 size={16} />
+                       </Badge>
+                     </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Resto de las secciones mantienen su funcionalidad pero con diseño moderno */}
+            {activeSection === 'usuarios' && (
+              <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50">
+                <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-2xl">
+                  <CardTitle className="text-2xl font-bold text-slate-800 flex items-center space-x-3">
+                    <Users size={24} className="text-blue-600" />
+                    <span>Gestión de Usuarios</span>
+                  </CardTitle>
+                  <CardDescription className="text-slate-600 text-base">
+                    Administra usuarios del sistema y sus roles
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-4">Estadísticas Rápidas</h3>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-300">Usuarios totales:</span>
-                          <Badge variant="secondary">{usuariosActivos}</Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-300">Nuevos este mes:</span>
-                          <Badge variant="default">+{usuariosNuevos}</Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-300">Proyectos activos:</span>
-                          <Badge variant="secondary">{proyectosEnCurso}</Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-300">Tasa éxito:</span>
-                          <Badge variant="outline">{tasaCompletacionProyectos}%</Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-300">Tickets abiertos:</span>
-                          <Badge variant="destructive">{ticketsAbiertos}</Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-300">Urgentes:</span>
-                          <Badge variant="destructive">{ticketsUrgentes}</Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-300">Ingresos totales:</span>
-                          <Badge variant="secondary">${ingresosTotales.toLocaleString()}</Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-300">Este mes:</span>
-                          <Badge variant="default">${ingresosEsteMes.toLocaleString()}</Badge>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-4">Acciones Rápidas</h3>
-                      <div className="space-y-3">
-                        <Button 
-                          variant="outline" 
-                          className="w-full justify-start"
-                          onClick={() => {
-                            setActiveSection('usuarios');
-                            window.location.hash = 'usuarios';
-                          }}
-                        >
-                          <Users className="h-4 w-4 mr-2" />
-                          Gestionar Usuarios
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className="w-full justify-start"
-                          onClick={() => {
-                            setActiveSection('proyectos');
-                            window.location.hash = 'proyectos';
-                          }}
-                        >
-                          <FolderOpen className="h-4 w-4 mr-2" />
-                          Ver Proyectos
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className="w-full justify-start"
-                          onClick={() => {
-                            setActiveSection('tickets');
-                            window.location.hash = 'tickets';
-                          }}
-                        >
-                          <Ticket className="h-4 w-4 mr-2" />
-                          Revisar Tickets
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className="w-full justify-start"
-                          onClick={() => {
-                            setActiveSection('pagos');
-                            window.location.hash = 'pagos';
-                          }}
-                        >
-                          <CreditCard className="h-4 w-4 mr-2" />
-                          Gestionar Pagos
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className="w-full justify-start"
-                          onClick={() => {
-                            setActiveSection('advanced-analytics');
-                            window.location.hash = 'advanced-analytics';
-                          }}
-                        >
-                          <BarChart className="h-4 w-4 mr-2" />
-                          Analytics Avanzado
-                        </Button>
-
-                        <Button 
-                          variant="outline" 
-                          className="w-full justify-start"
-                          onClick={() => {
-                            setActiveSection('automation');
-                            window.location.hash = 'automation';
-                          }}
-                        >
-                          <Zap className="h-4 w-4 mr-2" />
-                          Sistema de Automatización
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
-
-        {activeSection === 'usuarios' && (
-          <Card className="bg-zinc-800 border-zinc-700">
-            <CardHeader>
-              <CardTitle className="text-white">Gestión de Usuarios</CardTitle>
-              <CardDescription className="text-gray-400">
-                Administra los usuarios del sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {usuarios.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-400">No hay usuarios registrados</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
                     {usuarios.map((usuario) => (
-                      <div key={usuario.id} className="flex items-center justify-between p-4 bg-zinc-700 rounded-lg">
+                      <div key={usuario.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-all duration-200">
                         <div className="flex items-center space-x-4">
-                          <div className="h-10 w-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                            {usuario.full_name?.charAt(0) || usuario.email?.charAt(0)}
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                            {usuario.full_name?.charAt(0) || usuario.email?.charAt(0) || 'U'}
                           </div>
                           <div>
-                            <p className="text-white font-medium">{usuario.full_name || 'Sin nombre'}</p>
-                            <p className="text-gray-400 text-sm">{usuario.email}</p>
+                            <div className="font-semibold text-slate-800">{usuario.full_name || 'Sin nombre'}</div>
+                            <div className="text-sm text-slate-500">{usuario.email}</div>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={usuario.role === 'admin' ? 'destructive' : 'secondary'}>
-                            {usuario.role}
+                        <div className="flex items-center space-x-3">
+                          <Badge variant={usuario.role === 'admin' ? 'default' : 'secondary'}>
+                            {usuario.role || 'cliente'}
                           </Badge>
-                          <Select
-                            value={usuario.role}
-                            onValueChange={(value) => updateUserRole(usuario.id, value)}
-                          >
+                          <Select value={usuario.role || 'cliente'} onValueChange={(value) => updateUserRole(usuario.id, value)}>
                             <SelectTrigger className="w-32">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="user">Usuario</SelectItem>
                               <SelectItem value="admin">Admin</SelectItem>
+                              <SelectItem value="cliente">Cliente</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                </CardContent>
+              </Card>
+            )}
 
-        {activeSection === 'proyectos' && (
-          <ProjectsManagement />
-        )}
+            {activeSection === 'proyectos' && (
+              <ProjectsManagement />
+            )}
 
-        {activeSection === 'tickets' && (
-          <AdvancedTicketManager 
-            tickets={tickets}
-            updateTicketStatus={updateTicketStatus}
-            updateUserRole={updateUserRole}
-            refreshData={loadData}
-            lastUpdate={lastUpdate}
-          />
-        )}
+            {activeSection === 'tickets' && (
+              <AdvancedTicketManager />
+            )}
 
-        {activeSection === 'pagos' && (
-          <Card className="bg-zinc-800 border-zinc-700">
-            <CardHeader>
-              <CardTitle className="text-white">Gestión de Pagos</CardTitle>
-              <CardDescription className="text-gray-400">
-                Administra los pagos del sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {pagos.length === 0 ? (
-                  <div className="text-center py-8">
-                    <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-400">No hay pagos registrados</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
+            {activeSection === 'pagos' && (
+              <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50">
+                <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-2xl">
+                  <CardTitle className="text-2xl font-bold text-slate-800 flex items-center space-x-3">
+                    <CreditCard size={24} className="text-violet-600" />
+                    <span>Gestión de Pagos</span>
+                  </CardTitle>
+                  <CardDescription className="text-slate-600 text-base">
+                    Administra pagos y transacciones del sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
                     {pagos.map((pago) => (
-                      <div key={pago.id} className="flex items-center justify-between p-4 bg-zinc-700 rounded-lg">
+                      <div key={pago.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-all duration-200">
                         <div className="flex items-center space-x-4">
-                          <div className="h-10 w-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-full flex items-center justify-center text-white">
-                            <DollarSign className="h-5 w-5" />
+                          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-full flex items-center justify-center text-white font-bold">
+                            $
                           </div>
                           <div>
-                            <p className="text-white font-medium">${pago.amount || 0}</p>
-                            <p className="text-gray-400 text-sm">{pago.description || 'Sin descripción'}</p>
+                            <div className="font-semibold text-slate-800">${pago.amount}</div>
+                            <div className="text-sm text-slate-500">{pago.description || 'Sin descripción'}</div>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={pago.status === 'completed' ? 'default' : 'secondary'}>
+                        <div className="flex items-center space-x-3">
+                          <Badge variant={pago.status === 'completed' ? 'default' : pago.status === 'pending' ? 'secondary' : 'destructive'}>
                             {pago.status || 'pending'}
                           </Badge>
-                          <Select
-                            value={pago.status || 'pending'}
+                          <Select 
+                            value={pago.status || 'pending'} 
                             onValueChange={(value) => updatePaymentStatus(pago.id, value)}
                           >
                             <SelectTrigger className="w-32">
@@ -640,86 +732,87 @@ export default function Admin() {
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                </CardContent>
+              </Card>
+            )}
 
-        {activeSection === 'advanced-analytics' && (
-          <ExecutiveCharts 
-            refreshData={loadData}
-            lastUpdate={lastUpdate}
-          />
-        )}
+            {activeSection === 'advanced-analytics' && (
+              <ExecutiveCharts 
+                refreshData={loadData}
+                lastUpdate={lastUpdate}
+              />
+            )}
 
-        {activeSection === 'automation' && (
-          <AutomationSystem />
-        )}
+            {activeSection === 'automation' && (
+              <AutomationSystem />
+            )}
 
-        {activeSection === 'notifications' && (
-          <NotificationsManager />
-        )}
+            {activeSection === 'notifications' && (
+              <NotificationsManager />
+            )}
 
-        {activeSection === 'settings' && (
-          <Card className="bg-zinc-800 border-zinc-700">
-            <CardHeader>
-              <CardTitle className="text-white">Configuración del Sistema</CardTitle>
-              <CardDescription className="text-gray-400">
-                Configura los parámetros generales del sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="bg-zinc-700 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-white mb-4">Configuración General</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-white font-medium">Nombre del Sistema</label>
-                      <Input 
-                        defaultValue="TuWebAI Dashboard" 
-                        className="mt-2 bg-zinc-600 border-zinc-500 text-white"
-                      />
+            {activeSection === 'settings' && (
+              <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50">
+                <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-2xl">
+                  <CardTitle className="text-2xl font-bold text-slate-800 flex items-center space-x-3">
+                    <Cog size={24} className="text-slate-600" />
+                    <span>Configuración del Sistema</span>
+                  </CardTitle>
+                  <CardDescription className="text-slate-600 text-base">
+                    Configura los parámetros generales del sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-6">
+                    <div className="bg-slate-50 p-6 rounded-xl">
+                      <h3 className="text-lg font-semibold text-slate-800 mb-4">Configuración General</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-slate-700 font-medium">Nombre del Sistema</label>
+                          <Input 
+                            defaultValue="TuWebAI Dashboard" 
+                            className="mt-2 bg-white border-slate-300 text-slate-800"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-slate-700 font-medium">Zona Horaria</label>
+                          <Select defaultValue="utc">
+                            <SelectTrigger className="mt-2 bg-white border-slate-300 text-slate-800">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="utc">UTC</SelectItem>
+                              <SelectItem value="est">EST</SelectItem>
+                              <SelectItem value="pst">PST</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="text-slate-700 font-medium">Idioma</label>
+                          <Select defaultValue="es">
+                            <SelectTrigger className="mt-2 bg-white border-slate-300 text-slate-800">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="es">Español</SelectItem>
+                              <SelectItem value="en">English</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-white font-medium">Zona Horaria</label>
-                      <Select defaultValue="utc">
-                        <SelectTrigger className="mt-2 bg-zinc-600 border-zinc-500 text-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="utc">UTC</SelectItem>
-                          <SelectItem value="est">EST</SelectItem>
-                          <SelectItem value="pst">PST</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-white font-medium">Idioma</label>
-                      <Select defaultValue="es">
-                        <SelectTrigger className="mt-2 bg-zinc-600 border-zinc-500 text-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="es">Español</SelectItem>
-                          <SelectItem value="en">English</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="flex justify-end">
+                      <Button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        Guardar Configuración
+                      </Button>
                     </div>
                   </div>
-                </div>
-                <div className="flex justify-end">
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                    Guardar Configuración
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
       </div>
-
-
     </div>
   );
 } 
