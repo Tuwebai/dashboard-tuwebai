@@ -265,20 +265,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           try {
             // Obtener datos actualizados del usuario (incluyendo avatar_url)
             const updatedUserData = await userService.getUserById(supabaseUser.id);
-            console.log('🖼️ Datos del usuario desde BD:', updatedUserData);
-            
             if (updatedUserData) {
               // Mapear avatar_url a avatar para compatibilidad
               if (updatedUserData.avatar_url) {
                 userData.avatar = updatedUserData.avatar_url;
-                console.log('✅ Avatar cargado desde BD:', updatedUserData.avatar_url);
-              } else {
-                console.log('❌ No hay avatar_url en la BD');
               }
-              
               // Si no hay avatar en DB, sincronizarlo
-              if (!updatedUserData.avatar_url && supabaseUser.email) {
-                console.log('🔄 Sincronizando avatar para:', supabaseUser.email);
+              else if (!updatedUserData.avatar_url && supabaseUser.email) {
                 const { realAvatarService } = await import('@/lib/avatarProviders');
                 await realAvatarService.syncUserAvatar(supabaseUser.email);
                 
@@ -289,7 +282,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                   // Mapear avatar_url a avatar
                   if (finalUserData.avatar_url) {
                     userData.avatar = finalUserData.avatar_url;
-                    console.log('✅ Avatar sincronizado:', finalUserData.avatar_url);
                   }
                   setCachedData(cacheKey, userData, 10 * 60 * 1000);
                 }
