@@ -25,6 +25,16 @@ interface TopbarProps {
   onRefreshData?: () => void;
   lastUpdate?: Date;
   isAdmin?: boolean;
+  isClientDashboard?: boolean;
+  clientDashboardStats?: {
+    totalProjects: number;
+    totalComments: number;
+    inProgressProjects: number;
+    completedProjects: number;
+  };
+  onClientRefresh?: () => void;
+  onClientSearch?: (term: string) => void;
+  clientSearchTerm?: string;
 }
 
 export default function Topbar({ 
@@ -32,7 +42,12 @@ export default function Topbar({
   showMobileMenu = false, 
   onRefreshData,
   lastUpdate,
-  isAdmin = false
+  isAdmin = false,
+  isClientDashboard = false,
+  clientDashboardStats,
+  onClientRefresh,
+  onClientSearch,
+  clientSearchTerm = ''
 }: TopbarProps) {
   const { t } = useTranslation();
   const { user, projects, logout } = useApp();
@@ -40,10 +55,11 @@ export default function Topbar({
   const location = useLocation();
 
   const isAdminPage = location.pathname === '/admin';
+  const isClientDashboardPage = location.pathname === '/dashboard';
 
   return (
-    <header className={`${isAdminPage ? 'h-auto' : 'h-16 sm:h-18'} bg-white border-b border-slate-200 shadow-sm`}>
-      <div className={`flex items-center justify-between px-6 sm:px-8 ${isAdminPage ? 'py-6' : 'h-full'}`}>
+    <header className={`${isAdminPage || isClientDashboardPage ? 'h-auto' : 'h-16 sm:h-18'} bg-white border-b border-slate-200 shadow-sm`}>
+      <div className={`flex items-center justify-between px-6 sm:px-8 ${isAdminPage || isClientDashboardPage ? 'py-6' : 'h-full'}`}>
         <div className="flex items-center gap-6">
           {/* Mobile menu button */}
           {showMobileMenu && (
@@ -80,6 +96,22 @@ export default function Topbar({
                 </div>
               )}
             </div>
+          ) : isClientDashboardPage ? (
+            /* Client Dashboard Header */
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-slate-800">
+                Mi Dashboard
+              </h1>
+              <p className="text-slate-600 text-base font-medium mt-1">
+                Gestiona y revisa el progreso de tus proyectos web
+              </p>
+              {lastUpdate && (
+                <div className="text-slate-500 text-sm flex items-center space-x-2 mt-2">
+                  <Clock size={16} />
+                  <span>Última actualización: {lastUpdate.toLocaleTimeString()}</span>
+                </div>
+              )}
+            </div>
           ) : (
             /* Regular Search */
             <div className="relative max-w-xs sm:max-w-md w-full">
@@ -93,7 +125,7 @@ export default function Topbar({
               </TooltipProvider>
               <Input
                 placeholder="Buscar proyectos..."
-                className="pl-12 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-500 text-sm sm:text-base rounded-lg focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300 hover:bg-slate-100"
+                className="pl-12 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-500 text-sm sm:text-base rounded-lg focus:ring-2 focus:ring-blue-500/50 focus:border-border transition-all duration-300 hover:bg-slate-100"
               />
             </div>
           )}
@@ -107,6 +139,43 @@ export default function Topbar({
               {onRefreshData && (
                 <Button
                   onClick={onRefreshData}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Actualizar
+                </Button>
+              )}
+            </div>
+          ) : isClientDashboardPage ? (
+            /* Client Dashboard Actions */
+            <div className="flex items-center space-x-4">
+              {/* Barra de búsqueda */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+                <Input
+                  placeholder="Buscar proyectos..."
+                  value={clientSearchTerm}
+                  onChange={(e) => onClientSearch?.(e.target.value)}
+                  className="pl-10 w-64 bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400"
+                />
+              </div>
+              
+              {/* Notificación */}
+              <div className="relative">
+                <Button variant="ghost" size="sm" className="relative p-2">
+                  <Bell className="h-5 w-5 text-slate-600" />
+                  {clientDashboardStats && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {clientDashboardStats.totalComments > 99 ? '99+' : clientDashboardStats.totalComments}
+                    </span>
+                  )}
+                </Button>
+              </div>
+              
+              {/* Botón actualizar */}
+              {onClientRefresh && (
+                <Button
+                  onClick={onClientRefresh}
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
