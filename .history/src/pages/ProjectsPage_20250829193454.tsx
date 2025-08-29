@@ -408,21 +408,6 @@ export default function ProjectsPage() {
                         <p className="text-slate-600 text-sm line-clamp-2 mb-3">
                           {project.description || 'Sin descripción'}
                         </p>
-                        
-                        {/* Información del creador del proyecto */}
-                        {project.created_by && projectCreators[project.created_by] && (
-                          <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200/50 mb-3">
-                            <User className="h-4 w-4 text-slate-500" />
-                            <div className="flex flex-col">
-                              <span className="text-xs font-medium text-slate-700">
-                                Creado por: {projectCreators[project.created_by].full_name}
-                              </span>
-                              <span className="text-xs text-slate-500">
-                                {projectCreators[project.created_by].email}
-                              </span>
-                            </div>
-                          </div>
-                        )}
                       </div>
                       <div className="flex gap-1 ml-2">
                         <TooltipProvider>

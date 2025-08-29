@@ -264,7 +264,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             const updatedUserData = await userService.getUserById(supabaseUser.id);
             if (updatedUserData) {
               // Usar el avatar_url de la base de datos si existe
-              if (updatedUserData.avatar_url) {
+              if (updatedUserData.avatar_url && !userData.avatar) {
                 userData.avatar = updatedUserData.avatar_url;
               }
               // Si no hay avatar en DB, sincronizarlo

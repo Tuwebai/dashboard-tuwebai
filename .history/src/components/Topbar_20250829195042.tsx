@@ -135,25 +135,16 @@ export default function Topbar({
           {/* Admin Panel Actions */}
           {isAdminPage ? (
             <div className="flex items-center space-x-4">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={onRefreshData}
-                      className="bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-all duration-300"
-                    >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Actualizar
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Recargar datos desde la base de datos</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
               <NotificationBell />
+              {onRefreshData && (
+                <Button
+                  onClick={onRefreshData}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Actualizar
+                </Button>
+              )}
             </div>
           ) : isClientDashboardPage ? (
             /* Client Dashboard Actions */
@@ -214,7 +205,6 @@ export default function Topbar({
                     <AvatarImage 
                       src={user.avatar} 
                       alt={`Avatar de ${user.full_name || user.email}`}
-                      className="object-cover"
                     />
                   ) : null}
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-lg">

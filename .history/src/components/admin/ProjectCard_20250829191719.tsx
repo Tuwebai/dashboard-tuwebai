@@ -104,22 +104,23 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     const loadCreatorInfo = async () => {
       // Validar que el proyecto tenga created_by
       if (!project.created_by || project.created_by.trim() === '') {
-        setCreatorInfo({
-          full_name: 'Sin información de creador',
-          email: 'sin-creador@example.com'
-        });
+        console.log(`Proyecto ${project.id} no tiene created_by válido`);
+        setCreatorInfo(null);
         return;
       }
 
       try {
+        console.log(`Cargando creador para proyecto ${project.id}, created_by: ${project.created_by}`);
         const creator = await userService.getUserById(project.created_by);
         
         if (creator && creator.id) {
+          console.log(`Creador encontrado:`, creator);
           setCreatorInfo({
             full_name: creator.full_name || 'Usuario sin nombre',
             email: creator.email || 'sin-email@example.com'
           });
         } else {
+          console.log(`Creador no encontrado para ID: ${project.created_by}`);
           setCreatorInfo({
             full_name: 'Usuario no encontrado',
             email: 'no-encontrado@example.com'
@@ -149,7 +150,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
   return (
     <Card 
-      className="bg-white border-slate-200 hover:border-slate-300 transition-colors cursor-pointer group shadow-sm hover:shadow-md flex flex-col h-full"
+      className="bg-white border-slate-200 hover:border-slate-300 transition-colors cursor-pointer group shadow-sm hover:shadow-md"
       onClick={(e) => {
         // Evitar que se active cuando se hace click en botones
         if (!(e.target as HTMLElement).closest('button')) {
@@ -215,7 +216,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4 flex-1">
+      <CardContent className="space-y-4">
         {/* Descripción */}
         {project.description && (
           <p className="text-slate-600 text-sm leading-relaxed">
@@ -302,10 +303,24 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             </a>
           </div>
         )}
+
+        {/* Fechas */}
+        <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-200">
+          <div className="flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            <span>Creado: {formatDateSafe(project.created_at)}</span>
+          </div>
+          {project.updated_at !== project.created_at && (
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>Actualizado: {formatDateSafe(project.updated_at)}</span>
+            </div>
+          )}
+        </div>
       </CardContent>
 
-      {/* Footer fijo con separador - SIEMPRE abajo */}
-      <div className="border-t border-slate-200 bg-slate-50/50 mt-auto">
+      {/* Footer fijo con separador */}
+      <div className="border-t border-slate-200 bg-slate-50/50">
         <div className="px-6 py-3">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <div className="flex items-center gap-1">

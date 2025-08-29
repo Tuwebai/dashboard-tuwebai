@@ -102,8 +102,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   // Cargar información del creador del proyecto
   useEffect(() => {
     const loadCreatorInfo = async () => {
+      // Debug: Mostrar toda la información del proyecto
+      console.log(`Proyecto ${project.id} - Datos completos:`, project);
+      
       // Validar que el proyecto tenga created_by
       if (!project.created_by || project.created_by.trim() === '') {
+        console.log(`Proyecto ${project.id} no tiene created_by válido:`, project.created_by);
         setCreatorInfo({
           full_name: 'Sin información de creador',
           email: 'sin-creador@example.com'
@@ -112,14 +116,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       }
 
       try {
+        console.log(`Cargando creador para proyecto ${project.id}, created_by: ${project.created_by}`);
         const creator = await userService.getUserById(project.created_by);
         
         if (creator && creator.id) {
+          console.log(`Creador encontrado:`, creator);
           setCreatorInfo({
             full_name: creator.full_name || 'Usuario sin nombre',
             email: creator.email || 'sin-email@example.com'
           });
         } else {
+          console.log(`Creador no encontrado para ID: ${project.created_by}`);
           setCreatorInfo({
             full_name: 'Usuario no encontrado',
             email: 'no-encontrado@example.com'

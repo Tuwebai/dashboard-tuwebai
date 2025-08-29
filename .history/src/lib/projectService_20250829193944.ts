@@ -104,13 +104,6 @@ export const projectService = {
         throw new Error(`Datos del proyecto inválidos: ${validation.errors.join(', ')}`);
       }
 
-      // VALIDACIÓN CRÍTICA: Asegurar que created_by esté presente y sea válido
-      if (!projectData.created_by || projectData.created_by.trim() === '') {
-        throw new Error('El campo created_by es requerido y debe ser un ID de usuario válido');
-      }
-
-      console.log('🔐 Creando proyecto con created_by:', projectData.created_by);
-
       // Agregar timestamps y estado por defecto
       const projectToCreate = {
         ...projectData,

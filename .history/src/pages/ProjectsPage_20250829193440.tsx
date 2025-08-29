@@ -84,63 +84,6 @@ export default function ProjectsPage() {
     };
   }, []);
 
-  // Función para cargar información de los creadores de proyectos
-  const loadProjectCreators = useCallback(async (projects: any[]) => {
-    try {
-      const creators: Record<string, { full_name: string; email: string }> = {};
-      
-      for (const project of projects) {
-        // Validar que el proyecto tenga created_by válido
-        if (!project.created_by || project.created_by.trim() === '') {
-          console.log(`Proyecto ${project.id} no tiene created_by válido`);
-          continue;
-        }
-
-        // Evitar cargar el mismo creador múltiples veces
-        if (creators[project.created_by]) {
-          continue;
-        }
-
-        try {
-          console.log(`Cargando creador para proyecto ${project.id}, created_by: ${project.created_by}`);
-          const creator = await userService.getUserById(project.created_by);
-          
-          if (creator && creator.id) {
-            console.log(`Creador encontrado:`, creator);
-            creators[project.created_by] = {
-              full_name: creator.full_name || 'Usuario sin nombre',
-              email: creator.email || 'sin-email@example.com'
-            };
-          } else {
-            console.log(`Creador no encontrado para ID: ${project.created_by}`);
-            creators[project.created_by] = {
-              full_name: 'Usuario no encontrado',
-              email: 'no-encontrado@example.com'
-            };
-          }
-        } catch (error) {
-          console.warn(`Error cargando creador del proyecto ${project.id}:`, error);
-          creators[project.created_by] = {
-            full_name: 'Error al cargar',
-            email: 'error@example.com'
-          };
-        }
-      }
-      
-      console.log('Creadores cargados:', creators);
-      setProjectCreators(creators);
-    } catch (error) {
-      console.error('Error cargando creadores de proyectos:', error);
-    }
-  }, []);
-
-  // Cargar información de creadores cuando cambien los proyectos
-  useEffect(() => {
-    if (visibleProjects.length > 0) {
-      loadProjectCreators(visibleProjects);
-    }
-  }, [visibleProjects, loadProjectCreators]);
-
   // SOLUCIÓN NUCLEAR: Forzar re-renderizado cuando cambie la ruta
   useEffect(() => {
     const handleRouteChange = () => {
@@ -408,21 +351,6 @@ export default function ProjectsPage() {
                         <p className="text-slate-600 text-sm line-clamp-2 mb-3">
                           {project.description || 'Sin descripción'}
                         </p>
-                        
-                        {/* Información del creador del proyecto */}
-                        {project.created_by && projectCreators[project.created_by] && (
-                          <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200/50 mb-3">
-                            <User className="h-4 w-4 text-slate-500" />
-                            <div className="flex flex-col">
-                              <span className="text-xs font-medium text-slate-700">
-                                Creado por: {projectCreators[project.created_by].full_name}
-                              </span>
-                              <span className="text-xs text-slate-500">
-                                {projectCreators[project.created_by].email}
-                              </span>
-                            </div>
-                          </div>
-                        )}
                       </div>
                       <div className="flex gap-1 ml-2">
                         <TooltipProvider>

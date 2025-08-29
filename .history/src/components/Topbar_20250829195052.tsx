@@ -214,7 +214,6 @@ export default function Topbar({
                     <AvatarImage 
                       src={user.avatar} 
                       alt={`Avatar de ${user.full_name || user.email}`}
-                      className="object-cover"
                     />
                   ) : null}
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-lg">

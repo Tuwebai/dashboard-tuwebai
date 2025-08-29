@@ -191,12 +191,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       clearCache();
       
-      console.log('🔄 Recargando proyectos desde la base de datos...');
+      console.log('🔄 REFRESH: Recargando proyectos desde la base de datos...');
       // Recargar proyectos usando Supabase
       const response = await projectService.getProjects();
       const projectData = response?.projects || [];
       
-      console.log(`✅ Proyectos recargados: ${projectData.length} proyectos`);
+      console.log('📊 REFRESH: Proyectos cargados:', projectData.length);
+      console.log('✅ REFRESH: Proyectos con created_by:', projectData.filter(p => p.created_by).length);
+      console.log('❌ REFRESH: Proyectos sin created_by:', projectData.filter(p => !p.created_by).length);
       
       setProjects(projectData as any);
       
@@ -264,7 +266,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             const updatedUserData = await userService.getUserById(supabaseUser.id);
             if (updatedUserData) {
               // Usar el avatar_url de la base de datos si existe
-              if (updatedUserData.avatar_url) {
+              if (updatedUserData.avatar_url && !userData.avatar) {
                 userData.avatar = updatedUserData.avatar_url;
               }
               // Si no hay avatar en DB, sincronizarlo

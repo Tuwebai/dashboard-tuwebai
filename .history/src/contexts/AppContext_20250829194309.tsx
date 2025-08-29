@@ -191,12 +191,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       clearCache();
       
-      console.log('🔄 Recargando proyectos desde la base de datos...');
+      console.log('🔄 REFRESH: Recargando proyectos desde la base de datos...');
       // Recargar proyectos usando Supabase
       const response = await projectService.getProjects();
       const projectData = response?.projects || [];
       
-      console.log(`✅ Proyectos recargados: ${projectData.length} proyectos`);
+      console.log('📊 REFRESH: Proyectos cargados:', projectData.length);
+      console.log('✅ REFRESH: Proyectos con created_by:', projectData.filter(p => p.created_by).length);
+      console.log('❌ REFRESH: Proyectos sin created_by:', projectData.filter(p => !p.created_by).length);
       
       setProjects(projectData as any);
       
@@ -264,7 +266,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             const updatedUserData = await userService.getUserById(supabaseUser.id);
             if (updatedUserData) {
               // Usar el avatar_url de la base de datos si existe
-              if (updatedUserData.avatar_url) {
+              if (updatedUserData.avatar_url && !userData.avatar) {
                 userData.avatar = updatedUserData.avatar_url;
               }
               // Si no hay avatar en DB, sincronizarlo
@@ -337,12 +339,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       
-      // Cargar proyectos desde la base de datos
-      console.log('📊 Cargando proyectos desde la base de datos...');
+      // FORZAR RECARGA DESDE LA BASE DE DATOS
+      console.log('🔄 FORZANDO recarga de proyectos desde la base de datos...');
       const response = await projectService.getProjects();
       const projectData = response?.projects || [];
       
-      console.log(`✅ Proyectos cargados: ${projectData.length} proyectos`);
+      console.log('📊 Proyectos cargados desde BD:', projectData.length);
+      console.log('✅ Proyectos con created_by:', projectData.filter(p => p.created_by).length);
+      console.log('❌ Proyectos sin created_by:', projectData.filter(p => !p.created_by).length);
+      
+      // Mostrar detalles de cada proyecto
+      projectData.forEach(project => {
+        console.log(`Proyecto ${project.id}: created_by = ${project.created_by || 'NULL'}`);
+      });
       
       setProjects(projectData as any);
       
@@ -496,25 +505,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Crear proyecto optimizado
   const createProject = async (projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'ownerEmail'>) => {
-    if (!user) {
-      console.error('❌ No se puede crear proyecto: usuario no autenticado');
-      return;
-    }
+    if (!user) return;
     
     try {
       setLoading(true);
       setError(null);
       
-      // VALIDACIÓN CRÍTICA: Asegurar que el usuario tenga ID válido
-      if (!user.id || user.id.trim() === '') {
-        throw new Error('ID de usuario inválido. No se puede crear el proyecto.');
-      }
-      
-      console.log('👤 Creando proyecto para usuario:', user.email, 'con ID:', user.id);
-      
       const newProject = {
         ...projectData,
-        created_by: user.id, // SIEMPRE usar el ID del usuario autenticado
+        created_by: user.id,
         status: 'development' as const,
         technologies: projectData.technologies || []
       };
