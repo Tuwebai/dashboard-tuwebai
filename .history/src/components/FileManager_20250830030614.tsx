@@ -814,7 +814,8 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
               </div>
               
                              <div className="flex-1 overflow-auto">
-                 {(showFilePreview.type === 'image' || isImageFile(showFilePreview.name)) ? (
+                 {(showFilePreview.type === 'image' || 
+                   /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico)$/i.test(showFilePreview.name)) ? (
                   <div className="flex justify-center">
                     {filePreviewUrl ? (
                       <div className="relative">
@@ -853,7 +854,8 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                         </div>
                       </div>
                     )}
-                                         {!filePreviewUrl && (showFilePreview.type === 'image' || isImageFile(showFilePreview.name)) && (
+                                         {!filePreviewUrl && (showFilePreview.type === 'image' || 
+                       /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico)$/i.test(showFilePreview.name)) && (
                       <div className="flex items-center justify-center h-32 text-slate-500 mt-4">
                         <div className="text-center">
                           <Image className="h-12 w-12 mx-auto mb-2 text-slate-400" />

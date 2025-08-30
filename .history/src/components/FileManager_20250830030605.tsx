@@ -796,7 +796,8 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
         <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[80vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="text-slate-800">Vista previa: {showFilePreview?.name}</DialogTitle>
-                         {(showFilePreview?.type === 'image' || isImageFile(showFilePreview?.name || '')) && (
+                         {(showFilePreview?.type === 'image' || 
+               (showFilePreview?.name && /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico)$/i.test(showFilePreview.name))) && (
                <div className="flex items-center gap-2 text-sm text-slate-600">
                  <div className={`w-2 h-2 rounded-full ${filePreviewUrl ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
                  <span>{filePreviewUrl ? 'Imagen cargada' : 'Cargando imagen...'}</span>
@@ -814,7 +815,8 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
               </div>
               
                              <div className="flex-1 overflow-auto">
-                 {(showFilePreview.type === 'image' || isImageFile(showFilePreview.name)) ? (
+                 {(showFilePreview.type === 'image' || 
+                   /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico)$/i.test(showFilePreview.name)) ? (
                   <div className="flex justify-center">
                     {filePreviewUrl ? (
                       <div className="relative">
@@ -853,7 +855,8 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                         </div>
                       </div>
                     )}
-                                         {!filePreviewUrl && (showFilePreview.type === 'image' || isImageFile(showFilePreview.name)) && (
+                                         {!filePreviewUrl && (showFilePreview.type === 'image' || 
+                       /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico)$/i.test(showFilePreview.name)) && (
                       <div className="flex items-center justify-center h-32 text-slate-500 mt-4">
                         <div className="text-center">
                           <Image className="h-12 w-12 mx-auto mb-2 text-slate-400" />

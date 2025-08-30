@@ -44,13 +44,6 @@ interface FileManagerProps {
 }
 
 export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
-  // Función helper para detectar imágenes por extensión
-  const isImageFile = (fileName: string): boolean => {
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.ico'];
-    const lowerFileName = fileName.toLowerCase();
-    return imageExtensions.some(ext => lowerFileName.endsWith(ext));
-  };
-
   const [files, setFiles] = useState<ProjectFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -265,13 +258,11 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
     setShowFilePreview(file);
     setFilePreviewUrl(''); // Resetear URL previa
     
-    // Usar extensión del archivo como fallback si el tipo no es confiable
-    if (file.type === 'image' || isImageFile(file.name)) {
+    if (file.type === 'image') {
       try {
         console.log('🔄 Iniciando vista previa para:', file.name);
         console.log('📁 Ruta del archivo:', file.path);
         console.log('🏷️ Tipo de archivo:', file.type);
-        console.log('🔍 Detectado como imagen por extensión:', isImageFile(file.name));
         
         const url = await getFilePreviewUrl(file);
         
@@ -303,8 +294,15 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
 
   // Obtener icono del archivo
   const getFileIcon = (file: ProjectFile) => {
+    // Detectar imágenes por extensión del nombre del archivo
+    const isImageByExtension = (fileName: string): boolean => {
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.ico'];
+      const lowerFileName = fileName.toLowerCase();
+      return imageExtensions.some(ext => lowerFileName.endsWith(ext));
+    };
+
     // Usar extensión del archivo como fallback si el tipo no es confiable
-    if (file.type === 'image' || isImageFile(file.name)) {
+    if (file.type === 'image' || isImageByExtension(file.name)) {
       return <Image className="h-6 w-6 text-blue-400" />;
     }
     
@@ -796,12 +794,12 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
         <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[80vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="text-slate-800">Vista previa: {showFilePreview?.name}</DialogTitle>
-                         {(showFilePreview?.type === 'image' || isImageFile(showFilePreview?.name || '')) && (
-               <div className="flex items-center gap-2 text-sm text-slate-600">
-                 <div className={`w-2 h-2 rounded-full ${filePreviewUrl ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                 <span>{filePreviewUrl ? 'Imagen cargada' : 'Cargando imagen...'}</span>
-               </div>
-             )}
+            {showFilePreview?.type === 'image' && (
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <div className={`w-2 h-2 rounded-full ${filePreviewUrl ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                <span>{filePreviewUrl ? 'Imagen cargada' : 'Cargando imagen...'}</span>
+              </div>
+            )}
           </DialogHeader>
           {showFilePreview && (
             <div className="space-y-4">
@@ -813,8 +811,8 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                 </div>
               </div>
               
-                             <div className="flex-1 overflow-auto">
-                 {(showFilePreview.type === 'image' || isImageFile(showFilePreview.name)) ? (
+              <div className="flex-1 overflow-auto">
+                {showFilePreview.type === 'image' ? (
                   <div className="flex justify-center">
                     {filePreviewUrl ? (
                       <div className="relative">
@@ -853,7 +851,7 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                         </div>
                       </div>
                     )}
-                                         {!filePreviewUrl && (showFilePreview.type === 'image' || isImageFile(showFilePreview.name)) && (
+                    {!filePreviewUrl && showFilePreview.type === 'image' && (
                       <div className="flex items-center justify-center h-32 text-slate-500 mt-4">
                         <div className="text-center">
                           <Image className="h-12 w-12 mx-auto mb-2 text-slate-400" />
