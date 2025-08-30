@@ -165,10 +165,10 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                       <p className="text-slate-800 font-medium">{project.name}</p>
                     </div>
                     
-                    {/* Información del creador */}
-                    {creatorInfo && (
-                      <div>
-                        <label className="text-sm font-medium text-slate-600">Creado por</label>
+                    {/* Información del creador - SIEMPRE VISIBLE */}
+                    <div>
+                      <label className="text-sm font-medium text-slate-600">Creado por</label>
+                      {creatorInfo ? (
                         <div className="flex items-center gap-2 mt-1 p-2 bg-slate-50 rounded-lg border border-slate-200/50">
                           <User className="h-4 w-4 text-slate-500" />
                           <div className="flex flex-col">
@@ -180,12 +180,30 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                             </span>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="flex items-center gap-2 mt-1 p-2 bg-slate-50 rounded-lg border border-slate-200/50">
+                          <User className="h-4 w-4 text-slate-400" />
+                          <div className="flex flex-col">
+                            <span className="text-sm text-slate-400 italic">
+                              Sin información de creador
+                            </span>
+                            <span className="text-xs text-slate-400">
+                              No disponible
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     
                     <div>
                       <label className="text-sm font-medium text-slate-600">Descripción</label>
-                      <p className="text-slate-700">{project.description || 'Sin descripción'}</p>
+                      <p className="text-slate-700">
+                        {project.description ? (
+                          project.description
+                        ) : (
+                          <span className="italic text-slate-400">Sin descripción</span>
+                        )}
+                      </p>
                     </div>
                     
                     <div>
@@ -239,16 +257,16 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                   </CardContent>
                 </Card>
 
-                {/* Repositorio */}
-                {project.github_repository_url && (
-                  <Card className="bg-white border-slate-200 shadow-sm">
-                    <CardHeader className="bg-slate-50 border-b border-slate-200">
-                      <CardTitle className="text-slate-800 flex items-center gap-2">
-                        <GitBranch className="h-5 w-5 text-purple-600" />
-                        Repositorio
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6">
+                {/* Repositorio - SIEMPRE VISIBLE */}
+                <Card className="bg-white border-slate-200 shadow-sm">
+                  <CardHeader className="bg-slate-50 border-b border-slate-200">
+                    <CardTitle className="text-slate-800 flex items-center gap-2">
+                      <GitBranch className="h-5 w-5 text-purple-600" />
+                      Repositorio
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    {project.github_repository_url ? (
                       <div className="flex items-center gap-2">
                         <GitCommit className="h-4 w-4 text-slate-500" />
                         <a
@@ -260,9 +278,14 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                           {project.github_repository_url}
                         </a>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
+                    ) : (
+                      <div className="flex items-center gap-2 text-slate-500">
+                        <GitCommit className="h-4 w-4" />
+                        <span className="italic">No hay repositorio configurado</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
                 {/* Variables de entorno */}
                 <Card className="bg-white border-slate-200 shadow-sm">
