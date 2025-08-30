@@ -78,21 +78,7 @@ export const ProjectsManagement: React.FC = () => {
   };
 
   const handleDeleteProject = async (project: Project) => {
-    setProjectToDelete(project);
-    setShowConfirmDelete(true);
-  };
-
-  const confirmDelete = async () => {
-    if (projectToDelete) {
-      await deleteProject(projectToDelete.id);
-      setShowConfirmDelete(false);
-      setProjectToDelete(null);
-    }
-  };
-
-  const cancelDelete = () => {
-    setShowConfirmDelete(false);
-    setProjectToDelete(null);
+    await deleteProject(project.id);
   };
 
   const handleUpdateProjectIcon = async (projectId: string, iconName: string) => {
@@ -268,35 +254,6 @@ export const ProjectsManagement: React.FC = () => {
           onEdit={handleEditProject}
           onClose={handleCloseDetails}
         />
-      )}
-
-      {/* Modal de confirmación de eliminación */}
-      {showConfirmDelete && projectToDelete && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-          <div className="bg-white border border-slate-200 rounded-lg p-4 max-w-sm mx-4 shadow-xl">
-            <h3 className="text-slate-800 font-semibold mb-2">Confirmar eliminación</h3>
-            <p className="text-slate-600 text-sm mb-4">
-              ¿Estás seguro de que quieres eliminar el proyecto "{projectToDelete.name}"? Esta acción no se puede deshacer.
-            </p>
-            <div className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={cancelDelete}
-                className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={confirmDelete}
-              >
-                Eliminar
-              </Button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
