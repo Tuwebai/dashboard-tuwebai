@@ -944,7 +944,7 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
               <p id="file-preview-description" className="text-sm text-slate-600">
                 Vista previa del archivo seleccionado
               </p>
-                             {(getRealFileType(showFilePreview) === 'image') && (
+              {(getRealFileType(showFilePreview) === 'image') && (
                 <div className="flex items-center gap-2 text-sm text-slate-600">
                   <div className={`w-2 h-2 rounded-full ${filePreviewUrl ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
                   <span>{filePreviewUrl ? 'Imagen cargada' : 'Cargando imagen...'}</span>
@@ -970,21 +970,16 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                            src={filePreviewUrl}
                            alt={showFilePreview.name}
                            className="max-w-full max-h-[60vh] object-contain rounded-lg"
-                                                       onError={(e) => {
-                              console.error('❌ Error al cargar imagen en modal desde:', filePreviewUrl);
-                              console.error('📁 Archivo:', showFilePreview.name);
-                              console.error('🔗 URL:', filePreviewUrl);
-                              console.error('📊 Tipo detectado:', getRealFileType(showFilePreview));
-                              
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              
-                              // Mostrar el mensaje de error
-                              const errorDiv = target.nextElementSibling;
-                              if (errorDiv) {
-                                errorDiv.classList.remove('hidden');
-                              }
-                            }}
+                           onError={(e) => {
+                             console.error('❌ Error al cargar imagen en modal desde:', filePreviewUrl);
+                             const target = e.target as HTMLImageElement;
+                             target.style.display = 'none';
+                             // Mostrar el mensaje de error
+                             const errorDiv = target.nextElementSibling;
+                             if (errorDiv) {
+                               errorDiv.classList.remove('hidden');
+                             }
+                           }}
                          />
                         <div className="hidden absolute inset-0 flex items-center justify-center bg-slate-50 rounded-lg">
                           <div className="text-center">

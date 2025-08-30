@@ -967,25 +967,25 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                     {filePreviewUrl ? (
                       <div className="relative">
                                                  <img
-                           src={filePreviewUrl}
-                           alt={showFilePreview.name}
-                           className="max-w-full max-h-[60vh] object-contain rounded-lg"
-                                                       onError={(e) => {
-                              console.error('❌ Error al cargar imagen en modal desde:', filePreviewUrl);
-                              console.error('📁 Archivo:', showFilePreview.name);
-                              console.error('🔗 URL:', filePreviewUrl);
-                              console.error('📊 Tipo detectado:', getRealFileType(showFilePreview));
-                              
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              
-                              // Mostrar el mensaje de error
-                              const errorDiv = target.nextElementSibling;
-                              if (errorDiv) {
-                                errorDiv.classList.remove('hidden');
-                              }
-                            }}
-                         />
+                          src={filePreviewUrl}
+                          alt={showFilePreview.name}
+                          className="max-w-full max-h-[60vh] object-contain rounded-lg"
+                          onError={(e) => {
+                            console.error('❌ Error al cargar imagen en modal desde:', filePreviewUrl);
+                            console.error('📁 Archivo:', showFilePreview.name);
+                            console.error('🔗 URL:', filePreviewUrl);
+                            console.error('📊 Tipo detectado:', getRealFileType(showFilePreview));
+                            
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            
+                            // Mostrar el mensaje de error
+                            const errorDiv = target.nextElementSibling;
+                            if (errorDiv) {
+                              errorDiv.classList.remove('hidden');
+                            }
+                          }}
+                        />
                         <div className="hidden absolute inset-0 flex items-center justify-center bg-slate-50 rounded-lg">
                           <div className="text-center">
                             <Image className="h-12 w-12 mx-auto mb-2 text-slate-400" />
