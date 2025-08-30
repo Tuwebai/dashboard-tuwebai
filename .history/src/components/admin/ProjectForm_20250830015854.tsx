@@ -178,7 +178,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     }));
     
     // Aplicar variables de entorno detectadas
-    const detectedEnvVars: EnvironmentVariable[] = Object.entries(detectedInfo.environment_variables || {}).map(([key, value]) => ({
+    const detectedEnvVars: EnvironmentVariable[] = Object.entries(detectedInfo.environmentVariables).map(([key, value]) => ({
       key,
       value,
       isSensitive: false

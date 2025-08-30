@@ -14,7 +14,6 @@ import { ProjectDetails } from './ProjectDetails';
 import { ProjectPagination } from './ProjectPagination';
 
 export const ProjectsManagement: React.FC = () => {
-  const { user } = useApp();
   const {
     projects,
     loading,
@@ -39,24 +38,9 @@ export const ProjectsManagement: React.FC = () => {
   const [formLoading, setFormLoading] = useState(false);
 
   const handleCreateProject = async (data: CreateProjectData) => {
-    if (!user?.id) {
-      toast({
-        title: 'Error',
-        description: 'Usuario no autenticado',
-        variant: 'destructive'
-      });
-      return;
-    }
-
     setFormLoading(true);
     try {
-      // Agregar el ID del usuario creador
-      const projectDataWithCreator = {
-        ...data,
-        created_by: user.id
-      };
-      
-      await createProject(projectDataWithCreator);
+      await createProject(data);
       setShowForm(false);
     } finally {
       setFormLoading(false);

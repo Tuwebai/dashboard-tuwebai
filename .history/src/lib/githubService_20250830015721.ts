@@ -37,17 +37,6 @@ interface GitHubBranch {
   protected?: boolean;
 }
 
-// Interfaz para la información detectada desde GitHub
-export interface DetectedInfo {
-  name: string;
-  description: string;
-  technologies: string[];
-  github_repository_url: string;
-  status: string;
-  is_active: boolean;
-  environment_variables: Record<string, any>;
-}
-
 class GitHubService {
   private baseUrl = 'https://api.github.com';
   private token: string | null = null;
