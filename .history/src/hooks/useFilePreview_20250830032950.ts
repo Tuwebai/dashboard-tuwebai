@@ -63,8 +63,12 @@ export function useFilePreview(): UseFilePreviewReturn {
 
   // Mostrar preview con delay
   const showPreview = useCallback((file: ProjectFile, event: React.MouseEvent) => {
+    console.log('🔄 showPreview llamado para:', file.name);
+    console.log('📁 Archivo soportado:', isPreviewSupported(file.name));
+    
     // Solo mostrar preview para archivos soportados
     if (!isPreviewSupported(file.name)) {
+      console.log('❌ Archivo no soportado para preview');
       return;
     }
     
@@ -76,10 +80,13 @@ export function useFilePreview(): UseFilePreviewReturn {
     // Actualizar archivo actual
     currentFileRef.current = file;
     
+    console.log('⏰ Configurando delay de 300ms para mostrar preview');
+    
     // Delay de 300ms antes de mostrar
     timeoutRef.current = setTimeout(() => {
       // Verificar que el archivo sigue siendo el mismo
       if (currentFileRef.current === file) {
+        console.log('✅ Mostrando preview para:', file.name);
         setPreviewState({
           isVisible: true,
           file,
@@ -91,8 +98,11 @@ export function useFilePreview(): UseFilePreviewReturn {
 
   // Ocultar preview
   const hidePreview = useCallback(() => {
+    console.log('👋 hidePreview llamado');
+    
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
+      console.log('⏰ Timeout limpiado');
     }
     
     setPreviewState(prev => ({
@@ -101,17 +111,20 @@ export function useFilePreview(): UseFilePreviewReturn {
     }));
     
     currentFileRef.current = null;
+    console.log('✅ Preview ocultado');
   }, []);
 
   // Handler para mouse enter
   const handleMouseEnter = useCallback((file: ProjectFile) => {
     return (event: React.MouseEvent) => {
+      console.log('🖱️ Mouse enter en archivo:', file.name);
       showPreview(file, event);
     };
   }, [showPreview]);
 
   // Handler para mouse leave
   const handleMouseLeave = useCallback(() => {
+    console.log('🖱️ Mouse leave');
     hidePreview();
   }, [hidePreview]);
 
