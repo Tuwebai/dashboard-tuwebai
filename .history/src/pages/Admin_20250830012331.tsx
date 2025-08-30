@@ -356,12 +356,7 @@ export default function Admin() {
 
   // Función para editar un usuario
   const handleEditUser = (user: any) => {
-    // Asegurar que el usuario tenga un rol válido
-    const userWithRole = {
-      ...user,
-      role: user.role || 'cliente'
-    };
-    setEditingUser(userWithRole);
+    setEditingUser(user);
     setShowEditUserModal(true);
   };
 
@@ -442,7 +437,7 @@ export default function Admin() {
         .update({
           email: editingUser.email,
           full_name: editingUser.full_name,
-          role: editingUser.role || 'cliente',
+          role: editingUser.role,
           updated_at: new Date().toISOString()
         })
         .eq('id', editingUser.id);

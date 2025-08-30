@@ -46,7 +46,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
     const loadCreatorInfo = async () => {
       // Validar que el proyecto tenga created_by
       if (!project.created_by || project.created_by.trim() === '') {
-        console.log(`Proyecto ${project.id} no tiene created_by válido`);
+        // Proyecto no tiene created_by válido
         setCreatorInfo(null);
         return;
       }
@@ -59,14 +59,14 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
             email: creator.email || 'sin-email@example.com'
           });
         } else {
-          console.log(`Creador no encontrado para ID: ${project.created_by}`);
+          // Creador no encontrado
           setCreatorInfo({
             full_name: 'Usuario no encontrado',
             email: 'no-encontrado@example.com'
           });
         }
       } catch (error) {
-        console.warn(`Error cargando creador del proyecto ${project.id}:`, error);
+        // Error cargando creador
         setCreatorInfo({
           full_name: 'Error al cargar',
           email: 'error@example.com'

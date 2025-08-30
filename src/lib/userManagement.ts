@@ -1,180 +1,99 @@
 
 import { supabase } from './supabase';
-import { User, UserRole, UserPermission, UserAuditLog } from '../types/user.types';
+import { toast } from '@/hooks/use-toast';
 
-// Tipos simples para funcionalidades que no están en user.types.ts
-interface Invitation {
+// Tipos de usuario basados en la estructura real de la base de datos
+export interface User {
   id: string;
   email: string;
-  role: string;
-  invited_by: string;
-  status: string;
+  full_name: string | null;
+  role: 'admin' | 'user';
+  created_at: string;
+  updated_at: string;
+  avatar_url: string | null;
+}
+
+export interface UserRole {
+  id: string;
+  name: string;
+  display_name: string;
+  description: string | null;
+  permissions: string[];
+  is_system: boolean;
+  can_delete: boolean;
+  can_edit: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserInvitation {
+  id: string;
+  email: string;
+  role_id: string | null;
+  invited_by: string | null;
+  status: 'pending' | 'accepted' | 'expired' | 'cancelled' | 'declined';
   token: string;
   expires_at: string;
-  accepted_at?: string;
-  message?: string;
-  created_at?: string;
-  updated_at?: string;
+  message: string | null;
+  accepted_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
-import { realAvatarService, AvatarResult } from './avatarProviders';
 
-// =====================================================
-// SERVICIO DE GESTIÓN DE USUARIOS COMPLETAMENTE INTEGRADO CON SUPABASE
-// =====================================================
+export interface UserProfile extends User {
+  // Campos adicionales que podrían existir
+  phone?: string;
+  department?: string;
+  position?: string;
+  bio?: string;
+  skills?: string[];
+  status?: 'active' | 'inactive' | 'suspended';
+  last_login?: string;
+  login_count?: number;
+}
+
+export interface AuditLog {
+  id: string;
+  user_id: string;
+  action: string;
+  details: any;
+  ip_address?: string;
+  user_agent?: string;
+  created_at: string;
+}
+
+export interface UserPermission {
+  id: string;
+  name: string;
+  display_name: string;
+  description: string;
+  category: string;
+  action: string;
+}
 
 // Permisos del sistema
-const PERMISSIONS: UserPermission[] = [
-  { id: 'all', name: 'Todos los permisos', description: 'Acceso completo al sistema', resource: 'system', action: 'all' },
-  { id: 'users', name: 'Gestión de usuarios', description: 'Crear, editar y eliminar usuarios', resource: 'users', action: 'manage' },
-  { id: 'roles', name: 'Gestión de roles', description: 'Crear, editar y eliminar roles', resource: 'roles', action: 'manage' },
-  { id: 'projects', name: 'Gestión de proyectos', description: 'Crear, editar y eliminar proyectos', resource: 'projects', action: 'manage' },
-  { id: 'teams', name: 'Gestión de equipos', description: 'Crear, editar y eliminar equipos', resource: 'teams', action: 'manage' },
-  { id: 'analytics', name: 'Analytics', description: 'Acceso a reportes y estadísticas', resource: 'analytics', action: 'read' },
-  { id: 'collaboration', name: 'Colaboración', description: 'Chat, comentarios y archivos', resource: 'collaboration', action: 'manage' },
-  { id: 'files', name: 'Gestión de archivos', description: 'Subir, descargar y gestionar archivos', resource: 'files', action: 'manage' },
-  { id: 'billing', name: 'Facturación', description: 'Acceso a facturas y pagos', resource: 'billing', action: 'read' },
-  { id: 'settings', name: 'Configuración', description: 'Configuración del sistema', resource: 'settings', action: 'manage' }
+const SYSTEM_PERMISSIONS: UserPermission[] = [
+  { id: 'users.view', name: 'users.view', display_name: 'Ver Usuarios', description: 'Puede ver la lista de usuarios', category: 'users', action: 'view' },
+  { id: 'users.create', name: 'users.create', display_name: 'Crear Usuarios', description: 'Puede crear nuevos usuarios', category: 'users', action: 'create' },
+  { id: 'users.edit', name: 'users.edit', display_name: 'Editar Usuarios', description: 'Puede editar usuarios existentes', category: 'users', action: 'edit' },
+  { id: 'users.delete', name: 'users.delete', display_name: 'Eliminar Usuarios', description: 'Puede eliminar usuarios', category: 'users', action: 'delete' },
+  { id: 'roles.view', name: 'roles.view', display_name: 'Ver Roles', description: 'Puede ver roles del sistema', category: 'roles', action: 'view' },
+  { id: 'roles.create', name: 'roles.create', display_name: 'Crear Roles', description: 'Puede crear nuevos roles', category: 'roles', action: 'create' },
+  { id: 'roles.edit', name: 'roles.edit', display_name: 'Editar Roles', description: 'Puede editar roles existentes', category: 'roles', action: 'edit' },
+  { id: 'roles.delete', name: 'roles.delete', display_name: 'Eliminar Roles', description: 'Puede eliminar roles', category: 'roles', action: 'delete' },
+  { id: 'projects.view', name: 'projects.view', display_name: 'Ver Proyectos', description: 'Puede ver todos los proyectos', category: 'projects', action: 'view' },
+  { id: 'projects.manage', name: 'projects.manage', display_name: 'Gestionar Proyectos', description: 'Puede gestionar proyectos', category: 'projects', action: 'manage' },
+  { id: 'tickets.view', name: 'tickets.view', display_name: 'Ver Tickets', description: 'Puede ver tickets del sistema', category: 'tickets', action: 'view' },
+  { id: 'tickets.manage', name: 'tickets.manage', display_name: 'Gestionar Tickets', description: 'Puede gestionar tickets', category: 'tickets', action: 'manage' },
+  { id: 'payments.view', name: 'payments.view', display_name: 'Ver Pagos', description: 'Puede ver información de pagos', category: 'payments', action: 'view' },
+  { id: 'payments.manage', name: 'payments.manage', display_name: 'Gestionar Pagos', description: 'Puede gestionar pagos', category: 'payments', action: 'manage' },
+  { id: 'system.admin', name: 'system.admin', display_name: 'Administrador del Sistema', description: 'Acceso completo al sistema', category: 'system', action: 'admin' }
 ];
 
 export class UserManagementService {
-  private permissions: UserPermission[] = PERMISSIONS;
+  private permissions: UserPermission[] = SYSTEM_PERMISSIONS;
 
-  constructor() {
-    this.initializeRoles();
-  }
-
-  private async initializeRoles() {
-    try {
-      // Verificar si ya existen roles en la tabla user_roles
-      const { data: existingRoles, error } = await supabase
-        .from('user_roles')
-        .select('*')
-        .limit(1);
-
-      if (error) {
-        console.error('Error checking existing roles:', error);
-        // Si hay error, probablemente la tabla no existe, crear roles por defecto
-        await this.createDefaultRoles();
-      } else if (!existingRoles || existingRoles.length === 0) {
-        // Si no hay roles, crear los por defecto
-        await this.createDefaultRoles();
-      } else {
-        console.log('✅ Roles existentes encontrados en Supabase');
-      }
-    } catch (error) {
-      console.error('Error initializing roles:', error);
-      await this.createDefaultRoles();
-    }
-  }
-
-  private async createDefaultRoles() {
-    try {
-      const defaultRoles = [
-        {
-          name: 'admin',
-          display_name: 'Administrador',
-          description: 'Acceso completo al sistema',
-          permissions: ['all'],
-          is_system: true,
-          can_delete: false,
-          can_edit: false
-        },
-        {
-          name: 'manager',
-          display_name: 'Gerente',
-          description: 'Gestión de proyectos y equipos',
-          permissions: ['projects', 'teams', 'users', 'analytics'],
-          is_system: false,
-          can_delete: true,
-          can_edit: true
-        },
-        {
-          name: 'developer',
-          display_name: 'Desarrollador',
-          description: 'Desarrollo y colaboración en proyectos',
-          permissions: ['projects', 'collaboration', 'files'],
-          is_system: false,
-          can_delete: true,
-          can_edit: true
-        },
-        {
-          name: 'client',
-          display_name: 'Cliente',
-          description: 'Acceso a proyectos asignados',
-          permissions: ['projects', 'collaboration'],
-          is_system: false,
-          can_delete: true,
-          can_edit: true
-        }
-      ];
-
-      const { error } = await supabase
-        .from('user_roles')
-        .insert(defaultRoles);
-
-      if (error) {
-        console.error('Error creating default roles:', error);
-      } else {
-        console.log('✅ Roles por defecto creados exitosamente en Supabase');
-      }
-    } catch (error) {
-      console.error('Error creating default roles:', error);
-    }
-  }
-
-  // =====================================================
-  // MÉTODOS DE USUARIOS
-  // =====================================================
-
-  // =====================================================
-  // MÉTODOS DE AVATAR REAL DEL CORREO REGISTRADO
-  // =====================================================
-
-  private async getRealAvatarForUser(email: string): Promise<string> {
-    try {
-      console.log(`🖼️ Obteniendo avatar REAL del correo registrado para: ${email}`);
-      
-      // Usar el nuevo servicio de avatares reales
-      const avatarResult: AvatarResult = await realAvatarService.getRealAvatar(email);
-      
-      // Log del resultado
-      if (avatarResult.isReal) {
-        console.log(`✅ Avatar REAL obtenido de ${avatarResult.provider}: ${avatarResult.url}`);
-      } else {
-        console.log(`⚠️ Avatar temporal de ${avatarResult.provider}: ${avatarResult.url} - Razón: ${(avatarResult as any).reason || 'No especificada'}`);
-      }
-      
-      return avatarResult.url;
-    } catch (error) {
-      console.error('❌ Error obteniendo avatar real:', error);
-      // Fallback a avatar temporal
-      return this.generateTemporaryAvatar(email);
-    }
-  }
-
-  private generateTemporaryAvatar(email: string): string {
-    // Usar ui-avatars.com en lugar de DiceBear como solicitaste
-    const emailHash = this.hashCode(email);
-    const colors = ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf'];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    
-    // Generar iniciales del email
-    const initials = email.substring(0, 2).toUpperCase();
-    
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=${randomColor}&color=fff&size=200&font-size=0.8&bold=true&format=svg`;
-  }
-
-  private hashCode(str: string): string {
-    let hash = 0;
-    if (str.length === 0) return hash.toString();
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return Math.abs(hash).toString();
-  }
-
+  // Obtener todos los usuarios
   public async getUsers(filters?: any, sort?: any, page: number = 1, limit: number = 50): Promise<{ users: User[]; total: number; page: number; totalPages: number }> {
     try {
       console.log('🔍 Cargando usuarios desde Supabase...');
@@ -182,7 +101,8 @@ export class UserManagementService {
       // Obtener usuarios de Supabase con la estructura real de la tabla
       const { data: allUsers, error: countError } = await supabase
         .from('users')
-        .select('id, email, full_name, role, avatar_url, created_at, updated_at');
+        .select('id, email, full_name, role, avatar_url, created_at, updated_at')
+        .order('created_at', { ascending: false });
 
       if (countError) {
         console.error('❌ Error obteniendo usuarios de Supabase:', countError);
@@ -190,6 +110,7 @@ export class UserManagementService {
       }
 
       console.log(`📊 Total de usuarios en Supabase: ${allUsers?.length || 0}`);
+      console.log('👥 Usuarios cargados:', allUsers);
 
       if (!allUsers || allUsers.length === 0) {
         console.log('⚠️ No hay usuarios en la base de datos');
@@ -234,163 +155,107 @@ export class UserManagementService {
       const endIndex = startIndex + limit;
       const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
 
-      // Convertir a User usando solo los campos disponibles en Supabase
-      const users: User[] = await Promise.all(paginatedUsers.map(async (user) => {
-        // Obtener avatar REAL del correo registrado usando el nuevo servicio:
-        // 1. Avatar guardado en la base de datos (si ya se sincronizó)
-        // 2. Avatar del usuario autenticado (si es el mismo email)
-        // 3. Avatar REAL del proveedor de email (Google, Microsoft, etc.)
-        // 4. Avatar de Gravatar como fallback
-        // 5. Avatar temporal generado (SOLO si no hay avatar real)
-        
-        let avatar = user.avatar_url;
-        
-        if (!avatar) {
-          // Obtener avatar REAL del correo registrado usando el nuevo servicio
-          avatar = await this.getRealAvatarForUser(user.email);
-        }
-
-        console.log(`🖼️ Avatar para ${user.email}: ${avatar} ${!avatar.includes('ui-avatars') ? '(REAL del correo registrado)' : '(TEMPORAL generado)'}`);
+      console.log(`✅ Usuarios filtrados y paginados: ${paginatedUsers.length}/${total}`);
 
         return {
-          id: user.id,
-          email: user.email,
-          full_name: user.full_name || user.email,
-          role: user.role || 'user', // Valor por defecto si no hay role
-          created_at: user.created_at,
-          updated_at: user.updated_at,
-          avatar: avatar // Avatar único para cada usuario
-        };
-      }));
-
-      console.log(`✅ Usuarios cargados exitosamente: ${users.length} de ${total} total`);
-      console.log('📋 Usuarios cargados:', users.map(u => ({ id: u.id, email: u.email, role: u.role })));
-
-      return { users, total, page, totalPages };
-    } catch (error) {
-      console.error('❌ Error fatal cargando usuarios:', error);
-      throw error; // Re-lanzar el error para que se maneje en el componente
-    }
-  }
-
-
-
-  public async getUserById(userId: string): Promise<User | null> {
-    try {
-      console.log(`🔍 Buscando usuario con ID: ${userId}`);
-      
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, email, full_name, role, avatar_url, created_at, updated_at')
-        .eq('id', userId)
-        .single();
-
-      if (error || !data) {
-        console.log('❌ Usuario no encontrado en Supabase');
-        return null;
-      }
-
-      console.log(`✅ Usuario encontrado en Supabase: ${data.email}`);
-
-      // Obtener avatar REAL del correo registrado usando el nuevo servicio:
-      // 1. Avatar guardado en la base de datos (si ya se sincronizó)
-      // 2. Avatar del usuario autenticado (si es el mismo email)
-      // 3. Avatar REAL del proveedor de email (Google, Microsoft, etc.)
-      // 4. Avatar de Gravatar como fallback
-      // 5. Avatar temporal generado (SOLO si no hay avatar real)
-      
-      let avatar = data.avatar_url;
-      
-              if (!avatar) {
-          // Obtener avatar REAL del correo registrado usando el nuevo servicio
-          avatar = await this.getRealAvatarForUser(data.email);
-        }
-
-        console.log(`🖼️ Avatar para ${data.email}: ${avatar} ${!avatar.includes('ui-avatars') ? '(REAL del correo registrado)' : '(TEMPORAL generado)'}`);
-
-      return {
-        id: data.id,
-        email: data.email,
-        full_name: data.full_name || data.email,
-        role: data.role || 'user',
-        avatar: avatar, // Usar avatar de Auth, luego de DB, luego generado
-        created_at: data.created_at,
-        updated_at: data.updated_at
-      };
-    } catch (error) {
-      console.error('❌ Error getting user by id:', error);
-      return null;
-    }
-  }
-
-  public async createUser(userData: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User | null> {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .insert({
-          email: userData.email,
-          full_name: userData.full_name,
-          role: userData.role,
-                     avatar_url: userData.avatar || await this.getRealAvatarForUser(userData.email),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error || !data) {
-        console.error('Error creating user:', error);
-        return null;
-      }
-
-      return {
-        id: data.id,
-        email: data.email,
-        full_name: data.full_name || data.email,
-        role: data.role,
-        avatar: userData.avatar,
-        created_at: data.created_at,
-        updated_at: data.updated_at
-      };
-    } catch (error) {
-      console.error('Error creating user:', error);
-      return null;
-    }
-  }
-
-  public async updateUser(userId: string, updates: Partial<User>): Promise<User | null> {
-    try {
-      console.log(`🔧 Actualizando usuario con ID: ${userId}`, updates);
-      
-      const updateData: any = {
-        updated_at: new Date().toISOString()
+        users: paginatedUsers,
+        total,
+        page,
+        totalPages
       };
 
-      if (updates.email) updateData.email = updates.email;
-      if (updates.full_name) updateData.full_name = updates.full_name;
-      if (updates.role) updateData.role = updates.role;
-      if (updates.avatar) updateData.avatar_url = updates.avatar;
-
-      const { data, error } = await supabase
-        .from('users')
-        .update(updateData)
-        .eq('id', userId)
-        .select()
-        .single();
-
-      if (error || !data) {
-        console.error('❌ Error actualizando usuario en Supabase:', error);
-        throw new Error(`Error de Supabase: ${error?.message || 'Error desconocido'}`);
-      }
-
-      console.log(`✅ Usuario actualizado exitosamente en Supabase`);
-      return this.getUserById(userId);
     } catch (error) {
-      console.error('❌ Error updating user:', error);
+      console.error('❌ Error en getUsers:', error);
       throw error;
     }
   }
 
+  // Obtener un usuario por ID
+  public async getUserById(userId: string): Promise<User | null> {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error getting user by ID:', error);
+      return null;
+    }
+  }
+
+  // Crear un nuevo usuario
+  public async createUser(userData: Partial<User>): Promise<User> {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .insert([{
+          email: userData.email!,
+          full_name: userData.full_name || null,
+          role: userData.role || 'user',
+          avatar_url: userData.avatar_url || null
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      toast({
+        title: "Usuario creado",
+        description: "El usuario ha sido creado correctamente.",
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo crear el usuario.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  }
+
+  // Actualizar un usuario
+  public async updateUser(userId: string, userData: Partial<User>): Promise<User> {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .update({
+          email: userData.email,
+          full_name: userData.full_name,
+          role: userData.role,
+          avatar_url: userData.avatar_url,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      toast({
+        title: "Usuario actualizado",
+        description: "El usuario ha sido actualizado correctamente.",
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el usuario.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  }
+
+  // Eliminar un usuario
   public async deleteUser(userId: string): Promise<boolean> {
     try {
       const { error } = await supabase
@@ -398,143 +263,113 @@ export class UserManagementService {
         .delete()
         .eq('id', userId);
 
-      if (error) {
-        console.error('Error deleting user:', error);
-        return false;
-      }
+      if (error) throw error;
+      
+      toast({
+        title: "Usuario eliminado",
+        description: "El usuario ha sido eliminado correctamente.",
+      });
 
       return true;
     } catch (error) {
       console.error('Error deleting user:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el usuario.",
+        variant: "destructive",
+      });
       return false;
     }
   }
 
-  public async updateUserRole(userId: string, newRole: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update({ 
-          role: newRole,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
-
-      if (error) {
-        console.error('Error updating user role:', error);
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error updating user role:', error);
-      return false;
-    }
-  }
-
-  // =====================================================
-  // MÉTODOS DE ROLES (REALES DESDE SUPABASE)
-  // =====================================================
-
+  // Obtener roles del sistema
   public async getRoles(): Promise<UserRole[]> {
     try {
-      // Intentar obtener roles de la tabla user_roles
       const { data, error } = await supabase
         .from('user_roles')
         .select('*')
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error getting roles from user_roles table:', error);
-        // Si la tabla no existe, retornar roles por defecto
-        return this.getDefaultRoles();
-      }
-
+      if (error) throw error;
       return data || [];
     } catch (error) {
       console.error('Error getting roles:', error);
-      // En caso de error, retornar roles por defecto
-      return this.getDefaultRoles();
+      return [];
     }
   }
 
-  private getDefaultRoles(): UserRole[] {
-    return [
-      {
-        id: 'role_1',
-        name: 'admin',
-        description: 'Acceso completo al sistema',
-        permissions: ['all']
-      },
-      {
-        id: 'role_2',
-        name: 'manager',
-        description: 'Gestión de proyectos y equipos',
-        permissions: ['projects', 'teams', 'users', 'analytics']
-      },
-      {
-        id: 'role_3',
-        name: 'developer',
-        description: 'Desarrollo y colaboración en proyectos',
-        permissions: ['projects', 'collaboration', 'files']
-      },
-      {
-        id: 'role_4',
-        name: 'client',
-        description: 'Acceso a proyectos asignados',
-        permissions: ['projects', 'collaboration']
-      }
-    ];
-  }
-
-  public async createRole(roleData: Omit<UserRole, 'id' | 'created_at' | 'updated_at'>): Promise<UserRole | null> {
+  // Crear un nuevo rol
+  public async createRole(roleData: Partial<UserRole>): Promise<UserRole> {
     try {
       const { data, error } = await supabase
         .from('user_roles')
-        .insert({
-          ...roleData,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
+        .insert([{
+          name: roleData.name!,
+          display_name: roleData.display_name!,
+          description: roleData.description || null,
+          permissions: roleData.permissions || [],
+          is_system: false,
+          can_delete: true,
+          can_edit: true
+        }])
         .select()
         .single();
 
-      if (error || !data) {
-        console.error('Error creating role:', error);
-        return null;
-      }
+      if (error) throw error;
+      
+      toast({
+        title: "Rol creado",
+        description: "El rol ha sido creado correctamente.",
+      });
 
       return data;
     } catch (error) {
       console.error('Error creating role:', error);
-      return null;
+      toast({
+        title: "Error",
+        description: "No se pudo crear el rol.",
+        variant: "destructive",
+      });
+      throw error;
     }
   }
 
-  public async updateRole(roleId: string, updates: Partial<UserRole>): Promise<UserRole | null> {
+  // Actualizar un rol
+  public async updateRole(roleId: string, roleData: Partial<UserRole>): Promise<UserRole> {
     try {
       const { data, error } = await supabase
         .from('user_roles')
         .update({
-        ...updates,
+          name: roleData.name,
+          display_name: roleData.display_name,
+          description: roleData.description,
+          permissions: roleData.permissions,
           updated_at: new Date().toISOString()
         })
         .eq('id', roleId)
         .select()
         .single();
 
-      if (error || !data) {
-        console.error('Error updating role:', error);
-        return null;
-      }
+      if (error) throw error;
+      
+      toast({
+        title: "Rol actualizado",
+        description: "El rol ha sido actualizado correctamente.",
+      });
 
       return data;
     } catch (error) {
       console.error('Error updating role:', error);
-      return null;
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el rol.",
+        variant: "destructive",
+      });
+      throw error;
     }
   }
 
+  // Eliminar un rol
   public async deleteRole(roleId: string): Promise<boolean> {
     try {
       const { error } = await supabase
@@ -542,559 +377,234 @@ export class UserManagementService {
         .delete()
         .eq('id', roleId);
 
-      if (error) {
-        console.error('Error deleting role:', error);
-        return false;
-      }
+      if (error) throw error;
+      
+      toast({
+        title: "Rol eliminado",
+        description: "El rol ha sido eliminado correctamente.",
+      });
 
       return true;
     } catch (error) {
       console.error('Error deleting role:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el rol.",
+        variant: "destructive",
+      });
       return false;
     }
   }
 
-  // =====================================================
-  // MÉTODOS DE INVITACIONES (REALES DESDE SUPABASE)
-  // =====================================================
-
-  public async getInvitations(): Promise<Invitation[]> {
+  // Obtener invitaciones
+  public async getInvitations(): Promise<UserInvitation[]> {
     try {
       const { data, error } = await supabase
         .from('user_invitations')
-        .select(`
-          *,
-          user_roles!inner(name, display_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error getting invitations:', error);
-        return [];
-      }
-
-      // Convertir a formato Invitation
-      return (data || []).map(inv => ({
-        id: inv.id,
-        email: inv.email,
-        role: inv.role_id,
-        invited_by: inv.invited_by,
-        status: inv.status,
-        token: inv.token,
-        expires_at: inv.expires_at,
-        message: inv.message,
-        accepted_at: inv.accepted_at,
-        created_at: inv.created_at,
-        updated_at: inv.updated_at
-      }));
+      if (error) throw error;
+      return data || [];
     } catch (error) {
       console.error('Error getting invitations:', error);
       return [];
     }
   }
 
-  public async createInvitation(invitationData: Omit<Invitation, 'id' | 'created_at' | 'updated_at'>): Promise<Invitation | null> {
+  // Crear una invitación
+  public async createInvitation(invitationData: Partial<UserInvitation>): Promise<UserInvitation> {
     try {
-              const { data, error } = await supabase
-          .from('user_invitations')
-          .insert({
-            email: invitationData.email,
-            role_id: invitationData.role,
-            invited_by: invitationData.invited_by,
-            status: invitationData.status,
-            token: invitationData.token,
-            expires_at: invitationData.expires_at,
-            message: invitationData.message,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-
-      if (error || !data) {
-        console.error('Error creating invitation:', error);
-        return null;
-      }
-
-      return {
-        id: data.id,
-        email: data.email,
-        role: data.role_id,
-        invited_by: data.invited_by,
-        status: data.status,
-        token: data.token,
-        expires_at: data.expires_at,
-        message: data.message,
-        accepted_at: data.accepted_at,
-        created_at: data.created_at,
-        updated_at: data.updated_at
-      };
-    } catch (error) {
-      console.error('Error creating invitation:', error);
-      return null;
-    }
-  }
-
-  public async updateInvitation(invitationId: string, updates: Partial<Invitation>): Promise<Invitation | null> {
-    try {
-      const updateData: any = {
-        updated_at: new Date().toISOString()
-      };
-
-      if (updates.status) updateData.status = updates.status;
-      if (updates.accepted_at) updateData.accepted_at = updates.accepted_at;
+      const token = this.generateToken();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // Expira en 7 días
 
       const { data, error } = await supabase
         .from('user_invitations')
-        .update(updateData)
-        .eq('id', invitationId)
+        .insert([{
+          email: invitationData.email!,
+          role_id: invitationData.role_id || null,
+          invited_by: invitationData.invited_by || null,
+          status: 'pending',
+          token: token,
+          expires_at: expiresAt.toISOString(),
+          message: invitationData.message || null
+        }])
         .select()
         .single();
 
-      if (error || !data) {
-        console.error('Error updating invitation:', error);
-      return null;
-      }
+      if (error) throw error;
+      
+      toast({
+        title: "Invitación enviada",
+        description: "La invitación ha sido enviada correctamente.",
+      });
 
-      return {
-        id: data.id,
-        email: data.email,
-        role: data.role_id,
-        invited_by: data.invited_by,
-        status: data.status,
-        token: data.token,
-        expires_at: data.expires_at,
-        message: data.message,
-        accepted_at: data.accepted_at,
-        created_at: data.created_at,
-        updated_at: data.updated_at
-      };
+      return data;
     } catch (error) {
-      console.error('Error updating invitation:', error);
-      return null;
+      console.error('Error creating invitation:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo crear la invitación.",
+        variant: "destructive",
+      });
+      throw error;
     }
   }
 
-  public async deleteInvitation(invitationId: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('user_invitations')
-        .delete()
-        .eq('id', invitationId);
-
-      if (error) {
-        console.error('Error deleting invitation:', error);
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error deleting invitation:', error);
-      return false;
-    }
-  }
-
-  // =====================================================
-  // MÉTODOS DE AUDITORÍA (REALES DESDE SUPABASE)
-  // =====================================================
-
-  public async getAuditLogs(filters?: any, page: number = 1, limit: number = 50): Promise<{ logs: UserAuditLog[]; total: number; page: number; totalPages: number }> {
+  // Obtener logs de auditoría
+  public async getAuditLogs(userId?: string, limit: number = 100): Promise<AuditLog[]> {
     try {
       let query = supabase
-        .from('security_logs')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false });
+        .from('audit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit);
 
-      // Aplicar filtros si existen
-      if (filters?.user_id) {
-        query = query.eq('user_id', filters.user_id);
+      if (userId) {
+        query = query.eq('user_id', userId);
       }
 
-      if (filters?.action) {
-        query = query.eq('action', filters.action);
-      }
+      const { data, error } = await query;
 
-      if (filters?.resource) {
-        query = query.eq('resource', filters.resource);
-      }
-
-      // Aplicar paginación
-      const offset = (page - 1) * limit;
-      query = query.range(offset, offset + limit - 1);
-
-      const { data, error, count } = await query;
-
-      if (error) {
-        console.error('Error getting audit logs:', error);
-        return { logs: [], total: 0, page, totalPages: 0 };
-      }
-
-      // Convertir a formato UserAuditLog
-      const logs: UserAuditLog[] = (data || []).map(log => ({
-        id: log.id,
-        userId: log.user_id,
-        action: log.action,
-        details: log.details,
-        ipAddress: log.ip_address,
-        userAgent: log.user_agent,
-        timestamp: log.created_at
-      }));
-
-      const total = count || logs.length;
-      const totalPages = Math.ceil(total / limit);
-
-      return { logs, total, page, totalPages };
+      if (error) throw error;
+      return data || [];
     } catch (error) {
       console.error('Error getting audit logs:', error);
-      return { logs: [], total: 0, page, totalPages: 0 };
-    }
-  }
-
-  public async createAuditLog(logData: Omit<UserAuditLog, 'id' | 'timestamp'>): Promise<UserAuditLog | null> {
-    try {
-              const { data, error } = await supabase
-          .from('security_logs')
-          .insert({
-            user_id: logData.userId,
-            action: logData.action,
-            details: logData.details,
-            ip_address: logData.ipAddress,
-            user_agent: logData.userAgent,
-            created_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-
-      if (error || !data) {
-        console.error('Error creating audit log:', error);
-        return null;
-      }
-
-              return {
-          id: data.id,
-          userId: data.user_id,
-          action: data.action,
-          details: data.details,
-          ipAddress: data.ip_address,
-          userAgent: data.user_agent,
-          timestamp: data.created_at
-        };
-    } catch (error) {
-      console.error('Error creating audit log:', error);
-      return null;
-    }
-  }
-
-  // =====================================================
-  // MÉTODOS DE ESTADÍSTICAS
-  // =====================================================
-
-  public async getUserStats(): Promise<any> {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('role');
-
-      if (error) {
-        console.error('Error getting user stats:', error);
-        return {};
-      }
-
-      const roles = data || [];
-      return {
-        total: roles.length,
-        admin: roles.filter(u => u.role === 'admin').length,
-        manager: roles.filter(u => u.role === 'manager').length,
-        developer: roles.filter(u => u.role === 'developer').length,
-        client: roles.filter(u => u.role === 'client').length
-      };
-    } catch (error) {
-      console.error('Error getting user stats:', error);
-      return {};
-    }
-  }
-
-  public async getRoleStats(): Promise<any> {
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('*');
-
-      if (error) {
-        console.error('Error getting role stats:', error);
-        return {};
-      }
-
-      return {
-        total: data?.length || 0,
-        system: data?.filter(r => r.is_system).length || 0,
-        custom: data?.filter(r => !r.is_system).length || 0,
-        roles: data || []
-      };
-    } catch (error) {
-      console.error('Error getting role stats:', error);
-      return {};
-    }
-  }
-
-  public async getInvitationStats(): Promise<any> {
-    try {
-      const { data, error } = await supabase
-        .from('user_invitations')
-        .select('status');
-
-      if (error) {
-        console.error('Error getting invitation stats:', error);
-        return {};
-      }
-
-      return {
-        total: data?.length || 0,
-        pending: data?.filter(i => i.status === 'pending').length || 0,
-        accepted: data?.filter(i => i.status === 'accepted').length || 0,
-        expired: data?.filter(i => i.status === 'expired').length || 0,
-        declined: data?.filter(i => i.status === 'declined').length || 0
-      };
-    } catch (error) {
-      console.error('Error getting invitation stats:', error);
-      return {};
-    }
-  }
-
-  // =====================================================
-  // MÉTODOS DE PERMISOS
-  // =====================================================
-
-  public async updateUserAvatar(userId: string, avatarUrl: string): Promise<boolean> {
-    try {
-      console.log(`🖼️ Actualizando avatar del usuario ${userId} con URL: ${avatarUrl}`);
-      
-      const { error } = await supabase
-        .from('users')
-        .update({ 
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
-
-      if (error) {
-        console.error('❌ Error actualizando avatar en Supabase:', error);
-        return false;
-      }
-
-      console.log(`✅ Avatar actualizado exitosamente en Supabase`);
-      return true;
-    } catch (error) {
-      console.error('❌ Error updating user avatar:', error);
-      return false;
-    }
-  }
-
-  public async syncAuthUserAvatar(email: string): Promise<boolean> {
-    try {
-      console.log(`🔄 Sincronizando avatar de Auth para: ${email}`);
-      
-             // Obtener avatar del perfil de Auth usando el nuevo servicio
-       const avatarResult = await realAvatarService.getRealAvatar(email);
-       const authAvatar = avatarResult.isReal ? avatarResult.url : null;
-      
-      if (!authAvatar) {
-        console.log('❌ No se encontró avatar en Auth');
-        return false;
-      }
-
-      // Buscar usuario en la base de datos
-      const { data: user, error: findError } = await supabase
-        .from('users')
-        .select('id, avatar_url')
-        .eq('email', email)
-        .single();
-
-      if (findError || !user) {
-        console.log('❌ Usuario no encontrado en la base de datos');
-        return false;
-      }
-
-      // Si el avatar es diferente, actualizarlo
-      if (user.avatar_url !== authAvatar) {
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({ 
-            avatar_url: authAvatar,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', user.id);
-
-        if (updateError) {
-          console.error('❌ Error sincronizando avatar:', updateError);
-          return false;
-        }
-
-        console.log(`✅ Avatar sincronizado exitosamente: ${authAvatar}`);
-        return true;
-      }
-
-      console.log('✅ Avatar ya está sincronizado');
-      return true;
-    } catch (error) {
-      console.error('❌ Error sincronizando avatar:', error);
-      return false;
-    }
-  }
-
-  public async syncAllUserAvatars(): Promise<void> {
-    try {
-      console.log('🔄 Sincronizando avatares de todos los usuarios...');
-      
-      // Obtener todos los usuarios
-      const { data: users, error } = await supabase
-        .from('users')
-        .select('id, email, avatar_url')
-        .order('created_at', { ascending: true });
-
-      if (error || !users) {
-        console.error('❌ Error obteniendo usuarios para sincronización:', error);
-        return;
-      }
-
-      console.log(`📊 Sincronizando ${users.length} usuarios...`);
-
-      // Sincronizar avatares uno por uno
-      for (const user of users) {
-        try {
-                     // Intentar obtener avatar real del proveedor de email
-           const avatarResult = await realAvatarService.getRealAvatar(user.email);
-           const gravatarAvatar = avatarResult.isReal ? avatarResult.url : null;
-          
-          if (gravatarAvatar && gravatarAvatar !== user.avatar_url) {
-            // Actualizar en la base de datos
-            const { error: updateError } = await supabase
-              .from('users')
-              .update({ 
-                avatar_url: gravatarAvatar,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', user.id);
-
-            if (updateError) {
-              console.error(`❌ Error actualizando avatar de ${user.email}:`, updateError);
-            } else {
-              console.log(`✅ Avatar de ${user.email} actualizado: ${gravatarAvatar}`);
-            }
-          }
-        } catch (userError) {
-          console.error(`❌ Error procesando usuario ${user.email}:`, userError);
-        }
-      }
-
-      console.log('✅ Sincronización de avatares completada');
-    } catch (error) {
-      console.error('❌ Error en sincronización masiva:', error);
-    }
-  }
-
-  public async getUserAvatar(userId: string): Promise<string | null> {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('avatar_url')
-        .eq('id', userId)
-        .single();
-
-      if (error || !data) {
-        console.log('❌ Usuario no encontrado o sin avatar');
-        return null;
-      }
-
-      return data.avatar_url;
-    } catch (error) {
-      console.error('❌ Error getting user avatar:', error);
-      return null;
-    }
-  }
-
-  public async hasPermission(userRole: string, permission: string): Promise<boolean> {
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('permissions')
-        .eq('name', userRole)
-        .single();
-
-      if (error || !data) return false;
-
-      if (data.permissions.includes('all')) return true;
-      return data.permissions.includes(permission);
-    } catch (error) {
-      console.error('Error checking permission:', error);
-      return false;
-    }
-  }
-
-  public async getPermissionsForRole(roleName: string): Promise<string[]> {
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('permissions')
-        .eq('name', roleName)
-        .single();
-
-      if (error || !data) return [];
-
-      return data.permissions || [];
-    } catch (error) {
-      console.error('Error getting permissions for role:', error);
       return [];
     }
   }
 
-  public getAllPermissions(): UserPermission[] {
-    return this.permissions;
+  // Crear log de auditoría
+  public async createAuditLog(logData: Partial<AuditLog>): Promise<AuditLog> {
+    try {
+              const { data, error } = await supabase
+        .from('audit_logs')
+        .insert([{
+          user_id: logData.user_id!,
+          action: logData.action!,
+          details: logData.details || {},
+          ip_address: logData.ip_address || null,
+          user_agent: logData.user_agent || null
+        }])
+          .select()
+          .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error creating audit log:', error);
+      throw error;
+    }
   }
 
-  public async validateUserAccess(userId: string, requiredPermission: string): Promise<boolean> {
+  // Obtener estadísticas de usuarios
+  public async getUserStats(): Promise<{
+    total: number;
+    admins: number;
+    users: number;
+    active: number;
+    inactive: number;
+  }> {
+    try {
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('id, role, created_at');
+
+      if (error) throw error;
+
+      const total = users?.length || 0;
+      const admins = users?.filter(u => u.role === 'admin').length || 0;
+      const regularUsers = users?.filter(u => u.role === 'user').length || 0;
+      
+      // Considerar usuarios activos si se crearon en los últimos 30 días
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const active = users?.filter(u => new Date(u.created_at) > thirtyDaysAgo).length || 0;
+      const inactive = total - active;
+
+      return {
+        total,
+        admins,
+        users: regularUsers,
+        active,
+        inactive
+      };
+    } catch (error) {
+      console.error('Error getting user stats:', error);
+      return {
+        total: 0,
+        admins: 0,
+        users: 0,
+        active: 0,
+        inactive: 0
+      };
+    }
+  }
+
+  // Verificar permisos de un usuario
+  public async checkUserPermissions(userId: string, permission: string): Promise<boolean> {
     try {
       const user = await this.getUserById(userId);
       if (!user) return false;
 
-      return await this.hasPermission(user.role, requiredPermission);
+      // Los administradores tienen todos los permisos
+      if (user.role === 'admin') return true;
+
+      // Para usuarios regulares, verificar permisos específicos
+      const userRole = await this.getUserRole(userId);
+      if (!userRole) return false;
+
+      return userRole.permissions.includes(permission);
     } catch (error) {
-      console.error('Error validating user access:', error);
+      console.error('Error checking user permissions:', error);
       return false;
     }
+  }
+
+  // Obtener el rol de un usuario
+  private async getUserRole(userId: string): Promise<UserRole | null> {
+    try {
+      // Por ahora, asumimos que los usuarios regulares tienen permisos básicos
+      // En el futuro, esto se puede expandir para usar la tabla user_roles
+      return {
+        id: 'basic-user',
+        name: 'basic-user',
+        display_name: 'Usuario Básico',
+        description: 'Usuario con permisos básicos',
+        permissions: ['projects.view', 'tickets.view'],
+        is_system: true,
+        can_delete: false,
+        can_edit: false,
+        created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error getting user role:', error);
+      return null;
+    }
+  }
+
+  // Generar token para invitaciones
+  private generateToken(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 32; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+
+  // Obtener permisos del sistema
+  public getSystemPermissions(): UserPermission[] {
+    return this.permissions;
+  }
+
+  // Obtener permisos por categoría
+  public getPermissionsByCategory(category: string): UserPermission[] {
+    return this.permissions.filter(p => p.category === category);
   }
 }
 
 // Instancia singleton del servicio
 export const userManagementService = new UserManagementService();
-
-// Exportar funciones de conveniencia para compatibilidad
-export const {
-  getUsers,
-  getUserById,
-  createUser,
-  updateUser,
-  deleteUser,
-  updateUserRole,
-  getRoles,
-  createRole,
-  updateRole,
-  deleteRole,
-  getInvitations,
-  createInvitation,
-  updateInvitation,
-  deleteInvitation,
-  getAuditLogs,
-  createAuditLog,
-  getUserStats,
-  getRoleStats,
-  getInvitationStats,
-  hasPermission,
-  getPermissionsForRole,
-  getAllPermissions,
-  validateUserAccess,
-  updateUserAvatar,
-  getUserAvatar,
-  syncAuthUserAvatar,
-  syncAllUserAvatars
-} = userManagementService; 

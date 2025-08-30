@@ -70,7 +70,7 @@ export default function Admin() {
   const [newUserData, setNewUserData] = useState({
     email: '',
     full_name: '',
-    role: 'cliente'
+    role: 'user'
   });
 
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
@@ -356,12 +356,7 @@ export default function Admin() {
 
   // Función para editar un usuario
   const handleEditUser = (user: any) => {
-    // Asegurar que el usuario tenga un rol válido
-    const userWithRole = {
-      ...user,
-      role: user.role || 'cliente'
-    };
-    setEditingUser(userWithRole);
+    setEditingUser(user);
     setShowEditUserModal(true);
   };
 
@@ -415,7 +410,7 @@ export default function Admin() {
       setUsuarios(prev => [data, ...prev]);
 
       // Limpiar el formulario
-      setNewUserData({ email: '', full_name: '', role: 'cliente' });
+      setNewUserData({ email: '', full_name: '', role: 'user' });
       setShowAddUserModal(false);
 
       toast({ 
@@ -442,7 +437,7 @@ export default function Admin() {
         .update({
           email: editingUser.email,
           full_name: editingUser.full_name,
-          role: editingUser.role || 'cliente',
+          role: editingUser.role,
           updated_at: new Date().toISOString()
         })
         .eq('id', editingUser.id);
@@ -1167,15 +1162,7 @@ export default function Admin() {
 
       {/* Modal para agregar usuario */}
       <Dialog open={showAddUserModal} onOpenChange={setShowAddUserModal}>
-        <DialogContent className="bg-white border-slate-200 relative">
-          {/* Botón X para cerrar */}
-          <button
-            onClick={() => setShowAddUserModal(false)}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors duration-200 group"
-          >
-            <span className="text-slate-600 group-hover:text-slate-800 text-lg font-semibold">×</span>
-          </button>
-          
+        <DialogContent className="bg-white border-slate-200">
           <DialogHeader>
             <DialogTitle className="text-xl text-slate-800">Agregar Nuevo Usuario</DialogTitle>
             <DialogDescription className="text-slate-600">
@@ -1207,121 +1194,83 @@ export default function Admin() {
             </div>
             <div>
               <Label htmlFor="role" className="text-slate-700">Rol</Label>
-                             <Select value={newUserData.role} onValueChange={(value) => setNewUserData(prev => ({ ...prev, role: value }))}>
-                 <SelectTrigger className="bg-white border-slate-300 text-slate-800">
-                   <SelectValue>
-                     {newUserData.role === 'admin' ? '👑 Admin' : '👤 Cliente'}
-                   </SelectValue>
-                 </SelectTrigger>
+              <Select value={newUserData.role} onValueChange={(value) => setNewUserData(prev => ({ ...prev, role: value }))}>
+                <SelectTrigger className="bg-white border-slate-300 text-slate-800">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cliente" className="flex items-center space-x-2 text-slate-800">
-                    <span>👤</span>
-                    <span>Cliente</span>
-                  </SelectItem>
-                  <SelectItem value="admin" className="flex items-center space-x-2 text-slate-800">
-                    <span>👑</span>
-                    <span>Administrador</span>
-                  </SelectItem>
+                  <SelectItem value="user">Usuario</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <div className="flex justify-end space-x-3 pt-6">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowAddUserModal(false)}
-              className="px-6 py-2 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-800 transition-all duration-200 font-medium"
-            >
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button variant="outline" onClick={() => setShowAddUserModal(false)}>
               Cancelar
             </Button>
-            <Button 
-              onClick={handleCreateUser} 
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            >
+            <Button onClick={handleCreateUser} className="bg-blue-600 hover:bg-blue-700">
               Crear Usuario
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-             {/* Modal para editar usuario */}
-       <Dialog open={showEditUserModal} onOpenChange={setShowEditUserModal}>
-         <DialogContent className="bg-white border-slate-200 relative">
-           {/* Botón X para cerrar */}
-           <button
-             onClick={() => setShowEditUserModal(false)}
-             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors duration-200 group"
-           >
-             <span className="text-slate-600 group-hover:text-slate-800 text-lg font-semibold">×</span>
-           </button>
-           
-           <DialogHeader>
-             <DialogTitle className="text-xl text-slate-800">Editar Usuario</DialogTitle>
-             <DialogDescription className="text-slate-600">
-               Modifica la información del usuario
-             </DialogDescription>
-           </DialogHeader>
-           {editingUser && (
-             <div className="space-y-4">
-               <div>
-                 <Label htmlFor="edit_email" className="text-slate-700">Email</Label>
-                 <Input
-                   id="edit_email"
-                   type="email"
-                   value={editingUser.email}
-                   onChange={(e) => setEditingUser(prev => prev ? { ...prev, email: e.target.value } : null)}
-                   className="bg-white border-slate-300 text-slate-800"
-                 />
-               </div>
-               <div>
-                 <Label htmlFor="edit_full_name" className="text-slate-700">Nombre Completo</Label>
-                 <Input
-                   id="edit_full_name"
-                   type="text"
-                   value={editingUser.full_name}
-                   onChange={(e) => setEditingUser(prev => prev ? { ...prev, full_name: e.target.value } : null)}
-                   className="bg-white border-slate-300 text-slate-800"
-                 />
-               </div>
-               <div>
-                 <Label htmlFor="edit_role" className="text-slate-700">Rol</Label>
-                 <Select value={editingUser.role || 'cliente'} onValueChange={(value) => setEditingUser(prev => prev ? { ...prev, role: value } : null)}>
-                   <SelectTrigger className="bg-white border-slate-300 text-slate-800">
-                     <SelectValue>
-                       {editingUser.role === 'admin' ? '👑 Admin' : '👤 Cliente'}
-                     </SelectValue>
-                   </SelectTrigger>
-                   <SelectContent>
-                     <SelectItem value="cliente" className="flex items-center space-x-2 text-slate-800">
-                       <span>👤</span>
-                       <span>Cliente</span>
-                     </SelectItem>
-                     <SelectItem value="admin" className="flex items-center space-x-2 text-slate-800">
-                       <span>👑</span>
-                       <span>Administrador</span>
-                     </SelectItem>
-                   </SelectContent>
-                 </Select>
-               </div>
-             </div>
-           )}
-           <div className="flex justify-end space-x-3 pt-6">
-             <Button 
-               variant="outline" 
-               onClick={() => setShowEditUserModal(false)}
-               className="px-6 py-2 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-800 transition-all duration-200 font-medium"
-             >
-               Cancelar
-             </Button>
-             <Button 
-               onClick={handleUpdateUser} 
-               className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-             >
-               Actualizar Usuario
-             </Button>
-           </div>
-         </DialogContent>
-       </Dialog>
+      {/* Modal para editar usuario */}
+      <Dialog open={showEditUserModal} onOpenChange={setShowEditUserModal}>
+        <DialogContent className="bg-white border-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-slate-800">Editar Usuario</DialogTitle>
+            <DialogDescription className="text-slate-600">
+              Modifica la información del usuario
+            </DialogDescription>
+          </DialogHeader>
+          {editingUser && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit_email" className="text-slate-700">Email</Label>
+                <Input
+                  id="edit_email"
+                  type="email"
+                  value={editingUser.email}
+                  onChange={(e) => setEditingUser(prev => prev ? { ...prev, email: e.target.value } : null)}
+                  className="bg-white border-slate-300 text-slate-800"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_full_name" className="text-slate-700">Nombre Completo</Label>
+                <Input
+                  id="edit_full_name"
+                  type="text"
+                  value={editingUser.full_name}
+                  onChange={(e) => setEditingUser(prev => prev ? { ...prev, full_name: e.target.value } : null)}
+                  className="bg-white border-slate-300 text-slate-800"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_role" className="text-slate-700">Rol</Label>
+                <Select value={editingUser.role} onValueChange={(value) => setEditingUser(prev => prev ? { ...prev, role: value } : null)}>
+                  <SelectTrigger className="bg-white border-slate-300 text-slate-800">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">Usuario</SelectItem>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button variant="outline" onClick={() => setShowEditUserModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleUpdateUser} className="bg-blue-600 hover:bg-blue-700">
+              Actualizar Usuario
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 } 

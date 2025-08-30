@@ -210,7 +210,7 @@ export class SupabaseService {
       }
 
       if (!data) {
-        console.warn(`Usuario no encontrado con ID: ${id}`);
+        // Usuario no encontrado - manejo silencioso
         return null;
       }
 

@@ -356,12 +356,7 @@ export default function Admin() {
 
   // Función para editar un usuario
   const handleEditUser = (user: any) => {
-    // Asegurar que el usuario tenga un rol válido
-    const userWithRole = {
-      ...user,
-      role: user.role || 'cliente'
-    };
-    setEditingUser(userWithRole);
+    setEditingUser(user);
     setShowEditUserModal(true);
   };
 
@@ -442,7 +437,7 @@ export default function Admin() {
         .update({
           email: editingUser.email,
           full_name: editingUser.full_name,
-          role: editingUser.role || 'cliente',
+          role: editingUser.role,
           updated_at: new Date().toISOString()
         })
         .eq('id', editingUser.id);
@@ -1207,12 +1202,10 @@ export default function Admin() {
             </div>
             <div>
               <Label htmlFor="role" className="text-slate-700">Rol</Label>
-                             <Select value={newUserData.role} onValueChange={(value) => setNewUserData(prev => ({ ...prev, role: value }))}>
-                 <SelectTrigger className="bg-white border-slate-300 text-slate-800">
-                   <SelectValue>
-                     {newUserData.role === 'admin' ? '👑 Admin' : '👤 Cliente'}
-                   </SelectValue>
-                 </SelectTrigger>
+              <Select value={newUserData.role} onValueChange={(value) => setNewUserData(prev => ({ ...prev, role: value }))}>
+                <SelectTrigger className="bg-white border-slate-300 text-slate-800">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="cliente" className="flex items-center space-x-2 text-slate-800">
                     <span>👤</span>

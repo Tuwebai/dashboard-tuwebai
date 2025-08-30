@@ -191,12 +191,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       clearCache();
       
-      console.log('🔄 Recargando proyectos desde la base de datos...');
       // Recargar proyectos usando Supabase
       const response = await projectService.getProjects();
       const projectData = response?.projects || [];
-      
-      console.log(`✅ Proyectos recargados: ${projectData.length} proyectos`);
       
       setProjects(projectData as any);
       
@@ -205,7 +202,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // setLogs(logData);
       
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      // Error refreshing data
       setError('Error al recargar los datos');
     } finally {
       setLoading(false);
@@ -228,7 +225,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           try {
             userData = await userService.getUserById(supabaseUser.id);
           } catch (error) {
-            console.warn('Error loading user data:', error);
+            // Error loading user data
             // Si no existe el usuario en la tabla, crearlo
             const { email, user_metadata } = supabaseUser;
             let role: 'admin' | 'user' = 'user';
@@ -265,20 +262,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           try {
             // Obtener datos actualizados del usuario (incluyendo avatar_url)
             const updatedUserData = await userService.getUserById(supabaseUser.id);
-            console.log('🖼️ Datos del usuario desde BD:', updatedUserData);
             
             if (updatedUserData) {
               // Mapear avatar_url a avatar para compatibilidad
               if (updatedUserData.avatar_url) {
                 userData.avatar = updatedUserData.avatar_url;
-                console.log('✅ Avatar cargado desde BD:', updatedUserData.avatar_url);
-              } else {
-                console.log('❌ No hay avatar_url en la BD');
               }
               
               // Si no hay avatar en DB, sincronizarlo
               if (!updatedUserData.avatar_url && supabaseUser.email) {
-                console.log('🔄 Sincronizando avatar para:', supabaseUser.email);
                 const { realAvatarService } = await import('@/lib/avatarProviders');
                 await realAvatarService.syncUserAvatar(supabaseUser.email);
                 
@@ -289,14 +281,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                   // Mapear avatar_url a avatar
                   if (finalUserData.avatar_url) {
                     userData.avatar = finalUserData.avatar_url;
-                    console.log('✅ Avatar sincronizado:', finalUserData.avatar_url);
                   }
                   setCachedData(cacheKey, userData, 10 * 60 * 1000);
                 }
               }
             }
           } catch (error) {
-            console.warn('Error sincronizando avatar:', error);
+            // Error sincronizando avatar
           }
         }
         
@@ -307,7 +298,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // No mostrar toast aquí - se mostrará después del login exitoso
         
       } catch (error) {
-        console.error('Error in auth state change:', error);
         setError('Error de autenticación');
       } finally {
         setLoading(false);
@@ -353,11 +343,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       
       // Cargar proyectos desde la base de datos
-      console.log('📊 Cargando proyectos desde la base de datos...');
       const response = await projectService.getProjects();
       const projectData = response?.projects || [];
-      
-      console.log(`✅ Proyectos cargados: ${projectData.length} proyectos`);
       
       setProjects(projectData as any);
       
@@ -368,7 +355,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // TODO: Implementar suscripciones cuando sea necesario
       
     } catch (error) {
-      console.warn('Error configurando listeners de Supabase:', error);
       setError('Error de conexión');
       setProjects([]);
       setLogs([]);
@@ -411,7 +397,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       return result;
     } catch (error: any) {
-      console.error('Login error:', error);
       setError('Error al iniciar sesión');
       return false;
     } finally {
@@ -428,7 +413,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       await signUpWithEmail(email, password, { full_name: name });
       return true;
     } catch (error: any) {
-      console.error('Register error:', error);
       setError('Error al registrar usuario');
       return false;
     } finally {
@@ -457,7 +441,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       return result;
     } catch (error: any) {
-      console.error('Google login error:', error);
       setError('Error al iniciar sesión con Google');
       return false;
     } finally {
@@ -486,7 +469,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       return result;
     } catch (error: any) {
-      console.error('GitHub login error:', error);
       setError('Error al iniciar sesión con GitHub');
       return false;
     } finally {
@@ -502,7 +484,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       clearCache();
       localStorage.removeItem('tuwebai_welcome_back');
     } catch (error) {
-      console.error('Logout error:', error);
       setError('Error al cerrar sesión');
     } finally {
       setLoading(false);
@@ -512,7 +493,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Crear proyecto optimizado
   const createProject = async (projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'ownerEmail'>) => {
     if (!user) {
-      console.error('❌ No se puede crear proyecto: usuario no autenticado');
       return;
     }
     
@@ -525,7 +505,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         throw new Error('ID de usuario inválido. No se puede crear el proyecto.');
       }
       
-      console.log('👤 Creando proyecto para usuario:', user.email, 'con ID:', user.id);
+      // Creando proyecto para usuario
       
       const newProject = {
         ...projectData,
@@ -546,7 +526,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       cache.delete(`projects_${user.email}`);
       
     } catch (error) {
-      console.error('Create project error:', error);
       setError('Error al crear el proyecto');
     } finally {
       setLoading(false);
@@ -598,7 +577,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         cache.delete(`projects_${user.email}`);
       }
     } catch (error) {
-      console.error('Update project error:', error);
       setError('Error al actualizar el proyecto');
     } finally {
       setLoading(false);
@@ -619,7 +597,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       
     } catch (error) {
-      console.error('Delete project error:', error);
       setError('Error al eliminar el proyecto');
     } finally {
       setLoading(false);
@@ -646,7 +623,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       
     } catch (error) {
-      console.error('Add functionalities error:', error);
       setError('Error al agregar funcionalidades');
     } finally {
       setLoading(false);
@@ -692,7 +668,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       
     } catch (error) {
-      console.error('Add comment error:', error);
       setError('Error al agregar comentario');
     } finally {
       setLoading(false);
@@ -711,7 +686,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       
     } catch (error) {
-      console.error('Add log error:', error);
       // No mostrar error para logs ya que no es crítico
     }
   };
@@ -741,7 +715,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setCachedData(`user_${user.id}`, { ...user, ...updates }, 10 * 60 * 1000);
       return true;
     } catch (error) {
-      console.error('Error al actualizar configuración de usuario:', error);
       setError('Error al actualizar configuración');
       return false;
     } finally {
@@ -821,7 +794,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 export function useApp() {
   const context = useContext(AppContext);
   if (context === undefined) {
-    console.error('useApp must be used within an AppProvider');
     // Retornar un contexto por defecto en lugar de lanzar error
     return {
       user: null,

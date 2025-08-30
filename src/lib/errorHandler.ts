@@ -68,9 +68,9 @@ export const clearServiceWorkerCache = async () => {
         );
       }
       
-      console.log('Cache del Service Worker limpiado');
+      // Cache del Service Worker limpiado
     } catch (error) {
-      console.error('Error limpiando cache:', error);
+      // Error limpiando cache
     }
   }
 };

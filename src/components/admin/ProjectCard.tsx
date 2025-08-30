@@ -126,7 +126,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           });
         }
       } catch (error) {
-        console.warn(`Error cargando creador del proyecto ${project.id}:`, error);
+        // Error cargando creador
         setCreatorInfo({
           full_name: 'Error al cargar',
           email: 'error@example.com'

@@ -92,7 +92,6 @@ export default function ProjectsPage() {
       for (const project of projects) {
         // Validar que el proyecto tenga created_by válido
         if (!project.created_by || project.created_by.trim() === '') {
-          console.log(`Proyecto ${project.id} no tiene created_by válido`);
           continue;
         }
 
@@ -101,36 +100,40 @@ export default function ProjectsPage() {
           continue;
         }
 
-        try {
-          console.log(`Cargando creador para proyecto ${project.id}, created_by: ${project.created_by}`);
-          const creator = await userService.getUserById(project.created_by);
-          
-          if (creator && creator.id) {
-            console.log(`Creador encontrado:`, creator);
+        // Validar que el ID del creador sea válido antes de hacer la llamada
+        if (project.created_by && typeof project.created_by === 'string' && project.created_by.length > 0) {
+          try {
+            const creator = await userService.getUserById(project.created_by);
+            
+            if (creator && creator.id) {
+              creators[project.created_by] = {
+                full_name: creator.full_name || 'Usuario sin nombre',
+                email: creator.email || 'sin-email@example.com'
+              };
+            } else {
+              creators[project.created_by] = {
+                full_name: 'Usuario no encontrado',
+                email: 'no-encontrado@example.com'
+              };
+            }
+          } catch (error) {
             creators[project.created_by] = {
-              full_name: creator.full_name || 'Usuario sin nombre',
-              email: creator.email || 'sin-email@example.com'
-            };
-          } else {
-            console.log(`Creador no encontrado para ID: ${project.created_by}`);
-            creators[project.created_by] = {
-              full_name: 'Usuario no encontrado',
-              email: 'no-encontrado@example.com'
+              full_name: 'Error al cargar',
+              email: 'error@example.com'
             };
           }
-        } catch (error) {
-          console.warn(`Error cargando creador del proyecto ${project.id}:`, error);
+        } else {
+          // ID inválido o vacío
           creators[project.created_by] = {
-            full_name: 'Error al cargar',
-            email: 'error@example.com'
+            full_name: 'ID inválido',
+            email: 'id-invalido@example.com'
           };
         }
       }
       
-      console.log('Creadores cargados:', creators);
       setProjectCreators(creators);
     } catch (error) {
-      console.error('Error cargando creadores de proyectos:', error);
+      // Error cargando creadores de proyectos
     }
   }, []);
 

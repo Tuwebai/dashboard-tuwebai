@@ -17,10 +17,12 @@ import {
   Key,
   Lock,
   FolderOpen,
-  Globe
+  Globe,
+  Search
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { environmentService, EnvironmentVariable as EnvVar } from '@/lib/environmentService';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface EnvironmentVariable {
   key: string;
@@ -44,9 +46,10 @@ const EnvironmentVariables: React.FC = () => {
   // Verificación de seguridad
   if (!user) {
     return (
-      <div className="min-h-screen bg-zinc-900 text-white p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 text-slate-800 p-6 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-400">Cargando...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-slate-600">Cargando...</p>
         </div>
       </div>
     );
@@ -58,6 +61,7 @@ const EnvironmentVariables: React.FC = () => {
   const [selectedEnvironment, setSelectedEnvironment] = useState<string>('production');
   const [isLoading, setIsLoading] = useState(false);
   const [expandedProjects, setExpandedProjects] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Cargar variables de entorno para todos los proyectos
   useEffect(() => {
@@ -277,29 +281,53 @@ const EnvironmentVariables: React.FC = () => {
     return 'FolderOpen';
   };
 
+  // Filtrar proyectos por término de búsqueda
+  const filteredProjects = projectsWithVariables.filter(project =>
+    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    project.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   // Verificación adicional de seguridad
   if (!projects || !Array.isArray(projects)) {
     return (
-      <div className="min-h-screen bg-zinc-900 text-white p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 text-slate-800 p-6 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-400">Cargando proyectos...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-slate-600">Cargando proyectos...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
+      <div className="max-w-7xl mx-auto space-y-6 p-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+        >
           <div>
-            <h1 className="text-3xl font-bold">Variables de Entorno</h1>
-            <p className="text-gray-400 mt-1">Gestiona las variables de entorno de todos tus proyectos</p>
+            <h1 className="text-4xl font-bold text-slate-800 mb-2">Variables de Entorno</h1>
+            <p className="text-slate-600 text-lg">Gestiona las variables de entorno de todos tus proyectos</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Barra de búsqueda */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="Buscar proyectos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-full sm:w-64 bg-white border-slate-200 text-slate-800 placeholder-slate-500 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            {/* Selector de entorno */}
             <Select value={selectedEnvironment} onValueChange={setSelectedEnvironment}>
-              <SelectTrigger className="w-40 bg-zinc-800 border-zinc-700 text-white">
+              <SelectTrigger className="w-40 bg-white border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-blue-500">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -309,306 +337,364 @@ const EnvironmentVariables: React.FC = () => {
               </SelectContent>
             </Select>
           </div>
-        </div>
+        </motion.div>
 
         {/* Projects Grid */}
         {isLoading ? (
-          <div className="text-center py-12">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-12"
+          >
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="text-gray-400 mt-4">Cargando variables de entorno...</p>
-          </div>
-        ) : projectsWithVariables.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <Globe className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <h3 className="text-lg font-medium mb-2">No hay proyectos</h3>
-            <p className="text-sm">Crea un proyecto para comenzar a gestionar variables de entorno</p>
-          </div>
+            <p className="text-slate-600 mt-4 text-lg">Cargando variables de entorno...</p>
+          </motion.div>
+        ) : filteredProjects.length === 0 ? (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-12"
+          >
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-slate-200">
+              <Globe className="h-16 w-16 mx-auto mb-4 text-slate-400" />
+              <h3 className="text-xl font-semibold text-slate-700 mb-2">No hay proyectos</h3>
+              <p className="text-slate-500">Crea un proyecto para comenzar a gestionar variables de entorno</p>
+            </div>
+          </motion.div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {projectsWithVariables.filter(project => project.id).map((project) => (
-                              <Card key={project.id || `project-${Math.random()}`} className="bg-zinc-800 border-zinc-700">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                        <FolderOpen className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">{project.name}</CardTitle>
-                        <p className="text-gray-400 text-sm">{project.description}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {project.variables.length} variables
-                      </Badge>
-                                             <Button
-                         onClick={() => project.id && toggleProjectExpansion(project.id)}
-                         variant="ghost"
-                         size="sm"
-                         className="text-gray-400 hover:text-white"
-                       >
-                         {project.id && expandedProjects.includes(project.id) ? 'Ocultar' : 'Ver'}
-                       </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                                 {expandedProjects.includes(project.id) && (
-                  <CardContent className="space-y-4">
-                    {/* Variables List */}
-                    <div className="space-y-2">
-                      {project.variables.length === 0 ? (
-                        <div className="text-center py-6 text-gray-400">
-                          <Key className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">No hay variables de entorno</p>
+            <AnimatePresence>
+              {filteredProjects.filter(project => project.id).map((project, index) => (
+                <motion.div
+                  key={project.id || `project-${Math.random()}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.02 }}
+                  className="group"
+                >
+                  <Card className="bg-white border-slate-200 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-slate-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                            <FolderOpen className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-xl text-slate-800">{project.name}</CardTitle>
+                            <p className="text-slate-600 text-sm">{project.description}</p>
+                          </div>
                         </div>
-                      ) : (
-                        project.variables.map((variable, index) => (
-                          <div
-                            key={`${project.id || 'unknown'}-${index}`}
-                            className="flex items-center gap-3 p-3 bg-zinc-700 rounded-lg border border-zinc-600"
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200 text-xs px-3 py-1">
+                            {project.variables.length} variables
+                          </Badge>
+                          <Button
+                            onClick={() => project.id && toggleProjectExpansion(project.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-slate-600 hover:text-slate-800 hover:bg-slate-100"
                           >
-                            {/* Key */}
-                            <div className="flex-1">
-                              {editingVar === `${project.id || ''}-${index}` ? (
-                                <Input
-                                  value={variable.key}
-                                  onChange={(e) => project.id && updateVariable(project.id, index, 'key', e.target.value)}
-                                  className="bg-zinc-600 border-zinc-500 text-white text-sm"
-                                  placeholder="KEY"
-                                />
-                              ) : (
-                                <div className="flex items-center gap-2">
-                                  <Key className="h-3 w-3 text-gray-400" />
-                                  <span className="font-mono text-sm">{variable.key}</span>
-                                  {variable.isSensitive && (
-                                    <Lock className="h-3 w-3 text-yellow-400" />
-                                  )}
+                            {project.id && expandedProjects.includes(project.id) ? 'Ocultar' : 'Ver'}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    
+                    <AnimatePresence>
+                      {expandedProjects.includes(project.id) && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <CardContent className="space-y-4 p-6">
+                            {/* Variables List */}
+                            <div className="space-y-3">
+                              {project.variables.length === 0 ? (
+                                <div className="text-center py-6">
+                                  <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
+                                    <Key className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                                    <p className="text-slate-500 text-sm">No hay variables de entorno</p>
+                                  </div>
                                 </div>
+                              ) : (
+                                project.variables.map((variable, index) => (
+                                  <motion.div
+                                    key={`${project.id || 'unknown'}-${index}`}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                                    className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors duration-200"
+                                  >
+                                    {/* Key */}
+                                    <div className="flex-1">
+                                      {editingVar === `${project.id || ''}-${index}` ? (
+                                        <Input
+                                          value={variable.key}
+                                          onChange={(e) => project.id && updateVariable(project.id, index, 'key', e.target.value)}
+                                          className="bg-white border-slate-300 text-slate-800 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                          placeholder="KEY"
+                                        />
+                                      ) : (
+                                        <div className="flex items-center gap-2">
+                                          <Key className="h-4 w-4 text-slate-500" />
+                                          <span className="font-mono text-sm text-slate-700">{variable.key}</span>
+                                          {variable.isSensitive && (
+                                            <Lock className="h-4 w-4 text-amber-500" />
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Value */}
+                                    <div className="flex-1">
+                                      {editingVar === `${project.id || ''}-${index}` ? (
+                                        <div className="flex gap-2">
+                                          <Input
+                                            value={variable.value}
+                                            onChange={(e) => project.id && updateVariable(project.id, index, 'value', e.target.value)}
+                                            type={variable.isSensitive && !showValues[`${project.id || ''}-${variable.key}`] ? 'password' : 'text'}
+                                            className="bg-white border-slate-300 text-slate-800 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                            placeholder="VALUE"
+                                          />
+                                          <Button
+                                            onClick={() => project.id && updateVariable(project.id, index, 'isSensitive', !variable.isSensitive)}
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-slate-600 hover:text-slate-800 hover:bg-slate-200 p-2"
+                                          >
+                                            {variable.isSensitive ? <Lock className="h-4 w-4" /> : <Key className="h-4 w-4" />}
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-mono text-sm text-slate-600">
+                                            {variable.isSensitive && !showValues[`${project.id || ''}-${variable.key}`] 
+                                              ? '•'.repeat(8) 
+                                              : variable.value
+                                            }
+                                          </span>
+                                          {variable.isSensitive && (
+                                            <Button
+                                              onClick={() => project.id && toggleValueVisibility(project.id, variable.key)}
+                                              variant="ghost"
+                                              size="sm"
+                                              className="text-slate-600 hover:text-slate-800 hover:bg-slate-200 p-2"
+                                            >
+                                              {showValues[`${project.id || ''}-${variable.key}`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                            </Button>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex items-center gap-1">
+                                      {editingVar === `${project.id || ''}-${index}` ? (
+                                        <>
+                                          <Button
+                                            onClick={() => project.id && saveVariable(project.id, index)}
+                                            size="sm"
+                                            className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1"
+                                          >
+                                            ✓
+                                          </Button>
+                                          <Button
+                                            onClick={() => setEditingVar(null)}
+                                            variant="outline"
+                                            size="sm"
+                                            className="bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200 text-xs px-3 py-1"
+                                          >
+                                            ✕
+                                          </Button>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Button
+                                            onClick={() => project.id && setEditingVar(`${project.id}-${index}`)}
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-slate-600 hover:text-slate-800 hover:bg-slate-200 p-2"
+                                          >
+                                            <Edit className="h-4 w-4" />
+                                          </Button>
+                                          <Button
+                                            onClick={() => project.id && deleteVariable(project.id, index)}
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-red-500 hover:text-red-600 hover:bg-red-50 p-2"
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </motion.div>
+                                ))
                               )}
                             </div>
 
-                            {/* Value */}
-                            <div className="flex-1">
-                              {editingVar === `${project.id || ''}-${index}` ? (
-                                <div className="flex gap-2">
-                                  <Input
-                                    value={variable.value}
-                                    onChange={(e) => project.id && updateVariable(project.id, index, 'value', e.target.value)}
-                                    type={variable.isSensitive && !showValues[`${project.id || ''}-${variable.key}`] ? 'password' : 'text'}
-                                    className="bg-zinc-600 border-zinc-500 text-white text-sm"
-                                    placeholder="VALUE"
-                                  />
-                                  <Button
-                                    onClick={() => project.id && updateVariable(project.id, index, 'isSensitive', !variable.isSensitive)}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-gray-400 hover:text-white p-1"
-                                  >
-                                    {variable.isSensitive ? <Lock className="h-3 w-3" /> : <Key className="h-3 w-3" />}
-                                  </Button>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-2">
-                                  <span className="font-mono text-sm">
-                                    {variable.isSensitive && !showValues[`${project.id || ''}-${variable.key}`] 
-                                      ? '•'.repeat(8) 
-                                      : variable.value
-                                    }
-                                  </span>
-                                  {variable.isSensitive && (
+                            {/* Add New Variable */}
+                            <AnimatePresence>
+                              {editingVar?.startsWith(`${project.id || ''}-new-`) && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200"
+                                >
+                                  <div className="flex-1">
+                                    <Input
+                                      value={project.variables[project.variables.length - 1]?.key || ''}
+                                      onChange={(e) => project.id && updateVariable(project.id, project.variables.length - 1, 'key', e.target.value)}
+                                      className="bg-white border-blue-300 text-slate-800 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                      placeholder="KEY"
+                                    />
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex gap-2">
+                                      <Input
+                                        value={project.variables[project.variables.length - 1]?.value || ''}
+                                        onChange={(e) => project.id && updateVariable(project.id, project.variables.length - 1, 'value', e.target.value)}
+                                        type={project.variables[project.variables.length - 1]?.isSensitive ? 'password' : 'text'}
+                                        className="bg-white border-blue-300 text-slate-800 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="VALUE"
+                                      />
+                                      <Button
+                                        onClick={() => project.id && updateVariable(project.id, project.variables.length - 1, 'isSensitive', !project.variables[project.variables.length - 1]?.isSensitive)}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-slate-600 hover:text-slate-800 hover:bg-slate-200 p-2"
+                                      >
+                                        {project.variables[project.variables.length - 1]?.isSensitive ? <Lock className="h-4 w-4" /> : <Key className="h-4 w-4" />}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1">
                                     <Button
-                                      onClick={() => project.id && toggleValueVisibility(project.id, variable.key)}
-                                      variant="ghost"
+                                      onClick={() => project.id && saveVariable(project.id, project.variables.length - 1)}
                                       size="sm"
-                                      className="text-gray-400 hover:text-white p-1"
+                                      className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1"
                                     >
-                                      {showValues[`${project.id || ''}-${variable.key}`] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                                      ✓
                                     </Button>
-                                  )}
-                                </div>
+                                    <Button
+                                      onClick={() => {
+                                        setEditingVar(null);
+                                        setProjectsWithVariables(prev => prev.map(p => {
+                                          if (p.id === project.id) {
+                                            return { ...p, variables: p.variables.slice(0, -1) };
+                                          }
+                                          return p;
+                                        }));
+                                      }}
+                                      variant="outline"
+                                      size="sm"
+                                      className="bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200 text-xs px-3 py-1"
+                                    >
+                                      ✕
+                                    </Button>
+                                  </div>
+                                </motion.div>
                               )}
-                            </div>
+                            </AnimatePresence>
 
-                            {/* Actions */}
-                            <div className="flex items-center gap-1">
-                              {editingVar === `${project.id || ''}-${index}` ? (
-                                <>
-                                  <Button
-                                    onClick={() => project.id && saveVariable(project.id, index)}
-                                    size="sm"
-                                    className="bg-green-600 hover:bg-green-700 text-white text-xs"
-                                  >
-                                    ✓
-                                  </Button>
-                                  <Button
-                                    onClick={() => setEditingVar(null)}
-                                    variant="outline"
-                                    size="sm"
-                                    className="bg-zinc-600 border-zinc-500 text-white hover:bg-zinc-500 text-xs"
-                                  >
-                                    ✕
-                                  </Button>
-                                </>
-                              ) : (
-                                <>
-                                  <Button
-                                    onClick={() => project.id && setEditingVar(`${project.id}-${index}`)}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-gray-400 hover:text-white p-1"
-                                  >
-                                    <Edit className="h-3 w-3" />
-                                  </Button>
-                                  <Button
-                                    onClick={() => project.id && deleteVariable(project.id, index)}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-red-400 hover:text-red-300 p-1"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </>
-                              )}
+                            {/* Project Actions */}
+                            <div className="flex items-center gap-2 pt-4 border-t border-slate-200">
+                              <Button
+                                onClick={() => project.id && addVariable(project.id)}
+                                size="sm"
+                                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Agregar Variable
+                              </Button>
+                              <Button
+                                onClick={() => exportProjectVariables(project)}
+                                variant="outline"
+                                size="sm"
+                                className="bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 shadow-sm hover:shadow-md transition-all duration-300"
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                Exportar
+                              </Button>
                             </div>
-                          </div>
-                        ))
+                          </CardContent>
+                        </motion.div>
                       )}
-                    </div>
-
-                    {/* Add New Variable */}
-                    {editingVar?.startsWith(`${project.id || ''}-new-`) && (
-                      <div className="flex items-center gap-3 p-3 bg-zinc-700 rounded-lg border border-zinc-600">
-                        <div className="flex-1">
-                          <Input
-                            value={project.variables[project.variables.length - 1]?.key || ''}
-                            onChange={(e) => project.id && updateVariable(project.id, project.variables.length - 1, 'key', e.target.value)}
-                            className="bg-zinc-600 border-zinc-500 text-white text-sm"
-                            placeholder="KEY"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex gap-2">
-                            <Input
-                              value={project.variables[project.variables.length - 1]?.value || ''}
-                              onChange={(e) => project.id && updateVariable(project.id, project.variables.length - 1, 'value', e.target.value)}
-                              type={project.variables[project.variables.length - 1]?.isSensitive ? 'password' : 'text'}
-                              className="bg-zinc-600 border-zinc-500 text-white text-sm"
-                              placeholder="VALUE"
-                            />
-                            <Button
-                              onClick={() => project.id && updateVariable(project.id, project.variables.length - 1, 'isSensitive', !project.variables[project.variables.length - 1]?.isSensitive)}
-                              variant="ghost"
-                              size="sm"
-                              className="text-gray-400 hover:text-white p-1"
-                            >
-                              {project.variables[project.variables.length - 1]?.isSensitive ? <Lock className="h-3 w-3" /> : <Key className="h-3 w-3" />}
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            onClick={() => project.id && saveVariable(project.id, project.variables.length - 1)}
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700 text-white text-xs"
-                          >
-                            ✓
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              setEditingVar(null);
-                              setProjectsWithVariables(prev => prev.map(p => {
-                                if (p.id === project.id) {
-                                  return { ...p, variables: p.variables.slice(0, -1) };
-                                }
-                                return p;
-                              }));
-                            }}
-                            variant="outline"
-                            size="sm"
-                            className="bg-zinc-600 border-zinc-500 text-white hover:bg-zinc-500 text-xs"
-                          >
-                            ✕
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Project Actions */}
-                    <div className="flex items-center gap-2 pt-2 border-t border-zinc-600">
-                      <Button
-                        onClick={() => project.id && addVariable(project.id)}
-                        size="sm"
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        Agregar Variable
-                      </Button>
-                      <Button
-                        onClick={() => exportProjectVariables(project)}
-                        variant="outline"
-                        size="sm"
-                        className="bg-zinc-700 border-zinc-600 text-white hover:bg-zinc-600"
-                      >
-                        <Download className="h-3 w-3 mr-1" />
-                        Exportar
-                      </Button>
-                    </div>
-                  </CardContent>
-                )}
-              </Card>
-            ))}
+                    </AnimatePresence>
+                  </Card>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-zinc-800 border-zinc-700">
-            <CardContent className="p-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="grid grid-cols-1 md:grid-cols-4 gap-6"
+        >
+          <Card className="bg-white border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 group">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Total Proyectos</p>
-                  <p className="text-2xl font-bold">{projectsWithVariables.length}</p>
+                  <p className="text-slate-500 text-sm font-medium">Total Proyectos</p>
+                  <p className="text-3xl font-bold text-slate-800 group-hover:text-blue-600 transition-colors duration-300">{filteredProjects.length}</p>
                 </div>
-                <FolderOpen className="h-8 w-8 text-blue-400" />
+                <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <FolderOpen className="h-6 w-6 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-zinc-800 border-zinc-700">
-            <CardContent className="p-4">
+          
+          <Card className="bg-white border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 group">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Total Variables</p>
-                  <p className="text-2xl font-bold">{projectsWithVariables.reduce((sum, p) => sum + p.variables.length, 0)}</p>
+                  <p className="text-slate-500 text-sm font-medium">Total Variables</p>
+                  <p className="text-3xl font-bold text-slate-800 group-hover:text-green-600 transition-colors duration-300">{filteredProjects.reduce((sum, p) => sum + p.variables.length, 0)}</p>
                 </div>
-                <Key className="h-8 w-8 text-green-400" />
+                <div className="h-12 w-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Key className="h-6 w-6 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-zinc-800 border-zinc-700">
-            <CardContent className="p-4">
+          
+          <Card className="bg-white border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 group">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Sensibles</p>
-                  <p className="text-2xl font-bold">{projectsWithVariables.reduce((sum, p) => sum + p.variables.filter(v => v.isSensitive).length, 0)}</p>
+                  <p className="text-slate-500 text-sm font-medium">Sensibles</p>
+                  <p className="text-3xl font-bold text-slate-800 group-hover:text-amber-600 transition-colors duration-300">{filteredProjects.reduce((sum, p) => sum + p.variables.filter(v => v.isSensitive).length, 0)}</p>
                 </div>
-                <Lock className="h-8 w-8 text-yellow-400" />
+                <div className="h-12 w-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Lock className="h-6 w-6 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-zinc-800 border-zinc-700">
-            <CardContent className="p-4">
+          
+          <Card className="bg-white border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 group">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Entorno</p>
-                  <p className="text-2xl font-bold capitalize">{selectedEnvironment}</p>
+                  <p className="text-slate-500 text-sm font-medium">Entorno</p>
+                  <p className="text-3xl font-bold text-slate-800 group-hover:text-purple-600 transition-colors duration-300 capitalize">{selectedEnvironment}</p>
                 </div>
-                <Settings className="h-8 w-8 text-purple-400" />
+                <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Settings className="h-6 w-6 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

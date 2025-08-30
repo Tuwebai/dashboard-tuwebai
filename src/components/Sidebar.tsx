@@ -152,13 +152,18 @@ export default function Sidebar() {
           if (location.pathname !== '/admin') {
             // Si no estamos en /admin, navegar primero
             navigate('/admin');
+            // Usar un timeout más largo para asegurar que la navegación se complete
             setTimeout(() => {
               if (hash === 'dashboard') {
                 window.location.hash = '';
               } else {
                 window.location.hash = hash;
               }
-            }, 100);
+              // Forzar un re-render después de cambiar el hash
+              setTimeout(() => {
+                window.dispatchEvent(new HashChangeEvent('hashchange'));
+              }, 100);
+            }, 200);
           } else {
             // Si ya estamos en /admin, solo cambiar el hash
             if (hash === 'dashboard') {
@@ -166,6 +171,10 @@ export default function Sidebar() {
             } else {
               window.location.hash = hash;
             }
+            // Forzar un re-render del componente Admin
+            setTimeout(() => {
+              window.dispatchEvent(new HashChangeEvent('hashchange'));
+            }, 100);
           }
         }}
         className={`relative group cursor-pointer transition-all duration-300 ease-out hover:bg-gray-50 w-full

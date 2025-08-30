@@ -442,7 +442,7 @@ export default function Admin() {
         .update({
           email: editingUser.email,
           full_name: editingUser.full_name,
-          role: editingUser.role || 'cliente',
+          role: editingUser.role,
           updated_at: new Date().toISOString()
         })
         .eq('id', editingUser.id);

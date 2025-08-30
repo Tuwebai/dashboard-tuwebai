@@ -153,7 +153,6 @@ export default function Dashboard() {
       for (const project of projects) {
         // Validar que el proyecto tenga created_by válido
         if (!project.created_by || project.created_by.trim() === '') {
-          console.log(`Proyecto ${project.id} no tiene created_by válido`);
           continue;
         }
 
@@ -162,33 +161,37 @@ export default function Dashboard() {
           continue;
         }
 
-        try {
-          console.log(`Cargando creador para proyecto ${project.id}, created_by: ${project.created_by}`);
-          const creator = await userService.getUserById(project.created_by);
-          
-          if (creator && creator.id) {
-            console.log(`Creador encontrado:`, creator);
+        // Validar que el ID del creador sea válido antes de hacer la llamada
+        if (project.created_by && typeof project.created_by === 'string' && project.created_by.length > 0) {
+          try {
+            const creator = await userService.getUserById(project.created_by);
+            
+            if (creator && creator.id) {
+              creators[project.created_by] = {
+                full_name: creator.full_name || 'Usuario sin nombre',
+                email: creator.email || 'sin-email@example.com'
+              };
+            } else {
+              creators[project.created_by] = {
+                full_name: 'Usuario no encontrado',
+                email: 'no-encontrado@example.com'
+              };
+            }
+          } catch (error) {
             creators[project.created_by] = {
-              full_name: creator.full_name || 'Usuario sin nombre',
-              email: creator.email || 'sin-email@example.com'
-            };
-          } else {
-            console.log(`Creador no encontrado para ID: ${project.created_by}`);
-            creators[project.created_by] = {
-              full_name: 'Usuario no encontrado',
-              email: 'no-encontrado@example.com'
+              full_name: 'Error al cargar',
+              email: 'error@example.com'
             };
           }
-        } catch (error) {
-          console.warn(`Error cargando creador del proyecto ${project.id}:`, error);
+        } else {
+          // ID inválido o vacío
           creators[project.created_by] = {
-            full_name: 'Error al cargar',
-            email: 'error@example.com'
+            full_name: 'ID inválido',
+            email: 'id-invalido@example.com'
           };
         }
       }
       
-      console.log('Creadores cargados:', creators);
       setProjectCreators(creators);
     } catch (error) {
       console.error('Error cargando creadores de proyectos:', error);
@@ -310,7 +313,7 @@ export default function Dashboard() {
   // Verificar que el modal no se abra automáticamente
   useEffect(() => {
     if (isModalOpen && !modalInitialized) {
-      console.warn('Modal se abrió automáticamente, cerrando...');
+      // Modal se abrió automáticamente, cerrando...
       setIsModalOpen(false);
       setSelectedProject(null);
     }
@@ -319,7 +322,7 @@ export default function Dashboard() {
   // Verificar que el modal no se abra cuando no hay proyectos válidos
   useEffect(() => {
     if (isModalOpen && !hasValidProjects) {
-      console.warn('Modal abierto sin proyectos válidos, cerrando...');
+      // Modal abierto sin proyectos válidos, cerrando...
       setIsModalOpen(false);
       setSelectedProject(null);
       setModalInitialized(false);
@@ -361,7 +364,7 @@ export default function Dashboard() {
       setIsModalOpen(true);
       setModalInitialized(true);
     } else {
-      console.warn('Proyecto inválido:', project);
+      // Proyecto inválido
       toast({ 
         title: 'Error', 
         description: 'No se pudo cargar la información del proyecto.', 
@@ -765,18 +768,11 @@ export default function Dashboard() {
                         onClick={e => { 
                           e.preventDefault();
                           e.stopPropagation(); 
-                          console.log('Botón Colaborar clickeado, proyecto:', project);
-                          console.log('Proyecto ID:', project?.id);
-                          console.log('Usuario actual:', user);
-                          
                           if (project && project.id) {
                             const url = `/proyectos/${project.id}/colaboracion-cliente`;
-                            console.log('Navegando a:', url);
                             try {
                               navigate(url);
-                              console.log('Navegación exitosa');
                             } catch (error) {
-                              console.error('Error en navegación:', error);
                               toast({ 
                                 title: 'Error de navegación', 
                                 description: 'No se pudo navegar a la página de colaboración', 
@@ -784,7 +780,7 @@ export default function Dashboard() {
                               });
                             }
                           } else {
-                            console.error('Proyecto inválido:', project);
+                            // Proyecto inválido
                             toast({ 
                               title: 'Error', 
                               description: 'Proyecto inválido', 
