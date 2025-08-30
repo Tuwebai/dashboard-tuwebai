@@ -324,12 +324,16 @@ que permita syntax highlighting y mejor legibilidad.`;
     }
   }, [previewState.content, previewState.language]);
 
-  // Cargar contenido solo una vez cuando se hace visible
+  // Cargar contenido cuando se hace visible
   useEffect(() => {
-    if (isVisible && !previewState.content && !previewState.isLoading) {
+    if (isVisible) {
       timeoutRef.current = setTimeout(() => {
         loadFileContent();
       }, 300); // Delay de 300ms
+    } else {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     }
 
     return () => {
@@ -337,7 +341,7 @@ que permita syntax highlighting y mejor legibilidad.`;
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [isVisible, previewState.content, previewState.isLoading, loadFileContent]);
+  }, [isVisible, loadFileContent]);
 
   // Cerrar preview al presionar Escape
   useEffect(() => {

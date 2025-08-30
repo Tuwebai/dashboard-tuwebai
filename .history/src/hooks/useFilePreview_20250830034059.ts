@@ -124,27 +124,41 @@ export function useFilePreview(): UseFilePreviewReturn {
     };
   }, []);
 
-  // Ocultar preview solo cuando sea necesario
+  // Ocultar preview al mover el mouse fuera de la ventana
   useEffect(() => {
     const handleMouseLeaveWindow = () => {
       hidePreview();
     };
 
+    document.addEventListener('mouseleave', handleMouseLeaveWindow);
+    
+    return () => {
+      document.removeEventListener('mouseleave', handleMouseLeaveWindow);
+    };
+  }, [hidePreview]);
+
+  // Ocultar preview al hacer scroll
+  useEffect(() => {
     const handleScroll = () => {
       hidePreview();
     };
 
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [hidePreview]);
+
+  // Ocultar preview al cambiar el tamaño de la ventana
+  useEffect(() => {
     const handleResize = () => {
       hidePreview();
     };
 
-    document.addEventListener('mouseleave', handleMouseLeaveWindow);
-    window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleResize);
     
     return () => {
-      document.removeEventListener('mouseleave', handleMouseLeaveWindow);
-      window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
     };
   }, [hidePreview]);
