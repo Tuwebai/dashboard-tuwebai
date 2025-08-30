@@ -327,7 +327,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
       {/* Confirmación de eliminación */}
       {showConfirmDelete && (
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
           <div className="bg-white border border-slate-200 rounded-lg p-4 max-w-sm mx-4 shadow-xl">
             <h3 className="text-slate-800 font-semibold mb-2">Confirmar eliminación</h3>
             <p className="text-slate-600 text-sm mb-4">
