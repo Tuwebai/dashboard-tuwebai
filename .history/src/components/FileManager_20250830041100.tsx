@@ -3,15 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
@@ -286,67 +278,62 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
     }
   };
 
-  // Manejar apertura de vista previa
+  // Abrir vista previa del archivo
   const handleOpenPreview = async (file: ProjectFile) => {
-    setShowFilePreview(file);
-    setFilePreviewUrl(''); // Resetear URL previa
-    
-    // Usar extensión del archivo como fallback si el tipo no es confiable
-    if (file.type === 'image' || isImageFile(file.name)) {
-      try {
-        console.log('🔄 Iniciando vista previa para:', file.name);
-        console.log('📁 Ruta del archivo:', file.path);
-        console.log('🏷️ Tipo de archivo:', file.type);
-        console.log('🔍 Detectado como imagen por extensión:', isImageFile(file.name));
-        
+    try {
+      console.log('🔄 Iniciando vista previa para:', file.name);
+      console.log('📁 Tipo detectado por Supabase:', file.type);
+      console.log('🔍 Es imagen por extensión:', isImageFile(file.name));
+      
+      // Si es imagen por extensión, forzar el tipo
+      const actualFileType = isImageFile(file.name) ? 'image' : file.type;
+      console.log('🎯 Tipo final a usar:', actualFileType);
+      
+      if (actualFileType === 'image') {
         const url = await getFilePreviewUrl(file);
-        
-        if (!url) {
-          console.error('❌ No se pudo obtener URL para la imagen');
-          return;
-        }
-        
-        console.log('🔗 URL generada:', url);
-        
-        // Pre-cargar la imagen para verificar que funciona
-        const img = new window.Image();
-        
-        img.onload = () => {
-          console.log('✅ Imagen cargada correctamente desde:', url);
-          setFilePreviewUrl(url);
-        };
-        
-        img.onerror = (error) => {
-          console.error('❌ Error al cargar la imagen desde:', url);
-          console.error('Error details:', error);
+        if (url) {
+          console.log('🔗 URL obtenida:', url);
           
-          // Intentar con URL pública como fallback
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          if (supabaseUrl) {
-            const publicUrl = `${supabaseUrl}/storage/v1/object/public/project-files/${file.path}`;
-            console.log('🔄 Intentando con URL pública:', publicUrl);
+          // Pre-cargar la imagen para verificar que funciona
+          const img = new window.Image();
+          
+          img.onload = () => {
+            console.log('✅ Imagen cargada correctamente desde:', url);
+            setFilePreviewUrl(url);
+            setShowFilePreview(file); // Set the file for the modal
+          };
+          
+          img.onerror = (error) => {
+            console.error('❌ Error al cargar la imagen desde:', url);
+            console.error('Error details:', error);
             
-            const publicImg = new window.Image();
-            publicImg.onload = () => {
-              console.log('✅ Imagen cargada desde URL pública:', publicUrl);
-              setFilePreviewUrl(publicUrl);
-            };
-            publicImg.onerror = () => {
-              console.error('❌ Fallback a URL pública también falló');
-              setFilePreviewUrl('');
-            };
-            publicImg.src = publicUrl;
-          } else {
+            // Mostrar error en el modal
             setFilePreviewUrl('');
-          }
-        };
-        
-        img.src = url;
-        
-      } catch (error) {
-        console.error('❌ Error loading preview URL:', error);
+            setShowFilePreview(file); // Set the file for the modal
+          };
+          
+          img.src = url;
+        } else {
+          console.error('❌ No se pudo obtener URL para la imagen');
+          setFilePreviewUrl('');
+          setShowFilePreview(file); // Set the file for the modal
+        }
+      } else {
+        // Para archivos no-imagen, mostrar contenido de texto
+        console.log('📄 Archivo de texto detectado, cargando contenido...');
         setFilePreviewUrl('');
+        setShowFilePreview(file); // Set the file for the modal
       }
+      
+      // setSelectedFile(file); // This line was removed from the new_code, so it's removed here.
+      
+    } catch (error) {
+      console.error('❌ Error al abrir vista previa:', error);
+      // toast({ // This line was removed from the new_code, so it's removed here.
+      //   title: "Error",
+      //   description: "No se pudo abrir la vista previa del archivo",
+      //   variant: "destructive",
+      // });
     }
   };
 

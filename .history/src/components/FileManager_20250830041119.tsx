@@ -3,15 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
@@ -869,172 +861,91 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
       </Dialog>
 
         {/* Modal de vista previa del archivo */}
-        <Dialog open={!!showFilePreview} onOpenChange={() => {
-          setShowFilePreview(null);
-          setFilePreviewUrl('');
-        }}>
-          <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[80vh] overflow-hidden" aria-describedby="file-preview-description">
+        <Dialog open={!!showFilePreview} onOpenChange={() => setShowFilePreview(null)}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
             <DialogHeader>
-              <DialogTitle className="text-slate-800">Vista previa: {showFilePreview?.name}</DialogTitle>
-              <p id="file-preview-description" className="text-sm text-slate-600">
+              <DialogTitle>
+                Vista previa: {showFilePreview?.name}
+              </DialogTitle>
+              <DialogDescription>
                 Vista previa del archivo seleccionado
-              </p>
-              {(showFilePreview?.type === 'image' || isImageFile(showFilePreview?.name || '')) && (
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <div className={`w-2 h-2 rounded-full ${filePreviewUrl ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                  <span>{filePreviewUrl ? 'Imagen cargada' : 'Cargando imagen...'}</span>
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="flex-1 overflow-auto p-4">
+              {showFilePreview && (
+                <div className="space-y-4">
+                  {/* Información del archivo */}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>{showFilePreview.name}</span>
+                    <span>•</span>
+                    <span>{formatBytes(showFilePreview.size)}</span>
+                    <span>•</span>
+                    <span>{isImageFile(showFilePreview.name) ? 'image' : showFilePreview.type}</span>
+                  </div>
+                  
+                  {/* Contenido de la vista previa */}
+                  <div className="border rounded-lg p-4 min-h-[300px] flex items-center justify-center">
+                    {isImageFile(showFilePreview.name) ? (
+                      // Vista previa de imagen
+                      filePreviewUrl ? (
+                        <img
+                          src={filePreviewUrl}
+                          alt={showFilePreview.name}
+                          className="max-w-full max-h-[400px] object-contain rounded-lg shadow-lg"
+                          onError={(e) => {
+                            console.error('❌ Error al renderizar imagen en modal');
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="text-center space-y-2">
+                          <div className="text-6xl">🖼️</div>
+                          <p className="text-muted-foreground">Error al cargar la imagen</p>
+                          <p className="text-sm text-red-500">
+                            No se pudo obtener la URL de la imagen
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Verifica que el archivo existe y tienes permisos
+                          </p>
+                        </div>
+                      )
+                    ) : (
+                      // Vista previa de archivo de texto
+                      <div className="text-center space-y-2">
+                        <div className="text-6xl">📄</div>
+                        <p className="text-muted-foreground">Vista previa no disponible</p>
+                        <p className="text-sm text-muted-foreground">
+                          Este tipo de archivo no admite vista previa
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
-            </DialogHeader>
-            {showFilePreview && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 mb-4">
-                {getFileIcon(showFilePreview)}
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-800">{showFilePreview.name}</h3>
-                  <p className="text-sm text-slate-600">{formatBytes(showFilePreview.size)} • {showFilePreview.type}</p>
-                </div>
-              </div>
-              
-                             <div className="flex-1 overflow-auto">
-                 {(showFilePreview.type === 'image' || isImageFile(showFilePreview.name)) ? (
-                  <div className="flex justify-center">
-                    {filePreviewUrl ? (
-                      <div className="relative">
-                                                 <img
-                           src={filePreviewUrl}
-                           alt={showFilePreview.name}
-                           className="max-w-full max-h-[60vh] object-contain rounded-lg"
-                           onError={(e) => {
-                             console.error('❌ Error al cargar imagen en modal desde:', filePreviewUrl);
-                             const target = e.target as HTMLImageElement;
-                             target.style.display = 'none';
-                             // Mostrar el mensaje de error
-                             const errorDiv = target.nextElementSibling;
-                             if (errorDiv) {
-                               errorDiv.classList.remove('hidden');
-                             }
-                           }}
-                         />
-                        <div className="hidden absolute inset-0 flex items-center justify-center bg-slate-50 rounded-lg">
-                          <div className="text-center">
-                            <Image className="h-12 w-12 mx-auto mb-2 text-slate-400" />
-                            <p className="text-slate-600 font-medium">No se puede mostrar la vista previa</p>
-                            <p className="text-sm text-slate-500 mt-1">Intenta descargar el archivo</p>
-                            <Button
-                              onClick={() => handleOpenPreview(showFilePreview)}
-                              className="mt-3 bg-blue-600 hover:bg-blue-700 text-white"
-                              size="sm"
-                            >
-                              <RefreshCw className="h-4 w-4 mr-2" />
-                              Reintentar
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center h-32 text-slate-500">
-                        <div className="text-center">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400 mx-auto mb-2"></div>
-                          <p>Cargando imagen...</p>
-                        </div>
-                      </div>
-                    )}
-                                         {!filePreviewUrl && (showFilePreview.type === 'image' || isImageFile(showFilePreview.name)) && (
-                      <div className="flex items-center justify-center h-32 text-slate-500 mt-4">
-                        <div className="text-center">
-                          <Image className="h-12 w-12 mx-auto mb-2 text-slate-400" />
-                          <p className="text-slate-600 font-medium">Error al cargar la imagen</p>
-                          <p className="text-sm text-slate-500 mt-1">No se pudo obtener la URL de la imagen</p>
-                          <p className="text-xs text-slate-400 mt-1">Verifica que el archivo existe y tienes permisos</p>
-                                                     <div className="flex gap-2 mt-3 justify-center">
-                             <Button
-                               onClick={() => handleOpenPreview(showFilePreview)}
-                               className="bg-blue-600 hover:bg-blue-700 text-white"
-                               size="sm"
-                             >
-                               <RefreshCw className="h-4 w-4 mr-2" />
-                               Reintentar
-                             </Button>
-                             <Button
-                               onClick={() => {
-                                 // Abrir la URL en una nueva pestaña para probar
-                                 if (filePreviewUrl) {
-                                   window.open(filePreviewUrl, '_blank');
-                                 }
-                               }}
-                               variant="outline"
-                               size="sm"
-                               className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-300"
-                             >
-                               <Eye className="h-4 w-4 mr-2" />
-                               Probar URL
-                             </Button>
-                             <Button
-                               onClick={() => handleDownloadFile(showFilePreview)}
-                               variant="outline"
-                               size="sm"
-                             >
-                               <Download className="h-4 w-4 mr-2" />
-                               Descargar
-                             </Button>
-                           </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : showFilePreview.type === 'document' ? (
-                  <div className="flex items-center justify-center h-32 text-slate-500">
-                    <div className="text-center">
-                      <FileText className="h-12 w-12 mx-auto mb-2" />
-                      <p>Vista previa no disponible para este tipo de archivo</p>
-                      <Button
-                        onClick={() => handleDownloadFile(showFilePreview)}
-                        className="mt-2 bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Descargar archivo
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-32 text-slate-500">
-                    <div className="text-center">
-                      <File className="h-12 w-12 mx-auto mb-2" />
-                      <p>Vista previa no disponible para este tipo de archivo</p>
-                      <Button
-                        onClick={() => handleDownloadFile(showFilePreview)}
-                        className="mt-2 bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Descargar archivo
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-200">
-                <Button
-                  variant="outline"
-                  onClick={() => handleDownloadFile(showFilePreview)}
-                  className="border-slate-200 text-slate-700 hover:bg-slate-50"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Descargar
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowFilePreview(null)}
-                  className="border-slate-200 text-slate-700 hover:bg-slate-50"
-                >
-                  Cerrar
-                </Button>
-              </div>
             </div>
-          )}
-                 </DialogContent>
-       </Dialog>
+            
+            <DialogFooter className="flex gap-2">
+              {showFilePreview && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDownloadFile(showFilePreview)}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Descargar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowFilePreview(null)}
+                  >
+                    Cerrar
+                  </Button>
+                </>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
        {/* Preview de archivos al hacer hover */}
        {previewState.isVisible && previewState.file && (
