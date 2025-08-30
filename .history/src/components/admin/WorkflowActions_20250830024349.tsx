@@ -275,9 +275,6 @@ export const WorkflowActions: React.FC<WorkflowActionsProps> = ({ version, onAct
               {getAvailableActions().find(a => a.key === selectedAction)?.icon}
               {getAvailableActions().find(a => a.key === selectedAction)?.label}
             </DialogTitle>
-            <p id="workflow-action-description" className="text-slate-600 text-sm">
-              {getAvailableActions().find(a => a.key === selectedAction)?.description || 'Acción del workflow'}
-            </p>
           </DialogHeader>
           
           <div className="space-y-4">

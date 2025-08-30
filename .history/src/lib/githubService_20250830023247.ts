@@ -674,16 +674,13 @@ class GitHubService {
   private parseEnvironmentFile(content: string): Record<string, string> {
     const variables: Record<string, string> = {};
     
-    // Corregir codificación del contenido antes de procesarlo
-    const correctedContent = this.fixTextEncoding(content);
-    
     ENV_PATTERNS.forEach(pattern => {
-      const matches = correctedContent.match(pattern);
+      const matches = content.match(pattern);
       if (matches) {
         matches.forEach(match => {
           const [_, key, value] = match.match(/^([A-Z_][A-Z0-9_]*)\s*[=:]\s*(.+)$/) || [];
           if (key && value) {
-            variables[key.trim()] = this.fixTextEncoding(value.trim());
+            variables[key.trim()] = value.trim();
           }
         });
       }
@@ -804,7 +801,7 @@ class GitHubService {
         'Ã': 'Ç', 'Ã¢': 'â', 'Ãª': 'ê', 'Ã®': 'î', 'Ã´': 'ô',
         'Ã»': 'û', 'Ã‚': 'Â', 'ÃŠ': 'Ê', 'ÃŽ': 'Î', 'Ã': 'Ô',
         'Ã›': 'Û', 'Ãƒ': 'Ã', 'Ã‡': 'Ç', 'Ã‰': 'É', 'Ã': 'Í',
-        'Ã"': 'Ó', 'Ãš': 'Ú', 'Ã': 'Á', 'Ã': 'É', 'Ã': 'Í',
+        'Ã": 'Ó', 'Ãš': 'Ú', 'Ã': 'Á', 'Ã': 'É', 'Ã': 'Í',
         'Ã': 'Ó', 'Ãš': 'Ú', 'Ã': 'Á', 'Ã': 'É', 'Ã': 'Í',
         'Ã': 'Ó', 'Ãš': 'Ú'
       };
@@ -858,8 +855,8 @@ class GitHubService {
     );
 
     if (response.type === 'file' && response.content) {
-      // Decodificar contenido base64 con manejo correcto de UTF-8
-      const content = this.decodeBase64Content(response.content);
+      // Decodificar contenido base64
+      const content = atob(response.content);
       return {
         ...response,
         content,
@@ -1111,6 +1108,7 @@ class GitHubService {
    */
   async autoFillFromGitHub(repoUrl: string): Promise<DetectedInfo> {
     const startTime = Date.now();
+    console.log(`🚀 Iniciando análisis inteligente de: ${repoUrl}`);
 
     try {
       const repoInfo = this.parseRepositoryUrl(repoUrl);
@@ -1197,10 +1195,13 @@ class GitHubService {
       };
 
       const duration = Date.now() - startTime;
+      console.log(`✅ Análisis completado en ${duration}ms - Confianza: ${confidence}%`);
       
       return result;
 
     } catch (error: any) {
+      console.error('❌ Error en análisis del repositorio:', error);
+      
       if (error.message.includes('Not Found')) {
         throw new Error('Repository not found');
       } else if (error.message.includes('API rate limit exceeded')) {

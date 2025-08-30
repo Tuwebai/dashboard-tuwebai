@@ -1197,10 +1197,13 @@ class GitHubService {
       };
 
       const duration = Date.now() - startTime;
+      console.log(`✅ Análisis completado en ${duration}ms - Confianza: ${confidence}%`);
       
       return result;
 
     } catch (error: any) {
+      console.error('❌ Error en análisis del repositorio:', error);
+      
       if (error.message.includes('Not Found')) {
         throw new Error('Repository not found');
       } else if (error.message.includes('API rate limit exceeded')) {

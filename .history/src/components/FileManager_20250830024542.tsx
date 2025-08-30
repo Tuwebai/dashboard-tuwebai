@@ -266,13 +266,14 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
     if (file.type === 'image') {
       try {
         const url = await getFilePreviewUrl(file);
+        console.log('URL generada para vista previa:', url);
         setFilePreviewUrl(url);
         
-        // Pre-cargar la imagen para verificar que funciona
-        const img = new window.Image();
-        img.onload = () => {
-          // Imagen cargada correctamente
-        };
+                 // Pre-cargar la imagen para verificar que funciona
+         const img = new window.Image();
+         img.onload = () => {
+           console.log('Imagen cargada correctamente');
+         };
          img.onerror = () => {
            console.error('Error al cargar la imagen');
            setFilePreviewUrl('');

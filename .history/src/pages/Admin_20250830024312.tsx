@@ -1196,12 +1196,12 @@ export default function Admin() {
             <span className="text-slate-600 group-hover:text-slate-800 text-lg font-semibold">×</span>
           </button>
           
-                     <DialogHeader>
-             <DialogTitle className="text-xl text-slate-800">Agregar Nuevo Usuario</DialogTitle>
-             <DialogDescription id="add-user-description" className="text-slate-600">
-               Completa la información del nuevo usuario
-             </DialogDescription>
-           </DialogHeader>
+          <DialogHeader>
+            <DialogTitle className="text-xl text-slate-800">Agregar Nuevo Usuario</DialogTitle>
+            <DialogDescription className="text-slate-600">
+              Completa la información del nuevo usuario
+            </DialogDescription>
+          </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label htmlFor="email" className="text-slate-700">Email</Label>
@@ -1277,7 +1277,7 @@ export default function Admin() {
            
            <DialogHeader>
              <DialogTitle className="text-xl text-slate-800">Editar Usuario</DialogTitle>
-             <DialogDescription id="edit-user-description" className="text-slate-600">
+             <DialogDescription className="text-slate-600">
                Modifica la información del usuario
              </DialogDescription>
            </DialogHeader>

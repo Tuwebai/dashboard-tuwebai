@@ -1201,6 +1201,8 @@ class GitHubService {
       return result;
 
     } catch (error: any) {
+      console.error('❌ Error en análisis del repositorio:', error);
+      
       if (error.message.includes('Not Found')) {
         throw new Error('Repository not found');
       } else if (error.message.includes('API rate limit exceeded')) {

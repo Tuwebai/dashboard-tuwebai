@@ -1277,7 +1277,7 @@ export default function Admin() {
            
            <DialogHeader>
              <DialogTitle className="text-xl text-slate-800">Editar Usuario</DialogTitle>
-             <DialogDescription id="edit-user-description" className="text-slate-600">
+             <DialogDescription className="text-slate-600">
                Modifica la información del usuario
              </DialogDescription>
            </DialogHeader>

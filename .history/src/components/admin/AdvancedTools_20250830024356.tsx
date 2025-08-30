@@ -453,12 +453,9 @@ export default function AdvancedTools() {
       {/* Modal para crear nueva herramienta */}
       <Dialog open={showToolForm} onOpenChange={setShowToolForm}>
         <DialogContent className="bg-white border-slate-200" aria-describedby="advanced-tools-description">
-                      <DialogHeader>
-              <DialogTitle className="text-slate-800">Nueva Herramienta Avanzada</DialogTitle>
-              <p id="advanced-tools-description" className="text-slate-600 text-sm">
-                Crea una nueva herramienta avanzada para el sistema
-              </p>
-            </DialogHeader>
+          <DialogHeader>
+            <DialogTitle className="text-slate-800">Nueva Herramienta Avanzada</DialogTitle>
+          </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label htmlFor="name" className="text-slate-700">Nombre</Label>

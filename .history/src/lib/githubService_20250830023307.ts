@@ -804,7 +804,7 @@ class GitHubService {
         'Ã': 'Ç', 'Ã¢': 'â', 'Ãª': 'ê', 'Ã®': 'î', 'Ã´': 'ô',
         'Ã»': 'û', 'Ã‚': 'Â', 'ÃŠ': 'Ê', 'ÃŽ': 'Î', 'Ã': 'Ô',
         'Ã›': 'Û', 'Ãƒ': 'Ã', 'Ã‡': 'Ç', 'Ã‰': 'É', 'Ã': 'Í',
-        'Ã"': 'Ó', 'Ãš': 'Ú', 'Ã': 'Á', 'Ã': 'É', 'Ã': 'Í',
+        'Ã": 'Ó', 'Ãš': 'Ú', 'Ã': 'Á', 'Ã': 'É', 'Ã': 'Í',
         'Ã': 'Ó', 'Ãš': 'Ú', 'Ã': 'Á', 'Ã': 'É', 'Ã': 'Í',
         'Ã': 'Ó', 'Ãš': 'Ú'
       };
@@ -1111,6 +1111,7 @@ class GitHubService {
    */
   async autoFillFromGitHub(repoUrl: string): Promise<DetectedInfo> {
     const startTime = Date.now();
+    console.log(`🚀 Iniciando análisis inteligente de: ${repoUrl}`);
 
     try {
       const repoInfo = this.parseRepositoryUrl(repoUrl);
@@ -1197,10 +1198,13 @@ class GitHubService {
       };
 
       const duration = Date.now() - startTime;
+      console.log(`✅ Análisis completado en ${duration}ms - Confianza: ${confidence}%`);
       
       return result;
 
     } catch (error: any) {
+      console.error('❌ Error en análisis del repositorio:', error);
+      
       if (error.message.includes('Not Found')) {
         throw new Error('Repository not found');
       } else if (error.message.includes('API rate limit exceeded')) {
