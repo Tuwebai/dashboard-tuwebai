@@ -355,6 +355,62 @@ class GitHubService {
   getToken(): string | null {
     return this.token;
   }
+
+  // Función para auto-completar información del proyecto desde GitHub
+  async autoFillFromGitHub(repoUrl: string) {
+    try {
+      const repoInfo = this.parseRepositoryUrl(repoUrl);
+      if (!repoInfo) {
+        throw new Error('URL de repositorio inválida');
+      }
+
+      // Obtener información básica del repositorio
+      const [repository, languages, readme] = await Promise.all([
+        this.request(`/repos/${repoInfo.owner}/${repoInfo.repo}`),
+        this.request(`/repos/${repoInfo.owner}/${repoInfo.repo}/languages`),
+        this.request(`/repos/${repoInfo.owner}/${repoInfo.repo}/readme`).catch(() => null)
+      ]);
+
+      // Extraer tecnologías de los lenguajes
+      const technologies = Object.keys(languages || {});
+
+      // Extraer descripción del README si existe
+      let description = repository.description || '';
+      if (readme && readme.content) {
+        try {
+          const readmeContent = atob(readme.content);
+          // Extraer primera línea no vacía como descripción
+          const lines = readmeContent.split('\n').filter(line => line.trim());
+          if (lines.length > 0) {
+            const firstLine = lines[0].replace(/^#+\s*/, '').trim();
+            if (firstLine) {
+              description = firstLine;
+            }
+          }
+        } catch (error) {
+          console.warn('Error parsing README content:', error);
+        }
+      }
+
+      return {
+        name: repository.name,
+        description: description || repository.description || '',
+        technologies: technologies,
+        github_repository_url: repoUrl,
+        status: 'development', // Por defecto
+        is_active: true,
+        environment_variables: {}
+      };
+    } catch (error: any) {
+      if (error.message.includes('Not Found')) {
+        throw new Error('Repository not found');
+      } else if (error.message.includes('API rate limit exceeded')) {
+        throw new Error('API rate limit exceeded');
+      } else {
+        throw new Error(error.message || 'Error al obtener información del repositorio');
+      }
+    }
+  }
 }
 
 export const githubService = new GitHubService();
