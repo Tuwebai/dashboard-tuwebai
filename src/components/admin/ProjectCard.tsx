@@ -288,21 +288,24 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           </div>
         )}
 
-        {/* GitHub Repository */}
-        {project.github_repository_url && (
+      </CardContent>
+
+      {/* Botón GitHub SIEMPRE fijo arriba del footer */}
+      {project.github_repository_url && (
+        <div className="px-6 py-3 border-t border-slate-200 bg-slate-50/30">
           <div className="flex items-center gap-2">
             <ExternalLink className="h-4 w-4 text-slate-500" />
             <a
               href={project.github_repository_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-700 text-sm truncate"
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium hover:underline transition-colors"
             >
               Ver en GitHub
             </a>
           </div>
-        )}
-      </CardContent>
+        </div>
+      )}
 
       {/* Footer fijo con separador - SIEMPRE abajo */}
       <div className="border-t border-slate-200 bg-slate-50/50 mt-auto">
