@@ -833,25 +833,25 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
         </DialogContent>
       </Dialog>
 
-        {/* Modal de vista previa del archivo */}
-        <Dialog open={!!showFilePreview} onOpenChange={() => {
-          setShowFilePreview(null);
-          setFilePreviewUrl('');
-        }}>
-          <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[80vh] overflow-hidden" aria-describedby="file-preview-description">
-            <DialogHeader>
-              <DialogTitle className="text-slate-800">Vista previa: {showFilePreview?.name}</DialogTitle>
-              <p id="file-preview-description" className="text-sm text-slate-600">
-                Vista previa del archivo seleccionado
-              </p>
-              {(showFilePreview?.type === 'image' || isImageFile(showFilePreview?.name || '')) && (
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <div className={`w-2 h-2 rounded-full ${filePreviewUrl ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                  <span>{filePreviewUrl ? 'Imagen cargada' : 'Cargando imagen...'}</span>
-                </div>
-              )}
-            </DialogHeader>
-            {showFilePreview && (
+             {/* Modal de vista previa del archivo */}
+       <Dialog open={!!showFilePreview} onOpenChange={() => {
+         setShowFilePreview(null);
+         setFilePreviewUrl('');
+       }}>
+         <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[80vh] overflow-hidden" aria-describedby="file-preview-description">
+           <DialogHeader>
+             <DialogTitle className="text-slate-800">Vista previa: {showFilePreview?.name}</DialogTitle>
+             <p id="file-preview-description" className="text-sm text-slate-600">
+               Vista previa del archivo seleccionado
+             </p>
+                         {(showFilePreview?.type === 'image' || isImageFile(showFilePreview?.name || '')) && (
+               <div className="flex items-center gap-2 text-sm text-slate-600">
+                 <div className={`w-2 h-2 rounded-full ${filePreviewUrl ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                 <span>{filePreviewUrl ? 'Imagen cargada' : 'Cargando imagen...'}</span>
+               </div>
+             )}
+          </DialogHeader>
+          {showFilePreview && (
             <div className="space-y-4">
               <div className="flex items-center gap-4 mb-4">
                 {getFileIcon(showFilePreview)}
