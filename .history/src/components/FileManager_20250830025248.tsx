@@ -249,20 +249,7 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
         // Continuar con URL directa si falla signed URL
       }
       
-      // Método 2: Intentar obtener URL pública de Supabase
-      try {
-        const { data: urlData } = supabase.storage
-          .from(bucketName)
-          .getPublicUrl(filePath);
-        
-        if (urlData?.publicUrl) {
-          return urlData.publicUrl;
-        }
-      } catch (publicUrlError) {
-        // Continuar con URL directa si falla
-      }
-      
-      // Método 3: URL directa para archivos públicos
+      // Método 2: URL directa para archivos públicos
       const directUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
       
       // Verificar que la URL sea válida
@@ -281,29 +268,22 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
   // Manejar apertura de vista previa
   const handleOpenPreview = async (file: ProjectFile) => {
     setShowFilePreview(file);
-    setFilePreviewUrl(''); // Resetear URL previa
     
     if (file.type === 'image') {
       try {
         const url = await getFilePreviewUrl(file);
-        
-        if (!url) {
-          console.error('No se pudo obtener URL para la imagen');
-          return;
-        }
-        
         setFilePreviewUrl(url);
         
         // Pre-cargar la imagen para verificar que funciona
         const img = new window.Image();
         img.onload = () => {
-          // Imagen cargada correctamente, no hacer nada
+          // Imagen cargada correctamente
         };
-        img.onerror = () => {
-          console.error('Error al cargar la imagen desde:', url);
-          setFilePreviewUrl('');
-        };
-        img.src = url;
+         img.onerror = () => {
+           console.error('Error al cargar la imagen');
+           setFilePreviewUrl('');
+         };
+         img.src = url;
       } catch (error) {
         console.error('Error loading preview URL:', error);
         setFilePreviewUrl('');
@@ -803,12 +783,6 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
         <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[80vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="text-slate-800">Vista previa: {showFilePreview?.name}</DialogTitle>
-            {showFilePreview?.type === 'image' && (
-              <div className="flex items-center gap-2 text-sm text-slate-600">
-                <div className={`w-2 h-2 rounded-full ${filePreviewUrl ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                <span>{filePreviewUrl ? 'Imagen cargada' : 'Cargando imagen...'}</span>
-              </div>
-            )}
           </DialogHeader>
           {showFilePreview && (
             <div className="space-y-4">
@@ -824,70 +798,29 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                 {showFilePreview.type === 'image' ? (
                   <div className="flex justify-center">
                     {filePreviewUrl ? (
-                      <div className="relative">
-                        <img
-                          src={filePreviewUrl}
-                          alt={showFilePreview.name}
-                          className="max-w-full max-h-[60vh] object-contain rounded-lg"
-                          onError={(e) => {
-                            console.error('Error al cargar imagen en modal');
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            target.nextElementSibling?.classList.remove('hidden');
-                          }}
-                        />
-                        <div className="hidden absolute inset-0 flex items-center justify-center bg-slate-50 rounded-lg">
-                          <div className="text-center">
-                            <Image className="h-12 w-12 mx-auto mb-2 text-slate-400" />
-                            <p className="text-slate-600 font-medium">No se puede mostrar la vista previa</p>
-                            <p className="text-sm text-slate-500 mt-1">Intenta descargar el archivo</p>
-                            <Button
-                              onClick={() => handleOpenPreview(showFilePreview)}
-                              className="mt-3 bg-blue-600 hover:bg-blue-700 text-white"
-                              size="sm"
-                            >
-                              <RefreshCw className="h-4 w-4 mr-2" />
-                              Reintentar
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
+                      <img
+                        src={filePreviewUrl}
+                        alt={showFilePreview.name}
+                        className="max-w-full max-h-[60vh] object-contain rounded-lg"
+                        onError={(e) => {
+                          console.error('Error al cargar imagen en modal');
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
                     ) : (
                       <div className="flex items-center justify-center h-32 text-slate-500">
-                        <div className="text-center">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400 mx-auto mb-2"></div>
-                          <p>Cargando imagen...</p>
-                        </div>
+                        <p>Cargando imagen...</p>
                       </div>
                     )}
-                    {!filePreviewUrl && showFilePreview.type === 'image' && (
-                      <div className="flex items-center justify-center h-32 text-slate-500 mt-4">
-                        <div className="text-center">
-                          <Image className="h-12 w-12 mx-auto mb-2 text-slate-400" />
-                          <p className="text-slate-600 font-medium">Error al cargar la imagen</p>
-                          <p className="text-sm text-slate-500 mt-1">No se pudo obtener la URL de la imagen</p>
-                          <p className="text-xs text-slate-400 mt-1">Verifica que el archivo existe y tienes permisos</p>
-                          <div className="flex gap-2 mt-3 justify-center">
-                            <Button
-                              onClick={() => handleOpenPreview(showFilePreview)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
-                              size="sm"
-                            >
-                              <RefreshCw className="h-4 w-4 mr-2" />
-                              Reintentar
-                            </Button>
-                            <Button
-                              onClick={() => handleDownloadFile(showFilePreview)}
-                              variant="outline"
-                              size="sm"
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              Descargar
-                            </Button>
-                          </div>
-                        </div>
+                    <div className="hidden flex items-center justify-center h-32 text-slate-500">
+                      <div className="text-center">
+                        <Image className="h-12 w-12 mx-auto mb-2 text-slate-400" />
+                        <p>No se puede mostrar la vista previa de esta imagen</p>
+                        <p className="text-sm text-slate-500 mt-1">Intenta descargar el archivo</p>
                       </div>
-                    )}
+                    </div>
                   </div>
                 ) : showFilePreview.type === 'document' ? (
                   <div className="flex items-center justify-center h-32 text-slate-500">

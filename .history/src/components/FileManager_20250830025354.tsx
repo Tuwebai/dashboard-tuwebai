@@ -249,20 +249,7 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
         // Continuar con URL directa si falla signed URL
       }
       
-      // Método 2: Intentar obtener URL pública de Supabase
-      try {
-        const { data: urlData } = supabase.storage
-          .from(bucketName)
-          .getPublicUrl(filePath);
-        
-        if (urlData?.publicUrl) {
-          return urlData.publicUrl;
-        }
-      } catch (publicUrlError) {
-        // Continuar con URL directa si falla
-      }
-      
-      // Método 3: URL directa para archivos públicos
+      // Método 2: URL directa para archivos públicos
       const directUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
       
       // Verificar que la URL sea válida
@@ -803,12 +790,6 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
         <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[80vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="text-slate-800">Vista previa: {showFilePreview?.name}</DialogTitle>
-            {showFilePreview?.type === 'image' && (
-              <div className="flex items-center gap-2 text-sm text-slate-600">
-                <div className={`w-2 h-2 rounded-full ${filePreviewUrl ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                <span>{filePreviewUrl ? 'Imagen cargada' : 'Cargando imagen...'}</span>
-              </div>
-            )}
           </DialogHeader>
           {showFilePreview && (
             <div className="space-y-4">
@@ -866,25 +847,14 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                           <Image className="h-12 w-12 mx-auto mb-2 text-slate-400" />
                           <p className="text-slate-600 font-medium">Error al cargar la imagen</p>
                           <p className="text-sm text-slate-500 mt-1">No se pudo obtener la URL de la imagen</p>
-                          <p className="text-xs text-slate-400 mt-1">Verifica que el archivo existe y tienes permisos</p>
-                          <div className="flex gap-2 mt-3 justify-center">
-                            <Button
-                              onClick={() => handleOpenPreview(showFilePreview)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
-                              size="sm"
-                            >
-                              <RefreshCw className="h-4 w-4 mr-2" />
-                              Reintentar
-                            </Button>
-                            <Button
-                              onClick={() => handleDownloadFile(showFilePreview)}
-                              variant="outline"
-                              size="sm"
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              Descargar
-                            </Button>
-                          </div>
+                          <Button
+                            onClick={() => handleOpenPreview(showFilePreview)}
+                            className="mt-3 bg-blue-600 hover:bg-blue-700 text-white"
+                            size="sm"
+                          >
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Reintentar
+                          </Button>
                         </div>
                       </div>
                     )}
