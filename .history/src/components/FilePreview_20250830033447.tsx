@@ -411,8 +411,8 @@ que permita syntax highlighting y mejor legibilidad.`;
       style={{
         left: finalPosition.x,
         top: finalPosition.y,
-        width: `${finalPosition.width}px`,
-        maxHeight: `${finalPosition.height}px`
+        width: '400px',
+        maxHeight: '300px'
       }}
     >
       <Card className="bg-white border-slate-200 shadow-lg pointer-events-auto">
