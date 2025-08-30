@@ -327,8 +327,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
       {/* Confirmación de eliminación */}
       {showConfirmDelete && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-          <div className="bg-white border border-slate-200 rounded-lg p-4 max-w-sm mx-4 shadow-xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] pointer-events-none">
+          <div className="bg-white border border-slate-200 rounded-lg p-4 max-w-sm mx-4 shadow-xl pointer-events-auto">
             <h3 className="text-slate-800 font-semibold mb-2">Confirmar eliminación</h3>
             <p className="text-slate-600 text-sm mb-4">
               ¿Estás seguro de que quieres eliminar el proyecto "{project.name}"? Esta acción no se puede deshacer.
@@ -356,8 +356,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
       {/* Modal de selección de iconos */}
       {showIconPicker && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white border border-slate-200 rounded-lg p-6 max-w-md mx-4 shadow-xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 pointer-events-none">
+          <div className="bg-white border border-slate-200 rounded-lg p-6 max-w-md mx-4 shadow-xl pointer-events-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-slate-800 font-semibold">Personalizar Icono</h3>
               <Button
