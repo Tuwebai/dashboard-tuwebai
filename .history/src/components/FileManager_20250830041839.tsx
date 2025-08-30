@@ -310,36 +310,55 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
         
         // Pre-cargar la imagen para verificar que funciona
         const img = new window.Image();
+        let imageLoaded = false;
         
         img.onload = () => {
           console.log('✅ Imagen cargada correctamente desde:', url);
+          imageLoaded = true;
           setFilePreviewUrl(url);
         };
         
         img.onerror = (error) => {
-          console.error('❌ Error al cargar la imagen desde:', url);
-          console.error('Error details:', error);
-          
-          // Intentar con URL pública como fallback
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          if (supabaseUrl) {
-            const publicUrl = `${supabaseUrl}/storage/v1/object/public/project-files/${file.path}`;
-            console.log('🔄 Intentando con URL pública:', publicUrl);
+          if (!imageLoaded) {
+            console.error('❌ Error al cargar la imagen desde:', url);
+            console.error('Error details:', error);
             
-            const publicImg = new window.Image();
-            publicImg.onload = () => {
-              console.log('✅ Imagen cargada desde URL pública:', publicUrl);
-              setFilePreviewUrl(publicUrl);
-            };
-            publicImg.onerror = () => {
-              console.error('❌ Fallback a URL pública también falló');
+            // Solo intentar fallback si la imagen no se cargó
+            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+            if (supabaseUrl) {
+              const publicUrl = `${supabaseUrl}/storage/v1/object/public/project-files/${file.path}`;
+              console.log('🔄 Intentando con URL pública:', publicUrl);
+              
+              const publicImg = new window.Image();
+              let fallbackLoaded = false;
+              
+              publicImg.onload = () => {
+                console.log('✅ Imagen cargada desde URL pública:', publicUrl);
+                fallbackLoaded = true;
+                setFilePreviewUrl(publicUrl);
+              };
+              
+              publicImg.onerror = () => {
+                if (!fallbackLoaded) {
+                  console.error('❌ Fallback a URL pública también falló');
+                  setFilePreviewUrl('');
+                }
+              };
+              
+              publicImg.src = publicUrl;
+            } else {
               setFilePreviewUrl('');
-            };
-            publicImg.src = publicUrl;
-          } else {
-            setFilePreviewUrl('');
+            }
           }
         };
+        
+        // Establecer timeout para evitar esperar indefinidamente
+        setTimeout(() => {
+          if (!imageLoaded) {
+            console.log('⏰ Timeout de carga de imagen, usando URL directamente');
+            setFilePreviewUrl(url);
+          }
+        }, 3000); // 3 segundos de timeout
         
         img.src = url;
         
@@ -873,10 +892,7 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
           setShowFilePreview(null);
           setFilePreviewUrl('');
         }}>
-          <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[80vh] overflow-hidden">
-            <DialogDescription className="sr-only">
-              Vista previa del archivo seleccionado
-            </DialogDescription>
+          <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[80vh] overflow-hidden" aria-describedby="file-preview-description">
             <DialogHeader>
               <DialogTitle className="text-slate-800">Vista previa: {showFilePreview?.name}</DialogTitle>
               <p id="file-preview-description" className="text-sm text-slate-600">

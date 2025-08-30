@@ -873,10 +873,7 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
           setShowFilePreview(null);
           setFilePreviewUrl('');
         }}>
-          <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[80vh] overflow-hidden">
-            <DialogDescription className="sr-only">
-              Vista previa del archivo seleccionado
-            </DialogDescription>
+          <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[80vh] overflow-hidden" aria-describedby="file-preview-description">
             <DialogHeader>
               <DialogTitle className="text-slate-800">Vista previa: {showFilePreview?.name}</DialogTitle>
               <p id="file-preview-description" className="text-sm text-slate-600">
