@@ -512,7 +512,7 @@ class GitHubService {
     // Prioridad 1: Primera línea del README
     if (readme && readme.content) {
       try {
-        const readmeContent = atob(readme.content);
+        const readmeContent = this.decodeBase64Content(readme.content);
         const lines = readmeContent.split('\n')
           .filter(line => line.trim())
           .filter(line => !line.startsWith('#'))
@@ -529,12 +529,12 @@ class GitHubService {
     
     // Prioridad 2: Descripción del repositorio
     if (!description && repository.description) {
-      description = repository.description;
+      description = this.fixTextEncoding(repository.description);
     }
     
     // Prioridad 3: Descripción del package.json
     if (!description && packageJson?.description) {
-      description = packageJson.description;
+      description = this.fixTextEncoding(packageJson.description);
     }
     
     // Generar descripción contextual si no hay ninguna
@@ -674,13 +674,16 @@ class GitHubService {
   private parseEnvironmentFile(content: string): Record<string, string> {
     const variables: Record<string, string> = {};
     
+    // Corregir codificación del contenido antes de procesarlo
+    const correctedContent = this.fixTextEncoding(content);
+    
     ENV_PATTERNS.forEach(pattern => {
-      const matches = content.match(pattern);
+      const matches = correctedContent.match(pattern);
       if (matches) {
         matches.forEach(match => {
           const [_, key, value] = match.match(/^([A-Z_][A-Z0-9_]*)\s*[=:]\s*(.+)$/) || [];
           if (key && value) {
-            variables[key.trim()] = value.trim();
+            variables[key.trim()] = this.fixTextEncoding(value.trim());
           }
         });
       }
@@ -758,6 +761,91 @@ class GitHubService {
     return tools;
   }
 
+  // =====================================================
+  // MÉTODOS DE MANEJO DE CODIFICACIÓN DE TEXTO
+  // =====================================================
+
+  /**
+   * Decodifica contenido base64 con manejo correcto de UTF-8
+   */
+  private decodeBase64Content(base64Content: string): string {
+    try {
+      // Decodificar base64
+      const binaryString = atob(base64Content);
+      
+      // Convertir a Uint8Array para manejar UTF-8 correctamente
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      // Decodificar como UTF-8
+      const decoder = new TextDecoder('utf-8');
+      return decoder.decode(bytes);
+    } catch (error) {
+      console.warn('Error decoding base64 content, falling back to atob:', error);
+      // Fallback al método anterior
+      return atob(base64Content);
+    }
+  }
+
+  /**
+   * Corrige problemas de codificación de caracteres especiales
+   */
+  private fixTextEncoding(text: string): string {
+    if (!text) return text;
+    
+    try {
+      // Mapa de caracteres mal codificados comunes
+      const encodingMap: Record<string, string> = {
+        'Ã¡': 'á', 'Ã©': 'é', 'Ã­': 'í', 'Ã³': 'ó', 'Ãº': 'ú',
+        'Ã±': 'ñ', 'Ã¼': 'ü', 'Ã§': 'ç', 'Ã€': 'À', 'Ã': 'È',
+        'ÃŒ': 'Ì', 'Ã': 'Ò', 'Ã™': 'Ù', 'Ã': 'Ñ', 'Ãœ': 'Ü',
+        'Ã': 'Ç', 'Ã¢': 'â', 'Ãª': 'ê', 'Ã®': 'î', 'Ã´': 'ô',
+        'Ã»': 'û', 'Ã‚': 'Â', 'ÃŠ': 'Ê', 'ÃŽ': 'Î', 'Ã': 'Ô',
+        'Ã›': 'Û', 'Ãƒ': 'Ã', 'Ã‡': 'Ç', 'Ã‰': 'É', 'Ã': 'Í',
+        'Ã": 'Ó', 'Ãš': 'Ú', 'Ã': 'Á', 'Ã': 'É', 'Ã': 'Í',
+        'Ã': 'Ó', 'Ãš': 'Ú', 'Ã': 'Á', 'Ã': 'É', 'Ã': 'Í',
+        'Ã': 'Ó', 'Ãš': 'Ú'
+      };
+      
+      let correctedText = text;
+      
+      // Aplicar correcciones de codificación
+      Object.entries(encodingMap).forEach(([incorrect, correct]) => {
+        correctedText = correctedText.replace(new RegExp(incorrect, 'g'), correct);
+      });
+      
+      // Intentar decodificar como URI si hay caracteres codificados
+      try {
+        if (correctedText.includes('%')) {
+          correctedText = decodeURIComponent(correctedText);
+        }
+      } catch (error) {
+        // Si falla decodeURIComponent, mantener el texto corregido
+      }
+      
+      return correctedText;
+    } catch (error) {
+      console.warn('Error fixing text encoding:', error);
+      return text;
+    }
+  }
+
+  /**
+   * Normaliza y limpia texto para mejor legibilidad
+   */
+  private normalizeText(text: string): string {
+    if (!text) return text;
+    
+    return text
+      .replace(/\s+/g, ' ')           // Múltiples espacios a uno solo
+      .replace(/\n\s*\n/g, '\n')      // Múltiples saltos de línea a uno solo
+      .replace(/^\s+|\s+$/g, '')      // Eliminar espacios al inicio y final
+      .replace(/[^\w\s\u00C0-\u017F\-.,!?()]/g, '') // Solo caracteres válidos + acentos
+      .trim();
+  }
+
   // Obtener contenido de un archivo
   async getFileContent(repoUrl: string, path: string, branch: string = 'main') {
     const repoInfo = this.parseRepositoryUrl(repoUrl);
@@ -770,8 +858,8 @@ class GitHubService {
     );
 
     if (response.type === 'file' && response.content) {
-      // Decodificar contenido base64
-      const content = atob(response.content);
+      // Decodificar contenido base64 con manejo correcto de UTF-8
+      const content = this.decodeBase64Content(response.content);
       return {
         ...response,
         content,
