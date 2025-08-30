@@ -245,7 +245,6 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
         return '';
       }
       
-      console.log('🔗 URL pública generada:', publicUrl);
       return publicUrl;
     } catch (error) {
       console.error('Error getting file URL:', error);
@@ -260,33 +259,27 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
     
     if (file.type === 'image') {
       try {
-        console.log('🔄 Iniciando vista previa para:', file.name);
-        console.log('📁 Ruta del archivo:', file.path);
-        console.log('🏷️ Tipo de archivo:', file.type);
-        
         const url = await getFilePreviewUrl(file);
         
         if (!url) {
-          console.error('❌ No se pudo obtener URL para la imagen');
+          console.error('No se pudo obtener URL para la imagen');
           return;
         }
         
-        console.log('🔗 URL generada:', url);
         setFilePreviewUrl(url);
         
         // Pre-cargar la imagen para verificar que funciona
         const img = new window.Image();
         img.onload = () => {
-          console.log('✅ Imagen cargada correctamente desde:', url);
+          // Imagen cargada correctamente, no hacer nada
         };
-        img.onerror = (error) => {
-          console.error('❌ Error al cargar la imagen desde:', url);
-          console.error('Error details:', error);
+        img.onerror = () => {
+          console.error('Error al cargar la imagen desde:', url);
           setFilePreviewUrl('');
         };
         img.src = url;
       } catch (error) {
-        console.error('❌ Error loading preview URL:', error);
+        console.error('Error loading preview URL:', error);
         setFilePreviewUrl('');
       }
     }

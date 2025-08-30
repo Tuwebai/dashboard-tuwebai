@@ -236,17 +236,42 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
       const bucketName = 'project-files';
       const filePath = file.path;
       
-      // Como tienes políticas públicas configuradas, usar URL directa
-      const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
+      // Método 1: Intentar con signed URL primero (más seguro)
+      try {
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .createSignedUrl(filePath, 3600); // 1 hora de expiración
+        
+        if (!error && data?.signedUrl) {
+          return data.signedUrl;
+        }
+      } catch (signedError) {
+        // Continuar con URL directa si falla signed URL
+      }
+      
+      // Método 2: Intentar obtener URL pública de Supabase
+      try {
+        const { data: urlData } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(filePath);
+        
+        if (urlData?.publicUrl) {
+          return urlData.publicUrl;
+        }
+      } catch (publicUrlError) {
+        // Continuar con URL directa si falla
+      }
+      
+      // Método 3: URL directa para archivos públicos
+      const directUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
       
       // Verificar que la URL sea válida
-      if (!publicUrl || publicUrl.includes('undefined')) {
-        console.error('URL inválida generada:', publicUrl);
+      if (!directUrl || directUrl.includes('undefined')) {
+        console.error('URL inválida generada:', directUrl);
         return '';
       }
       
-      console.log('🔗 URL pública generada:', publicUrl);
-      return publicUrl;
+      return directUrl;
     } catch (error) {
       console.error('Error getting file URL:', error);
       return '';
