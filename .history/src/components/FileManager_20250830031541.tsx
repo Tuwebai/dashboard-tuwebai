@@ -985,18 +985,8 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
               </div>
             </div>
           )}
-                 </DialogContent>
-       </Dialog>
-
-       {/* Preview de archivos al hacer hover */}
-       {previewState.isVisible && previewState.file && (
-         <FilePreview
-           file={previewState.file}
-           isVisible={previewState.isVisible}
-           position={previewState.position}
-           onClose={() => {}}
-         />
-       )}
-     </div>
-   );
- }
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

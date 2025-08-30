@@ -568,29 +568,20 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
           ) : (
             <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4' : 'space-y-2'}>
               {sortedFiles.map((file) => (
-                                 <div
-                   key={file.id}
-                   className={`group relative p-3 sm:p-4 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all cursor-pointer ${
-                     viewMode === 'grid' ? 'bg-white' : 'bg-slate-50'
-                   }`}
-                   onClick={() => handleOpenPreview(file)}
-                   onMouseEnter={handleMouseEnter(file)}
-                   onMouseLeave={handleMouseLeave}
-                 >
+                <div
+                  key={file.id}
+                  className={`group relative p-3 sm:p-4 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all cursor-pointer ${
+                    viewMode === 'grid' ? 'bg-white' : 'bg-slate-50'
+                  }`}
+                  onClick={() => handleOpenPreview(file)}
+                >
                   <div className="flex items-center gap-2 sm:gap-3">
                     {getFileIcon(file)}
-                                         <div className="flex-1 min-w-0">
-                       <div className="flex items-center gap-2">
-                         <p className="text-sm font-medium text-slate-800 truncate">{file.name}</p>
-                         {isPreviewSupported(file.name) && (
-                           <Badge variant="outline" className="text-xs border-blue-200 text-blue-600 bg-blue-50">
-                             <Eye className="h-3 w-3" />
-                           </Badge>
-                         )}
-                       </div>
-                       <p className="text-xs text-slate-600">{formatBytes(file.size)}</p>
-                       <p className="text-xs text-slate-500">{formatDateSafe(file.created_at)}</p>
-                     </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">{file.name}</p>
+                      <p className="text-xs text-slate-600">{formatBytes(file.size)}</p>
+                      <p className="text-xs text-slate-500">{formatDateSafe(file.created_at)}</p>
+                    </div>
                     
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
@@ -985,18 +976,8 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
               </div>
             </div>
           )}
-                 </DialogContent>
-       </Dialog>
-
-       {/* Preview de archivos al hacer hover */}
-       {previewState.isVisible && previewState.file && (
-         <FilePreview
-           file={previewState.file}
-           isVisible={previewState.isVisible}
-           position={previewState.position}
-           onClose={() => {}}
-         />
-       )}
-     </div>
-   );
- }
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
