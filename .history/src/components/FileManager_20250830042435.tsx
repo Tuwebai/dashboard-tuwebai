@@ -329,9 +329,8 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
     setShowFilePreview(file);
     setFilePreviewUrl(''); // Resetear URL previa
     
-    // Usar el tipo real del archivo (por extensión)
-    const realType = getRealFileType(file);
-    if (realType === 'image') {
+    // Usar extensión del archivo como fallback si el tipo no es confiable
+    if (file.type === 'image' || isImageFile(file.name)) {
       try {
         console.log('🔄 Iniciando vista previa para:', file.name);
         console.log('📁 Ruta del archivo:', file.path);
@@ -939,7 +938,7 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
               <p id="file-preview-description" className="text-sm text-slate-600">
                 Vista previa del archivo seleccionado
               </p>
-                             {(getRealFileType(showFilePreview) === 'image') && (
+              {(showFilePreview?.type === 'image' || isImageFile(showFilePreview?.name || '')) && (
                 <div className="flex items-center gap-2 text-sm text-slate-600">
                   <div className={`w-2 h-2 rounded-full ${filePreviewUrl ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
                   <span>{filePreviewUrl ? 'Imagen cargada' : 'Cargando imagen...'}</span>
@@ -952,12 +951,12 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                 {getFileIcon(showFilePreview)}
                 <div>
                   <h3 className="text-lg font-semibold text-slate-800">{showFilePreview.name}</h3>
-                                     <p className="text-sm text-slate-600">{formatBytes(showFilePreview.size)} • {getRealFileType(showFilePreview)}</p>
+                  <p className="text-sm text-slate-600">{formatBytes(showFilePreview.size)} • {showFilePreview.type}</p>
                 </div>
               </div>
               
                              <div className="flex-1 overflow-auto">
-                                   {(getRealFileType(showFilePreview) === 'image') ? (
+                 {(showFilePreview.type === 'image' || isImageFile(showFilePreview.name)) ? (
                   <div className="flex justify-center">
                     {filePreviewUrl ? (
                       <div className="relative">
@@ -1000,7 +999,7 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                         </div>
                       </div>
                     )}
-                                                                                   {!filePreviewUrl && (getRealFileType(showFilePreview) === 'image') && (
+                                         {!filePreviewUrl && (showFilePreview.type === 'image' || isImageFile(showFilePreview.name)) && (
                       <div className="flex items-center justify-center h-32 text-slate-500 mt-4">
                         <div className="text-center">
                           <Image className="h-12 w-12 mx-auto mb-2 text-slate-400" />
@@ -1043,7 +1042,7 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                       </div>
                     )}
                   </div>
-                                 ) : getRealFileType(showFilePreview) === 'document' ? (
+                ) : showFilePreview.type === 'document' ? (
                   <div className="flex items-center justify-center h-32 text-slate-500">
                     <div className="text-center">
                       <FileText className="h-12 w-12 mx-auto mb-2" />

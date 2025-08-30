@@ -1043,7 +1043,7 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                       </div>
                     )}
                   </div>
-                                 ) : getRealFileType(showFilePreview) === 'document' ? (
+                ) : showFilePreview.type === 'document' ? (
                   <div className="flex items-center justify-center h-32 text-slate-500">
                     <div className="text-center">
                       <FileText className="h-12 w-12 mx-auto mb-2" />
