@@ -114,14 +114,12 @@ export function useFilePreview(): UseFilePreviewReturn {
   // Handler para mouse enter
   const handleMouseEnter = useCallback((file: ProjectFile) => {
     return (event: React.MouseEvent) => {
-      console.log('🖱️ Mouse enter en archivo:', file.name);
       showPreview(file, event);
     };
   }, [showPreview]);
 
   // Handler para mouse leave
   const handleMouseLeave = useCallback(() => {
-    console.log('🖱️ Mouse leave');
     hidePreview();
   }, [hidePreview]);
 
