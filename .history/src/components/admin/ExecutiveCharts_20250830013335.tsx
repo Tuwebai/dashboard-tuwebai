@@ -370,7 +370,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
         displayColors: true,
         titleFont: {
           size: 14,
-          weight: 'bold'
+          weight: '600'
         },
         bodyFont: {
           size: 13
@@ -378,16 +378,16 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
       }
     },
     scales: {
-              x: {
-          ticks: {
-            color: '#374151', // Texto oscuro para mejor legibilidad
-            font: {
-              size: 11,
-              weight: 'normal'
-            },
-            maxRotation: 45,
-            minRotation: 0
+      x: {
+        ticks: {
+          color: '#374151', // Texto oscuro para mejor legibilidad
+          font: {
+            size: 11,
+            weight: '500'
           },
+          maxRotation: 45,
+          minRotation: 0
+        },
         grid: {
           color: '#e5e7eb', // Gris claro para las líneas de grid
           drawBorder: false
@@ -396,20 +396,20 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
           color: '#d1d5db'
         }
       },
-              y: {
-          ticks: {
-            color: '#374151', // Texto oscuro para mejor legibilidad
-            font: {
-              size: 11,
-              weight: 'normal'
-            },
-            callback: function(value: any) {
-              // Convertir a números enteros
-              return Math.round(value);
-            },
-            stepSize: 1, // Forzar incrementos de 1
-            beginAtZero: true
+      y: {
+        ticks: {
+          color: '#374151', // Texto oscuro para mejor legibilidad
+          font: {
+            size: 11,
+            weight: '500'
           },
+          callback: function(value: any) {
+            // Convertir a números enteros
+            return Math.round(value);
+          },
+          stepSize: 1, // Forzar incrementos de 1
+          beginAtZero: true
+        },
         grid: {
           color: '#e5e7eb', // Gris claro para las líneas de grid
           drawBorder: false

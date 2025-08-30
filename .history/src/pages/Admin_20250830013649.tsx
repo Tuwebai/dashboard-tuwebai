@@ -186,6 +186,7 @@ export default function Admin() {
 
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
+      console.log('Hash cambiado a:', hash);
       setActiveSection(hash || 'dashboard');
     };
 
@@ -514,107 +515,105 @@ export default function Admin() {
 
   return (
     <>
-             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
-         <div className="flex-1 overflow-hidden">
-           <div className="h-full">
-             
- 
- 
-                           {/* Contenido Principal */}
-              <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 min-h-[calc(100vh-120px)]">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full overflow-y-auto">
+            
+
+
+            {/* Cards de Estadísticas Principales */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 px-8 py-6">
+              
+              {/* Card Usuarios */}
+              <div className="relative group cursor-pointer">
+                <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-blue-50 via-blue-25 to-indigo-50">
+                  <div className="flex items-center justify-center w-14 h-14 rounded-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                    <Users size={28} />
+                  </div>
+                  <div className="text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
+                    {usuariosActivos}
+                  </div>
+                  <div className="text-lg font-semibold text-slate-600 mb-1">
+                    Usuarios Activos
+                  </div>
+                  <div className="text-sm text-slate-500 flex items-center space-x-1">
+                    <span className="text-green-600 font-semibold">+{usuariosNuevos}</span>
+                    <span>este mes ({crecimientoUsuarios}%)</span>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+                </div>
+              </div>
+
+              {/* Card Proyectos */}
+              <div className="relative group cursor-pointer">
+                <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-emerald-50 via-emerald-25 to-teal-50">
+                  <div className="flex items-center justify-center w-14 h-14 rounded-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+                    <FolderOpen size={28} />
+                  </div>
+                  <div className="text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
+                    {proyectosEnCurso}
+                  </div>
+                  <div className="text-lg font-semibold text-slate-600 mb-1">
+                    Proyectos en Curso
+                  </div>
+                  <div className="text-sm text-slate-500 flex items-center space-x-1">
+                    <span className="text-blue-600 font-semibold">{proyectosEnDesarrollo}</span>
+                    <span>desarrollo, </span>
+                    <span className="text-yellow-600 font-semibold">{proyectosPendientes}</span>
+                    <span>pendientes</span>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+                </div>
+              </div>
+
+              {/* Card Tickets */}
+              <div className="relative group cursor-pointer">
+                <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-amber-50 via-amber-25 to-orange-50">
+                  <div className="flex items-center justify-center w-14 h-14 rounded-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-amber-500 to-amber-600 text-white">
+                    <Ticket size={28} />
+                  </div>
+                  <div className="text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
+                    {ticketsAbiertos}
+                  </div>
+                  <div className="text-lg font-semibold text-slate-600 mb-1">
+                    Tickets Abiertos
+                  </div>
+                  <div className="text-sm text-slate-500 flex items-center space-x-1">
+                    <span className="text-red-600 font-semibold">{ticketsUrgentes}</span>
+                    <span>urgentes, </span>
+                    <span className="text-blue-600 font-semibold">{ticketsEnProgreso}</span>
+                    <span>en progreso</span>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+                </div>
+              </div>
+
+              {/* Card Ingresos */}
+              <div className="relative group cursor-pointer">
+                <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-violet-50 via-violet-25 to-purple-50">
+                  <div className="flex items-center justify-center w-14 h-14 rounded-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-violet-500 to-violet-600 text-white">
+                    <DollarSign size={28} />
+                  </div>
+                  <div className="text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
+                    ${ingresosTotales.toLocaleString()}
+                  </div>
+                  <div className="text-lg font-semibold text-slate-600 mb-1">
+                    Ingresos Totales
+                  </div>
+                  <div className="text-sm text-slate-500 flex items-center space-x-1">
+                    <span className="text-green-600 font-semibold">${ingresosEsteMes.toLocaleString()}</span>
+                    <span>este mes</span>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Contenido Principal */}
+            <div className="px-8 py-6 space-y-6">
 
               {activeSection === 'dashboard' && (
-                <>
-                  {/* Cards de Estadísticas Principales - Solo en Dashboard */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-                    
-                    {/* Card Usuarios */}
-                    <div className="relative group cursor-pointer">
-                      <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-blue-50 via-blue-25 to-indigo-50">
-                        <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-                          <Users size={24} className="sm:w-7 sm:h-7" />
-                        </div>
-                        <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
-                          {usuariosActivos}
-                        </div>
-                        <div className="text-sm sm:text-lg font-semibold text-slate-600 mb-1">
-                          Usuarios Activos
-                        </div>
-                        <div className="text-xs sm:text-sm text-slate-500 flex items-center space-x-1">
-                          <span className="text-green-600 font-semibold">+{usuariosNuevos}</span>
-                          <span>este mes ({crecimientoUsuarios}%)</span>
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
-                      </div>
-                    </div>
-
-                    {/* Card Proyectos */}
-                    <div className="relative group cursor-pointer">
-                      <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-emerald-50 via-emerald-25 to-teal-50">
-                        <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
-                          <FolderOpen size={24} className="sm:w-7 sm:h-7" />
-                        </div>
-                        <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
-                          {proyectosEnCurso}
-                        </div>
-                        <div className="text-sm sm:text-lg font-semibold text-slate-600 mb-1">
-                          Proyectos en Curso
-                        </div>
-                        <div className="text-xs sm:text-sm text-slate-500 flex items-center space-x-1">
-                          <span className="text-blue-600 font-semibold">{proyectosEnDesarrollo}</span>
-                          <span>desarrollo, </span>
-                          <span className="text-yellow-600 font-semibold">{proyectosPendientes}</span>
-                          <span>pendientes</span>
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
-                      </div>
-                    </div>
-
-                    {/* Card Tickets */}
-                    <div className="relative group cursor-pointer">
-                      <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-amber-50 via-amber-25 to-orange-50">
-                        <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-amber-500 to-amber-600 text-white">
-                          <Ticket size={24} className="sm:w-7 sm:h-7" />
-                        </div>
-                        <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
-                          {ticketsAbiertos}
-                        </div>
-                        <div className="text-sm sm:text-lg font-semibold text-slate-600 mb-1">
-                          Tickets Abiertos
-                        </div>
-                        <div className="text-xs sm:text-sm text-slate-500 flex items-center space-x-1">
-                          <span className="text-red-600 font-semibold">{ticketsUrgentes}</span>
-                          <span>urgentes, </span>
-                          <span className="text-blue-600 font-semibold">{ticketsEnProgreso}</span>
-                          <span>en progreso</span>
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
-                      </div>
-                    </div>
-
-                    {/* Card Ingresos */}
-                    <div className="relative group cursor-pointer">
-                      <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-violet-50 via-violet-25 to-purple-50">
-                        <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-violet-500 to-violet-600 text-white">
-                          <DollarSign size={24} className="sm:w-7 sm:h-7" />
-                        </div>
-                        <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
-                          ${ingresosTotales.toLocaleString()}
-                        </div>
-                        <div className="text-sm sm:text-lg font-semibold text-slate-600 mb-1">
-                          Ingresos Totales
-                        </div>
-                        <div className="text-xs sm:text-sm text-slate-500 flex items-center space-x-1">
-                          <span className="text-green-600 font-semibold">${ingresosEsteMes.toLocaleString()}</span>
-                          <span>este mes</span>
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Contenido del Dashboard */}
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                   
                   {/* Card Estadísticas Rápidas */}
                   <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50">
@@ -805,38 +804,36 @@ export default function Admin() {
                     </div>
                   </div>
                 </div>
-              </>
               )}
 
               {/* Resto de las secciones mantienen su funcionalidad pero con diseño moderno */}
               {activeSection === 'usuarios' && (
-                <div className="h-full flex flex-col">
-                  <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50 flex-1">
-                    <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-2xl">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                            <Users size={20} className="sm:w-6 sm:h-6 text-white" />
-                          </div>
-                          <div>
-                            <span className="text-xl sm:text-2xl font-bold text-slate-800">Gestión de Usuarios</span>
-                            <p className="text-slate-600 text-xs sm:text-sm mt-1">Administra usuarios del sistema y sus roles</p>
-                          </div>
+                <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50">
+                  <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-2xl">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                          <Users size={24} className="text-white" />
                         </div>
-                        <div className="flex items-center space-x-3">
-                          <Button
-                            onClick={refreshData}
-                            variant="outline"
-                            size="sm"
-                            className="bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200 hover:from-emerald-100 hover:to-teal-100 text-emerald-700 hover:text-emerald-800 font-medium transition-all duration-200 shadow-sm hover:shadow-md px-3 sm:px-4 py-2 text-xs sm:text-sm"
-                          >
-                            <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                            Actualizar Datos
-                          </Button>
+                        <div>
+                          <span className="text-2xl font-bold text-slate-800">Gestión de Usuarios</span>
+                          <p className="text-slate-600 text-sm mt-1">Administra usuarios del sistema y sus roles</p>
                         </div>
                       </div>
-                    </CardHeader>
-                    <CardContent className="p-4 sm:p-6 flex-1">
+                      <div className="flex items-center space-x-3">
+                        <Button
+                          onClick={refreshData}
+                          variant="outline"
+                          size="sm"
+                          className="bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200 hover:from-emerald-100 hover:to-teal-100 text-emerald-700 hover:text-emerald-800 font-medium transition-all duration-200 shadow-sm hover:shadow-md px-4 py-2"
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Actualizar Datos
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6">
                     {loading ? (
                       <div className="text-center py-12">
                         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
@@ -1009,7 +1006,6 @@ export default function Admin() {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
               )}
 
               {activeSection === 'proyectos' && (
@@ -1021,77 +1017,59 @@ export default function Admin() {
               )}
 
               {activeSection === 'pagos' && (
-                <div className="h-full flex flex-col">
-                  <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50 h-full">
-                    <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-2xl">
-                      <CardTitle className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center space-x-3">
-                        <CreditCard size={20} className="sm:w-6 sm:h-6 text-violet-600" />
-                        <span>Gestión de Pagos</span>
-                      </CardTitle>
-                      <CardDescription className="text-slate-600 text-sm sm:text-base">
-                        Administra pagos y transacciones del sistema
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-4 sm:p-6 flex-1">
-                      {pagos.length === 0 ? (
-                        <div className="h-full flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-violet-100 to-violet-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                              <CreditCard className="h-8 w-8 sm:h-10 sm:w-10 text-violet-400" />
+                <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50">
+                  <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-2xl">
+                    <CardTitle className="text-2xl font-bold text-slate-800 flex items-center space-x-3">
+                      <CreditCard size={24} className="text-violet-600" />
+                      <span>Gestión de Pagos</span>
+                    </CardTitle>
+                    <CardDescription className="text-slate-600 text-base">
+                      Administra pagos y transacciones del sistema
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      {pagos.map((pago) => (
+                        <div key={pago.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-all duration-200">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-full flex items-center justify-center text-white font-bold">
+                              $
                             </div>
-                            <h3 className="text-lg font-semibold text-slate-700 mb-2">No hay pagos registrados</h3>
-                            <p className="text-slate-500 text-sm">Los pagos aparecerán aquí cuando se registren</p>
+                            <div>
+                              <div className="font-semibold text-slate-800">${pago.amount}</div>
+                              <div className="text-sm text-slate-500">{pago.description || 'Sin descripción'}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <Badge variant={pago.status === 'completed' ? 'default' : pago.status === 'pending' ? 'secondary' : 'destructive'}>
+                              {pago.status || 'pending'}
+                            </Badge>
+                            <Select 
+                              value={pago.status || 'pending'} 
+                              onValueChange={(value) => updatePaymentStatus(pago.id, value)}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pendiente</SelectItem>
+                                <SelectItem value="completed">Completado</SelectItem>
+                                <SelectItem value="failed">Fallido</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
-                      ) : (
-                        <div className="space-y-3 sm:space-y-4 flex-1 overflow-y-auto">
-                          {pagos.map((pago) => (
-                            <div key={pago.id} className="flex items-center justify-between p-3 sm:p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-all duration-200">
-                              <div className="flex items-center space-x-3 sm:space-x-4">
-                                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base">
-                                  $
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-slate-800 text-sm sm:text-base">${pago.amount}</div>
-                                  <div className="text-xs sm:text-sm text-slate-500">{pago.description || 'Sin descripción'}</div>
-                                </div>
-                              </div>
-                              <div className="flex items-center space-x-2 sm:space-x-3">
-                                <Badge variant={pago.status === 'completed' ? 'default' : pago.status === 'pending' ? 'secondary' : 'destructive'} className="text-xs">
-                                  {pago.status || 'pending'}
-                                </Badge>
-                                <Select 
-                                  value={pago.status || 'pending'} 
-                                  onValueChange={(value) => updatePaymentStatus(pago.id, value)}
-                                >
-                                  <SelectTrigger className="w-24 sm:w-32 text-xs sm:text-sm">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="pending">Pendiente</SelectItem>
-                                    <SelectItem value="completed">Completado</SelectItem>
-                                    <SelectItem value="failed">Fallido</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
               {activeSection === 'advanced-analytics' && (
-                <div className="h-full flex flex-col">
-                  <div className="flex-1 overflow-y-auto">
-                    <ExecutiveCharts 
-                      refreshData={loadData}
-                      lastUpdate={lastUpdate}
-                    />
-                  </div>
-                </div>
+                <ExecutiveCharts 
+                  refreshData={loadData}
+                  lastUpdate={lastUpdate}
+                />
               )}
 
               {activeSection === 'automation' && (
@@ -1112,39 +1090,41 @@ export default function Admin() {
 
               
 
-
+              {activeSection === 'security-audit' && (
+                <SecurityAudit />
+              )}
 
               {activeSection === 'notifications' && (
                 <NotificationsManager />
               )}
 
               {activeSection === 'settings' && (
-                <div className="h-full flex flex-col">
-                  <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50 h-full">
-                    <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-2xl">
-                      <CardTitle className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center space-x-3">
-                        <Cog size={20} className="sm:w-6 sm:h-6 text-slate-600" />
-                        <span>Configuración del Sistema</span>
-                      </CardTitle>
-                      <CardDescription className="text-slate-600 text-sm sm:text-base">
-                        Configura los parámetros generales del sistema
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-4 sm:p-6 flex-1 flex flex-col justify-between">
-                      <div className="bg-slate-50 p-4 sm:p-6 rounded-xl flex-1">
-                        <h3 className="text-base sm:text-lg font-semibold text-slate-800 mb-3 sm:mb-4">Configuración General</h3>
-                        <div className="space-y-3 sm:space-y-4">
+                <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50">
+                  <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-2xl">
+                    <CardTitle className="text-2xl font-bold text-slate-800 flex items-center space-x-3">
+                      <Cog size={24} className="text-slate-600" />
+                      <span>Configuración del Sistema</span>
+                    </CardTitle>
+                    <CardDescription className="text-slate-600 text-base">
+                      Configura los parámetros generales del sistema
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="space-y-6">
+                      <div className="bg-slate-50 p-6 rounded-xl">
+                        <h3 className="text-lg font-semibold text-slate-800 mb-4">Configuración General</h3>
+                        <div className="space-y-4">
                           <div>
-                            <label className="text-slate-700 font-medium text-sm sm:text-base">Nombre del Sistema</label>
+                            <label className="text-slate-700 font-medium">Nombre del Sistema</label>
                             <Input 
                               defaultValue="TuWebAI Dashboard" 
-                              className="mt-2 bg-white border-slate-300 text-slate-800 text-sm sm:text-base"
+                              className="mt-2 bg-white border-slate-300 text-slate-800"
                             />
                           </div>
                           <div>
-                            <label className="text-slate-700 font-medium text-sm sm:text-base">Zona Horaria</label>
+                            <label className="text-slate-700 font-medium">Zona Horaria</label>
                             <Select defaultValue="utc">
-                              <SelectTrigger className="mt-2 bg-white border-slate-300 text-slate-800 text-sm sm:text-base">
+                              <SelectTrigger className="mt-2 bg-white border-slate-300 text-slate-800">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -1155,9 +1135,9 @@ export default function Admin() {
                             </Select>
                           </div>
                           <div>
-                            <label className="text-slate-700 font-medium text-sm sm:text-base">Idioma</label>
+                            <label className="text-slate-700 font-medium">Idioma</label>
                             <Select defaultValue="es">
-                              <SelectTrigger className="mt-2 bg-white border-slate-300 text-slate-800 text-sm sm:text-base">
+                              <SelectTrigger className="mt-2 bg-white border-slate-300 text-slate-800">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -1168,17 +1148,17 @@ export default function Admin() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex justify-end pt-4 mt-auto">
-                        <Button 
-                          className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm sm:text-base"
-                          onClick={() => toast({ title: 'Info', description: 'Función de configuración no implementada.' })}
-                        >
-                          Guardar Configuración
-                        </Button>
+                      <div className="flex justify-end">
+                                                <Button 
+                            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                            onClick={() => toast({ title: 'Info', description: 'Función de configuración no implementada.' })}
+                          >
+                            Guardar Configuración
+                          </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </div>
           </div>

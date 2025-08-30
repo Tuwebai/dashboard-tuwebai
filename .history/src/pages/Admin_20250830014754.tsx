@@ -520,8 +520,8 @@ export default function Admin() {
              
  
  
-                           {/* Contenido Principal */}
-              <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 min-h-[calc(100vh-120px)]">
+             {/* Contenido Principal */}
+             <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 h-[calc(100vh-120px)]">
 
               {activeSection === 'dashboard' && (
                 <>
@@ -1021,7 +1021,7 @@ export default function Admin() {
               )}
 
               {activeSection === 'pagos' && (
-                <div className="h-full flex flex-col">
+                <div className="h-[calc(100vh-200px)] flex flex-col">
                   <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50 h-full">
                     <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-2xl">
                       <CardTitle className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center space-x-3">
@@ -1032,7 +1032,7 @@ export default function Admin() {
                         Administra pagos y transacciones del sistema
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="p-4 sm:p-6 flex-1">
+                    <CardContent className="p-4 sm:p-6 h-[calc(100%-120px)]">
                       {pagos.length === 0 ? (
                         <div className="h-full flex items-center justify-center">
                           <div className="text-center">
@@ -1044,7 +1044,7 @@ export default function Admin() {
                           </div>
                         </div>
                       ) : (
-                        <div className="space-y-3 sm:space-y-4 flex-1 overflow-y-auto">
+                        <div className="space-y-3 sm:space-y-4 h-full overflow-y-auto">
                           {pagos.map((pago) => (
                             <div key={pago.id} className="flex items-center justify-between p-3 sm:p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-all duration-200">
                               <div className="flex items-center space-x-3 sm:space-x-4">
@@ -1084,14 +1084,10 @@ export default function Admin() {
               )}
 
               {activeSection === 'advanced-analytics' && (
-                <div className="h-full flex flex-col">
-                  <div className="flex-1 overflow-y-auto">
-                    <ExecutiveCharts 
-                      refreshData={loadData}
-                      lastUpdate={lastUpdate}
-                    />
-                  </div>
-                </div>
+                <ExecutiveCharts 
+                  refreshData={loadData}
+                  lastUpdate={lastUpdate}
+                />
               )}
 
               {activeSection === 'automation' && (
@@ -1119,7 +1115,7 @@ export default function Admin() {
               )}
 
               {activeSection === 'settings' && (
-                <div className="h-full flex flex-col">
+                <div className="h-[calc(100vh-200px)] flex flex-col">
                   <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50 h-full">
                     <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-2xl">
                       <CardTitle className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center space-x-3">
@@ -1130,7 +1126,7 @@ export default function Admin() {
                         Configura los parámetros generales del sistema
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="p-4 sm:p-6 flex-1 flex flex-col justify-between">
+                    <CardContent className="p-4 sm:p-6 h-[calc(100%-120px)] flex flex-col justify-between">
                       <div className="bg-slate-50 p-4 sm:p-6 rounded-xl flex-1">
                         <h3 className="text-base sm:text-lg font-semibold text-slate-800 mb-3 sm:mb-4">Configuración General</h3>
                         <div className="space-y-3 sm:space-y-4">

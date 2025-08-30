@@ -351,82 +351,36 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
       legend: {
         position: 'top' as const,
         labels: {
-          color: '#374151', // Texto oscuro para mejor legibilidad
+          color: '#e5e7eb',
           font: {
-            size: 12,
-            weight: 'normal'
-          },
-          usePointStyle: true,
-          padding: 20
+            size: 12
+          }
         }
       },
       tooltip: {
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        titleColor: '#1f2937',
-        bodyColor: '#374151',
-        borderColor: '#d1d5db',
-        borderWidth: 1,
-        cornerRadius: 8,
-        displayColors: true,
-        titleFont: {
-          size: 14,
-          weight: 'bold'
-        },
-        bodyFont: {
-          size: 13
-        }
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#fff',
+        bodyColor: '#e5e7eb',
+        borderColor: '#374151',
+        borderWidth: 1
       }
     },
     scales: {
-              x: {
-          ticks: {
-            color: '#374151', // Texto oscuro para mejor legibilidad
-            font: {
-              size: 11,
-              weight: 'normal'
-            },
-            maxRotation: 45,
-            minRotation: 0
-          },
-        grid: {
-          color: '#e5e7eb', // Gris claro para las líneas de grid
-          drawBorder: false
+      x: {
+        ticks: {
+          color: '#9ca3af'
         },
-        border: {
-          color: '#d1d5db'
+        grid: {
+          color: '#374151'
         }
       },
-              y: {
-          ticks: {
-            color: '#374151', // Texto oscuro para mejor legibilidad
-            font: {
-              size: 11,
-              weight: 'normal'
-            },
-            callback: function(value: any) {
-              // Convertir a números enteros
-              return Math.round(value);
-            },
-            stepSize: 1, // Forzar incrementos de 1
-            beginAtZero: true
-          },
-        grid: {
-          color: '#e5e7eb', // Gris claro para las líneas de grid
-          drawBorder: false
+      y: {
+        ticks: {
+          color: '#9ca3af'
         },
-        border: {
-          color: '#d1d5db'
+        grid: {
+          color: '#374151'
         }
-      }
-    },
-    elements: {
-      point: {
-        radius: 4,
-        hoverRadius: 6,
-        borderWidth: 2
-      },
-      line: {
-        tension: 0.4
       }
     }
   };

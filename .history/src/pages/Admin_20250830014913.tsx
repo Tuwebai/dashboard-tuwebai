@@ -520,8 +520,8 @@ export default function Admin() {
              
  
  
-                           {/* Contenido Principal */}
-              <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 min-h-[calc(100vh-120px)]">
+             {/* Contenido Principal */}
+             <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 h-[calc(100vh-120px)]">
 
               {activeSection === 'dashboard' && (
                 <>
@@ -1084,14 +1084,10 @@ export default function Admin() {
               )}
 
               {activeSection === 'advanced-analytics' && (
-                <div className="h-full flex flex-col">
-                  <div className="flex-1 overflow-y-auto">
-                    <ExecutiveCharts 
-                      refreshData={loadData}
-                      lastUpdate={lastUpdate}
-                    />
-                  </div>
-                </div>
+                <ExecutiveCharts 
+                  refreshData={loadData}
+                  lastUpdate={lastUpdate}
+                />
               )}
 
               {activeSection === 'automation' && (

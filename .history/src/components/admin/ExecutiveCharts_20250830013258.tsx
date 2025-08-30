@@ -232,7 +232,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
           datasets: [
             {
               label: 'Usuarios Registrados',
-              data: userGrowthData.map(val => Math.round(val)), // Asegurar números enteros
+              data: userGrowthData,
               borderColor: 'rgb(59, 130, 246)',
               backgroundColor: 'rgba(59, 130, 246, 0.1)',
               fill: true,
@@ -250,7 +250,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
           datasets: [
             {
               label: 'Ingresos ($)',
-              data: revenueData.map(val => Math.round(val)), // Asegurar números enteros
+              data: revenueData,
               backgroundColor: 'rgba(34, 197, 94, 0.8)',
               borderColor: 'rgb(34, 197, 94)',
               borderWidth: 2,
@@ -263,7 +263,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
           labels: projectLabels.length > 0 ? projectLabels : ['Sin datos'],
           datasets: [
             {
-              data: projectData.length > 0 ? projectData.map(val => Math.round(val)) : [0], // Asegurar números enteros
+              data: projectData.length > 0 ? projectData : [0],
               backgroundColor: [
                 'rgba(59, 130, 246, 0.8)',
                 'rgba(34, 197, 94, 0.8)',
@@ -288,7 +288,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
           datasets: [
             {
               label: 'Tickets por Prioridad',
-              data: ticketData.length > 0 ? ticketData.map(val => Math.round(val)) : [0], // Asegurar números enteros
+              data: ticketData.length > 0 ? ticketData : [0],
               backgroundColor: [
                 'rgba(239, 68, 68, 0.8)',
                 'rgba(251, 191, 36, 0.8)',
@@ -312,7 +312,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
           datasets: [
             {
               label: 'Actividad del Sistema',
-              data: weekData.map(val => Math.round(val)), // Asegurar números enteros
+              data: weekData,
               borderColor: 'rgb(147, 51, 234)',
               backgroundColor: 'rgba(147, 51, 234, 0.1)',
               fill: true,
@@ -354,7 +354,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
           color: '#374151', // Texto oscuro para mejor legibilidad
           font: {
             size: 12,
-            weight: 'normal'
+            weight: '500'
           },
           usePointStyle: true,
           padding: 20
@@ -370,7 +370,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
         displayColors: true,
         titleFont: {
           size: 14,
-          weight: 'bold'
+          weight: '600'
         },
         bodyFont: {
           size: 13
@@ -378,16 +378,16 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
       }
     },
     scales: {
-              x: {
-          ticks: {
-            color: '#374151', // Texto oscuro para mejor legibilidad
-            font: {
-              size: 11,
-              weight: 'normal'
-            },
-            maxRotation: 45,
-            minRotation: 0
+      x: {
+        ticks: {
+          color: '#374151', // Texto oscuro para mejor legibilidad
+          font: {
+            size: 11,
+            weight: '500'
           },
+          maxRotation: 45,
+          minRotation: 0
+        },
         grid: {
           color: '#e5e7eb', // Gris claro para las líneas de grid
           drawBorder: false
@@ -396,20 +396,20 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
           color: '#d1d5db'
         }
       },
-              y: {
-          ticks: {
-            color: '#374151', // Texto oscuro para mejor legibilidad
-            font: {
-              size: 11,
-              weight: 'normal'
-            },
-            callback: function(value: any) {
-              // Convertir a números enteros
-              return Math.round(value);
-            },
-            stepSize: 1, // Forzar incrementos de 1
-            beginAtZero: true
+      y: {
+        ticks: {
+          color: '#374151', // Texto oscuro para mejor legibilidad
+          font: {
+            size: 11,
+            weight: '500'
           },
+          callback: function(value: any) {
+            // Convertir a números enteros
+            return Math.round(value);
+          },
+          stepSize: 1, // Forzar incrementos de 1
+          beginAtZero: true
+        },
         grid: {
           color: '#e5e7eb', // Gris claro para las líneas de grid
           drawBorder: false
@@ -437,7 +437,44 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
       ...chartOptions.plugins,
       legend: {
         ...chartOptions.plugins.legend,
-        position: 'bottom' as const
+        position: 'bottom' as const,
+        labels: {
+          ...chartOptions.plugins.legend.labels,
+          padding: 15,
+          generateLabels: function(chart: any) {
+            const data = chart.data;
+            if (data.labels.length && data.datasets.length) {
+              return data.labels.map((label: string, i: number) => {
+                const dataset = data.datasets[0];
+                const value = dataset.data[i];
+                const total = dataset.data.reduce((a: number, b: number) => a + b, 0);
+                const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                
+                return {
+                  text: `${label}: ${value} (${percentage}%)`,
+                  fillStyle: dataset.backgroundColor[i],
+                  strokeStyle: dataset.borderColor[i],
+                  lineWidth: 2,
+                  hidden: false,
+                  index: i
+                };
+              });
+            }
+            return [];
+          }
+        }
+      },
+      tooltip: {
+        ...chartOptions.plugins.tooltip,
+        callbacks: {
+          label: function(context: any) {
+            const label = context.label || '';
+            const value = context.parsed;
+            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+            const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+            return `${label}: ${value} (${percentage}%)`;
+          }
+        }
       }
     }
   };

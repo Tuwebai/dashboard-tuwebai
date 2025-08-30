@@ -370,7 +370,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
         displayColors: true,
         titleFont: {
           size: 14,
-          weight: 'bold'
+          weight: '600'
         },
         bodyFont: {
           size: 13

@@ -514,14 +514,14 @@ export default function Admin() {
 
   return (
     <>
-             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
-         <div className="flex-1 overflow-hidden">
-           <div className="h-full">
-             
- 
- 
-                           {/* Contenido Principal */}
-              <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 min-h-[calc(100vh-120px)]">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full overflow-y-auto">
+            
+
+
+            {/* Contenido Principal */}
+            <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 h-full">
 
               {activeSection === 'dashboard' && (
                 <>
@@ -1022,7 +1022,7 @@ export default function Admin() {
 
               {activeSection === 'pagos' && (
                 <div className="h-full flex flex-col">
-                  <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50 h-full">
+                  <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50 flex-1">
                     <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-2xl">
                       <CardTitle className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center space-x-3">
                         <CreditCard size={20} className="sm:w-6 sm:h-6 text-violet-600" />
@@ -1044,7 +1044,7 @@ export default function Admin() {
                           </div>
                         </div>
                       ) : (
-                        <div className="space-y-3 sm:space-y-4 flex-1 overflow-y-auto">
+                        <div className="space-y-3 sm:space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto">
                           {pagos.map((pago) => (
                             <div key={pago.id} className="flex items-center justify-between p-3 sm:p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-all duration-200">
                               <div className="flex items-center space-x-3 sm:space-x-4">
@@ -1084,14 +1084,10 @@ export default function Admin() {
               )}
 
               {activeSection === 'advanced-analytics' && (
-                <div className="h-full flex flex-col">
-                  <div className="flex-1 overflow-y-auto">
-                    <ExecutiveCharts 
-                      refreshData={loadData}
-                      lastUpdate={lastUpdate}
-                    />
-                  </div>
-                </div>
+                <ExecutiveCharts 
+                  refreshData={loadData}
+                  lastUpdate={lastUpdate}
+                />
               )}
 
               {activeSection === 'automation' && (
@@ -1120,7 +1116,7 @@ export default function Admin() {
 
               {activeSection === 'settings' && (
                 <div className="h-full flex flex-col">
-                  <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50 h-full">
+                  <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50 flex-1">
                     <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-2xl">
                       <CardTitle className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center space-x-3">
                         <Cog size={20} className="sm:w-6 sm:h-6 text-slate-600" />
@@ -1130,51 +1126,53 @@ export default function Admin() {
                         Configura los parámetros generales del sistema
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="p-4 sm:p-6 flex-1 flex flex-col justify-between">
-                      <div className="bg-slate-50 p-4 sm:p-6 rounded-xl flex-1">
-                        <h3 className="text-base sm:text-lg font-semibold text-slate-800 mb-3 sm:mb-4">Configuración General</h3>
-                        <div className="space-y-3 sm:space-y-4">
-                          <div>
-                            <label className="text-slate-700 font-medium text-sm sm:text-base">Nombre del Sistema</label>
-                            <Input 
-                              defaultValue="TuWebAI Dashboard" 
-                              className="mt-2 bg-white border-slate-300 text-slate-800 text-sm sm:text-base"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-slate-700 font-medium text-sm sm:text-base">Zona Horaria</label>
-                            <Select defaultValue="utc">
-                              <SelectTrigger className="mt-2 bg-white border-slate-300 text-slate-800 text-sm sm:text-base">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="utc">UTC</SelectItem>
-                                <SelectItem value="est">EST</SelectItem>
-                                <SelectItem value="pst">PST</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <label className="text-slate-700 font-medium text-sm sm:text-base">Idioma</label>
-                            <Select defaultValue="es">
-                              <SelectTrigger className="mt-2 bg-white border-slate-300 text-slate-800 text-sm sm:text-base">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="es">Español</SelectItem>
-                                <SelectItem value="en">English</SelectItem>
-                              </SelectContent>
-                            </Select>
+                    <CardContent className="p-4 sm:p-6 flex-1">
+                      <div className="h-full flex flex-col justify-between">
+                        <div className="bg-slate-50 p-4 sm:p-6 rounded-xl">
+                          <h3 className="text-base sm:text-lg font-semibold text-slate-800 mb-3 sm:mb-4">Configuración General</h3>
+                          <div className="space-y-3 sm:space-y-4">
+                            <div>
+                              <label className="text-slate-700 font-medium text-sm sm:text-base">Nombre del Sistema</label>
+                              <Input 
+                                defaultValue="TuWebAI Dashboard" 
+                                className="mt-2 bg-white border-slate-300 text-slate-800 text-sm sm:text-base"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-slate-700 font-medium text-sm sm:text-base">Zona Horaria</label>
+                              <Select defaultValue="utc">
+                                <SelectTrigger className="mt-2 bg-white border-slate-300 text-slate-800 text-sm sm:text-base">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="utc">UTC</SelectItem>
+                                  <SelectItem value="est">EST</SelectItem>
+                                  <SelectItem value="pst">PST</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <label className="text-slate-700 font-medium text-sm sm:text-base">Idioma</label>
+                              <Select defaultValue="es">
+                                <SelectTrigger className="mt-2 bg-white border-slate-300 text-slate-800 text-sm sm:text-base">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="es">Español</SelectItem>
+                                  <SelectItem value="en">English</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex justify-end pt-4 mt-auto">
-                        <Button 
-                          className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm sm:text-base"
-                          onClick={() => toast({ title: 'Info', description: 'Función de configuración no implementada.' })}
-                        >
-                          Guardar Configuración
-                        </Button>
+                        <div className="flex justify-end pt-4">
+                          <Button 
+                            className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm sm:text-base"
+                            onClick={() => toast({ title: 'Info', description: 'Función de configuración no implementada.' })}
+                          >
+                            Guardar Configuración
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
