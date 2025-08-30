@@ -241,10 +241,7 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
       }
       
       const bucketName = 'project-files';
-      
-      // Construir la ruta del archivo: projectId + nombre del archivo
-      const fileName = file.name;
-      const filePath = `${projectId}/${fileName}`;
+      const filePath = file.path;
       
       // Como tienes políticas públicas configuradas, usar URL directa
       const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
@@ -256,7 +253,6 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
       }
       
       console.log('🔗 URL pública generada:', publicUrl);
-      console.log('📁 Ruta construida:', filePath);
       return publicUrl;
     } catch (error) {
       console.error('Error getting file URL:', error);
@@ -650,15 +646,15 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
         </Card>
       )}
 
-             {/* Modal de subida de archivos */}
-       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-         <DialogContent className="bg-white border-slate-200" aria-describedby="upload-description">
-           <DialogHeader>
-             <DialogTitle className="text-slate-800">Subir archivos</DialogTitle>
-             <p id="upload-description" className="text-sm text-slate-600">
-               Selecciona los archivos que deseas subir al proyecto
-             </p>
-           </DialogHeader>
+      {/* Modal de subida de archivos */}
+      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+        <DialogContent className="bg-white border-slate-200" aria-describedby="upload-description">
+          <DialogHeader>
+            <DialogTitle className="text-slate-800">Subir archivos</DialogTitle>
+            <p id="upload-description" className="text-sm text-slate-600">
+              Selecciona los archivos que deseas subir al proyecto
+            </p>
+          </DialogHeader>
           <div className="space-y-4">
             <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center bg-slate-50">
               <Upload className="h-12 w-12 mx-auto text-slate-400 mb-4" />
@@ -684,12 +680,9 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
 
       {/* Modal de crear carpeta */}
       <Dialog open={showCreateFolderDialog} onOpenChange={setShowCreateFolderDialog}>
-        <DialogContent className="bg-white border-slate-200" aria-describedby="create-folder-description">
+        <DialogContent className="bg-white border-slate-200">
           <DialogHeader>
             <DialogTitle className="text-slate-800">Crear nueva carpeta</DialogTitle>
-            <p id="create-folder-description" className="text-sm text-slate-600">
-              Ingresa el nombre de la nueva carpeta que deseas crear
-            </p>
           </DialogHeader>
           <div className="space-y-4">
             <Input
@@ -718,15 +711,12 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
         </DialogContent>
       </Dialog>
 
-             {/* Modal de detalles del archivo */}
-       <Dialog open={!!showFileDetails} onOpenChange={() => setShowFileDetails(null)}>
-         <DialogContent className="bg-white border-slate-200 max-w-2xl" aria-describedby="file-details-description">
-           <DialogHeader>
-             <DialogTitle className="text-slate-800">Detalles del archivo</DialogTitle>
-             <p id="file-details-description" className="text-sm text-slate-600">
-               Información detallada del archivo seleccionado
-             </p>
-           </DialogHeader>
+      {/* Modal de detalles del archivo */}
+      <Dialog open={!!showFileDetails} onOpenChange={() => setShowFileDetails(null)}>
+        <DialogContent className="bg-white border-slate-200 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-slate-800">Detalles del archivo</DialogTitle>
+          </DialogHeader>
           {showFileDetails && (
             <div className="space-y-4">
               <div className="flex items-center gap-4">
@@ -801,17 +791,14 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
         </DialogContent>
       </Dialog>
 
-             {/* Modal de vista previa del archivo */}
-       <Dialog open={!!showFilePreview} onOpenChange={() => {
-         setShowFilePreview(null);
-         setFilePreviewUrl('');
-       }}>
-         <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[80vh] overflow-hidden" aria-describedby="file-preview-description">
-           <DialogHeader>
-             <DialogTitle className="text-slate-800">Vista previa: {showFilePreview?.name}</DialogTitle>
-             <p id="file-preview-description" className="text-sm text-slate-600">
-               Vista previa del archivo seleccionado
-             </p>
+      {/* Modal de vista previa del archivo */}
+      <Dialog open={!!showFilePreview} onOpenChange={() => {
+        setShowFilePreview(null);
+        setFilePreviewUrl('');
+      }}>
+        <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="text-slate-800">Vista previa: {showFilePreview?.name}</DialogTitle>
                          {(showFilePreview?.type === 'image' || isImageFile(showFilePreview?.name || '')) && (
                <div className="flex items-center gap-2 text-sm text-slate-600">
                  <div className={`w-2 h-2 rounded-full ${filePreviewUrl ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
@@ -834,21 +821,17 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                   <div className="flex justify-center">
                     {filePreviewUrl ? (
                       <div className="relative">
-                                                 <img
-                           src={filePreviewUrl}
-                           alt={showFilePreview.name}
-                           className="max-w-full max-h-[60vh] object-contain rounded-lg"
-                           onError={(e) => {
-                             console.error('❌ Error al cargar imagen en modal desde:', filePreviewUrl);
-                             const target = e.target as HTMLImageElement;
-                             target.style.display = 'none';
-                             // Mostrar el mensaje de error
-                             const errorDiv = target.nextElementSibling;
-                             if (errorDiv) {
-                               errorDiv.classList.remove('hidden');
-                             }
-                           }}
-                         />
+                        <img
+                          src={filePreviewUrl}
+                          alt={showFilePreview.name}
+                          className="max-w-full max-h-[60vh] object-contain rounded-lg"
+                          onError={(e) => {
+                            console.error('Error al cargar imagen en modal');
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
                         <div className="hidden absolute inset-0 flex items-center justify-center bg-slate-50 rounded-lg">
                           <div className="text-center">
                             <Image className="h-12 w-12 mx-auto mb-2 text-slate-400" />
@@ -880,38 +863,24 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                           <p className="text-slate-600 font-medium">Error al cargar la imagen</p>
                           <p className="text-sm text-slate-500 mt-1">No se pudo obtener la URL de la imagen</p>
                           <p className="text-xs text-slate-400 mt-1">Verifica que el archivo existe y tienes permisos</p>
-                                                     <div className="flex gap-2 mt-3 justify-center">
-                             <Button
-                               onClick={() => handleOpenPreview(showFilePreview)}
-                               className="bg-blue-600 hover:bg-blue-700 text-white"
-                               size="sm"
-                             >
-                               <RefreshCw className="h-4 w-4 mr-2" />
-                               Reintentar
-                             </Button>
-                             <Button
-                               onClick={() => {
-                                 // Abrir la URL en una nueva pestaña para probar
-                                 if (filePreviewUrl) {
-                                   window.open(filePreviewUrl, '_blank');
-                                 }
-                               }}
-                               variant="outline"
-                               size="sm"
-                               className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-300"
-                             >
-                               <Eye className="h-4 w-4 mr-2" />
-                               Probar URL
-                             </Button>
-                             <Button
-                               onClick={() => handleDownloadFile(showFilePreview)}
-                               variant="outline"
-                               size="sm"
-                             >
-                               <Download className="h-4 w-4 mr-2" />
-                               Descargar
-                             </Button>
-                           </div>
+                          <div className="flex gap-2 mt-3 justify-center">
+                            <Button
+                              onClick={() => handleOpenPreview(showFilePreview)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                              size="sm"
+                            >
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              Reintentar
+                            </Button>
+                            <Button
+                              onClick={() => handleDownloadFile(showFilePreview)}
+                              variant="outline"
+                              size="sm"
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              Descargar
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )}

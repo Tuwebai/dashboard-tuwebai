@@ -880,38 +880,24 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                           <p className="text-slate-600 font-medium">Error al cargar la imagen</p>
                           <p className="text-sm text-slate-500 mt-1">No se pudo obtener la URL de la imagen</p>
                           <p className="text-xs text-slate-400 mt-1">Verifica que el archivo existe y tienes permisos</p>
-                                                     <div className="flex gap-2 mt-3 justify-center">
-                             <Button
-                               onClick={() => handleOpenPreview(showFilePreview)}
-                               className="bg-blue-600 hover:bg-blue-700 text-white"
-                               size="sm"
-                             >
-                               <RefreshCw className="h-4 w-4 mr-2" />
-                               Reintentar
-                             </Button>
-                             <Button
-                               onClick={() => {
-                                 // Abrir la URL en una nueva pestaña para probar
-                                 if (filePreviewUrl) {
-                                   window.open(filePreviewUrl, '_blank');
-                                 }
-                               }}
-                               variant="outline"
-                               size="sm"
-                               className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-300"
-                             >
-                               <Eye className="h-4 w-4 mr-2" />
-                               Probar URL
-                             </Button>
-                             <Button
-                               onClick={() => handleDownloadFile(showFilePreview)}
-                               variant="outline"
-                               size="sm"
-                             >
-                               <Download className="h-4 w-4 mr-2" />
-                               Descargar
-                             </Button>
-                           </div>
+                          <div className="flex gap-2 mt-3 justify-center">
+                            <Button
+                              onClick={() => handleOpenPreview(showFilePreview)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                              size="sm"
+                            >
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              Reintentar
+                            </Button>
+                            <Button
+                              onClick={() => handleDownloadFile(showFilePreview)}
+                              variant="outline"
+                              size="sm"
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              Descargar
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )}
