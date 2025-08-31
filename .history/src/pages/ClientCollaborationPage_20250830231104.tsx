@@ -145,11 +145,6 @@ export default function ClientCollaborationPage() {
     }
   }, [projectId, projects, navigate]);
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
   // Load collaboration data
   useEffect(() => {
     if (!project || !user) return;

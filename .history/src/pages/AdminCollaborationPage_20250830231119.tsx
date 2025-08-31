@@ -602,50 +602,40 @@ export default function AdminCollaborationPage() {
                     <p className="text-slate-600">No hay mensajes aún. ¡Inicia la conversación!</p>
                   </div>
                 ) : (
-                  messages.map((message) => {
-                    const isOwnMessage = message.role === 'admin';
-                    return (
+                  messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.role === 'admin' ? 'justify-end' : 'justify-start'}`}
+                    >
                       <div
-                        key={message.id}
-                        className={`flex items-start gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}
+                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                          message.role === 'admin'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-100 text-slate-800'
+                        }`}
                       >
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          isOwnMessage ? 'bg-blue-500' : 'bg-blue-100'
-                        }`}>
-                          <span className={`text-sm font-medium ${
-                            isOwnMessage ? 'text-white' : 'text-blue-600'
-                          }`}>
-                            {message.sender_name?.charAt(0).toUpperCase()}
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-medium">
+                            {message.senderName}
                           </span>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${
+                              message.role === 'admin'
+                                ? 'border-blue-200 text-blue-100'
+                                : 'border-slate-200 text-slate-600'
+                            }`}
+                          >
+                            {message.role === 'admin' ? 'Admin' : 'Cliente'}
+                          </Badge>
                         </div>
-                        <div className={`flex-1 min-w-0 ${isOwnMessage ? 'text-right' : ''}`}>
-                          <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'justify-end' : ''}`}>
-                            <span className="font-medium text-slate-800">{message.sender_name}</span>
-                            <span className="text-xs text-slate-500">
-                              {formatDateSafe(message.created_at)}
-                            </span>
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${
-                                isOwnMessage
-                                  ? 'border-blue-200 text-blue-100'
-                                  : 'border-slate-200 text-slate-600'
-                              }`}
-                            >
-                              {isOwnMessage ? 'Admin' : 'Cliente'}
-                            </Badge>
-                          </div>
-                          <div className={`inline-block max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                            isOwnMessage 
-                              ? 'bg-blue-500 text-white rounded-br-none' 
-                              : 'bg-slate-100 text-slate-800 rounded-bl-none'
-                          }`}>
-                            <p className="text-sm">{message.text}</p>
-                          </div>
-                        </div>
+                        <p className="text-sm">{message.text}</p>
+                        <p className="text-xs opacity-70 mt-1">
+                          {formatDateSafe(message.timestamp)}
+                        </p>
                       </div>
-                    );
-                  })
+                    </div>
+                  ))
                 )}
                 <div ref={messagesEndRef} />
               </div>

@@ -145,11 +145,6 @@ export default function ClientCollaborationPage() {
     }
   }, [projectId, projects, navigate]);
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
   // Load collaboration data
   useEffect(() => {
     if (!project || !user) return;
@@ -599,40 +594,27 @@ export default function ClientCollaborationPage() {
                   Chat del Proyecto
                 </h3>
                 
-                                 <div className="h-96 overflow-y-auto space-y-4 border border-slate-200 rounded-lg p-4 bg-white">
-                   {messages.length > 0 ? (
-                     messages.map((message) => {
-                       const isOwnMessage = message.sender === user.id;
-                       return (
-                         <div key={message.id} className={`flex items-start gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
-                           <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                             isOwnMessage ? 'bg-blue-500' : 'bg-blue-100'
-                           }`}>
-                             <span className={`text-sm font-medium ${
-                               isOwnMessage ? 'text-white' : 'text-blue-600'
-                             }`}>
-                               {message.sender_name?.charAt(0).toUpperCase()}
-                             </span>
-                           </div>
-                           <div className={`flex-1 min-w-0 ${isOwnMessage ? 'text-right' : ''}`}>
-                             <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'justify-end' : ''}`}>
-                               <span className="font-medium text-slate-800">{message.sender_name}</span>
-                               <span className="text-xs text-slate-500">
-                                 {formatDateSafe(message.created_at)}
-                               </span>
-                             </div>
-                             <div className={`inline-block max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                               isOwnMessage 
-                                 ? 'bg-blue-500 text-white rounded-br-none' 
-                                 : 'bg-slate-100 text-slate-800 rounded-bl-none'
-                             }`}>
-                               <p className="text-sm">{message.text}</p>
-                             </div>
-                           </div>
-                         </div>
-                       );
-                     })
-                   ) : (
+                <div className="h-96 overflow-y-auto space-y-4 border border-slate-200 rounded-lg p-4 bg-white">
+                  {messages.length > 0 ? (
+                    messages.map((message) => (
+                      <div key={message.id} className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-sm font-medium text-blue-600">
+                            {message.sender_name?.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-slate-800">{message.sender_name}</span>
+                            <span className="text-xs text-slate-500">
+                              {formatDateSafe(message.created_at)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-700">{message.text}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
                     <div className="text-center py-8">
                       <MessageSquare className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                       <p className="text-slate-500">No hay mensajes aún. ¡Sé el primero en escribir!</p>
