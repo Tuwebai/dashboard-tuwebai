@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { toast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { 
   Settings, 
@@ -36,6 +37,23 @@ import {
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/lib/i18n';
+
+// Estilos CSS personalizados para animaciones
+const customStyles = `
+  @keyframes gradient-x {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  
+  .animate-gradient-x {
+    background-size: 200% 200%;
+    animation: gradient-x 3s ease infinite;
+  }
+  
+  .animate-spin-slow {
+    animation: spin 3s linear infinite;
+  }
+`;
 
 export default function Configuracion() {
   const { user, updateUserSettings, projects } = useApp() as AppContextType;
@@ -263,84 +281,159 @@ export default function Configuracion() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
-      <div className="p-6 max-w-7xl mx-auto space-y-6">
-        {/* Header con diseño claro */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200/50">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-800">Configuración</h1>
-              <p className="text-slate-600 mt-2">
-                Personaliza tu experiencia en la plataforma
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm text-slate-600">
-                <FileText className="h-4 w-4" />
-                <span>Proyectos: {projects?.length || 0}</span>
+    <>
+      <style>{customStyles}</style>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
+        <div className="p-6 max-w-7xl mx-auto space-y-6">
+          {/* Header con diseño claro y moderno */}
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="relative group"
+          >
+            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-white via-blue-25 to-indigo-25">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                  <motion.h1 
+                    className="text-3xl font-bold bg-gradient-to-r from-slate-800 via-blue-800 to-indigo-800 bg-clip-text text-transparent"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                  >
+                    Configuración
+                  </motion.h1>
+                  <motion.p 
+                    className="text-slate-600 mt-2 text-lg"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                  >
+                    Personaliza tu experiencia en la plataforma
+                  </motion.p>
+                </div>
+                <motion.div 
+                  className="flex items-center gap-4"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.8, delay: 0.6 }}
+                >
+                  <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-100 px-4 py-2 rounded-xl">
+                    <FileText className="h-4 w-4 text-blue-600" />
+                    <span className="font-semibold">Proyectos: {projects?.length || 0}</span>
+                  </div>
+                </motion.div>
               </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/20 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
             </div>
-          </div>
-        </div>
+          </motion.div>
 
-        {/* Tabs de configuración */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-white rounded-2xl shadow-lg border border-slate-200/50 p-1">
-            <TabsTrigger 
-              value="general" 
-              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-xl"
-            >
-              General
-            </TabsTrigger>
-            <TabsTrigger 
-              value="privacidad" 
-              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-xl"
-            >
-              Privacidad
-            </TabsTrigger>
-            <TabsTrigger 
-              value="rendimiento" 
-              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-xl"
-            >
-              Rendimiento
-            </TabsTrigger>
-            <TabsTrigger 
-              value="seguridad" 
-              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-xl"
-            >
-              Seguridad
-            </TabsTrigger>
-          </TabsList>
+        {/* Tabs de configuración con diseño moderno */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-4 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50 p-1 backdrop-blur-sm">
+              <TabsTrigger 
+                value="general" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:shadow-lg"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2"
+                >
+                  <Globe className="h-4 w-4" />
+                  General
+                </motion.div>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="privacidad" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:shadow-lg"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2"
+                >
+                  <Shield className="h-4 w-4" />
+                  Privacidad
+                </motion.div>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="rendimiento" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-600 data-[state=active]:text-white rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:shadow-lg"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2"
+                >
+                  <Monitor className="h-4 w-4" />
+                  Rendimiento
+                </motion.div>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="seguridad" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-pink-600 data-[state=active]:text-white rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:shadow-lg"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2"
+                >
+                  <Lock className="h-4 w-4" />
+                  Seguridad
+                </motion.div>
+              </TabsTrigger>
+            </TabsList>
 
           {/* Configuración General */}
           <TabsContent value="general" className="space-y-6">
-            <Card className="bg-white rounded-2xl shadow-lg border border-slate-200/50">
-              <CardHeader>
-                <CardTitle className="text-xl text-slate-800 flex items-center gap-2">
-                  <Globe className="h-5 w-5 text-blue-600" />
-                  Configuración General
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="language" className="text-sm font-medium text-slate-700">
-                      Idioma
-                    </Label>
-                    <Select
-                      value={generalSettings.language}
-                      onValueChange={(value) => setGeneralSettings({...generalSettings, language: value})}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="relative group"
+            >
+              <Card className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-white via-blue-25 to-indigo-25">
+                <CardHeader>
+                  <CardTitle className="text-xl text-slate-800 flex items-center gap-2">
+                    <motion.div
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.6 }}
                     >
-                      <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="es">Español</SelectItem>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="pt">Português</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      <Globe className="h-5 w-5 text-blue-600" />
+                    </motion.div>
+                    Configuración General
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <motion.div 
+                      className="space-y-2"
+                      whileHover={{ scale: 1.02 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Label htmlFor="language" className="text-sm font-medium text-slate-700">
+                        Idioma
+                      </Label>
+                      <Select
+                        value={generalSettings.language}
+                        onValueChange={(value) => setGeneralSettings({...generalSettings, language: value})}
+                      >
+                        <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 hover:border-blue-400 transition-colors duration-200">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="es">Español</SelectItem>
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="pt">Português</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </motion.div>
 
                   <div className="space-y-2">
                     <Label htmlFor="timezone" className="text-sm font-medium text-slate-700">
@@ -362,42 +455,50 @@ export default function Configuracion() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="dateFormat" className="text-sm font-medium text-slate-700">
-                      Formato de fecha
-                    </Label>
-                    <Select
-                      value={generalSettings.dateFormat}
-                      onValueChange={(value) => setGeneralSettings({...generalSettings, dateFormat: value})}
-                    >
-                      <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
-                        <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
-                        <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                                       <motion.div 
+                       className="space-y-2"
+                       whileHover={{ scale: 1.02 }}
+                       transition={{ duration: 0.2 }}
+                     >
+                       <Label htmlFor="date_format" className="text-sm font-medium text-slate-700">
+                         Formato de fecha
+                       </Label>
+                       <Select
+                         value={generalSettings.date_format}
+                         onValueChange={(value) => setGeneralSettings({...generalSettings, date_format: value})}
+                       >
+                         <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 hover:border-blue-400 transition-colors duration-200">
+                           <SelectValue />
+                         </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
+                           <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
+                           <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
+                         </SelectContent>
+                       </Select>
+                     </motion.div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="timeFormat" className="text-sm font-medium text-slate-700">
-                      Formato de hora
-                    </Label>
-                    <Select
-                      value={generalSettings.timeFormat}
-                      onValueChange={(value) => setGeneralSettings({...generalSettings, timeFormat: value})}
-                    >
-                      <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="24h">24 horas</SelectItem>
-                        <SelectItem value="12h">12 horas</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                     <motion.div 
+                       className="space-y-2"
+                       whileHover={{ scale: 1.02 }}
+                       transition={{ duration: 0.2 }}
+                     >
+                       <Label htmlFor="time_format" className="text-sm font-medium text-slate-700">
+                         Formato de hora
+                       </Label>
+                       <Select
+                         value={generalSettings.time_format}
+                         onValueChange={(value) => setGeneralSettings({...generalSettings, time_format: value})}
+                       >
+                         <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 hover:border-blue-400 transition-colors duration-200">
+                           <SelectValue />
+                         </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="24h">24 horas</SelectItem>
+                           <SelectItem value="12h">12 horas</SelectItem>
+                         </SelectContent>
+                       </Select>
+                     </motion.div>
                 </div>
 
                 <div className="flex justify-end pt-4">
@@ -438,50 +539,50 @@ export default function Configuracion() {
                         Controla quién puede ver tu información
                       </p>
                     </div>
-                    <Select
-                      value={privacySettings.profileVisibility}
-                      onValueChange={(value) => setPrivacySettings({...privacySettings, profileVisibility: value})}
-                    >
-                      <SelectTrigger className="w-32 border-slate-300 focus:border-blue-500 focus:ring-blue-500">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="public">Público</SelectItem>
-                        <SelectItem value="friends">Amigos</SelectItem>
-                        <SelectItem value="private">Privado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                                         <Select
+                       value={privacySettings.profile_visibility}
+                       onValueChange={(value) => setPrivacySettings({...privacySettings, profile_visibility: value})}
+                     >
+                       <SelectTrigger className="w-32 border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                         <SelectValue />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="public">Público</SelectItem>
+                         <SelectItem value="friends">Amigos</SelectItem>
+                         <SelectItem value="private">Privado</SelectItem>
+                       </SelectContent>
+                     </Select>
+                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-medium text-slate-700">
-                        Mostrar email
-                      </Label>
-                      <p className="text-xs text-slate-500">
-                        Permite que otros usuarios vean tu email
-                      </p>
-                    </div>
-                    <Switch
-                      checked={privacySettings.showEmail}
-                      onCheckedChange={(checked) => setPrivacySettings({...privacySettings, showEmail: checked})}
-                    />
-                  </div>
+                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                     <div className="space-y-1">
+                       <Label className="text-sm font-medium text-slate-700">
+                         Mostrar email
+                       </Label>
+                       <p className="text-xs text-slate-500">
+                         Permite que otros usuarios vean tu email
+                       </p>
+                     </div>
+                     <Switch
+                       checked={privacySettings.show_email}
+                       onCheckedChange={(checked) => setPrivacySettings({...privacySettings, show_email: checked})}
+                     />
+                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-medium text-slate-700">
-                        Mostrar teléfono
-                      </Label>
-                      <p className="text-xs text-slate-500">
-                        Permite que otros usuarios vean tu teléfono
-                      </p>
-                    </div>
-                    <Switch
-                      checked={privacySettings.showPhone}
-                      onCheckedChange={(checked) => setPrivacySettings({...privacySettings, showPhone: checked})}
-                    />
-                  </div>
+                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                     <div className="space-y-1">
+                       <Label className="text-sm font-medium text-slate-700">
+                         Mostrar teléfono
+                       </Label>
+                       <p className="text-xs text-slate-500">
+                         Permite que otros usuarios vean tu teléfono
+                       </p>
+                     </div>
+                     <Switch
+                       checked={privacySettings.show_phone}
+                       onCheckedChange={(checked) => setPrivacySettings({...privacySettings, show_phone: checked})}
+                     />
+                   </div>
 
                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                     <div className="space-y-1">
@@ -492,26 +593,26 @@ export default function Configuracion() {
                         Permite el uso de cookies para mejorar la experiencia
                       </p>
                     </div>
-                    <Switch
-                      checked={privacySettings.allowCookies}
-                      onCheckedChange={(checked) => setPrivacySettings({...privacySettings, allowCookies: checked})}
-                    />
-                  </div>
+                                         <Switch
+                       checked={privacySettings.allow_cookies}
+                       onCheckedChange={(checked) => setPrivacySettings({...privacySettings, allow_cookies: checked})}
+                     />
+                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-medium text-slate-700">
-                        Autenticación de dos factores
-                      </Label>
-                      <p className="text-xs text-slate-500">
-                        Añade una capa extra de seguridad a tu cuenta
-                      </p>
-                    </div>
-                    <Switch
-                      checked={privacySettings.twoFactorAuth}
-                      onCheckedChange={(checked) => setPrivacySettings({...privacySettings, twoFactorAuth: checked})}
-                    />
-                  </div>
+                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                     <div className="space-y-1">
+                       <Label className="text-sm font-medium text-slate-700">
+                         Autenticación de dos factores
+                       </Label>
+                       <p className="text-xs text-slate-500">
+                         Añade una capa extra de seguridad a tu cuenta
+                       </p>
+                     </div>
+                     <Switch
+                       checked={privacySettings.two_factor_auth}
+                       onCheckedChange={(checked) => setPrivacySettings({...privacySettings, two_factor_auth: checked})}
+                     />
+                   </div>
                 </div>
 
                 <div className="flex justify-end pt-4">
