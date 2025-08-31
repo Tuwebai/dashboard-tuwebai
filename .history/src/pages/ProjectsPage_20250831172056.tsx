@@ -76,30 +76,6 @@ export default function ProjectsPage() {
     setFilteredProjects(visibleProjects);
   }, [visibleProjects]);
 
-  // Cargar información del usuario objetivo cuando se pase un userId
-  useEffect(() => {
-    const loadTargetUserInfo = async () => {
-      if (userId && userId !== user.id) {
-        try {
-          const { data: userData, error } = await supabase
-            .from('users')
-            .select('full_name, email')
-            .eq('id', userId)
-            .single();
-          
-          if (userData && !error) {
-            setTargetUserName(userData.full_name || userData.email || 'Usuario');
-          }
-        } catch (error) {
-          console.error('Error cargando información del usuario:', error);
-          setTargetUserName('Usuario');
-        }
-      }
-    };
-
-    loadTargetUserInfo();
-  }, [userId, user.id]);
-
   // Función para manejar proyectos filtrados desde SearchAndFilters
   const handleFilteredProjects = useCallback((filtered: any[]) => {
     setFilteredProjects(filtered);
@@ -340,25 +316,16 @@ export default function ProjectsPage() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-slate-800">
-                {userId ? `Proyectos de ${targetUserName}` : 'Mis Proyectos'}
+                {userId ? `Proyectos de Usuario` : 'Mis Proyectos'}
               </h1>
               <p className="text-slate-600 mt-2">
                 {userId 
-                  ? `Proyectos creados por ${targetUserName}`
+                  ? 'Proyectos creados por este usuario'
                   : 'Gestiona y monitorea todos tus proyectos en un solo lugar'
                 }
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              {userId && (
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(-1)}
-                  className="border-slate-300 text-slate-700 hover:bg-slate-50"
-                >
-                  ← Volver
-                </Button>
-              )}
               <Button
                 variant="outline"
                 onClick={handleExportReport}
@@ -367,15 +334,13 @@ export default function ProjectsPage() {
                 <Download className="h-4 w-4 mr-2" />
                 Exportar Reporte
               </Button>
-              {!userId && (
-                <Button 
-                  onClick={handleOpenNuevoModal}
-                  className="bg-gradient-to-r from-blue-500 via-purple-600 to-fuchsia-600 hover:from-blue-600 hover:to-fuchsia-700 shadow-lg text-white font-medium"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Proyecto
-                </Button>
-              )}
+              <Button 
+                onClick={handleOpenNuevoModal}
+                className="bg-gradient-to-r from-blue-500 via-purple-600 to-fuchsia-600 hover:from-blue-600 hover:to-fuchsia-700 shadow-lg text-white font-medium"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Proyecto
+              </Button>
             </div>
           </div>
         </div>

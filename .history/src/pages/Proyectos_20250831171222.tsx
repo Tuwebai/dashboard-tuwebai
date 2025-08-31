@@ -43,35 +43,15 @@ export default function Proyectos() {
   };
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">
-          {userFilter ? 'Proyectos del Usuario' : 'Mis Proyectos'}
-        </h1>
-        {userFilter && (
-          <button
-            onClick={() => window.history.back()}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-          >
-            ← Volver
-          </button>
-        )}
-      </div>
-      
-      {loading ? (
-        <Card className="bg-muted/20 border-border mb-4">
-          <CardContent className="p-6 text-center text-muted-foreground">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            Cargando proyectos...
-          </CardContent>
-        </Card>
-      ) : filteredProjects.length === 0 ? (
+      <h1 className="text-3xl font-bold mb-6">Mis Proyectos</h1>
+      {projects.length === 0 ? (
         <Card className="bg-muted/20 border-border mb-4">
           <CardContent className="p-6 text-center text-muted-foreground">
             No tienes proyectos contratados aún.
           </CardContent>
         </Card>
       ) : (
-        filteredProjects.map(project => (
+        projects.map(project => (
           <Card key={project.id} className="mb-4">
             <CardHeader>
               <CardTitle>{project.name}</CardTitle>

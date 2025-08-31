@@ -45,7 +45,6 @@ export default function ProjectsPage() {
   const { projects, loading, error, refreshData, user } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
-  const { userId } = useParams<{ userId?: string }>();
   const [filteredProjects, setFilteredProjects] = useState(projects);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -57,48 +56,18 @@ export default function ProjectsPage() {
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [projectCreators, setProjectCreators] = useState<Record<string, { full_name: string; email: string }>>({});
-  const [targetUserName, setTargetUserName] = useState<string>('');
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Mostrar proyectos según el contexto:
-  // - Si hay userId en la URL: mostrar solo proyectos de ese usuario
-  // - Si es admin sin userId: mostrar todos los proyectos
-  // - Si es usuario normal sin userId: mostrar solo sus proyectos
-  const visibleProjects = userId 
-    ? projects.filter(p => p.created_by === userId)
-    : user.role === 'admin'
-      ? projects
-      : projects.filter(p => p.created_by === user.id);
+  // Mostrar solo proyectos del cliente, o todos si es admin
+  const visibleProjects = user.role === 'admin'
+    ? projects
+    : projects.filter(p => p.created_by === user.id);
 
   // Actualizar proyectos filtrados cuando cambien los proyectos o el usuario
   useEffect(() => {
     setFilteredProjects(visibleProjects);
   }, [visibleProjects]);
-
-  // Cargar información del usuario objetivo cuando se pase un userId
-  useEffect(() => {
-    const loadTargetUserInfo = async () => {
-      if (userId && userId !== user.id) {
-        try {
-          const { data: userData, error } = await supabase
-            .from('users')
-            .select('full_name, email')
-            .eq('id', userId)
-            .single();
-          
-          if (userData && !error) {
-            setTargetUserName(userData.full_name || userData.email || 'Usuario');
-          }
-        } catch (error) {
-          console.error('Error cargando información del usuario:', error);
-          setTargetUserName('Usuario');
-        }
-      }
-    };
-
-    loadTargetUserInfo();
-  }, [userId, user.id]);
 
   // Función para manejar proyectos filtrados desde SearchAndFilters
   const handleFilteredProjects = useCallback((filtered: any[]) => {
@@ -339,26 +308,12 @@ export default function ProjectsPage() {
         <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200/50">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-slate-800">
-                {userId ? `Proyectos de ${targetUserName}` : 'Mis Proyectos'}
-              </h1>
+              <h1 className="text-3xl font-bold text-slate-800">Mis Proyectos</h1>
               <p className="text-slate-600 mt-2">
-                {userId 
-                  ? `Proyectos creados por ${targetUserName}`
-                  : 'Gestiona y monitorea todos tus proyectos en un solo lugar'
-                }
+                Gestiona y monitorea todos tus proyectos en un solo lugar
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              {userId && (
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(-1)}
-                  className="border-slate-300 text-slate-700 hover:bg-slate-50"
-                >
-                  ← Volver
-                </Button>
-              )}
               <Button
                 variant="outline"
                 onClick={handleExportReport}
@@ -367,15 +322,13 @@ export default function ProjectsPage() {
                 <Download className="h-4 w-4 mr-2" />
                 Exportar Reporte
               </Button>
-              {!userId && (
-                <Button 
-                  onClick={handleOpenNuevoModal}
-                  className="bg-gradient-to-r from-blue-500 via-purple-600 to-fuchsia-600 hover:from-blue-600 hover:to-fuchsia-700 shadow-lg text-white font-medium"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Proyecto
-                </Button>
-              )}
+              <Button 
+                onClick={handleOpenNuevoModal}
+                className="bg-gradient-to-r from-blue-500 via-purple-600 to-fuchsia-600 hover:from-blue-600 hover:to-fuchsia-700 shadow-lg text-white font-medium"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Proyecto
+              </Button>
             </div>
           </div>
         </div>

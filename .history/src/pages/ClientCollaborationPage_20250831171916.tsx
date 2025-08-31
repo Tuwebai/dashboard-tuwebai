@@ -1070,15 +1070,7 @@ export default function ClientCollaborationPage() {
                            <div className="flex items-start gap-3">
                              <Avatar 
                                className="w-8 h-8 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all duration-200 ring-2 ring-slate-200"
-                               onClick={() => {
-                                 if (comment.sender === user.id) {
-                                   // Si es el usuario actual, ir a su perfil
-                                   navigate('/perfil');
-                                 } else {
-                                   // Si es otro usuario, ir a su perfil en modo solo lectura
-                                   navigate(`/perfil/${comment.sender}`);
-                                 }
-                               }}
+                               onClick={() => navigate(`/perfil/${comment.sender}`)}
                              >
                                {userData?.avatar_url ? (
                                  <AvatarImage 

@@ -350,15 +350,6 @@ export default function ProjectsPage() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              {userId && (
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(-1)}
-                  className="border-slate-300 text-slate-700 hover:bg-slate-50"
-                >
-                  ← Volver
-                </Button>
-              )}
               <Button
                 variant="outline"
                 onClick={handleExportReport}
@@ -367,15 +358,13 @@ export default function ProjectsPage() {
                 <Download className="h-4 w-4 mr-2" />
                 Exportar Reporte
               </Button>
-              {!userId && (
-                <Button 
-                  onClick={handleOpenNuevoModal}
-                  className="bg-gradient-to-r from-blue-500 via-purple-600 to-fuchsia-600 hover:from-blue-600 hover:to-fuchsia-700 shadow-lg text-white font-medium"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Proyecto
-                </Button>
-              )}
+              <Button 
+                onClick={handleOpenNuevoModal}
+                className="bg-gradient-to-r from-blue-500 via-purple-600 to-fuchsia-600 hover:from-blue-600 hover:to-fuchsia-700 shadow-lg text-white font-medium"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Proyecto
+              </Button>
             </div>
           </div>
         </div>
