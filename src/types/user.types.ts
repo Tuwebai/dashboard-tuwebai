@@ -8,8 +8,7 @@ export interface User {
   created_at: string;
   updated_at: string;
   
-  // Avatar del usuario
-  avatar?: string;
+  // Avatar del usuario - Estandarizado a avatar_url
   avatar_url?: string;
   
   // Perfil extendido
@@ -145,7 +144,7 @@ export interface UserAuditLog {
   id: string;
   userId: string;
   action: string;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
   timestamp: string;

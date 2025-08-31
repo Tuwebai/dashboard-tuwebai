@@ -259,18 +259,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                          user_metadata?.photoURL ||
                          user_metadata?.image;
             
-            userData = {
+            // Crear objeto de datos del usuario
+            const userData: User = {
               id: supabaseUser.id,
-              email: email || '',
+              email: supabaseUser.email || '',
               full_name: user_metadata?.full_name || user_metadata?.name || email?.split('@')[0] || '',
               role,
-              avatar, // Incluir avatar
+              avatar_url: avatar, // Usar avatar_url directamente
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             };
-            
-            // Guardar también en avatar_url para compatibilidad con la BD
-            userData.avatar_url = avatar;
             
             await userService.upsertUser(userData);
           }
