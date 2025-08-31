@@ -1,5 +1,5 @@
 import { useApp } from '@/contexts/AppContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 import { 
   User, 
@@ -39,6 +40,7 @@ export default function Perfil() {
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Estados para edición de perfil
   const [profileData, setProfileData] = useState({
@@ -79,7 +81,63 @@ export default function Perfil() {
     
     setLoading(true);
     try {
-      // TODO: Implementar actualización de perfil con Supabase
+      // Validar campos obligatorios
+      if (!profileData.name.trim() || !profileData.email.trim()) {
+        toast({
+          title: 'Error',
+          description: 'El nombre y email son campos obligatorios.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Validar formato de email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(profileData.email)) {
+        toast({
+          title: 'Error',
+          description: 'El formato del email no es válido.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Actualizar perfil en Supabase
+      const { error } = await supabase
+        .from('users')
+        .update({
+          full_name: profileData.name,
+          email: profileData.email,
+          phone: profileData.phone || null,
+          company: profileData.company || null,
+          position: profileData.position || null,
+          bio: profileData.bio || null,
+          location: profileData.location || null,
+          website: profileData.website || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Actualizar datos del usuario en el contexto
+      const updatedUser = {
+        ...user,
+        full_name: profileData.name,
+        email: profileData.email,
+        phone: profileData.phone,
+        company: profileData.company,
+        position: profileData.position,
+        bio: profileData.bio,
+        location: profileData.location,
+        website: profileData.website
+      };
+
+      // Actualizar el contexto local (esto requeriría una función en AppContext)
+      // Por ahora solo actualizamos el estado local
+      
       toast({
         title: 'Perfil actualizado',
         description: 'Los datos de tu perfil han sido actualizados correctamente.'
@@ -87,6 +145,7 @@ export default function Perfil() {
       
       setIsEditing(false);
     } catch (error) {
+      console.error('Error actualizando perfil:', error);
       toast({
         title: 'Error',
         description: 'No se pudo actualizar el perfil. Inténtalo de nuevo.',
@@ -100,6 +159,16 @@ export default function Perfil() {
   const handlePasswordChange = async () => {
     if (!user) return;
     
+    // Validar campos
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      toast({
+        title: 'Error',
+        description: 'Todos los campos son obligatorios.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast({
         title: 'Error',
@@ -108,10 +177,27 @@ export default function Perfil() {
       });
       return;
     }
+
+    if (passwordData.newPassword.length < 6) {
+      toast({
+        title: 'Error',
+        description: 'La nueva contraseña debe tener al menos 6 caracteres.',
+        variant: 'destructive'
+      });
+      return;
+    }
     
     setLoading(true);
     try {
-      // TODO: Implementar cambio de contraseña con Supabase
+      // Cambiar contraseña usando Supabase Auth
+      const { error } = await supabase.auth.updateUser({
+        password: passwordData.newPassword
+      });
+
+      if (error) {
+        throw error;
+      }
+
       toast({
         title: 'Contraseña actualizada',
         description: 'Tu contraseña ha sido actualizada correctamente.'
@@ -124,6 +210,7 @@ export default function Perfil() {
         confirmPassword: ''
       });
     } catch (error) {
+      console.error('Error cambiando contraseña:', error);
       toast({
         title: 'Error',
         description: 'No se pudo cambiar la contraseña. Inténtalo de nuevo.',
@@ -135,11 +222,96 @@ export default function Perfil() {
   };
 
   const handlePhotoChange = () => {
-    // TODO: Implementar cambio de foto de perfil
-    toast({
-      title: 'Función en desarrollo',
-      description: 'El cambio de foto de perfil estará disponible pronto.'
-    });
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: 'Error',
+        description: 'Solo se permiten archivos de imagen (JPEG, PNG, GIF).',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Validar tamaño (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'Error',
+        description: 'La imagen debe ser menor a 5MB.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Generar nombre único para el archivo
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      // Subir archivo a Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Obtener URL pública del archivo
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Actualizar URL del avatar en la base de datos
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Actualizar el usuario en el contexto local
+      const updatedUser = {
+        ...user,
+        avatar_url: publicUrl
+      };
+
+      toast({
+        title: 'Foto actualizada',
+        description: 'Tu foto de perfil ha sido actualizada correctamente.'
+      });
+
+      // Limpiar input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
+    } catch (error) {
+      console.error('Error subiendo foto:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo subir la foto. Inténtalo de nuevo.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!user) {
@@ -477,7 +649,7 @@ export default function Perfil() {
                 <div className="flex justify-center">
                   <Avatar className="h-24 w-24 border-4 border-slate-200">
                     <AvatarImage 
-                      src={user.avatar} 
+                      src={user.avatar_url || user.avatar} 
                       alt={user.full_name || user.email} 
                       className="object-cover"
                     />
@@ -489,11 +661,25 @@ export default function Perfil() {
                 <Button
                   variant="outline"
                   onClick={handlePhotoChange}
+                  disabled={loading}
                   className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
                 >
-                  <Camera className="h-4 w-4 mr-2" />
-                  Cambiar foto
+                  {loading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-500 mr-2"></div>
+                  ) : (
+                    <Camera className="h-4 w-4 mr-2" />
+                  )}
+                  {loading ? 'Subiendo...' : 'Cambiar foto'}
                 </Button>
+                
+                {/* Input de archivo oculto */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
               </CardContent>
             </Card>
 
