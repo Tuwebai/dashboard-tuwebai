@@ -622,36 +622,36 @@ export default function ClientCollaborationPage() {
         {/* Main Content con diseño claro */}
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200/50 p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                         <TabsList className="grid w-full grid-cols-4 bg-slate-100 border border-slate-200">
-               <TabsTrigger 
-                 value="chat" 
-                 className="flex items-center gap-2 text-slate-600 hover:text-slate-800 hover:bg-slate-200 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm font-medium"
-               >
-                 <MessageSquare className="h-4 w-4" />
-                 Chat
-               </TabsTrigger>
-               <TabsTrigger 
-                 value="tasks" 
-                 className="flex items-center gap-2 text-slate-600 hover:text-slate-800 hover:bg-slate-200 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm font-medium"
-               >
-                 <CheckSquare className="h-4 w-4" />
-                 Tareas
-               </TabsTrigger>
-               <TabsTrigger 
-                 value="files" 
-                 className="flex items-center gap-2 text-slate-600 hover:text-slate-800 hover:bg-slate-200 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm font-medium"
-               >
-                 <FileText className="h-4 w-4" />
-                 Archivos
-               </TabsTrigger>
-               <TabsTrigger 
-                 value="comments" 
-                 className="flex items-center gap-2 text-slate-600 hover:text-slate-800 hover:bg-slate-200 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm font-medium"
-               >
-                 <MessageSquare className="h-4 w-4" />
-                 Comentarios
-               </TabsTrigger>
-             </TabsList>
+            <TabsList className="grid w-full grid-cols-4 bg-slate-100 border border-slate-200">
+              <TabsTrigger 
+                value="chat" 
+                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Chat
+              </TabsTrigger>
+              <TabsTrigger 
+                value="tasks" 
+                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm"
+              >
+                <CheckSquare className="h-4 w-4" />
+                Tareas
+              </TabsTrigger>
+              <TabsTrigger 
+                value="files" 
+                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm"
+              >
+                <FileText className="h-4 w-4" />
+                Archivos
+              </TabsTrigger>
+              <TabsTrigger 
+                value="comments" 
+                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Comentarios
+              </TabsTrigger>
+            </TabsList>
 
             {/* Chat Tab */}
             <TabsContent value="chat" className="space-y-4">
@@ -929,12 +929,12 @@ export default function ClientCollaborationPage() {
                      ))}
                 </div>
                 
-                                 {comments.length === 0 && (
-                   <div className="text-center py-8">
-                     <MessageSquare className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                     <p className="text-slate-500">No hay comentarios aún</p>
-                   </div>
-                 )}
+                {messages.length === 0 && (
+                  <div className="text-center py-8">
+                    <MessageSquare className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <p className="text-slate-500">No hay comentarios aún</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>

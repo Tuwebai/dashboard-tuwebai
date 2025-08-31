@@ -227,11 +227,8 @@ export default function ClientCollaborationPage() {
           setFiles(filesData);
         }
 
-        // Cargar comentarios específicos por fases (mensajes que contienen [fase])
-        const phaseComments = chatData?.filter((msg: any) => 
-          msg.text && msg.text.includes('[') && msg.text.includes(']')
-        ) || [];
-        setComments(phaseComments);
+        // Los comentarios se manejan a través de los mensajes del chat
+        setComments([]);
 
         // Actualizar estadísticas
         updateCollaborationStats(chatData, tasksData, filesData, []);
@@ -622,36 +619,36 @@ export default function ClientCollaborationPage() {
         {/* Main Content con diseño claro */}
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200/50 p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                         <TabsList className="grid w-full grid-cols-4 bg-slate-100 border border-slate-200">
-               <TabsTrigger 
-                 value="chat" 
-                 className="flex items-center gap-2 text-slate-600 hover:text-slate-800 hover:bg-slate-200 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm font-medium"
-               >
-                 <MessageSquare className="h-4 w-4" />
-                 Chat
-               </TabsTrigger>
-               <TabsTrigger 
-                 value="tasks" 
-                 className="flex items-center gap-2 text-slate-600 hover:text-slate-800 hover:bg-slate-200 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm font-medium"
-               >
-                 <CheckSquare className="h-4 w-4" />
-                 Tareas
-               </TabsTrigger>
-               <TabsTrigger 
-                 value="files" 
-                 className="flex items-center gap-2 text-slate-600 hover:text-slate-800 hover:bg-slate-200 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm font-medium"
-               >
-                 <FileText className="h-4 w-4" />
-                 Archivos
-               </TabsTrigger>
-               <TabsTrigger 
-                 value="comments" 
-                 className="flex items-center gap-2 text-slate-600 hover:text-slate-800 hover:bg-slate-200 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm font-medium"
-               >
-                 <MessageSquare className="h-4 w-4" />
-                 Comentarios
-               </TabsTrigger>
-             </TabsList>
+            <TabsList className="grid w-full grid-cols-4 bg-slate-100 border border-slate-200">
+              <TabsTrigger 
+                value="chat" 
+                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Chat
+              </TabsTrigger>
+              <TabsTrigger 
+                value="tasks" 
+                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm"
+              >
+                <CheckSquare className="h-4 w-4" />
+                Tareas
+              </TabsTrigger>
+              <TabsTrigger 
+                value="files" 
+                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm"
+              >
+                <FileText className="h-4 w-4" />
+                Archivos
+              </TabsTrigger>
+              <TabsTrigger 
+                value="comments" 
+                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-sm"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Comentarios
+              </TabsTrigger>
+            </TabsList>
 
             {/* Chat Tab */}
             <TabsContent value="chat" className="space-y-4">
@@ -899,42 +896,42 @@ export default function ClientCollaborationPage() {
                   </div>
                 )}
 
-                                 <div className="space-y-3">
-                   {comments
-                     .filter(comment => !commentPhase || comment.text.includes(`[${commentPhase}]`))
-                                          .map((comment) => (
-                       <div key={comment.id} className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
-                         <div className="flex items-start gap-3">
-                           <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                             <span className="text-sm font-medium text-blue-600">
-                               {comment.sender_name?.charAt(0).toUpperCase()}
-                             </span>
-                           </div>
-                           <div className="flex-1">
-                             <div className="flex items-center gap-2 mb-1">
-                               <span className="font-medium text-slate-800">{comment.sender_name}</span>
-                               <span className="text-xs text-slate-500">
-                                 {formatDateSafe(comment.created_at)}
-                               </span>
-                               {comment.text.includes('[') && comment.text.includes(']') && (
-                                 <Badge variant="outline" className="text-xs bg-slate-100 text-slate-700 border-slate-200">
-                                   {comment.text.match(/\[(.*?)\]/)?.[1]}
-                                 </Badge>
-                               )}
-                             </div>
-                             <p className="text-sm text-slate-700">{comment.text.replace(/\[.*?\]/, '').trim()}</p>
-                           </div>
-                         </div>
-                       </div>
-                     ))}
+                <div className="space-y-3">
+                  {messages
+                    .filter(message => !commentPhase || message.text.includes(`[${commentPhase}]`))
+                    .map((message) => (
+                      <div key={message.id} className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <span className="text-sm font-medium text-blue-600">
+                              {message.sender_name?.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-slate-800">{message.sender_name}</span>
+                              <span className="text-xs text-slate-500">
+                                {formatDateSafe(message.created_at)}
+                              </span>
+                              {message.text.includes('[') && message.text.includes(']') && (
+                                <Badge variant="outline" className="text-xs bg-slate-100 text-slate-700 border-slate-200">
+                                  {message.text.match(/\[(.*?)\]/)?.[1]}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-slate-700">{message.text.replace(/\[.*?\]/, '').trim()}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                 </div>
                 
-                                 {comments.length === 0 && (
-                   <div className="text-center py-8">
-                     <MessageSquare className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                     <p className="text-slate-500">No hay comentarios aún</p>
-                   </div>
-                 )}
+                {messages.length === 0 && (
+                  <div className="text-center py-8">
+                    <MessageSquare className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <p className="text-slate-500">No hay comentarios aún</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
