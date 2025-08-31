@@ -16,7 +16,7 @@ Configuracion.tsx:
 ✅ IMPLEMENTADO: Sistema de configuración completamente funcional con base de datos
 3. CONEXIONES A BASE DE DATOS FALTANTES
 Team.tsx:
-Tabla invitations no existe en Supabase
+Tabla invitations no existe en Supabase exite user_invitations
 FUNCIONALIDAD DE INVITACIONES NO FUNCIONA
 Facturacion.tsx:
 ✅ TODO: Sincronización de pagos no implementada

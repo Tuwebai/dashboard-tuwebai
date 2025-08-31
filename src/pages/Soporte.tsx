@@ -33,7 +33,7 @@ interface Ticket {
 }
 
 export default function Soporte() {
-  const { user, projects } = useApp();
+  const { user, getUserProjects } = useApp();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -236,7 +236,7 @@ export default function Soporte() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-slate-600">
                 <FileText className="h-4 w-4" />
-                <span>Proyectos: {projects?.length || 0}</span>
+                <span>Proyectos: {getUserProjects().length}</span>
               </div>
               <Button
                 variant="outline"

@@ -20,6 +20,7 @@ export default function Facturacion() {
   const { user } = useApp();
   const [pagos, setPagos] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedPago, setSelectedPago] = useState<Payment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -32,13 +33,30 @@ export default function Facturacion() {
     
     setLoading(true);
     
+    // Timeout para evitar carga infinita
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+    }, 5000); // 5 segundos máximo
+    
     // Escuchar pagos en tiempo real
     const unsubscribe = getUserPayments(user.email, (payments) => {
-      setPagos(payments);
-      setLoading(false);
+      try {
+        setPagos(payments || []);
+        setError(null);
+        setLoading(false);
+        clearTimeout(timeoutId);
+      } catch (err) {
+        setError('Error al cargar los pagos. Inténtalo de nuevo.');
+        setLoading(false);
+        clearTimeout(timeoutId);
+      }
     });
 
-    return () => unsubscribe();
+    // Función de limpieza
+    return () => {
+      unsubscribe();
+      clearTimeout(timeoutId);
+    };
   }, [user]);
 
   if (!user) return <Navigate to="/login" />;
@@ -102,6 +120,38 @@ export default function Facturacion() {
       a.click();
       URL.revokeObjectURL(url);
     }
+  };
+
+  const handleRetryLoad = () => {
+    setLoading(true);
+    setError(null);
+    setPagos([]);
+    
+    // Timeout para evitar carga infinita
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+      setError('Tiempo de espera agotado. Verifica tu conexión e inténtalo de nuevo.');
+    }, 5000);
+    
+    // Reintentar carga
+    const unsubscribe = getUserPayments(user!.email, (payments) => {
+      try {
+        setPagos(payments || []);
+        setError(null);
+        setLoading(false);
+        clearTimeout(timeoutId);
+      } catch (err) {
+        setError('Error al cargar los pagos. Inténtalo de nuevo.');
+        setLoading(false);
+        clearTimeout(timeoutId);
+      }
+    });
+    
+    // Limpiar timeout si se desmonta el componente
+    return () => {
+      unsubscribe();
+      clearTimeout(timeoutId);
+    };
   };
 
   const handleCreatePayment = async (paymentType: string) => {
@@ -259,28 +309,76 @@ export default function Facturacion() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex items-center justify-center py-12">
+              <div className="flex items-center justify-center py-16">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                  <p className="text-slate-600">Cargando pagos...</p>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-6"></div>
+                  <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                    Cargando historial de pagos
+                  </h3>
+                  <p className="text-slate-600 max-w-md mx-auto">
+                    Estamos sincronizando tu información de pagos desde tuweb-ai.com. 
+                    Esto puede tomar unos segundos.
+                  </p>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="text-center py-16">
+                <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                  <AlertCircle className="h-10 w-10 text-red-500" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-slate-800">
+                  Error al cargar los pagos
+                </h3>
+                <p className="text-slate-600 mb-6 max-w-md mx-auto leading-relaxed">
+                  {error}
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button
+                    onClick={handleRetryLoad}
+                    className="bg-gradient-to-r from-blue-500 via-purple-600 to-fuchsia-600 hover:from-blue-600 hover:to-fuchsia-700 shadow-lg text-white font-medium px-6"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reintentar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsPaymentModalOpen(true)}
+                    className="border-slate-300 text-slate-700 hover:bg-slate-50 px-6"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Crear pago
+                  </Button>
                 </div>
               </div>
             ) : pagos.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CreditCard className="h-8 w-8 text-slate-400" />
+              <div className="text-center py-16">
+                <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                  <CreditCard className="h-10 w-10 text-slate-500" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2 text-slate-800">No hay pagos</h3>
-                <p className="text-slate-600 mb-4">
-                  Aún no has realizado ningún pago. Comienza creando tu primer pago.
+                <h3 className="text-xl font-semibold mb-3 text-slate-800">
+                  No tienes pagos registrados
+                </h3>
+                <p className="text-slate-600 mb-6 max-w-md mx-auto leading-relaxed">
+                  Tu historial de pagos aparecerá aquí una vez que realices tu primera transacción. 
+                  Todos los pagos se sincronizan automáticamente desde tuweb-ai.com.
                 </p>
-                <Button
-                  onClick={() => setIsPaymentModalOpen(true)}
-                  className="bg-gradient-to-r from-blue-500 via-purple-600 to-fuchsia-600 hover:from-blue-600 hover:to-fuchsia-700 shadow-lg text-white font-medium"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Crear primer pago
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button
+                    onClick={() => setIsPaymentModalOpen(true)}
+                    className="bg-gradient-to-r from-blue-500 via-purple-600 to-fuchsia-600 hover:from-blue-600 hover:to-fuchsia-700 shadow-lg text-white font-medium px-6"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Crear primer pago
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleRetryLoad}
+                    className="border-slate-300 text-slate-700 hover:bg-slate-50 px-6"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Actualizar
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">

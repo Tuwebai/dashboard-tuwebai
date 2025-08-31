@@ -56,7 +56,7 @@ const customStyles = `
 `;
 
 export default function Configuracion() {
-  const { user, updateUserSettings, projects } = useApp() as AppContextType;
+  const { user, updateUserSettings, getUserProjects } = useApp() as AppContextType;
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const { t } = useTranslation();
@@ -320,7 +320,7 @@ export default function Configuracion() {
                 >
                   <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-100 px-4 py-2 rounded-xl">
                     <FileText className="h-4 w-4 text-blue-600" />
-                    <span className="font-semibold">Proyectos: {projects?.length || 0}</span>
+                    <span className="font-semibold">Proyectos: {getUserProjects().length}</span>
                   </div>
                 </motion.div>
               </div>
@@ -328,584 +328,587 @@ export default function Configuracion() {
             </div>
           </motion.div>
 
-        {/* Tabs de configuración con diseño moderno */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50 p-1 backdrop-blur-sm">
-              <TabsTrigger 
-                value="general" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:shadow-lg"
-              >
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-2"
-                >
-                  <Globe className="h-4 w-4" />
-                  General
-                </motion.div>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="privacidad" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:shadow-lg"
-              >
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-2"
-                >
-                  <Shield className="h-4 w-4" />
-                  Privacidad
-                </motion.div>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="rendimiento" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-600 data-[state=active]:text-white rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:shadow-lg"
-              >
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-2"
-                >
-                  <Monitor className="h-4 w-4" />
-                  Rendimiento
-                </motion.div>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="seguridad" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-pink-600 data-[state=active]:text-white rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:shadow-lg"
-              >
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-2"
-                >
-                  <Lock className="h-4 w-4" />
-                  Seguridad
-                </motion.div>
-              </TabsTrigger>
-            </TabsList>
-
-          {/* Configuración General */}
-          <TabsContent value="general" className="space-y-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="relative group"
-            >
-              <Card className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-white via-blue-25 to-indigo-25">
-                <CardHeader>
-                  <CardTitle className="text-xl text-slate-800 flex items-center gap-2">
-                    <motion.div
-                      whileHover={{ rotate: 360 }}
-                      transition={{ duration: 0.6 }}
-                    >
-                      <Globe className="h-5 w-5 text-blue-600" />
-                    </motion.div>
-                    Configuración General
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <motion.div 
-                      className="space-y-2"
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Label htmlFor="language" className="text-sm font-medium text-slate-700">
-                        Idioma
-                      </Label>
-                      <Select
-                        value={generalSettings.language}
-                        onValueChange={(value) => setGeneralSettings({...generalSettings, language: value})}
-                      >
-                        <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 hover:border-blue-400 transition-colors duration-200">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="es">Español</SelectItem>
-                          <SelectItem value="en">English</SelectItem>
-                          <SelectItem value="pt">Português</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </motion.div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="timezone" className="text-sm font-medium text-slate-700">
-                      Zona horaria
-                    </Label>
-                    <Select
-                      value={generalSettings.timezone}
-                      onValueChange={(value) => setGeneralSettings({...generalSettings, timezone: value})}
-                    >
-                      <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="America/Argentina/Buenos_Aires">Buenos Aires (GMT-3)</SelectItem>
-                        <SelectItem value="America/New_York">New York (GMT-5)</SelectItem>
-                        <SelectItem value="Europe/Madrid">Madrid (GMT+1)</SelectItem>
-                        <SelectItem value="UTC">UTC</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                                       <motion.div 
-                       className="space-y-2"
-                       whileHover={{ scale: 1.02 }}
-                       transition={{ duration: 0.2 }}
-                     >
-                       <Label htmlFor="date_format" className="text-sm font-medium text-slate-700">
-                         Formato de fecha
-                       </Label>
-                       <Select
-                         value={generalSettings.date_format}
-                         onValueChange={(value) => setGeneralSettings({...generalSettings, date_format: value})}
-                       >
-                         <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 hover:border-blue-400 transition-colors duration-200">
-                           <SelectValue />
-                         </SelectTrigger>
-                         <SelectContent>
-                           <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
-                           <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
-                           <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
-                         </SelectContent>
-                       </Select>
-                     </motion.div>
-
-                     <motion.div 
-                       className="space-y-2"
-                       whileHover={{ scale: 1.02 }}
-                       transition={{ duration: 0.2 }}
-                     >
-                       <Label htmlFor="time_format" className="text-sm font-medium text-slate-700">
-                         Formato de hora
-                       </Label>
-                       <Select
-                         value={generalSettings.time_format}
-                         onValueChange={(value) => setGeneralSettings({...generalSettings, time_format: value})}
-                       >
-                         <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 hover:border-blue-400 transition-colors duration-200">
-                           <SelectValue />
-                         </SelectTrigger>
-                         <SelectContent>
-                           <SelectItem value="24h">24 horas</SelectItem>
-                           <SelectItem value="12h">12 horas</SelectItem>
-                         </SelectContent>
-                       </Select>
-                     </motion.div>
-                </div>
-
-                <div className="flex justify-end pt-4">
-                  <Button
-                    onClick={handleSaveGeneralSettings}
-                    disabled={loading}
-                    className="bg-gradient-to-r from-blue-500 via-purple-600 to-fuchsia-600 hover:from-blue-600 hover:to-fuchsia-700 shadow-lg text-white font-medium"
-                  >
-                    {loading ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    ) : (
-                      <Save className="h-4 w-4 mr-2" />
-                    )}
-                    Guardar cambios
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Configuración de Privacidad */}
-          <TabsContent value="privacidad" className="space-y-6">
-            <Card className="bg-white rounded-2xl shadow-lg border border-slate-200/50">
-              <CardHeader>
-                <CardTitle className="text-xl text-slate-800 flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-green-600" />
-                  Configuración de Privacidad
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-medium text-slate-700">
-                        Visibilidad del perfil
-                      </Label>
-                      <p className="text-xs text-slate-500">
-                        Controla quién puede ver tu información
-                      </p>
-                    </div>
-                                         <Select
-                       value={privacySettings.profile_visibility}
-                       onValueChange={(value) => setPrivacySettings({...privacySettings, profile_visibility: value})}
-                     >
-                       <SelectTrigger className="w-32 border-slate-300 focus:border-blue-500 focus:ring-blue-500">
-                         <SelectValue />
-                       </SelectTrigger>
-                       <SelectContent>
-                         <SelectItem value="public">Público</SelectItem>
-                         <SelectItem value="friends">Amigos</SelectItem>
-                         <SelectItem value="private">Privado</SelectItem>
-                       </SelectContent>
-                     </Select>
-                   </div>
-
-                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                     <div className="space-y-1">
-                       <Label className="text-sm font-medium text-slate-700">
-                         Mostrar email
-                       </Label>
-                       <p className="text-xs text-slate-500">
-                         Permite que otros usuarios vean tu email
-                       </p>
-                     </div>
-                     <Switch
-                       checked={privacySettings.show_email}
-                       onCheckedChange={(checked) => setPrivacySettings({...privacySettings, show_email: checked})}
-                     />
-                   </div>
-
-                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                     <div className="space-y-1">
-                       <Label className="text-sm font-medium text-slate-700">
-                         Mostrar teléfono
-                       </Label>
-                       <p className="text-xs text-slate-500">
-                         Permite que otros usuarios vean tu teléfono
-                       </p>
-                     </div>
-                     <Switch
-                       checked={privacySettings.show_phone}
-                       onCheckedChange={(checked) => setPrivacySettings({...privacySettings, show_phone: checked})}
-                     />
-                   </div>
-
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-medium text-slate-700">
-                        Análisis y cookies
-                      </Label>
-                      <p className="text-xs text-slate-500">
-                        Permite el uso de cookies para mejorar la experiencia
-                      </p>
-                    </div>
-                                         <Switch
-                       checked={privacySettings.allow_cookies}
-                       onCheckedChange={(checked) => setPrivacySettings({...privacySettings, allow_cookies: checked})}
-                     />
-                   </div>
-
-                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                     <div className="space-y-1">
-                       <Label className="text-sm font-medium text-slate-700">
-                         Autenticación de dos factores
-                       </Label>
-                       <p className="text-xs text-slate-500">
-                         Añade una capa extra de seguridad a tu cuenta
-                       </p>
-                     </div>
-                     <Switch
-                       checked={privacySettings.two_factor_auth}
-                       onCheckedChange={(checked) => setPrivacySettings({...privacySettings, two_factor_auth: checked})}
-                     />
-                   </div>
-                </div>
-
-                <div className="flex justify-end pt-4">
-                  <Button
-                    onClick={handleSavePrivacySettings}
-                    disabled={loading}
-                    className="bg-gradient-to-r from-green-500 via-emerald-600 to-teal-600 hover:from-green-600 hover:to-teal-700 shadow-lg text-white font-medium"
-                  >
-                    {loading ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    ) : (
-                      <Shield className="h-4 w-4 mr-2" />
-                    )}
-                    Guardar cambios
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Configuración de Rendimiento */}
-          <TabsContent value="rendimiento" className="space-y-6">
-            <Card className="bg-white rounded-2xl shadow-lg border border-slate-200/50">
-              <CardHeader>
-                <CardTitle className="text-xl text-slate-800 flex items-center gap-2">
-                  <Monitor className="h-5 w-5 text-purple-600" />
-                  Configuración de Rendimiento
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-medium text-slate-700">
-                        Guardado automático
-                      </Label>
-                      <p className="text-xs text-slate-500">
-                        Guarda automáticamente tus cambios
-                      </p>
-                    </div>
-                                         <Switch
-                       checked={performanceSettings.auto_save}
-                       onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, auto_save: checked})}
-                     />
-                   </div>
-
-                   {performanceSettings.auto_save && (
-                     <div className="space-y-2 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
-                       <Label className="text-sm font-medium text-blue-700">
-                         Intervalo de guardado: {performanceSettings.auto_save_interval} segundos
-                       </Label>
-                       <Slider
-                         value={[performanceSettings.auto_save_interval]}
-                         onValueChange={(value) => setPerformanceSettings({...performanceSettings, auto_save_interval: value[0]})}
-                         max={120}
-                         min={10}
-                         step={10}
-                         className="w-full"
-                       />
-                     </div>
-                   )}
-
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-medium text-slate-700">
-                        Cache habilitado
-                      </Label>
-                      <p className="text-xs text-slate-500">
-                        Mejora la velocidad de carga
-                      </p>
-                    </div>
-                                         <Switch
-                       checked={performanceSettings.cache_enabled}
-                       onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, cache_enabled: checked})}
-                     />
-                   </div>
-
-                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                     <div className="space-y-1">
-                       <Label className="text-sm font-medium text-slate-700">
-                         Calidad de imagen
-                       </Label>
-                       <p className="text-xs text-slate-500">
-                         Balance entre calidad y velocidad
-                       </p>
-                     </div>
-                     <Select
-                       value={performanceSettings.image_quality}
-                       onValueChange={(value) => setPerformanceSettings({...performanceSettings, image_quality: value})}
-                     >
-                       <SelectTrigger className="w-32 border-slate-300 focus:border-blue-500 focus:ring-blue-500">
-                         <SelectValue />
-                       </SelectTrigger>
-                       <SelectContent>
-                         <SelectItem value="low">Baja</SelectItem>
-                         <SelectItem value="medium">Media</SelectItem>
-                         <SelectItem value="high">Alta</SelectItem>
-                       </SelectContent>
-                     </Select>
-                   </div>
-
-                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                     <div className="space-y-1">
-                       <Label className="text-sm font-medium text-slate-700">
-                         Animaciones
-                       </Label>
-                       <p className="text-xs text-slate-500">
-                         Habilita las animaciones de la interfaz
-                       </p>
-                     </div>
-                     <Switch
-                       checked={performanceSettings.animations_enabled}
-                       onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, animations_enabled: checked})}
-                     />
-                   </div>
-
-                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                     <div className="space-y-1">
-                       <Label className="text-sm font-medium text-slate-700">
-                         Modo de bajo ancho de banda
-                       </Label>
-                       <p className="text-xs text-slate-500">
-                         Optimiza para conexiones lentas
-                       </p>
-                     </div>
-                     <Switch
-                       checked={performanceSettings.low_bandwidth_mode}
-                       onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, low_bandwidth_mode: checked})}
-                     />
-                   </div>
-                </div>
-
-                <div className="flex justify-end pt-4">
-                  <Button
-                    onClick={handleSavePerformanceSettings}
-                    disabled={loading}
-                    className="bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 hover:from-purple-600 hover:to-red-600 shadow-lg text-white font-medium"
-                  >
-                    {loading ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    ) : (
-                      <Monitor className="h-4 w-4 mr-2" />
-                    )}
-                    Guardar cambios
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Configuración de Seguridad */}
-          <TabsContent value="seguridad" className="space-y-6">
-            <Card className="bg-white rounded-2xl shadow-lg border border-slate-200/50">
-              <CardHeader>
-                <CardTitle className="text-xl text-slate-800 flex items-center gap-2">
-                  <Lock className="h-5 w-5 text-red-600" />
-                  Configuración de Seguridad
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                                     <div className="space-y-2 p-4 bg-slate-50 rounded-xl">
-                     <Label className="text-sm font-medium text-slate-700">
-                       Tiempo de sesión: {securitySettings.session_timeout} minutos
-                     </Label>
-                     <Slider
-                       value={[securitySettings.session_timeout]}
-                       onValueChange={(value) => setSecuritySettings({...securitySettings, session_timeout: value[0]})}
-                       max={120}
-                       min={15}
-                       step={15}
-                       className="w-full"
-                     />
-                     <p className="text-xs text-slate-500">
-                       Tiempo antes de que se cierre la sesión por inactividad
-                     </p>
-                   </div>
-
-                   <div className="space-y-2 p-4 bg-slate-50 rounded-xl">
-                     <Label className="text-sm font-medium text-slate-700">
-                       Intentos máximos de login: {securitySettings.max_login_attempts}
-                     </Label>
-                     <Slider
-                       value={[securitySettings.max_login_attempts]}
-                       onValueChange={(value) => setSecuritySettings({...securitySettings, max_login_attempts: value[0]})}
-                       max={10}
-                       min={3}
-                       step={1}
-                       className="w-full"
-                     />
-                     <p className="text-xs text-slate-500">
-                       Número de intentos antes de bloquear la cuenta
-                     </p>
-                   </div>
-
-                                     <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                     <div className="space-y-1">
-                       <Label className="text-sm font-medium text-slate-700">
-                         Cambio obligatorio de contraseña
-                       </Label>
-                       <p className="text-xs text-slate-500">
-                         Fuerza el cambio de contraseña periódicamente
-                       </p>
-                     </div>
-                     <Switch
-                       checked={securitySettings.require_password_change}
-                       onCheckedChange={(checked) => setSecuritySettings({...securitySettings, require_password_change: checked})}
-                     />
-                   </div>
-
-                   {securitySettings.require_password_change && (
-                     <div className="space-y-2 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
-                       <Label className="text-sm font-medium text-blue-700">
-                         Días antes de expirar: {securitySettings.password_expiry_days}
-                       </Label>
-                       <Slider
-                         value={[securitySettings.password_expiry_days]}
-                         onValueChange={(value) => setSecuritySettings({...securitySettings, password_expiry_days: value[0]})}
-                         max={365}
-                         min={30}
-                         step={30}
-                         className="w-full"
-                       />
-                     </div>
-                   )}
-
-                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                     <div className="space-y-1">
-                       <Label className="text-sm font-medium text-slate-700">
-                         Notificaciones de login
-                       </Label>
-                       <p className="text-xs text-slate-500">
-                         Recibe alertas cuando se inicie sesión en tu cuenta
-                       </p>
-                     </div>
-                     <Switch
-                       checked={securitySettings.login_notifications}
-                       onCheckedChange={(checked) => setSecuritySettings({...securitySettings, login_notifications: checked})}
-                     />
-                   </div>
-
-                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                     <div className="space-y-1">
-                       <Label className="text-sm font-medium text-slate-700">
-                         Gestión de dispositivos
-                       </Label>
-                       <p className="text-xs text-slate-500">
-                         Permite gestionar dispositivos conectados
-                       </p>
-                     </div>
-                     <Switch
-                       checked={securitySettings.device_management}
-                       onCheckedChange={(checked) => setSecuritySettings({...securitySettings, device_management: checked})}
-                     />
-                   </div>
-                </div>
-
-                <div className="flex justify-end pt-4">
-                  <Button
-                    onClick={handleSaveSecuritySettings}
-                    disabled={loading}
-                    className="bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 hover:from-red-600 hover:to-purple-600 shadow-lg text-white font-medium"
-                  >
-                    {loading ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    ) : (
-                      <Lock className="h-4 w-4 mr-2" />
-                    )}
-                    Guardar cambios
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {/* Botón para guardar toda la configuración */}
-        <div className="flex justify-center">
-          <Button
-            onClick={handleSaveAllSettings}
-            disabled={loading}
-            size="lg"
-            className="bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 hover:from-indigo-600 hover:to-pink-700 shadow-lg text-white font-medium px-8"
+          {/* Tabs de configuración con diseño moderno */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
           >
-            {loading ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-            ) : (
-              <Save className="h-5 w-5 mr-2" />
-            )}
-            Guardar toda la configuración
-          </Button>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-4 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50 p-1 backdrop-blur-sm">
+                <TabsTrigger 
+                  value="general" 
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:shadow-lg text-slate-700 font-medium"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center gap-2"
+                  >
+                    <Globe className="h-4 w-4" />
+                    <span className="font-medium">General</span>
+                  </motion.div>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="privacidad" 
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:shadow-lg text-slate-700 font-medium"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center gap-2"
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span className="font-medium">Privacidad</span>
+                  </motion.div>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="rendimiento" 
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-600 data-[state=active]:text-white rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:shadow-lg text-slate-700 font-medium"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center gap-2"
+                  >
+                    <Monitor className="h-4 w-4" />
+                    <span className="font-medium">Rendimiento</span>
+                  </motion.div>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="seguridad" 
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-pink-600 data-[state=active]:text-white rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:shadow-lg text-slate-700 font-medium"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center gap-2"
+                  >
+                    <Lock className="h-4 w-4" />
+                    <span className="font-medium">Seguridad</span>
+                  </motion.div>
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Configuración General */}
+              <TabsContent value="general" className="space-y-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.4 }}
+                  className="relative group"
+                >
+                  <Card className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-white via-blue-25 to-indigo-25">
+                    <CardHeader>
+                      <CardTitle className="text-xl text-slate-800 flex items-center gap-2">
+                        <motion.div
+                          whileHover={{ rotate: 360 }}
+                          transition={{ duration: 0.6 }}
+                        >
+                          <Globe className="h-5 w-5 text-blue-600" />
+                        </motion.div>
+                        Configuración General
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <motion.div 
+                          className="space-y-2"
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Label htmlFor="language" className="text-sm font-medium text-slate-700">
+                            Idioma
+                          </Label>
+                          <Select
+                            value={generalSettings.language}
+                            onValueChange={(value) => setGeneralSettings({...generalSettings, language: value})}
+                          >
+                            <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 hover:border-blue-400 transition-colors duration-200">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="es">Español</SelectItem>
+                              <SelectItem value="en">English</SelectItem>
+                              <SelectItem value="pt">Português</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </motion.div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="timezone" className="text-sm font-medium text-slate-700">
+                            Zona horaria
+                          </Label>
+                          <Select
+                            value={generalSettings.timezone}
+                            onValueChange={(value) => setGeneralSettings({...generalSettings, timezone: value})}
+                          >
+                            <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="America/Argentina/Buenos_Aires">Buenos Aires (GMT-3)</SelectItem>
+                              <SelectItem value="America/New_York">New York (GMT-5)</SelectItem>
+                              <SelectItem value="Europe/Madrid">Madrid (GMT+1)</SelectItem>
+                              <SelectItem value="UTC">UTC</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <motion.div 
+                          className="space-y-2"
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Label htmlFor="date_format" className="text-sm font-medium text-slate-700">
+                            Formato de fecha
+                          </Label>
+                          <Select
+                            value={generalSettings.date_format}
+                            onValueChange={(value) => setGeneralSettings({...generalSettings, date_format: value})}
+                          >
+                            <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 hover:border-blue-400 transition-colors duration-200">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
+                              <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
+                              <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </motion.div>
+
+                        <motion.div 
+                          className="space-y-2"
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Label htmlFor="time_format" className="text-sm font-medium text-slate-700">
+                            Formato de hora
+                          </Label>
+                          <Select
+                            value={generalSettings.time_format}
+                            onValueChange={(value) => setGeneralSettings({...generalSettings, time_format: value})}
+                          >
+                            <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 hover:border-blue-400 transition-colors duration-200">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="24h">24 horas</SelectItem>
+                              <SelectItem value="12h">12 horas</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </motion.div>
+                      </div>
+
+                      <div className="flex justify-end pt-4">
+                        <Button
+                          onClick={handleSaveGeneralSettings}
+                          disabled={loading}
+                          className="bg-gradient-to-r from-blue-500 via-purple-600 to-fuchsia-600 hover:from-blue-600 hover:to-fuchsia-700 shadow-lg text-white font-medium"
+                        >
+                          {loading ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          ) : (
+                            <Save className="h-4 w-4 mr-2" />
+                          )}
+                          Guardar cambios
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </TabsContent>
+
+              {/* Configuración de Privacidad */}
+              <TabsContent value="privacidad" className="space-y-6">
+                <Card className="bg-white rounded-2xl shadow-lg border border-slate-200/50">
+                  <CardHeader>
+                    <CardTitle className="text-xl text-slate-800 flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-green-600" />
+                      Configuración de Privacidad
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Visibilidad del perfil
+                          </Label>
+                          <p className="text-xs text-slate-500">
+                            Controla quién puede ver tu información
+                          </p>
+                        </div>
+                        <Select
+                          value={privacySettings.profile_visibility}
+                          onValueChange={(value) => setPrivacySettings({...privacySettings, profile_visibility: value})}
+                        >
+                          <SelectTrigger className="w-32 border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="public">Público</SelectItem>
+                            <SelectItem value="friends">Amigos</SelectItem>
+                            <SelectItem value="private">Privado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Mostrar email
+                          </Label>
+                          <p className="text-xs text-slate-500">
+                            Permite que otros usuarios vean tu email
+                          </p>
+                        </div>
+                        <Switch
+                          checked={privacySettings.show_email}
+                          onCheckedChange={(checked) => setPrivacySettings({...privacySettings, show_email: checked})}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Mostrar teléfono
+                          </Label>
+                          <p className="text-xs text-slate-500">
+                            Permite que otros usuarios vean tu teléfono
+                          </p>
+                        </div>
+                        <Switch
+                          checked={privacySettings.show_phone}
+                          onCheckedChange={(checked) => setPrivacySettings({...privacySettings, show_phone: checked})}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Análisis y cookies
+                          </Label>
+                          <p className="text-xs text-slate-500">
+                            Permite el uso de cookies para mejorar la experiencia
+                          </p>
+                        </div>
+                        <Switch
+                          checked={privacySettings.allow_cookies}
+                          onCheckedChange={(checked) => setPrivacySettings({...privacySettings, allow_cookies: checked})}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Autenticación de dos factores
+                          </Label>
+                          <p className="text-xs text-slate-500">
+                            Añade una capa extra de seguridad a tu cuenta
+                          </p>
+                        </div>
+                        <Switch
+                          checked={privacySettings.two_factor_auth}
+                          onCheckedChange={(checked) => setPrivacySettings({...privacySettings, two_factor_auth: checked})}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-4">
+                      <Button
+                        onClick={handleSavePrivacySettings}
+                        disabled={loading}
+                        className="bg-gradient-to-r from-green-500 via-emerald-600 to-teal-600 hover:from-green-600 hover:to-teal-700 shadow-lg text-white font-medium"
+                      >
+                        {loading ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        ) : (
+                          <Shield className="h-4 w-4 mr-2" />
+                        )}
+                        Guardar cambios
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Configuración de Rendimiento */}
+              <TabsContent value="rendimiento" className="space-y-6">
+                <Card className="bg-white rounded-2xl shadow-lg border border-slate-200/50">
+                  <CardHeader>
+                    <CardTitle className="text-xl text-slate-800 flex items-center gap-2">
+                      <Monitor className="h-5 w-5 text-purple-600" />
+                      Configuración de Rendimiento
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Guardado automático
+                          </Label>
+                          <p className="text-xs text-slate-500">
+                            Guarda automáticamente tus cambios
+                          </p>
+                        </div>
+                        <Switch
+                          checked={performanceSettings.auto_save}
+                          onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, auto_save: checked})}
+                        />
+                      </div>
+
+                      {performanceSettings.auto_save && (
+                        <div className="space-y-2 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
+                          <Label className="text-sm font-medium text-blue-700">
+                            Intervalo de guardado: {performanceSettings.auto_save_interval} segundos
+                          </Label>
+                          <Slider
+                            value={[performanceSettings.auto_save_interval]}
+                            onValueChange={(value) => setPerformanceSettings({...performanceSettings, auto_save_interval: value[0]})}
+                            max={120}
+                            min={10}
+                            step={10}
+                            className="w-full"
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Cache habilitado
+                          </Label>
+                          <p className="text-xs text-slate-500">
+                            Mejora la velocidad de carga
+                          </p>
+                        </div>
+                        <Switch
+                          checked={performanceSettings.cache_enabled}
+                          onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, cache_enabled: checked})}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Calidad de imagen
+                          </Label>
+                          <p className="text-xs text-slate-500">
+                            Balance entre calidad y velocidad
+                          </p>
+                        </div>
+                        <Select
+                          value={performanceSettings.image_quality}
+                          onValueChange={(value) => setPerformanceSettings({...performanceSettings, image_quality: value})}
+                        >
+                          <SelectTrigger className="w-32 border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">Baja</SelectItem>
+                            <SelectItem value="medium">Media</SelectItem>
+                            <SelectItem value="high">Alta</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Animaciones
+                          </Label>
+                          <p className="text-xs text-slate-500">
+                            Habilita las animaciones de la interfaz
+                          </p>
+                        </div>
+                        <Switch
+                          checked={performanceSettings.animations_enabled}
+                          onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, animations_enabled: checked})}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Modo de bajo ancho de banda
+                          </Label>
+                          <p className="text-xs text-slate-500">
+                            Optimiza para conexiones lentas
+                          </p>
+                        </div>
+                        <Switch
+                          checked={performanceSettings.low_bandwidth_mode}
+                          onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, low_bandwidth_mode: checked})}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-4">
+                      <Button
+                        onClick={handleSavePerformanceSettings}
+                        disabled={loading}
+                        className="bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 hover:from-purple-600 hover:to-red-600 shadow-lg text-white font-medium"
+                      >
+                        {loading ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        ) : (
+                          <Monitor className="h-4 w-4 mr-2" />
+                        )}
+                        Guardar cambios
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Configuración de Seguridad */}
+              <TabsContent value="seguridad" className="space-y-6">
+                <Card className="bg-white rounded-2xl shadow-lg border border-slate-200/50">
+                  <CardHeader>
+                    <CardTitle className="text-xl text-slate-800 flex items-center gap-2">
+                      <Lock className="h-5 w-5 text-red-600" />
+                      Configuración de Seguridad
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                      <div className="space-y-2 p-4 bg-slate-50 rounded-xl">
+                        <Label className="text-sm font-medium text-slate-700">
+                          Tiempo de sesión: {securitySettings.session_timeout} minutos
+                        </Label>
+                        <Slider
+                          value={[securitySettings.session_timeout]}
+                          onValueChange={(value) => setSecuritySettings({...securitySettings, session_timeout: value[0]})}
+                          max={120}
+                          min={15}
+                          step={15}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-slate-500">
+                          Tiempo antes de que se cierre la sesión por inactividad
+                        </p>
+                      </div>
+
+                      <div className="space-y-2 p-4 bg-slate-50 rounded-xl">
+                        <Label className="text-sm font-medium text-slate-700">
+                          Intentos máximos de login: {securitySettings.max_login_attempts}
+                        </Label>
+                        <Slider
+                          value={[securitySettings.max_login_attempts]}
+                          onValueChange={(value) => setSecuritySettings({...securitySettings, max_login_attempts: value[0]})}
+                          max={10}
+                          min={3}
+                          step={1}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-slate-500">
+                          Número de intentos antes de bloquear la cuenta
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Cambio obligatorio de contraseña
+                          </Label>
+                          <p className="text-xs text-slate-500">
+                            Fuerza el cambio de contraseña periódicamente
+                          </p>
+                        </div>
+                        <Switch
+                          checked={securitySettings.require_password_change}
+                          onCheckedChange={(checked) => setSecuritySettings({...securitySettings, require_password_change: checked})}
+                        />
+                      </div>
+
+                      {securitySettings.require_password_change && (
+                        <div className="space-y-2 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
+                          <Label className="text-sm font-medium text-blue-700">
+                            Días antes de expirar: {securitySettings.password_expiry_days}
+                          </Label>
+                          <Slider
+                            value={[securitySettings.password_expiry_days]}
+                            onValueChange={(value) => setSecuritySettings({...securitySettings, password_expiry_days: value[0]})}
+                            max={365}
+                            min={30}
+                            step={30}
+                            className="w-full"
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Notificaciones de login
+                          </Label>
+                          <p className="text-xs text-slate-500">
+                            Recibe alertas cuando se inicie sesión en tu cuenta
+                          </p>
+                        </div>
+                        <Switch
+                          checked={securitySettings.login_notifications}
+                          onCheckedChange={(checked) => setSecuritySettings({...securitySettings, login_notifications: checked})}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Gestión de dispositivos
+                          </Label>
+                          <p className="text-xs text-slate-500">
+                            Permite gestionar dispositivos conectados
+                          </p>
+                        </div>
+                        <Switch
+                          checked={securitySettings.device_management}
+                          onCheckedChange={(checked) => setSecuritySettings({...securitySettings, device_management: checked})}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-4">
+                      <Button
+                        onClick={handleSaveSecuritySettings}
+                        disabled={loading}
+                        className="bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 hover:from-red-600 hover:to-purple-600 shadow-lg text-white font-medium"
+                      >
+                        {loading ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        ) : (
+                          <Lock className="h-4 w-4 mr-2" />
+                        )}
+                        Guardar cambios
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </motion.div>
+
+          {/* Botón para guardar toda la configuración */}
+          <div className="flex justify-center">
+            <Button
+              onClick={handleSaveAllSettings}
+              disabled={loading}
+              size="lg"
+              className="bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 hover:from-indigo-600 hover:to-pink-700 shadow-lg text-white font-medium px-8"
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+              ) : (
+                <Save className="h-5 w-5 mr-2" />
+              )}
+              Guardar toda la configuración
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 } 

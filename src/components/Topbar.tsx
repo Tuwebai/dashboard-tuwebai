@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 
-import { LogOut, User as UserIcon, FolderOpen, CreditCard, Settings as SettingsIcon } from 'lucide-react';
+import { LogOut, User as UserIcon } from 'lucide-react';
 
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useTranslation } from 'react-i18next';
@@ -50,7 +50,7 @@ export default function Topbar({
   clientSearchTerm = ''
 }: TopbarProps) {
   const { t } = useTranslation();
-  const { user, projects, logout } = useApp();
+  const { user, getUserProjects, logout } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -189,7 +189,7 @@ export default function Topbar({
               <div className="text-sm">
                 <span className="text-slate-600 font-medium">{t('Proyectos')}: </span>
                 <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-0 px-3 py-1.5 rounded-lg font-semibold">
-                  {projects.length}
+                  {getUserProjects().length}
                 </Badge>
               </div>
             </div>
@@ -213,36 +213,12 @@ export default function Topbar({
                   </AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 bg-white border-slate-200 shadow-lg rounded-lg">
+              <DropdownMenuContent align="end" className="w-48 bg-white border-slate-200 shadow-lg rounded-lg">
                 <DropdownMenuItem 
                   onClick={() => navigate('/perfil')}
                   className="text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all duration-200"
                 >
                   <UserIcon className="h-4 w-4 mr-3 text-blue-500" /> {t('Mi perfil')}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => navigate('/proyectos')}
-                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all duration-200"
-                >
-                  <FolderOpen className="h-4 w-4 mr-3 text-emerald-500" /> {t('Mis proyectos')}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => navigate('/facturacion')}
-                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all duration-200"
-                >
-                  <CreditCard className="h-4 w-4 mr-3 text-amber-500" /> {t('Facturación / Pagos')}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => navigate('/soporte')}
-                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all duration-200"
-                >
-                  <SettingsIcon className="h-4 w-4 mr-3 text-purple-500" /> {t('Soporte')}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => navigate('/configuracion')}
-                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all duration-200"
-                >
-                  <SettingsIcon className="h-4 w-4 mr-3 text-slate-500" /> {t('Configuración')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-slate-200" />
                 <DropdownMenuItem

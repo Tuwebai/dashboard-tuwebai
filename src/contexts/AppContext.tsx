@@ -132,6 +132,7 @@ export interface AppContextType {
   refreshData: () => Promise<void>;
   clearError: () => void;
   updateUserSettings: (updates: Partial<User>) => Promise<boolean>;
+  getUserProjects: () => Project[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -191,9 +192,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       clearCache();
       
-      // Recargar proyectos usando Supabase
-      const response = await projectService.getProjects();
-      const projectData = response?.projects || [];
+      // Recargar proyectos según el rol del usuario
+      let projectData: any[] = [];
+      
+      if (user.role === 'admin') {
+        // Los administradores ven todos los proyectos
+        const response = await projectService.getProjects();
+        projectData = response?.projects || [];
+      } else {
+        // Los usuarios normales solo ven sus propios proyectos
+        projectData = await projectService.getProjectsByUser(user.id);
+      }
       
       setProjects(projectData as any);
       
@@ -208,6 +217,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     }
   }, [user]);
+
+  // Obtener solo los proyectos del usuario actual (para conteos y estadísticas)
+  const getUserProjects = useCallback(() => {
+    if (!user) return [];
+    
+    if (user.role === 'admin') {
+      // Los administradores ven todos los proyectos
+      return projects;
+    } else {
+      // Los usuarios normales solo ven sus propios proyectos
+      return projects.filter(p => p.created_by === user.id);
+    }
+  }, [user, projects]);
 
   // Sincronizar usuario de Supabase
   const syncUser = useCallback(async () => {
@@ -350,9 +372,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       
-      // Cargar proyectos desde la base de datos
-      const response = await projectService.getProjects();
-      const projectData = response?.projects || [];
+      // Cargar proyectos según el rol del usuario
+      let projectData: any[] = [];
+      
+      if (user.role === 'admin') {
+        // Los administradores ven todos los proyectos
+        const response = await projectService.getProjects();
+        projectData = response?.projects || [];
+      } else {
+        // Los usuarios normales solo ven sus propios proyectos
+        projectData = await projectService.getProjectsByUser(user.id);
+      }
       
       setProjects(projectData as any);
       
@@ -711,7 +741,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Memoizar el contexto para evitar re-renders innecesarios
+    // Memoizar el contexto para evitar re-renders innecesarios
   const contextValue = useMemo(() => ({
       user,
       projects,
@@ -733,7 +763,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getProjectLogs,
       refreshData,
       clearError,
-      updateUserSettings
+      updateUserSettings,
+      getUserProjects
   }), [
     user,
     projects,
@@ -745,17 +776,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     register,
     loginWithGoogle,
     loginWithGithub,
-    logout,
-    createProject,
-    updateProject,
-    deleteProject,
-    addFunctionalities,
-    addCommentToPhase,
-    addLog,
-    getProjectLogs,
-    refreshData,
-    clearError,
-    updateUserSettings
+      logout,
+      createProject,
+      updateProject,
+      deleteProject,
+      addFunctionalities,
+      addCommentToPhase,
+      addLog,
+      getProjectLogs,
+      refreshData,
+      clearError,
+      updateUserSettings,
+      getUserProjects
   ]);
 
 
@@ -805,7 +837,8 @@ export function useApp() {
       getProjectLogs: () => [],
       refreshData: async () => {},
       clearError: () => {},
-      updateUserSettings: async () => false
+      updateUserSettings: async () => false,
+      getUserProjects: () => []
     };
   }
   return context;

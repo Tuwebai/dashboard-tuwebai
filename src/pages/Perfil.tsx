@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 
 export default function Perfil() {
-  const { user, projects } = useApp();
+  const { user, getUserProjects } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -340,7 +340,7 @@ export default function Perfil() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-slate-600">
                 <User className="h-4 w-4" />
-                <span>Proyectos: {projects?.length || 0}</span>
+                <span>Proyectos: {getUserProjects().length}</span>
               </div>
               <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
                 Miembro desde {new Date(user.created_at || Date.now()).toLocaleDateString('es-ES')}
