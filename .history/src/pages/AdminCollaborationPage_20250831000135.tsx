@@ -124,7 +124,6 @@ export default function AdminCollaborationPage() {
   });
   const [showNewTaskForm, setShowNewTaskForm] = useState(false);
   const [clientInfo, setClientInfo] = useState<any>(null);
-  const [userAvatars, setUserAvatars] = useState<Record<string, { avatar?: string; full_name?: string; email?: string }>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Cargar proyecto y datos de colaboración
@@ -139,20 +138,6 @@ export default function AdminCollaborationPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  // Initialize current user avatar
-  useEffect(() => {
-    if (user) {
-      setUserAvatars(prev => ({
-        ...prev,
-        [user.id]: {
-          avatar: user.avatar,
-          full_name: user.full_name,
-          email: user.email
-        }
-      }));
-    }
-  }, [user]);
 
   const loadProjectData = async () => {
     try {
@@ -203,8 +188,6 @@ export default function AdminCollaborationPage() {
 
       if (!messagesError && messagesData) {
         setMessages(messagesData);
-        // Cargar avatares de usuarios
-        loadUserAvatars(messagesData);
       }
 
       // Cargar tareas
@@ -216,72 +199,6 @@ export default function AdminCollaborationPage() {
 
       if (!tasksError && tasksData) {
         setTasks(tasksData);
-      }
-
-      // Cargar archivos
-      const { data: filesData, error: filesError } = await supabase
-        .from('project_files')
-        .select('*')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
-
-      if (!filesError && filesData) {
-        setFiles(filesData);
-      }
-
-      calculateStats();
-    } catch (error) {
-      console.error('Error cargando datos de colaboración:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudieron cargar los datos de colaboración',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  // Load user avatars for all participants in the chat
-  const loadUserAvatars = async (chatData: any[]) => {
-    if (!chatData || chatData.length === 0) return;
-    
-    try {
-      const uniqueUserIds = [...new Set(chatData.map(msg => msg.sender))];
-      const avatarsToLoad: Record<string, { avatar?: string; full_name?: string; email?: string }> = {};
-      
-      for (const userId of uniqueUserIds) {
-        // Skip if we already have this user's data
-        if (userAvatars[userId]) {
-          continue;
-        }
-        
-        try {
-          const { data: userData, error } = await supabase
-            .from('users')
-            .select('id, full_name, email, avatar_url')
-            .eq('id', userId)
-            .single();
-          
-          if (error) {
-            console.error(`Error fetching user ${userId} for avatar:`, error);
-          } else if (userData) {
-            avatarsToLoad[userId] = {
-              avatar: userData.avatar_url,
-              full_name: userData.full_name,
-              email: userData.email
-            };
-          }
-        } catch (fetchError) {
-          console.error(`Exception fetching user ${userId} for avatar:`, fetchError);
-        }
-      }
-      
-      if (Object.keys(avatarsToLoad).length > 0) {
-        setUserAvatars(prev => ({ ...prev, ...avatarsToLoad }));
-      }
-    } catch (error) {
-      console.error('Error in loadUserAvatars:', error);
-    }
-  };
       }
 
       // Cargar archivos
@@ -693,26 +610,20 @@ export default function AdminCollaborationPage() {
                 ) : (
                   messages.map((message) => {
                     const isOwnMessage = message.role === 'admin';
-                    const userData = userAvatars[message.sender];
                     return (
                       <div
                         key={message.id}
                         className={`flex items-start gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}
                       >
-                        <Avatar className={`w-8 h-8 flex-shrink-0 ${isOwnMessage ? 'ring-2 ring-blue-500' : 'ring-2 ring-slate-200'}`}>
-                          {userData?.avatar ? (
-                            <AvatarImage
-                              src={userData.avatar}
-                              alt={userData.full_name || userData.email || 'Usuario'}
-                            />
-                          ) : (
-                            <AvatarFallback className={`text-sm font-medium ${
-                              isOwnMessage ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-600'
-                            }`}>
-                              {userData?.full_name?.charAt(0).toUpperCase() || message.sender_name?.charAt(0).toUpperCase() || 'U'}
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          isOwnMessage ? 'bg-blue-500' : 'bg-blue-100'
+                        }`}>
+                          <span className={`text-sm font-medium ${
+                            isOwnMessage ? 'text-white' : 'text-blue-600'
+                          }`}>
+                            {message.sender_name?.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
                         <div className={`flex-1 min-w-0 ${isOwnMessage ? 'text-right' : ''}`}>
                           <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'justify-end' : ''}`}>
                             <span className="font-medium text-slate-800">{message.sender_name}</span>

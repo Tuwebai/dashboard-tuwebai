@@ -733,10 +733,11 @@ export default function ClientCollaborationPage() {
                 
                                  <div className="h-96 overflow-y-auto space-y-4 border border-slate-200 rounded-lg p-4 bg-white">
                    {messages.length > 0 ? (
-                                                             messages.map((message) => {
-                    const isOwnMessage = message.sender === user.id;
-                    const userData = userAvatars[message.sender];
-                    return (
+                                           messages.map((message) => {
+                        const isOwnMessage = message.sender === user.id;
+                        const userData = userAvatars[message.sender];
+                        console.log(`Rendering message from user ${message.sender}:`, userData);
+                        return (
                           <div key={message.id} className={`flex items-start gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
                             <Avatar className={`w-8 h-8 flex-shrink-0 ${isOwnMessage ? 'ring-2 ring-blue-500' : 'ring-2 ring-slate-200'}`}>
                               {userData?.avatar ? (

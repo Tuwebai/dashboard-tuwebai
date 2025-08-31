@@ -693,26 +693,20 @@ export default function AdminCollaborationPage() {
                 ) : (
                   messages.map((message) => {
                     const isOwnMessage = message.role === 'admin';
-                    const userData = userAvatars[message.sender];
                     return (
                       <div
                         key={message.id}
                         className={`flex items-start gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}
                       >
-                        <Avatar className={`w-8 h-8 flex-shrink-0 ${isOwnMessage ? 'ring-2 ring-blue-500' : 'ring-2 ring-slate-200'}`}>
-                          {userData?.avatar ? (
-                            <AvatarImage
-                              src={userData.avatar}
-                              alt={userData.full_name || userData.email || 'Usuario'}
-                            />
-                          ) : (
-                            <AvatarFallback className={`text-sm font-medium ${
-                              isOwnMessage ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-600'
-                            }`}>
-                              {userData?.full_name?.charAt(0).toUpperCase() || message.sender_name?.charAt(0).toUpperCase() || 'U'}
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          isOwnMessage ? 'bg-blue-500' : 'bg-blue-100'
+                        }`}>
+                          <span className={`text-sm font-medium ${
+                            isOwnMessage ? 'text-white' : 'text-blue-600'
+                          }`}>
+                            {message.sender_name?.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
                         <div className={`flex-1 min-w-0 ${isOwnMessage ? 'text-right' : ''}`}>
                           <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'justify-end' : ''}`}>
                             <span className="font-medium text-slate-800">{message.sender_name}</span>

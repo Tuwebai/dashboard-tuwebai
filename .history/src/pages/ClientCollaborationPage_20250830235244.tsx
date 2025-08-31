@@ -276,25 +276,29 @@ export default function ClientCollaborationPage() {
     
     try {
       const uniqueUserIds = [...new Set(chatData.map(msg => msg.sender))];
+      console.log('Loading avatars for user IDs:', uniqueUserIds);
       
       const avatarsToLoad: Record<string, { avatar?: string; full_name?: string; email?: string }> = {};
       
       for (const userId of uniqueUserIds) {
         // Skip if we already have this user's data
         if (userAvatars[userId]) {
+          console.log(`Avatar already loaded for user ${userId}`);
           continue;
         }
         
         try {
+          console.log(`Fetching avatar for user ${userId}...`);
           const { data: userData, error } = await supabase
             .from('users')
-            .select('id, full_name, email, avatar_url')
+            .select('id, full_name, email, avatar')
             .eq('id', userId)
             .single();
           
           if (!error && userData) {
+            console.log(`Avatar loaded for user ${userId}:`, userData);
             avatarsToLoad[userId] = {
-              avatar: userData.avatar_url,
+              avatar: userData.avatar,
               full_name: userData.full_name,
               email: userData.email
             };
@@ -307,7 +311,10 @@ export default function ClientCollaborationPage() {
       }
       
       if (Object.keys(avatarsToLoad).length > 0) {
+        console.log('Updating user avatars state with:', avatarsToLoad);
         setUserAvatars(prev => ({ ...prev, ...avatarsToLoad }));
+      } else {
+        console.log('No new avatars to load');
       }
     } catch (error) {
       console.error('Error loading user avatars:', error);
@@ -733,10 +740,11 @@ export default function ClientCollaborationPage() {
                 
                                  <div className="h-96 overflow-y-auto space-y-4 border border-slate-200 rounded-lg p-4 bg-white">
                    {messages.length > 0 ? (
-                                                             messages.map((message) => {
-                    const isOwnMessage = message.sender === user.id;
-                    const userData = userAvatars[message.sender];
-                    return (
+                                           messages.map((message) => {
+                        const isOwnMessage = message.sender === user.id;
+                        const userData = userAvatars[message.sender];
+                        console.log(`Rendering message from user ${message.sender}:`, userData);
+                        return (
                           <div key={message.id} className={`flex items-start gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
                             <Avatar className={`w-8 h-8 flex-shrink-0 ${isOwnMessage ? 'ring-2 ring-blue-500' : 'ring-2 ring-slate-200'}`}>
                               {userData?.avatar ? (
