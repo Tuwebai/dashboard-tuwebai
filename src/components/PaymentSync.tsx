@@ -85,11 +85,11 @@ export default function PaymentSync() {
           variant: "default",
         });
       } else {
-        toast({
+      toast({
           title: "Error en sincronización",
-          description: result.message,
+        description: result.message,
           variant: "destructive",
-        });
+      });
       }
 
       // Recargar estadísticas
@@ -165,18 +165,18 @@ export default function PaymentSync() {
           <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
             <Zap className="h-5 w-5 text-blue-600" />
             Estado de Conexión
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {getConnectionStatusIcon()}
               <span className="text-slate-700">Conexión con MercadoPago</span>
-            </div>
+          </div>
             <Badge variant="secondary" className={getConnectionStatusColor()}>
               {getConnectionStatusText()}
-            </Badge>
-          </div>
+          </Badge>
+        </div>
           
           {connectionStatus === 'disconnected' && (
             <Alert>
@@ -186,9 +186,9 @@ export default function PaymentSync() {
               </AlertDescription>
             </Alert>
           )}
-          
-          <div className="flex gap-2">
-            <Button
+        
+        <div className="flex gap-2">
+          <Button 
               variant="outline"
               size="sm"
               onClick={checkConnection}
@@ -196,14 +196,14 @@ export default function PaymentSync() {
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${connectionStatus === 'checking' ? 'animate-spin' : ''}`} />
               Verificar Conexión
-            </Button>
-            
-            <Button
-              variant="outline"
+          </Button>
+          
+          <Button 
+            variant="outline"
               size="sm"
               onClick={() => window.open('https://www.mercadopago.com.ar/developers', '_blank')}
-            >
-              <ExternalLink className="h-4 w-4 mr-2" />
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
               Documentación API
             </Button>
           </div>
@@ -284,8 +284,8 @@ export default function PaymentSync() {
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Reintentar
-              </Button>
-            </div>
+          </Button>
+        </div>
           ) : (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -326,9 +326,9 @@ export default function PaymentSync() {
                 No se puede sincronizar sin conexión a MercadoPago
               </p>
             )}
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CardContent>
+    </Card>
 
       {/* Resultado de la última sincronización */}
       {lastSyncResult && (
