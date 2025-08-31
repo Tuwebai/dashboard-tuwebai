@@ -96,11 +96,10 @@ class MercadoPagoSyncService {
 
         return { success: true };
       } else {
-        // Crear nuevo pago
+        // Crear nuevo pago - usar user_email en lugar de user_id
         const { error: insertError } = await supabase
           .from('payments')
           .insert({
-            user_id: await this.getUserIdByEmail(userEmail),
             user_email: userEmail,
             user_name: mpPayment.payer?.name || 'Usuario',
             payment_type: this.determinePaymentType(mpPayment),
@@ -135,15 +134,26 @@ class MercadoPagoSyncService {
     }
   }
 
-  // Obtener ID de usuario por email
-  private async getUserIdByEmail(email: string): Promise<string> {
-    const { data: user } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .single();
+  // Obtener ID de usuario por email - simplificado para evitar problemas de permisos
+  private async getUserIdByEmail(email: string): Promise<string | null> {
+    try {
+      // Intentar obtener el user_id si es posible
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .single();
 
-    return user?.id || 'unknown';
+      if (error) {
+        console.warn('No se pudo obtener user_id, usando email:', error.message);
+        return null; // Retornar null en lugar de 'unknown'
+      }
+
+      return user?.id || null;
+    } catch (error) {
+      console.warn('Error obteniendo user_id, usando email:', error);
+      return null;
+    }
   }
 
   // Mapear estado de MercadoPago a estado interno

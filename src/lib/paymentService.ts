@@ -250,6 +250,10 @@ export const getUserPayments = (userEmail: string, callback: (payments: Payment[
           .then(({ data, error }) => {
             if (!error && data) {
               callback(data as Payment[]);
+            } else if (error) {
+              console.warn('Error recargando pagos:', error);
+              // En caso de error, llamar callback con array vacío
+              callback([]);
             }
           });
       }
@@ -260,10 +264,17 @@ export const getUserPayments = (userEmail: string, callback: (payments: Payment[
   supabase
     .from('payments')
     .select('*')
-            .eq('user_email', userEmail)
+    .eq('user_email', userEmail)
     .then(({ data, error }) => {
       if (!error && data) {
         callback(data as Payment[]);
+      } else if (error) {
+        console.warn('Error cargando pagos iniciales:', error);
+        // En caso de error, llamar callback con array vacío
+        callback([]);
+      } else {
+        // Si no hay datos, llamar callback con array vacío
+        callback([]);
       }
     });
   
@@ -284,6 +295,10 @@ export const getAllPayments = (callback: (payments: Payment[]) => void) => {
           .then(({ data, error }) => {
             if (!error && data) {
               callback(data as Payment[]);
+            } else if (error) {
+              console.warn('Error recargando todos los pagos:', error);
+              // En caso de error, llamar callback con array vacío
+              callback([]);
             }
           });
       }
@@ -297,6 +312,13 @@ export const getAllPayments = (callback: (payments: Payment[]) => void) => {
     .then(({ data, error }) => {
       if (!error && data) {
         callback(data as Payment[]);
+      } else if (error) {
+        console.warn('Error cargando todos los pagos iniciales:', error);
+        // En caso de error, llamar callback con array vacío
+        callback([]);
+      } else {
+        // Si no hay datos, llamar callback con array vacío
+        callback([]);
       }
     });
   
