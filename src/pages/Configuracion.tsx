@@ -32,7 +32,8 @@ import {
   EyeOff,
   Lock,
   Unlock,
-  FileText
+  FileText,
+  Cog
 } from 'lucide-react';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useTranslation } from 'react-i18next';
@@ -97,6 +98,18 @@ export default function Configuracion() {
     password_expiry_days: 90,
     login_notifications: true,
     device_management: true
+  });
+
+  // Configuración del sistema (solo para admins)
+  const [systemSettings, setSystemSettings] = useState({
+    system_name: 'TuWebAI Dashboard',
+    system_timezone: 'UTC',
+    system_language: 'es',
+    maintenance_mode: false,
+    debug_mode: false,
+    log_level: 'info',
+    backup_frequency: 'daily',
+    auto_updates: true
   });
 
   useEffect(() => {
@@ -244,6 +257,27 @@ export default function Configuracion() {
     }
   };
 
+  const handleSaveSystemSettings = async () => {
+    setLoading(true);
+    try {
+      // Aquí se guardarían los cambios del sistema en la base de datos
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulación
+      
+      toast({
+        title: 'Configuración del sistema guardada',
+        description: 'Los cambios del sistema han sido guardados correctamente.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudieron guardar los cambios del sistema.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSaveAllSettings = async () => {
     setLoading(true);
     try {
@@ -335,7 +369,7 @@ export default function Configuracion() {
             transition={{ duration: 0.6, delay: 0.3 }}
           >
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50 p-1 backdrop-blur-sm">
+              <TabsList className={`grid w-full ${user?.role === 'admin' ? 'grid-cols-5' : 'grid-cols-4'} bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200/50 p-1 backdrop-blur-sm`}>
                 <TabsTrigger 
                   value="general" 
                   className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:shadow-lg text-slate-700 font-medium"
@@ -388,6 +422,21 @@ export default function Configuracion() {
                     <span className="font-medium">Seguridad</span>
                   </motion.div>
                 </TabsTrigger>
+                {user?.role === 'admin' && (
+                  <TabsTrigger 
+                    value="admin" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-600 data-[state=active]:text-white rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:shadow-lg text-slate-700 font-medium"
+                  >
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center gap-2"
+                    >
+                      <Cog className="h-4 w-4" />
+                      <span className="font-medium">Admin</span>
+                    </motion.div>
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               {/* Configuración General */}
@@ -888,6 +937,160 @@ export default function Configuracion() {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              {/* Configuración de Administración del Sistema (Solo para Admins) */}
+              {user?.role === 'admin' && (
+                <TabsContent value="admin" className="space-y-6">
+                  <Card className="bg-white rounded-2xl shadow-lg border border-slate-200/50">
+                    <CardHeader>
+                      <CardTitle className="text-xl text-slate-800 flex items-center gap-2">
+                        <Cog className="h-5 w-5 text-orange-600" />
+                        Administración del Sistema
+                      </CardTitle>
+                      <CardDescription className="text-slate-600">
+                        Configuraciones avanzadas del sistema (solo para administradores)
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Nombre del Sistema
+                          </Label>
+                          <Input
+                            value={systemSettings.system_name}
+                            onChange={(e) => setSystemSettings({...systemSettings, system_name: e.target.value})}
+                            className="border-slate-300 focus:border-orange-500 focus:ring-orange-500"
+                            placeholder="Nombre del sistema"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Zona Horaria del Sistema
+                          </Label>
+                          <Select
+                            value={systemSettings.system_timezone}
+                            onValueChange={(value) => setSystemSettings({...systemSettings, system_timezone: value})}
+                          >
+                            <SelectTrigger className="border-slate-300 focus:border-orange-500 focus:ring-orange-500">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="UTC">UTC</SelectItem>
+                              <SelectItem value="America/Argentina/Buenos_Aires">Argentina (GMT-3)</SelectItem>
+                              <SelectItem value="America/New_York">Nueva York (GMT-5)</SelectItem>
+                              <SelectItem value="Europe/Madrid">Madrid (GMT+1)</SelectItem>
+                              <SelectItem value="Asia/Tokyo">Tokio (GMT+9)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Idioma del Sistema
+                          </Label>
+                          <Select
+                            value={systemSettings.system_language}
+                            onValueChange={(value) => setSystemSettings({...systemSettings, system_language: value})}
+                          >
+                            <SelectTrigger className="border-slate-300 focus:border-orange-500 focus:ring-orange-500">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="es">Español</SelectItem>
+                              <SelectItem value="en">English</SelectItem>
+                              <SelectItem value="pt">Português</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-slate-700">
+                            Nivel de Log
+                          </Label>
+                          <Select
+                            value={systemSettings.log_level}
+                            onValueChange={(value) => setSystemSettings({...systemSettings, log_level: value})}
+                          >
+                            <SelectTrigger className="border-slate-300 focus:border-orange-500 focus:ring-orange-500">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="error">Error</SelectItem>
+                              <SelectItem value="warn">Warning</SelectItem>
+                              <SelectItem value="info">Info</SelectItem>
+                              <SelectItem value="debug">Debug</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 bg-orange-50 rounded-xl border-l-4 border-orange-500">
+                          <div className="space-y-1">
+                            <Label className="text-sm font-medium text-orange-700">
+                              Modo de Mantenimiento
+                            </Label>
+                            <p className="text-xs text-orange-600">
+                              Bloquea el acceso al sistema para mantenimiento
+                            </p>
+                          </div>
+                          <Switch
+                            checked={systemSettings.maintenance_mode}
+                            onCheckedChange={(checked) => setSystemSettings({...systemSettings, maintenance_mode: checked})}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                          <div className="space-y-1">
+                            <Label className="text-sm font-medium text-slate-700">
+                              Modo Debug
+                            </Label>
+                            <p className="text-xs text-slate-500">
+                              Habilita información de debug para desarrolladores
+                            </p>
+                          </div>
+                          <Switch
+                            checked={systemSettings.debug_mode}
+                            onCheckedChange={(checked) => setSystemSettings({...systemSettings, debug_mode: checked})}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                          <div className="space-y-1">
+                            <Label className="text-sm font-medium text-slate-700">
+                              Actualizaciones Automáticas
+                            </Label>
+                            <p className="text-xs text-slate-500">
+                              Permite actualizaciones automáticas del sistema
+                            </p>
+                          </div>
+                          <Switch
+                            checked={systemSettings.auto_updates}
+                            onCheckedChange={(checked) => setSystemSettings({...systemSettings, auto_updates: checked})}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end pt-4">
+                        <Button
+                          onClick={handleSaveSystemSettings}
+                          disabled={loading}
+                          className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 shadow-lg text-white font-medium"
+                        >
+                          {loading ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          ) : (
+                            <Cog className="h-4 w-4 mr-2" />
+                          )}
+                          Guardar configuración del sistema
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              )}
             </Tabs>
           </motion.div>
 

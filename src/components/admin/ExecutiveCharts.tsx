@@ -80,37 +80,50 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
       setLoading(true);
       
       // Cargar usuarios
-      const { data: users, error: usersError } = await supabase
+      let { data: users, error: usersError } = await supabase
         .from('users')
         .select('created_at')
         .order('created_at', { ascending: true });
       
-      if (usersError) throw usersError;
+      if (usersError) {
+        console.error('Error loading users:', usersError);
+        users = [];
+      }
 
       // Cargar pagos
-      const { data: payments, error: paymentsError } = await supabase
+      let { data: payments, error: paymentsError } = await supabase
         .from('payments')
         .select('amount, created_at, status')
         .eq('status', 'completed')
         .order('created_at', { ascending: true });
       
-      if (paymentsError) throw paymentsError;
+      if (paymentsError) {
+        console.error('Error loading payments:', paymentsError);
+        payments = [];
+      }
 
       // Cargar proyectos
-      const { data: projects, error: projectsError } = await supabase
+      let { data: projects, error: projectsError } = await supabase
         .from('projects')
         .select('status, created_at')
         .order('created_at', { ascending: true });
       
-      if (projectsError) throw projectsError;
+      if (projectsError) {
+        console.error('Error loading projects:', projectsError);
+        projects = [];
+      }
 
       // Cargar tickets
-      const { data: tickets, error: ticketsError } = await supabase
+      let { data: tickets, error: ticketsError } = await supabase
         .from('tickets')
-        .select('priority, status, created_at')
+        .select('prioridad, estado, created_at')
         .order('created_at', { ascending: true });
       
-      if (ticketsError) throw ticketsError;
+      if (ticketsError) {
+        console.error('Error loading tickets:', ticketsError);
+        // Si hay error con tickets, usar array vacío
+        tickets = [];
+      }
 
       // Generar etiquetas de fechas según el rango seleccionado
       const now = new Date();
@@ -150,7 +163,7 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
         const endDate = new Date(targetDate);
         endDate.setDate(endDate.getDate() + 1);
         
-        return users?.filter(user => {
+        return (users || []).filter(user => {
           const userDate = new Date(user.created_at);
           return userDate >= targetDate && userDate < endDate;
         }).length || 0;
@@ -170,14 +183,14 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
         const endDate = new Date(targetDate);
         endDate.setDate(endDate.getDate() + 1);
         
-        return payments?.filter(payment => {
+        return (payments || []).filter(payment => {
           const paymentDate = new Date(payment.created_at);
           return paymentDate >= targetDate && paymentDate < endDate;
         }).reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0) || 0;
       });
 
       // Procesar distribución de proyectos
-      const projectStatuses = projects?.reduce((acc, project) => {
+      const projectStatuses = (projects || []).reduce((acc, project) => {
         const status = project.status || 'unknown';
         acc[status] = (acc[status] || 0) + 1;
         return acc;
@@ -187,8 +200,8 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
       const projectData = Object.values(projectStatuses);
 
       // Procesar tickets por prioridad
-      const ticketPriorities = tickets?.reduce((acc, ticket) => {
-        const priority = ticket.priority || 'unknown';
+      const ticketPriorities = (tickets || []).reduce((acc, ticket) => {
+        const priority = ticket.prioridad || 'unknown';
         acc[priority] = (acc[priority] || 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
@@ -218,10 +231,10 @@ export default function ExecutiveCharts({ refreshData, lastUpdate }: ExecutiveCh
           return projectDate >= targetDate && projectDate < endDate;
         }).length || 0;
 
-        const ticketActivity = tickets?.filter(ticket => {
-          const ticketDate = new Date(ticket.created_at);
-          return ticketDate >= targetDate && ticketDate < endDate;
-        }).length || 0;
+                 const ticketActivity = (tickets || []).filter(ticket => {
+           const ticketDate = new Date(ticket.created_at);
+           return ticketDate >= targetDate && ticketDate < endDate;
+         }).length || 0;
 
         return userActivity + projectActivity + ticketActivity;
       });

@@ -19,15 +19,12 @@ import {
   Shield,
   TrendingUp,
   FileText,
-  Zap,
   BarChart,
   Eye,
   Key,
   ChevronRight,
   Search,
-  GitBranch,
-  GitCommit,
-  Wrench
+  GitBranch
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -107,7 +104,7 @@ export default function Sidebar() {
                 {icon}
               </div>
             </div>
-            <span className={`font-medium text-sm flex-1 ${
+            <span className={`font-medium text-sm flex-1 text-center ${
               isActive ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
             }`}>
               {t(label)}
@@ -193,7 +190,7 @@ export default function Sidebar() {
               {icon}
             </div>
           </div>
-          <span className={`font-medium text-sm flex-1 ${
+          <span className={`font-medium text-sm flex-1 text-center ${
             isActive ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
           }`}>
             {t(label)}
@@ -287,6 +284,43 @@ export default function Sidebar() {
                 {adminNavItem('proyectos', <FolderKanban size={18} />, t('Proyectos'), counts.projects)}
                 {adminNavItem('tickets', <Ticket size={18} />, t('Tickets'), counts.tickets)}
                 {adminNavItem('pagos', <CreditCard size={18} />, t('Pagos'), counts.payments)}
+                <NavLink
+                  to="/team"
+                  className={({ isActive }) =>
+                    `relative group cursor-pointer transition-all duration-300 ease-out hover:bg-gray-50 w-full
+                    ${isActive ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500' : ''}`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <div className="flex items-center px-4 py-3.5 space-x-4">
+                        <div className={`relative p-2 rounded-xl transition-all duration-300 ${
+                          isActive 
+                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25' 
+                            : 'bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600'
+                        }`}>
+                          {isActive && (
+                            <div className="absolute inset-0 bg-blue-400 rounded-xl animate-ping opacity-25"></div>
+                          )}
+                          <div className="transition-transform duration-300 group-hover:scale-110">
+                            <Users size={18} />
+                          </div>
+                        </div>
+                        <span className={`font-medium text-sm flex-1 text-center ${
+                          isActive ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
+                        }`}>
+                          Equipo
+                        </span>
+                        {isActive && (
+                          <ChevronRight size={16} className="text-blue-500 animate-pulse" />
+                        )}
+                      </div>
+                      {isActive && (
+                        <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-blue-400 to-blue-600 rounded-r-full"></div>
+                      )}
+                    </>
+                  )}
+                </NavLink>
               </div>
             </div>
 
@@ -303,18 +337,7 @@ export default function Sidebar() {
               </div>
             </div>
 
-            {/* AUTOMATIZACIÓN */}
-            <div className="mb-8 px-2">
-              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2 mb-2">
-                Automatización
-              </div>
-              <div className="h-px bg-gradient-to-r from-gray-200 to-transparent mb-2"></div>
-              <div className="space-y-1">
-                {adminNavItem('automation', <Zap size={18} />, 'Sistema de Automatización')}
-                {adminNavItem('auto-version', <GitCommit size={18} />, 'Auto Versiones')}
-                {adminNavItem('advanced-tools', <Wrench size={18} />, 'Herramientas Avanzadas')}
-              </div>
-            </div>
+
 
             {/* Sección Sistema */}
             <div className="mb-8 px-2">
@@ -323,7 +346,7 @@ export default function Sidebar() {
               <div className="space-y-1">
                 {navItem('/environment', <Key size={18} />, 'Variables de Entorno')}
                 {adminNavItem('notifications', <Bell size={18} />, 'Notificaciones')}
-                {adminNavItem('settings', <Settings size={18} />, 'Configuración')}
+                {navItem('/configuracion', <Settings size={18} />, 'Configuración')}
               </div>
             </div>
           </nav>
