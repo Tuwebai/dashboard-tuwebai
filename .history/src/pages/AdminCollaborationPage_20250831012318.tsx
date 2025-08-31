@@ -271,7 +271,7 @@ export default function AdminCollaborationPage() {
             console.error(`Error fetching user ${userId} for avatar:`, error);
           } else if (userData) {
             avatarsToLoad[userId] = {
-              avatar_url: userData.avatar_url,
+              avatar: userData.avatar_url,
               full_name: userData.full_name,
               email: userData.email
             };

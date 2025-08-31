@@ -252,7 +252,7 @@ export default function AdminCollaborationPage() {
     
     try {
       const uniqueUserIds = [...new Set(chatData.map(msg => msg.sender))];
-              const avatarsToLoad: Record<string, { avatar_url?: string; full_name?: string; email?: string }> = {};
+      const avatarsToLoad: Record<string, { avatar?: string; full_name?: string; email?: string }> = {};
       
       for (const userId of uniqueUserIds) {
         // Skip if we already have this user's data
@@ -271,7 +271,7 @@ export default function AdminCollaborationPage() {
             console.error(`Error fetching user ${userId} for avatar:`, error);
           } else if (userData) {
             avatarsToLoad[userId] = {
-              avatar_url: userData.avatar_url,
+              avatar: userData.avatar_url,
               full_name: userData.full_name,
               email: userData.email
             };

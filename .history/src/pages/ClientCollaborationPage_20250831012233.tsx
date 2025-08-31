@@ -128,7 +128,7 @@ export default function ClientCollaborationPage() {
   const [participants, setParticipants] = useState<string[]>([]);
   
   // User avatars state
-  const [userAvatars, setUserAvatars] = useState<Record<string, { avatar_url?: string; full_name?: string; email?: string }>>({});
+  const [userAvatars, setUserAvatars] = useState<Record<string, { avatar?: string; full_name?: string; email?: string }>>({});
   
   // Initialize current user avatar
   useEffect(() => {
@@ -282,7 +282,7 @@ export default function ClientCollaborationPage() {
     try {
       const uniqueUserIds = [...new Set(chatData.map(msg => msg.sender))];
       
-              const avatarsToLoad: Record<string, { avatar_url?: string; full_name?: string; email?: string }> = {};
+      const avatarsToLoad: Record<string, { avatar?: string; full_name?: string; email?: string }> = {};
       
       for (const userId of uniqueUserIds) {
         // Skip if we already have this user's data
@@ -299,7 +299,7 @@ export default function ClientCollaborationPage() {
           
           if (!error && userData) {
             avatarsToLoad[userId] = {
-              avatar_url: userData.avatar_url,
+              avatar: userData.avatar_url,
               full_name: userData.full_name,
               email: userData.email
             };
@@ -1060,13 +1060,10 @@ export default function ClientCollaborationPage() {
                        return (
                          <div key={comment.id} className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
                            <div className="flex items-start gap-3">
-                             <Avatar 
-                               className="w-8 h-8 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all duration-200 ring-2 ring-slate-200"
-                               onClick={() => navigate(`/perfil/${comment.sender}`)}
-                             >
-                               {userData?.avatar_url ? (
+                             <Avatar className="w-8 h-8 flex-shrink-0 ring-2 ring-slate-200">
+                               {userData?.avatar ? (
                                  <AvatarImage 
-                                   src={userData.avatar_url} 
+                                   src={userData.avatar} 
                                    alt={userData.full_name || userData.email || 'Usuario'}
                                    className="object-cover"
                                  />

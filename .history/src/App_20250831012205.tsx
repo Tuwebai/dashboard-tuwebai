@@ -114,14 +114,6 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       
-      <Route path="/perfil/:userId" element={
-        <ProtectedRoute>
-          <DashboardLayout key="user-profile">
-            <UserProfileView key="user-profile-content" />
-          </DashboardLayout>
-        </ProtectedRoute>
-      } />
-      
       <Route path="/configuracion" element={
         <ProtectedRoute>
           <DashboardLayout key="configuracion">

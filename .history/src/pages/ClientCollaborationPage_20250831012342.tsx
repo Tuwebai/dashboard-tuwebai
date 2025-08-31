@@ -299,7 +299,7 @@ export default function ClientCollaborationPage() {
           
           if (!error && userData) {
             avatarsToLoad[userId] = {
-              avatar_url: userData.avatar_url,
+              avatar: userData.avatar_url,
               full_name: userData.full_name,
               email: userData.email
             };

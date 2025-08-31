@@ -60,8 +60,8 @@ interface ChatMessage {
   id: string;
   text: string;
   sender: string;
-  sender_name: string;
-  created_at: string;
+  senderName: string;
+  timestamp: string;
   type: 'text' | 'file' | 'system';
   fileUrl?: string;
   fileName?: string;
@@ -124,7 +124,7 @@ export default function AdminCollaborationPage() {
   });
   const [showNewTaskForm, setShowNewTaskForm] = useState(false);
   const [clientInfo, setClientInfo] = useState<any>(null);
-  const [userAvatars, setUserAvatars] = useState<Record<string, { avatar_url?: string; full_name?: string; email?: string }>>({});
+  const [userAvatars, setUserAvatars] = useState<Record<string, { avatar?: string; full_name?: string; email?: string }>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Cargar proyecto y datos de colaboración
@@ -252,7 +252,7 @@ export default function AdminCollaborationPage() {
     
     try {
       const uniqueUserIds = [...new Set(chatData.map(msg => msg.sender))];
-              const avatarsToLoad: Record<string, { avatar_url?: string; full_name?: string; email?: string }> = {};
+      const avatarsToLoad: Record<string, { avatar?: string; full_name?: string; email?: string }> = {};
       
       for (const userId of uniqueUserIds) {
         // Skip if we already have this user's data
@@ -271,7 +271,7 @@ export default function AdminCollaborationPage() {
             console.error(`Error fetching user ${userId} for avatar:`, error);
           } else if (userData) {
             avatarsToLoad[userId] = {
-              avatar_url: userData.avatar_url,
+              avatar: userData.avatar_url,
               full_name: userData.full_name,
               email: userData.email
             };
@@ -294,7 +294,7 @@ export default function AdminCollaborationPage() {
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter(task => task.status === 'completed').length;
     const filesUploaded = files.length;
-    const lastActivity = messages.length > 0 ? messages[messages.length - 1]?.created_at : '';
+    const lastActivity = messages.length > 0 ? messages[messages.length - 1]?.timestamp : '';
     
     setCollaborationStats({
       totalMessages,
@@ -789,21 +789,17 @@ export default function AdminCollaborationPage() {
                         key={message.id}
                         className={`flex items-start gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}
                       >
-                        <Avatar 
-                          className={`w-8 h-8 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all duration-200 ${isOwnMessage ? 'ring-2 ring-blue-500' : 'ring-2 ring-slate-200'}`}
-                          onClick={() => navigate(`/perfil/${message.sender}`)}
-                        >
-                          {userData?.avatar_url ? (
+                        <Avatar className={`w-8 h-8 flex-shrink-0 ${isOwnMessage ? 'ring-2 ring-blue-500' : 'ring-2 ring-slate-200'}`}>
+                          {userData?.avatar ? (
                             <AvatarImage
-                              src={userData.avatar_url}
+                              src={userData.avatar}
                               alt={userData.full_name || userData.email || 'Usuario'}
-                              className="object-cover"
                             />
                           ) : (
                             <AvatarFallback className={`text-sm font-medium ${
                               isOwnMessage ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-600'
                             }`}>
-                              {userData?.full_name?.charAt(0).toUpperCase() || message.sender_name?.charAt(0).toUpperCase() || 'U'}
+                              {userData?.full_name?.charAt(0).toUpperCase() || message.senderName?.charAt(0).toUpperCase() || 'U'}
                             </AvatarFallback>
                           )}
                         </Avatar>
@@ -1057,12 +1053,12 @@ export default function AdminCollaborationPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-800 truncate">
-                          {message.sender_name}
+                          {message.senderName}
                         </p>
                         <p className="text-xs text-slate-600 truncate">{message.text}</p>
                       </div>
                       <span className="text-xs text-slate-500">
-                        {formatDateSafe(message.created_at)}
+                        {formatDateSafe(message.timestamp)}
                       </span>
                     </div>
                   ))}
