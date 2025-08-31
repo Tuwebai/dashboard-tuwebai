@@ -55,12 +55,11 @@ interface ChatMessage {
   id: string;
   text: string;
   sender: string;
-  sender_name: string;
-  created_at: string;
+  senderName: string;
+  timestamp: string;
   type: 'text' | 'file' | 'system';
-  file_url?: string;
-  file_name?: string;
-  role: string;
+  fileUrl?: string;
+  fileName?: string;
 }
 
 interface ProjectFile {
@@ -577,14 +576,14 @@ export default function ClientCollaborationPage() {
                       <div key={message.id} className="flex items-start gap-3">
                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                           <span className="text-sm font-medium text-blue-600">
-                            {message.sender_name?.charAt(0).toUpperCase()}
+                            {message.senderName?.charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-slate-800">{message.sender_name}</span>
+                            <span className="font-medium text-slate-800">{message.senderName}</span>
                             <span className="text-xs text-slate-500">
-                              {formatDateSafe(message.created_at)}
+                              {formatDateSafe(message.timestamp)}
                             </span>
                           </div>
                           <p className="text-sm text-slate-700">{message.text}</p>
@@ -797,36 +796,36 @@ export default function ClientCollaborationPage() {
                 )}
 
                 <div className="space-y-3">
-                  {messages
-                    .filter(message => !commentPhase || message.text.includes(`[${commentPhase}]`))
-                    .map((message) => (
-                      <div key={message.id} className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                  {comments
+                    .filter(comment => !commentPhase || comment.phaseKey === commentPhase)
+                    .map((comment) => (
+                      <div key={comment.id} className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
                         <div className="flex items-start gap-3">
                           <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                             <span className="text-sm font-medium text-blue-600">
-                              {message.sender_name?.charAt(0).toUpperCase()}
+                              {comment.authorName?.charAt(0).toUpperCase()}
                             </span>
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-slate-800">{message.sender_name}</span>
+                              <span className="font-medium text-slate-800">{comment.authorName}</span>
                               <span className="text-xs text-slate-500">
-                                {formatDateSafe(message.created_at)}
+                                {formatDateSafe(comment.timestamp)}
                               </span>
-                              {message.text.includes('[') && message.text.includes(']') && (
+                              {comment.phaseKey && (
                                 <Badge variant="outline" className="text-xs bg-slate-100 text-slate-700 border-slate-200">
-                                  {message.text.match(/\[(.*?)\]/)?.[1]}
+                                  {comment.phaseKey}
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-slate-700">{message.text.replace(/\[.*?\]/, '').trim()}</p>
+                            <p className="text-sm text-slate-700">{comment.text}</p>
                           </div>
                         </div>
                       </div>
                     ))}
                 </div>
                 
-                {messages.length === 0 && (
+                {comments.length === 0 && (
                   <div className="text-center py-8">
                     <MessageSquare className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                     <p className="text-slate-500">No hay comentarios aún</p>

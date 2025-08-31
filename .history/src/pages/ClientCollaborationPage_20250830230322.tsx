@@ -55,12 +55,11 @@ interface ChatMessage {
   id: string;
   text: string;
   sender: string;
-  sender_name: string;
-  created_at: string;
+  senderName: string;
+  timestamp: string;
   type: 'text' | 'file' | 'system';
-  file_url?: string;
-  file_name?: string;
-  role: string;
+  fileUrl?: string;
+  fileName?: string;
 }
 
 interface ProjectFile {
@@ -207,7 +206,7 @@ export default function ClientCollaborationPage() {
     const totalTasks = tasksData?.length || 0;
     const completedTasks = tasksData?.filter((t: any) => t.status === 'completed').length || 0;
     const totalMessages = chatData?.length || 0;
-    const totalComments = totalMessages; // Los comentarios son los mismos mensajes
+    const totalComments = commentsData?.length || 0;
     const filesUploaded = filesData?.length || 0;
 
     setCollaborationStats({
@@ -230,15 +229,15 @@ export default function ClientCollaborationPage() {
     try {
       const messageData = {
         text: newMessage.trim(),
-        sender: user.id,
-        sender_name: user.full_name || user.email,
-        project_id: project.id,
+        sender: user.email,
+        senderName: user.full_name || user.email,
+        timestamp: new Date().toISOString(),
         type: 'text',
-        role: 'cliente'
+        projectId: project.id
       };
 
       const { error: messageError } = await supabase
-        .from('project_messages')
+        .from('chat_messages')
         .insert(messageData);
 
       if (messageError) {
@@ -301,13 +300,15 @@ export default function ClientCollaborationPage() {
         url: urlData.publicUrl,
         size: file.size,
         type: file.type,
-        uploaded_by: user.id,
-        uploaded_by_name: user.full_name || user.email,
-        project_id: project.id
+        uploadedBy: user.email,
+        uploadedByName: user.full_name || user.email,
+        uploadedAt: new Date().toISOString(),
+        projectId,
+        storagePath: filePath
       };
 
       const { error: fileError } = await supabase
-        .from('project_files')
+        .from('projectFiles')
         .insert(fileData);
       
       if (fileError) {
@@ -335,26 +336,26 @@ export default function ClientCollaborationPage() {
     }
   };
 
-  // Los comentarios se manejan a través de los mensajes del chat
+  // Add comment to phase
   const addCommentToPhase = async (phaseKey: string) => {
-    if (!newComment.trim() || !phaseKey || !project) return;
+    if (!newComment.trim() || !phaseKey || !projectId) return;
 
     try {
-      const messageData = {
-        text: `[${phaseKey}] ${newComment.trim()}`,
-        sender: user.id,
-        sender_name: user.full_name || user.email,
-        project_id: project.id,
-        type: 'text',
-        role: 'cliente'
+      const commentData = {
+        text: newComment.trim(),
+        author: user.email,
+        authorName: user.full_name || user.email,
+        phaseKey,
+        projectId,
+        timestamp: new Date().toISOString()
       };
 
-      const { error: messageError } = await supabase
-        .from('project_messages')
-        .insert(messageData);
+      const { error: commentError } = await supabase
+        .from('comments')
+        .insert(commentData);
       
-      if (messageError) {
-        throw messageError;
+      if (commentError) {
+        throw commentError;
       }
       setNewComment('');
       setCommentPhase('');
@@ -577,14 +578,14 @@ export default function ClientCollaborationPage() {
                       <div key={message.id} className="flex items-start gap-3">
                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                           <span className="text-sm font-medium text-blue-600">
-                            {message.sender_name?.charAt(0).toUpperCase()}
+                            {message.senderName?.charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-slate-800">{message.sender_name}</span>
+                            <span className="font-medium text-slate-800">{message.senderName}</span>
                             <span className="text-xs text-slate-500">
-                              {formatDateSafe(message.created_at)}
+                              {formatDateSafe(message.timestamp)}
                             </span>
                           </div>
                           <p className="text-sm text-slate-700">{message.text}</p>
@@ -797,36 +798,36 @@ export default function ClientCollaborationPage() {
                 )}
 
                 <div className="space-y-3">
-                  {messages
-                    .filter(message => !commentPhase || message.text.includes(`[${commentPhase}]`))
-                    .map((message) => (
-                      <div key={message.id} className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                  {comments
+                    .filter(comment => !commentPhase || comment.phaseKey === commentPhase)
+                    .map((comment) => (
+                      <div key={comment.id} className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
                         <div className="flex items-start gap-3">
                           <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                             <span className="text-sm font-medium text-blue-600">
-                              {message.sender_name?.charAt(0).toUpperCase()}
+                              {comment.authorName?.charAt(0).toUpperCase()}
                             </span>
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-slate-800">{message.sender_name}</span>
+                              <span className="font-medium text-slate-800">{comment.authorName}</span>
                               <span className="text-xs text-slate-500">
-                                {formatDateSafe(message.created_at)}
+                                {formatDateSafe(comment.timestamp)}
                               </span>
-                              {message.text.includes('[') && message.text.includes(']') && (
+                              {comment.phaseKey && (
                                 <Badge variant="outline" className="text-xs bg-slate-100 text-slate-700 border-slate-200">
-                                  {message.text.match(/\[(.*?)\]/)?.[1]}
+                                  {comment.phaseKey}
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-slate-700">{message.text.replace(/\[.*?\]/, '').trim()}</p>
+                            <p className="text-sm text-slate-700">{comment.text}</p>
                           </div>
                         </div>
                       </div>
                     ))}
                 </div>
                 
-                {messages.length === 0 && (
+                {comments.length === 0 && (
                   <div className="text-center py-8">
                     <MessageSquare className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                     <p className="text-slate-500">No hay comentarios aún</p>

@@ -33,7 +33,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onEdit,
   onDelete,
   onView,
-  onCollaborate,
   onUpdateIcon
 }) => {
   const [showIconPicker, setShowIconPicker] = useState(false);
@@ -196,36 +195,20 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 onEdit(project);
               }}
               className="text-slate-500 hover:text-blue-600 hover:bg-slate-100"
-              title="Editar proyecto"
             >
               <Edit className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onCollaborate) {
-                  onCollaborate(project);
-                }
-              }}
-              className="text-slate-500 hover:text-emerald-600 hover:bg-slate-100"
-              title="Colaborar con el cliente"
-            >
-              <Users className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(project);
-              }}
-              className="text-slate-500 hover:text-red-600 hover:bg-slate-100"
-              title="Eliminar proyecto"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+                         <Button
+               variant="ghost"
+               size="sm"
+               onClick={(e) => {
+                 e.stopPropagation();
+                 onDelete(project);
+               }}
+               className="text-slate-500 hover:text-red-600 hover:bg-slate-100"
+             >
+               <Trash2 className="h-4 w-4" />
+             </Button>
           </div>
         </div>
       </CardHeader>

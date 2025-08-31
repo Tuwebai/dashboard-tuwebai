@@ -55,12 +55,11 @@ interface ChatMessage {
   id: string;
   text: string;
   sender: string;
-  sender_name: string;
-  created_at: string;
+  senderName: string;
+  timestamp: string;
   type: 'text' | 'file' | 'system';
-  file_url?: string;
-  file_name?: string;
-  role: string;
+  fileUrl?: string;
+  fileName?: string;
 }
 
 interface ProjectFile {
@@ -577,14 +576,14 @@ export default function ClientCollaborationPage() {
                       <div key={message.id} className="flex items-start gap-3">
                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                           <span className="text-sm font-medium text-blue-600">
-                            {message.sender_name?.charAt(0).toUpperCase()}
+                            {message.senderName?.charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-slate-800">{message.sender_name}</span>
+                            <span className="font-medium text-slate-800">{message.senderName}</span>
                             <span className="text-xs text-slate-500">
-                              {formatDateSafe(message.created_at)}
+                              {formatDateSafe(message.timestamp)}
                             </span>
                           </div>
                           <p className="text-sm text-slate-700">{message.text}</p>

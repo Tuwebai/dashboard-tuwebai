@@ -234,7 +234,6 @@ export const ProjectsManagement: React.FC = () => {
                 onEdit={handleEditProject}
                 onDelete={handleDeleteProject}
                 onView={handleViewProject}
-                onCollaborate={handleCollaborate}
                 onUpdateIcon={handleUpdateProjectIcon}
               />
             ))}

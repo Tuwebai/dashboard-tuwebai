@@ -161,14 +161,6 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       
-      <Route path="/proyectos/:projectId/colaboracion-admin" element={
-        <ProtectedRoute>
-          <DashboardLayout>
-            <AdminCollaborationPage />
-          </DashboardLayout>
-        </ProtectedRoute>
-      } />
-      
       <Route path="/workspace" element={
         <ProtectedRoute>
           <DashboardLayout>
