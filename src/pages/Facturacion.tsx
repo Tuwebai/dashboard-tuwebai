@@ -207,51 +207,8 @@ export default function Facturacion() {
           </div>
         </div>
 
-        {/* Sincronizar Pagos */}
-        <Card className="bg-white rounded-2xl shadow-lg border border-slate-200/50">
-          <CardContent className="p-6">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                  Sincronizar Pagos
-                </h3>
-                <p className="text-slate-600 mb-4">
-                  Sincroniza los pagos realizados en tuweb-ai.com con este dashboard
-                </p>
-                <div className="space-y-2 text-sm text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Los pagos realizados en tuweb-ai.com se sincronizan automáticamente</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Puedes ver el historial completo aquí en el dashboard</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Las facturas se generan automáticamente</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>El estado se actualiza en tiempo real</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col items-center gap-3">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 hover:from-purple-600 hover:to-red-600 shadow-lg text-white font-medium px-8"
-                >
-                  <RefreshCw className="h-5 w-5 mr-2" />
-                  Sincronizar Pagos
-                </Button>
-                <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
-                  Conectado
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Sincronización de Pagos */}
+        <PaymentSync />
 
         {/* Resumen de pagos */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
