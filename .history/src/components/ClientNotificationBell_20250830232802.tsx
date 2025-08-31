@@ -286,17 +286,17 @@ export default function ClientNotificationBell({ className = '' }: ClientNotific
                               <span className="text-xs text-slate-500">
                                 {formatDateSafe(notification.created_at)}
                               </span>
-                                                             <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 onClick={(e) => {
-                                   e.stopPropagation();
-                                   markAsRead(notification.id);
-                                 }}
-                                 className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                               >
-                                 <Check className="h-3 w-3" />
-                               </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markAsRead(notification.id);
+                                }}
+                                className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600"
+                              >
+                                <Check className="h-3 w-3" />
+                              </Button>
                             </div>
                           </div>
                         </div>

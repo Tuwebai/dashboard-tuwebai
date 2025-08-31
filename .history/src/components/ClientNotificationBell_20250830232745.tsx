@@ -128,14 +128,14 @@ export default function ClientNotificationBell({ className = '' }: ClientNotific
   const getNotificationIcon = (type: Notification['type']) => {
     switch (type) {
       case 'success':
-        return <Check className="h-4 w-4 text-emerald-600" />;
+        return <Check className="h-4 w-4 text-green-500" />;
       case 'warning':
-        return <Bell className="h-4 w-4 text-amber-600" />;
+        return <Bell className="h-4 w-4 text-yellow-500" />;
       case 'error':
       case 'critical':
-        return <X className="h-4 w-4 text-red-600" />;
+        return <X className="h-4 w-4 text-red-500" />;
       default:
-        return <Bell className="h-4 w-4 text-blue-600" />;
+        return <Bell className="h-4 w-4 text-blue-500" />;
     }
   };
 
@@ -143,14 +143,14 @@ export default function ClientNotificationBell({ className = '' }: ClientNotific
   const getNotificationColor = (type: Notification['type']) => {
     switch (type) {
       case 'success':
-        return 'border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50';
+        return 'border-green-200 bg-green-50';
       case 'warning':
-        return 'border-amber-200 bg-amber-50/50 hover:bg-amber-50';
+        return 'border-yellow-200 bg-yellow-50';
       case 'error':
       case 'critical':
-        return 'border-red-200 bg-red-50/50 hover:bg-red-50';
+        return 'border-red-200 bg-red-50';
       default:
-        return 'border-slate-200 bg-slate-50/50 hover:bg-slate-50';
+        return 'border-slate-200 bg-slate-50';
     }
   };
 
@@ -286,17 +286,17 @@ export default function ClientNotificationBell({ className = '' }: ClientNotific
                               <span className="text-xs text-slate-500">
                                 {formatDateSafe(notification.created_at)}
                               </span>
-                                                             <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 onClick={(e) => {
-                                   e.stopPropagation();
-                                   markAsRead(notification.id);
-                                 }}
-                                 className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                               >
-                                 <Check className="h-3 w-3" />
-                               </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markAsRead(notification.id);
+                                }}
+                                className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600"
+                              >
+                                <Check className="h-3 w-3" />
+                              </Button>
                             </div>
                           </div>
                         </div>
