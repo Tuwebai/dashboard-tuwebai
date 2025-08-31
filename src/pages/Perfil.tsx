@@ -64,7 +64,7 @@ export default function Perfil() {
   useEffect(() => {
     if (user) {
       setProfileData({
-        name: user.name || '',
+        name: user.full_name || user.name || '',
         email: user.email || '',
         phone: user.phone || '',
         company: user.company || '',

@@ -30,13 +30,11 @@ const ClientCollaborationPage = lazy(() => import('./pages/ClientCollaborationPa
 const AdminCollaborationPage = lazy(() => import('./pages/AdminCollaborationPage'));
 
 const WorkspacePage = lazy(() => import('./pages/WorkspacePage'));
-const VisualBuilder = lazy(() => import('./pages/VisualBuilder'));
 const Perfil = lazy(() => import('./pages/Perfil'));
 const UserProfileView = lazy(() => import('./pages/UserProfileView'));
 const Configuracion = lazy(() => import('./pages/Configuracion'));
 const Facturacion = lazy(() => import('./pages/Facturacion'));
 const Soporte = lazy(() => import('./pages/Soporte'));
-const Help = lazy(() => import('./pages/Help'));
 const Team = lazy(() => import('./pages/Team'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const AdvancedAnalytics = lazy(() => import('./components/AdvancedAnalytics'));
@@ -194,21 +192,7 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       
-      <Route path="/visual-builder" element={
-        <ProtectedRoute>
-          <DashboardLayout>
-            <VisualBuilder />
-          </DashboardLayout>
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/help" element={
-        <ProtectedRoute>
-          <DashboardLayout>
-            <Help />
-          </DashboardLayout>
-        </ProtectedRoute>
-      } />
+
       
       <Route path="/team" element={
         <ProtectedRoute>

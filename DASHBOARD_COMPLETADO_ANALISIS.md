@@ -80,6 +80,7 @@ File storage: Supabase storage básico
 - Validaciones de formularios y manejo de errores mejorado
 - Navegación de avatares en chat de proyectos corregida
 - Visualización de proyectos de usuarios específicos
+- ELIMINACIÓN de páginas placeholder: VisualBuilder.tsx, Help.tsx, Proyectos.tsx
 
 ALTA PRIORIDAD (Crítico)
 Implementar sistema de configuración con base de datos
