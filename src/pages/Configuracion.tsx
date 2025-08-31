@@ -653,27 +653,27 @@ export default function Configuracion() {
                         Guarda automáticamente tus cambios
                       </p>
                     </div>
-                    <Switch
-                      checked={performanceSettings.autoSave}
-                      onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, autoSave: checked})}
-                    />
-                  </div>
+                                         <Switch
+                       checked={performanceSettings.auto_save}
+                       onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, auto_save: checked})}
+                     />
+                   </div>
 
-                  {performanceSettings.autoSave && (
-                    <div className="space-y-2 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
-                      <Label className="text-sm font-medium text-blue-700">
-                        Intervalo de guardado: {performanceSettings.autoSaveInterval} segundos
-                      </Label>
-                      <Slider
-                        value={[performanceSettings.autoSaveInterval]}
-                        onValueChange={(value) => setPerformanceSettings({...performanceSettings, autoSaveInterval: value[0]})}
-                        max={120}
-                        min={10}
-                        step={10}
-                        className="w-full"
-                      />
-                    </div>
-                  )}
+                   {performanceSettings.auto_save && (
+                     <div className="space-y-2 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
+                       <Label className="text-sm font-medium text-blue-700">
+                         Intervalo de guardado: {performanceSettings.auto_save_interval} segundos
+                       </Label>
+                       <Slider
+                         value={[performanceSettings.auto_save_interval]}
+                         onValueChange={(value) => setPerformanceSettings({...performanceSettings, auto_save_interval: value[0]})}
+                         max={120}
+                         min={10}
+                         step={10}
+                         className="w-full"
+                       />
+                     </div>
+                   )}
 
                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                     <div className="space-y-1">
@@ -684,65 +684,65 @@ export default function Configuracion() {
                         Mejora la velocidad de carga
                       </p>
                     </div>
-                    <Switch
-                      checked={performanceSettings.cacheEnabled}
-                      onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, cacheEnabled: checked})}
-                    />
-                  </div>
+                                         <Switch
+                       checked={performanceSettings.cache_enabled}
+                       onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, cache_enabled: checked})}
+                     />
+                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-medium text-slate-700">
-                        Calidad de imagen
-                      </Label>
-                      <p className="text-xs text-slate-500">
-                        Balance entre calidad y velocidad
-                      </p>
-                    </div>
-                    <Select
-                      value={performanceSettings.imageQuality}
-                      onValueChange={(value) => setPerformanceSettings({...performanceSettings, imageQuality: value})}
-                    >
-                      <SelectTrigger className="w-32 border-slate-300 focus:border-blue-500 focus:ring-blue-500">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Baja</SelectItem>
-                        <SelectItem value="medium">Media</SelectItem>
-                        <SelectItem value="high">Alta</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                     <div className="space-y-1">
+                       <Label className="text-sm font-medium text-slate-700">
+                         Calidad de imagen
+                       </Label>
+                       <p className="text-xs text-slate-500">
+                         Balance entre calidad y velocidad
+                       </p>
+                     </div>
+                     <Select
+                       value={performanceSettings.image_quality}
+                       onValueChange={(value) => setPerformanceSettings({...performanceSettings, image_quality: value})}
+                     >
+                       <SelectTrigger className="w-32 border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                         <SelectValue />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="low">Baja</SelectItem>
+                         <SelectItem value="medium">Media</SelectItem>
+                         <SelectItem value="high">Alta</SelectItem>
+                       </SelectContent>
+                     </Select>
+                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-medium text-slate-700">
-                        Animaciones
-                      </Label>
-                      <p className="text-xs text-slate-500">
-                        Habilita las animaciones de la interfaz
-                      </p>
-                    </div>
-                    <Switch
-                      checked={performanceSettings.animationsEnabled}
-                      onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, animationsEnabled: checked})}
-                    />
-                  </div>
+                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                     <div className="space-y-1">
+                       <Label className="text-sm font-medium text-slate-700">
+                         Animaciones
+                       </Label>
+                       <p className="text-xs text-slate-500">
+                         Habilita las animaciones de la interfaz
+                       </p>
+                     </div>
+                     <Switch
+                       checked={performanceSettings.animations_enabled}
+                       onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, animations_enabled: checked})}
+                     />
+                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-medium text-slate-700">
-                        Modo de bajo ancho de banda
-                      </Label>
-                      <p className="text-xs text-slate-500">
-                        Optimiza para conexiones lentas
-                      </p>
-                    </div>
-                    <Switch
-                      checked={performanceSettings.lowBandwidthMode}
-                      onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, lowBandwidthMode: checked})}
-                    />
-                  </div>
+                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                     <div className="space-y-1">
+                       <Label className="text-sm font-medium text-slate-700">
+                         Modo de bajo ancho de banda
+                       </Label>
+                       <p className="text-xs text-slate-500">
+                         Optimiza para conexiones lentas
+                       </p>
+                     </div>
+                     <Switch
+                       checked={performanceSettings.low_bandwidth_mode}
+                       onCheckedChange={(checked) => setPerformanceSettings({...performanceSettings, low_bandwidth_mode: checked})}
+                     />
+                   </div>
                 </div>
 
                 <div className="flex justify-end pt-4">
@@ -774,100 +774,100 @@ export default function Configuracion() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  <div className="space-y-2 p-4 bg-slate-50 rounded-xl">
-                    <Label className="text-sm font-medium text-slate-700">
-                      Tiempo de sesión: {securitySettings.sessionTimeout} minutos
-                    </Label>
-                    <Slider
-                      value={[securitySettings.sessionTimeout]}
-                      onValueChange={(value) => setSecuritySettings({...securitySettings, sessionTimeout: value[0]})}
-                      max={120}
-                      min={15}
-                      step={15}
-                      className="w-full"
-                    />
-                    <p className="text-xs text-slate-500">
-                      Tiempo antes de que se cierre la sesión por inactividad
-                    </p>
-                  </div>
+                                     <div className="space-y-2 p-4 bg-slate-50 rounded-xl">
+                     <Label className="text-sm font-medium text-slate-700">
+                       Tiempo de sesión: {securitySettings.session_timeout} minutos
+                     </Label>
+                     <Slider
+                       value={[securitySettings.session_timeout]}
+                       onValueChange={(value) => setSecuritySettings({...securitySettings, session_timeout: value[0]})}
+                       max={120}
+                       min={15}
+                       step={15}
+                       className="w-full"
+                     />
+                     <p className="text-xs text-slate-500">
+                       Tiempo antes de que se cierre la sesión por inactividad
+                     </p>
+                   </div>
 
-                  <div className="space-y-2 p-4 bg-slate-50 rounded-xl">
-                    <Label className="text-sm font-medium text-slate-700">
-                      Intentos máximos de login: {securitySettings.maxLoginAttempts}
-                    </Label>
-                    <Slider
-                      value={[securitySettings.maxLoginAttempts]}
-                      onValueChange={(value) => setSecuritySettings({...securitySettings, maxLoginAttempts: value[0]})}
-                      max={10}
-                      min={3}
-                      step={1}
-                      className="w-full"
-                    />
-                    <p className="text-xs text-slate-500">
-                      Número de intentos antes de bloquear la cuenta
-                    </p>
-                  </div>
+                   <div className="space-y-2 p-4 bg-slate-50 rounded-xl">
+                     <Label className="text-sm font-medium text-slate-700">
+                       Intentos máximos de login: {securitySettings.max_login_attempts}
+                     </Label>
+                     <Slider
+                       value={[securitySettings.max_login_attempts]}
+                       onValueChange={(value) => setSecuritySettings({...securitySettings, max_login_attempts: value[0]})}
+                       max={10}
+                       min={3}
+                       step={1}
+                       className="w-full"
+                     />
+                     <p className="text-xs text-slate-500">
+                       Número de intentos antes de bloquear la cuenta
+                     </p>
+                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-medium text-slate-700">
-                        Cambio obligatorio de contraseña
-                      </Label>
-                      <p className="text-xs text-slate-500">
-                        Fuerza el cambio de contraseña periódicamente
-                      </p>
-                    </div>
-                    <Switch
-                      checked={securitySettings.requirePasswordChange}
-                      onCheckedChange={(checked) => setSecuritySettings({...securitySettings, requirePasswordChange: checked})}
-                    />
-                  </div>
+                                     <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                     <div className="space-y-1">
+                       <Label className="text-sm font-medium text-slate-700">
+                         Cambio obligatorio de contraseña
+                       </Label>
+                       <p className="text-xs text-slate-500">
+                         Fuerza el cambio de contraseña periódicamente
+                       </p>
+                     </div>
+                     <Switch
+                       checked={securitySettings.require_password_change}
+                       onCheckedChange={(checked) => setSecuritySettings({...securitySettings, require_password_change: checked})}
+                     />
+                   </div>
 
-                  {securitySettings.requirePasswordChange && (
-                    <div className="space-y-2 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
-                      <Label className="text-sm font-medium text-blue-700">
-                        Días antes de expirar: {securitySettings.passwordExpiryDays}
-                      </Label>
-                      <Slider
-                        value={[securitySettings.passwordExpiryDays]}
-                        onValueChange={(value) => setSecuritySettings({...securitySettings, passwordExpiryDays: value[0]})}
-                        max={365}
-                        min={30}
-                        step={30}
-                        className="w-full"
-                      />
-                    </div>
-                  )}
+                   {securitySettings.require_password_change && (
+                     <div className="space-y-2 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
+                       <Label className="text-sm font-medium text-blue-700">
+                         Días antes de expirar: {securitySettings.password_expiry_days}
+                       </Label>
+                       <Slider
+                         value={[securitySettings.password_expiry_days]}
+                         onValueChange={(value) => setSecuritySettings({...securitySettings, password_expiry_days: value[0]})}
+                         max={365}
+                         min={30}
+                         step={30}
+                         className="w-full"
+                       />
+                     </div>
+                   )}
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-medium text-slate-700">
-                        Notificaciones de login
-                      </Label>
-                      <p className="text-xs text-slate-500">
-                        Recibe alertas cuando se inicie sesión en tu cuenta
-                      </p>
-                    </div>
-                    <Switch
-                      checked={securitySettings.loginNotifications}
-                      onCheckedChange={(checked) => setSecuritySettings({...securitySettings, loginNotifications: checked})}
-                    />
-                  </div>
+                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                     <div className="space-y-1">
+                       <Label className="text-sm font-medium text-slate-700">
+                         Notificaciones de login
+                       </Label>
+                       <p className="text-xs text-slate-500">
+                         Recibe alertas cuando se inicie sesión en tu cuenta
+                       </p>
+                     </div>
+                     <Switch
+                       checked={securitySettings.login_notifications}
+                       onCheckedChange={(checked) => setSecuritySettings({...securitySettings, login_notifications: checked})}
+                     />
+                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-medium text-slate-700">
-                        Gestión de dispositivos
-                      </Label>
-                      <p className="text-xs text-slate-500">
-                        Permite gestionar dispositivos conectados
-                      </p>
-                    </div>
-                    <Switch
-                      checked={securitySettings.deviceManagement}
-                      onCheckedChange={(checked) => setSecuritySettings({...securitySettings, deviceManagement: checked})}
-                    />
-                  </div>
+                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                     <div className="space-y-1">
+                       <Label className="text-sm font-medium text-slate-700">
+                         Gestión de dispositivos
+                       </Label>
+                       <p className="text-xs text-slate-500">
+                         Permite gestionar dispositivos conectados
+                       </p>
+                     </div>
+                     <Switch
+                       checked={securitySettings.device_management}
+                       onCheckedChange={(checked) => setSecuritySettings({...securitySettings, device_management: checked})}
+                     />
+                   </div>
                 </div>
 
                 <div className="flex justify-end pt-4">
