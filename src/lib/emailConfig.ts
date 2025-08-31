@@ -17,7 +17,7 @@ export const EMAIL_CONFIG = {
   // Emails de destino
   EMAILS: {
     // Email que RECIBE los tickets de soporte (tu email de soporte)
-    SUPPORT: 'admin@tuweb-ai.com',
+    SUPPORT: 'tuwebai@gmail.com',
     // Email que ENVÍA los emails (tu email configurado en EmailJS)
     FROM_EMAIL: 'tuwebai@gmail.com', // ← Este es el email que ENVÍA
     SYSTEM: 'noreply@tuweb-ai.com'

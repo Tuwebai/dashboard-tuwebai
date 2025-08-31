@@ -16,12 +16,15 @@ import { formatDateSafe } from '@/utils/formatDateSafe';
 
 interface Ticket {
   id: string;
-  asunto: string;
-  mensaje: string;
-  email: string;
-  fecha: string;
-  estado: 'abierto' | 'respondido' | 'cerrado' | 'en_conversacion';
-  prioridad: 'baja' | 'media' | 'alta';
+  title: string;
+  description: string;
+  status: 'open' | 'responded' | 'closed' | 'in_conversation';
+  priority: 'low' | 'medium' | 'high';
+  user_id: string;
+  assigned_to?: string;
+  created_at: string;
+  updated_at: string;
+  // Campos adicionales para funcionalidad extendida
   respuesta?: string;
   respondido_por?: string;
   fecha_respuesta?: string;
@@ -35,9 +38,9 @@ export default function Soporte() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    asunto: '',
-    mensaje: '',
-    prioridad: 'media' as 'baja' | 'media' | 'alta'
+    title: '',
+    description: '',
+    priority: 'medium' as 'low' | 'medium' | 'high'
   });
 
   // Sistema de respuestas del cliente
@@ -52,8 +55,8 @@ export default function Soporte() {
         const { data: ticketsData, error } = await supabase
           .from('tickets')
           .select('*')
-          .eq('email', user.email)
-          .order('fecha', { ascending: false });
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
         
         if (error) throw error;
         
@@ -72,26 +75,27 @@ export default function Soporte() {
 
   const handleSubmitTicket = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.asunto.trim() || !formData.mensaje.trim()) {
+    if (!formData.title.trim() || !formData.description.trim()) {
       toast({ title: 'Error', description: 'Por favor completa todos los campos.', variant: 'destructive' });
       return;
     }
 
     // Confirmación instantánea y limpieza del formulario
     toast({ title: 'Ticket enviado', description: 'Tu ticket de soporte fue enviado. Procesando en segundo plano...' });
-    setFormData({ asunto: '', mensaje: '', prioridad: 'media' });
+    setFormData({ title: '', description: '', priority: 'medium' });
     setShowForm(false);
 
     // Procesamiento real en segundo plano
     (async () => {
       try {
         const newTicket = {
-          asunto: formData.asunto,
-          mensaje: formData.mensaje,
-          email: user.email,
-          fecha: new Date().toISOString(),
-          estado: 'abierto' as const,
-          prioridad: formData.prioridad
+          title: formData.title,
+          description: formData.description,
+          status: 'open' as const,
+          priority: formData.priority,
+          user_id: user.id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
 
         // Crear el ticket en Supabase
@@ -105,10 +109,23 @@ export default function Soporte() {
         const ticketId = ticketData.id;
         
         // Enviar email de confirmación
-        await sendTicketConfirmationEmail(user.email, ticketId, formData.asunto);
+        await sendTicketConfirmationEmail({
+          email: user.email,
+          ticketId: ticketId,
+          asunto: formData.title,
+          mensaje: formData.description,
+          prioridad: formData.priority,
+          fecha: new Date().toISOString()
+        });
         
         // Enviar email al equipo de soporte
-        await sendSupportTicketEmail(newTicket);
+        await sendSupportTicketEmail({
+          asunto: formData.title,
+          mensaje: formData.description,
+          email: user.email,
+          prioridad: formData.priority,
+          fecha: new Date().toISOString()
+        });
         
         // Actualizar la lista de tickets
         setTickets(prev => [ticketData, ...prev]);
@@ -131,7 +148,8 @@ export default function Soporte() {
         .update({
           respuesta_cliente: responseText,
           fecha_respuesta_cliente: new Date().toISOString(),
-          estado: 'en_conversacion'
+          status: 'in_conversation',
+          updated_at: new Date().toISOString()
         })
         .eq('id', respondingTicket.id);
 
@@ -144,7 +162,8 @@ export default function Soporte() {
               ...ticket, 
               respuesta_cliente: responseText,
               fecha_respuesta_cliente: new Date().toISOString(),
-              estado: 'en_conversacion'
+              status: 'in_conversation',
+              updated_at: new Date().toISOString()
             }
           : ticket
       );
@@ -169,38 +188,38 @@ export default function Soporte() {
     }
   };
 
-  const getPriorityColor = (prioridad: string) => {
-    switch (prioridad) {
-      case 'alta': return 'bg-red-500/10 text-red-600 border-red-500/20';
-      case 'media': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
-      case 'baja': return 'bg-green-500/10 text-green-600 border-green-500/20';
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-500/10 text-red-600 border-red-500/20';
+      case 'medium': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
+      case 'low': return 'bg-green-500/10 text-green-600 border-green-500/20';
       default: return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
     }
   };
 
-  const getStatusColor = (estado: string) => {
-    switch (estado) {
-      case 'abierto': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
-      case 'respondido': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
-      case 'en_conversacion': return 'bg-purple-500/10 text-purple-600 border-purple-500/20';
-      case 'cerrado': return 'bg-green-500/10 text-green-600 border-green-500/20';
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'open': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+      case 'responded': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
+      case 'in_conversation': return 'bg-purple-500/10 text-purple-600 border-purple-500/20';
+      case 'closed': return 'bg-green-500/10 text-green-600 border-green-500/20';
       default: return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
     }
   };
 
-  const getStatusText = (estado: string) => {
-    switch (estado) {
-      case 'abierto': return 'Abierto';
-      case 'respondido': return 'Respondido';
-      case 'en_conversacion': return 'En Conversación';
-      case 'cerrado': return 'Cerrado';
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'open': return 'Abierto';
+      case 'responded': return 'Respondido';
+      case 'in_conversation': return 'En Conversación';
+      case 'closed': return 'Cerrado';
       default: return 'Desconocido';
     }
   };
 
-  const ticketsAbiertos = tickets.filter(t => t.estado === 'abierto').length;
-  const ticketsRespondidos = tickets.filter(t => t.estado === 'respondido').length;
-  const ticketsResueltos = tickets.filter(t => t.estado === 'cerrado').length;
+  const ticketsAbiertos = tickets.filter(t => t.status === 'open').length;
+  const ticketsRespondidos = tickets.filter(t => t.status === 'responded').length;
+  const ticketsResueltos = tickets.filter(t => t.status === 'closed').length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
@@ -326,26 +345,26 @@ export default function Soporte() {
             <CardContent>
               <form onSubmit={handleSubmitTicket} className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="asunto" className="text-sm font-medium text-slate-700">
+                  <label htmlFor="title" className="text-sm font-medium text-slate-700">
                     Asunto
                   </label>
                   <Input
-                    id="asunto"
-                    value={formData.asunto}
-                    onChange={(e) => setFormData({...formData, asunto: e.target.value})}
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
                     placeholder="Describe brevemente tu consulta"
                     className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="mensaje" className="text-sm font-medium text-slate-700">
+                  <label htmlFor="description" className="text-sm font-medium text-slate-700">
                     Mensaje
                   </label>
                   <Textarea
-                    id="mensaje"
-                    value={formData.mensaje}
-                    onChange={(e) => setFormData({...formData, mensaje: e.target.value})}
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
                     placeholder="Explica detalladamente tu consulta o problema"
                     rows={4}
                     className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 resize-none"
@@ -353,22 +372,22 @@ export default function Soporte() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="prioridad" className="text-sm font-medium text-slate-700">
+                  <label htmlFor="priority" className="text-sm font-medium text-slate-700">
                     Prioridad
                   </label>
                   <Select
-                    value={formData.prioridad}
-                    onValueChange={(value: 'baja' | 'media' | 'alta') => 
-                      setFormData({...formData, prioridad: value})
+                    value={formData.priority}
+                    onValueChange={(value: 'low' | 'medium' | 'high') => 
+                      setFormData({...formData, priority: value})
                     }
                   >
                     <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="baja">Baja</SelectItem>
-                      <SelectItem value="media">Media</SelectItem>
-                      <SelectItem value="alta">Alta</SelectItem>
+                      <SelectItem value="low">Baja</SelectItem>
+                      <SelectItem value="medium">Media</SelectItem>
+                      <SelectItem value="high">Alta</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -417,23 +436,23 @@ export default function Soporte() {
                     className="p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
                   >
                     <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-slate-800 mb-1">{ticket.asunto}</h4>
-                        <p className="text-sm text-slate-600 mb-2">{ticket.mensaje}</p>
-                        <div className="flex items-center gap-3 text-xs text-slate-500">
-                          <span>{formatDateSafe(ticket.fecha)}</span>
-                          <span>•</span>
-                          <span>{ticket.email}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        <Badge className={getPriorityColor(ticket.prioridad)}>
-                          {ticket.prioridad}
-                        </Badge>
-                        <Badge className={getStatusColor(ticket.estado)}>
-                          {getStatusText(ticket.estado)}
-                        </Badge>
-                      </div>
+                                             <div className="flex-1">
+                         <h4 className="font-semibold text-slate-800 mb-1">{ticket.title}</h4>
+                         <p className="text-sm text-slate-600 mb-2">{ticket.description}</p>
+                         <div className="flex items-center gap-3 text-xs text-slate-500">
+                           <span>{formatDateSafe(ticket.created_at)}</span>
+                           <span>•</span>
+                           <span>{user.email}</span>
+                         </div>
+                       </div>
+                       <div className="flex items-center gap-2 ml-4">
+                         <Badge className={getPriorityColor(ticket.priority)}>
+                           {ticket.priority === 'low' ? 'Baja' : ticket.priority === 'medium' ? 'Media' : 'Alta'}
+                         </Badge>
+                         <Badge className={getStatusColor(ticket.status)}>
+                           {getStatusText(ticket.status)}
+                         </Badge>
+                       </div>
                     </div>
                     
                     {/* Respuesta del admin */}
@@ -455,8 +474,8 @@ export default function Soporte() {
                           </p>
                         )}
                         
-                        {/* Botón para responder al admin */}
-                        {ticket.estado !== 'cerrado' && (
+                                                 {/* Botón para responder al admin */}
+                         {ticket.status !== 'closed' && (
                           <Button
                             onClick={() => setRespondingTicket(ticket)}
                             className="mt-3 bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 h-8"
@@ -512,17 +531,17 @@ export default function Soporte() {
 
             <div className="space-y-6">
               {/* Información del ticket */}
-              <div className="bg-slate-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-slate-800 mb-2">
-                  {respondingTicket.asunto}
-                </h3>
-                <p className="text-sm text-slate-600">
-                  {respondingTicket.mensaje}
-                </p>
-                <div className="text-xs text-slate-500 mt-2">
-                  Estado: {getStatusText(respondingTicket.estado)}
-                </div>
-              </div>
+                             <div className="bg-slate-50 p-4 rounded-lg">
+                 <h3 className="font-semibold text-slate-800 mb-2">
+                   {respondingTicket.title}
+                 </h3>
+                 <p className="text-sm text-slate-600">
+                   {respondingTicket.description}
+                 </p>
+                 <div className="text-xs text-slate-500 mt-2">
+                   Estado: {getStatusText(respondingTicket.status)}
+                 </div>
+               </div>
 
               {/* Campo de respuesta */}
               <div>
