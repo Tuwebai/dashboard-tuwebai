@@ -8,7 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/lib/supabase';
 import { formatDateSafe } from '@/utils/formatDateSafe';
-import './NotificationBell.css';
+import '../admin/NotificationBell.css';
 
 interface Notification {
   id: string;

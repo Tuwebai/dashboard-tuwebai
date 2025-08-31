@@ -20,72 +20,31 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
   const [urgentCount, setUrgentCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [offset, setOffset] = useState(0);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  const LIMIT = 20; // Número de notificaciones por carga
 
   // Cargar notificaciones no leídas
-  const loadUnreadNotifications = async (reset = true) => {
+  const loadUnreadNotifications = async () => {
     try {
-      if (reset) {
-        setLoading(true);
-        setOffset(0);
-        setHasMore(true);
-      } else {
-        setLoadingMore(true);
-      }
-
-      const currentOffset = reset ? 0 : offset;
+      setLoading(true);
       const unreadNotifications = await notificationService.getUserNotifications({
         is_read: false,
-        limit: LIMIT,
-        offset: currentOffset
+        limit: 10
       });
-
-      if (reset) {
-        setNotifications(unreadNotifications);
-        setUnreadCount(unreadNotifications.length);
-        setUrgentCount(unreadNotifications.filter(n => n.is_urgent).length);
-      } else {
-        setNotifications(prev => [...prev, ...unreadNotifications]);
-        setOffset(currentOffset + LIMIT);
-      }
-
-      // Verificar si hay más notificaciones
-      setHasMore(unreadNotifications.length === LIMIT);
+      setNotifications(unreadNotifications);
+      setUnreadCount(unreadNotifications.length);
+      setUrgentCount(unreadNotifications.filter(n => n.is_urgent).length);
     } catch (error) {
       console.error('Error loading unread notifications:', error);
     } finally {
       setLoading(false);
-      setLoadingMore(false);
     }
   };
-
-  // Cargar más notificaciones (scroll infinito)
-  const loadMoreNotifications = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
-    await loadUnreadNotifications(false);
-  }, [loadingMore, hasMore, offset]);
-
-  // Manejar scroll para cargar más notificaciones
-  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    
-    // Si está cerca del final (con un margen de 50px), cargar más
-    if (scrollHeight - scrollTop - clientHeight < 50 && hasMore && !loadingMore) {
-      loadMoreNotifications();
-    }
-  }, [hasMore, loadingMore, loadMoreNotifications]);
 
   // Cargar notificaciones al montar el componente
   useEffect(() => {
     loadUnreadNotifications();
     
     // Configurar intervalo para actualizar cada 30 segundos
-    const interval = setInterval(() => loadUnreadNotifications(true), 30000);
+    const interval = setInterval(loadUnreadNotifications, 30000);
     
     return () => clearInterval(interval);
   }, [user.id]);
@@ -220,11 +179,7 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
               )}
             </CardHeader>
             <CardContent className="p-0">
-              <div 
-                ref={scrollContainerRef}
-                className="max-h-80 overflow-y-auto notification-scroll"
-                onScroll={handleScroll}
-              >
+              <div className="max-h-80 overflow-y-auto">
                 {loading ? (
                   <div className="flex items-center justify-center p-8">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-600"></div>
@@ -284,21 +239,6 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
                         </div>
                       </div>
                     ))}
-                    
-                    {/* Indicador de carga para más notificaciones */}
-                    {loadingMore && (
-                      <div className="flex items-center justify-center p-4 loading-more">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-400"></div>
-                        <span className="ml-2 text-xs text-slate-500">Cargando más notificaciones...</span>
-                      </div>
-                    )}
-                    
-                    {/* Indicador de fin de notificaciones */}
-                    {!hasMore && notifications.length > 0 && (
-                      <div className="text-center py-3">
-                        <span className="text-xs text-slate-400">✨ No hay más notificaciones</span>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>

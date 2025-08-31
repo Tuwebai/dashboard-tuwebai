@@ -289,14 +289,14 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
                     {loadingMore && (
                       <div className="flex items-center justify-center p-4 loading-more">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-400"></div>
-                        <span className="ml-2 text-xs text-slate-500">Cargando más notificaciones...</span>
+                        <span className="ml-2 text-xs text-slate-500">Cargando más...</span>
                       </div>
                     )}
                     
                     {/* Indicador de fin de notificaciones */}
                     {!hasMore && notifications.length > 0 && (
                       <div className="text-center py-3">
-                        <span className="text-xs text-slate-400">✨ No hay más notificaciones</span>
+                        <span className="text-xs text-slate-400">No hay más notificaciones</span>
                       </div>
                     )}
                   </div>

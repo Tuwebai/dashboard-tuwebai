@@ -697,9 +697,9 @@ export default function AdminCollaborationPage() {
                         </Avatar>
                         <div className={`flex-1 min-w-0 ${isOwnMessage ? 'text-right' : ''}`}>
                           <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'justify-end' : ''}`}>
-                            <span className="font-medium text-slate-800">{message.senderName}</span>
+                            <span className="font-medium text-slate-800">{message.sender_name}</span>
                             <span className="text-xs text-slate-500">
-                              {formatDateSafe(message.timestamp)}
+                              {formatDateSafe(message.created_at)}
                             </span>
                             <Badge
                               variant="outline"

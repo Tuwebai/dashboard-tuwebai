@@ -229,7 +229,6 @@ export default function AdminCollaborationPage() {
         setFiles(filesData);
       }
 
-      // Calcular estadísticas
       calculateStats();
     } catch (error) {
       console.error('Error cargando datos de colaboración:', error);
@@ -281,6 +280,24 @@ export default function AdminCollaborationPage() {
       }
     } catch (error) {
       console.error('Error in loadUserAvatars:', error);
+    }
+  };
+
+      // Cargar archivos
+      const { data: filesData, error: filesError } = await supabase
+        .from('project_files')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('uploaded_at', { ascending: false });
+
+      if (!filesError && filesData) {
+        setFiles(filesData);
+      }
+
+      // Calcular estadísticas
+      calculateStats();
+    } catch (error) {
+      console.error('Error cargando datos de colaboración:', error);
     }
   };
 
@@ -691,15 +708,15 @@ export default function AdminCollaborationPage() {
                             <AvatarFallback className={`text-sm font-medium ${
                               isOwnMessage ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-600'
                             }`}>
-                              {userData?.full_name?.charAt(0).toUpperCase() || message.senderName?.charAt(0).toUpperCase() || 'U'}
+                              {userData?.full_name?.charAt(0).toUpperCase() || message.sender_name?.charAt(0).toUpperCase() || 'U'}
                             </AvatarFallback>
                           )}
                         </Avatar>
                         <div className={`flex-1 min-w-0 ${isOwnMessage ? 'text-right' : ''}`}>
                           <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'justify-end' : ''}`}>
-                            <span className="font-medium text-slate-800">{message.senderName}</span>
+                            <span className="font-medium text-slate-800">{message.sender_name}</span>
                             <span className="text-xs text-slate-500">
-                              {formatDateSafe(message.timestamp)}
+                              {formatDateSafe(message.created_at)}
                             </span>
                             <Badge
                               variant="outline"

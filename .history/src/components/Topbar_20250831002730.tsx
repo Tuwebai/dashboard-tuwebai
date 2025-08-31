@@ -170,7 +170,7 @@ export default function Topbar({
               </div>
               
               {/* Notificación */}
-              <NotificationBell />
+              <ClientNotificationBell />
               
               {/* Botón actualizar */}
               {onClientRefresh && (

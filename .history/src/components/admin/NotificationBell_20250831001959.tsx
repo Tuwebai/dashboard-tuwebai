@@ -7,7 +7,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
 import { useApp } from '@/contexts/AppContext';
 import { notificationService, Notification } from '@/lib/notificationService';
-import './NotificationBell.css';
 
 interface NotificationBellProps {
   className?: string;
@@ -222,7 +221,7 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
             <CardContent className="p-0">
               <div 
                 ref={scrollContainerRef}
-                className="max-h-80 overflow-y-auto notification-scroll"
+                className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100"
                 onScroll={handleScroll}
               >
                 {loading ? (
@@ -287,16 +286,16 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
                     
                     {/* Indicador de carga para más notificaciones */}
                     {loadingMore && (
-                      <div className="flex items-center justify-center p-4 loading-more">
+                      <div className="flex items-center justify-center p-4">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-400"></div>
-                        <span className="ml-2 text-xs text-slate-500">Cargando más notificaciones...</span>
+                        <span className="ml-2 text-xs text-slate-500">Cargando más...</span>
                       </div>
                     )}
                     
                     {/* Indicador de fin de notificaciones */}
                     {!hasMore && notifications.length > 0 && (
                       <div className="text-center py-3">
-                        <span className="text-xs text-slate-400">✨ No hay más notificaciones</span>
+                        <span className="text-xs text-slate-400">No hay más notificaciones</span>
                       </div>
                     )}
                   </div>
