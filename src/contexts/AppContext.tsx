@@ -58,44 +58,44 @@ export interface User {
   // Configuración general
   language?: string;
   timezone?: string;
-  dateFormat?: string;
-  timeFormat?: string;
+  date_format?: string;
+  time_format?: string;
   // Privacidad
-  profileVisibility?: string;
-  showEmail?: boolean;
-  showPhone?: boolean;
-  allowAnalytics?: boolean;
-  allowCookies?: boolean;
-  twoFactorAuth?: boolean;
+  profile_visibility?: string;
+  show_email?: boolean;
+  show_phone?: boolean;
+  allow_analytics?: boolean;
+  allow_cookies?: boolean;
+  two_factor_auth?: boolean;
   // Notificaciones
-  pushNotifications?: boolean;
-  emailNotifications?: boolean;
-  smsNotifications?: boolean;
-  soundEnabled?: boolean;
-  vibrationEnabled?: boolean;
-  quietHours?: boolean;
-  quietHoursStart?: string;
-  quietHoursEnd?: string;
-  projectUpdates?: boolean;
-  paymentReminders?: boolean;
-  supportUpdates?: boolean;
-  marketingEmails?: boolean;
+  push_notifications?: boolean;
+  email_notifications?: boolean;
+  sms_notifications?: boolean;
+  sound_enabled?: boolean;
+  vibration_enabled?: boolean;
+  quiet_hours?: boolean;
+  quiet_hours_start?: string;
+  quiet_hours_end?: string;
+  project_updates?: boolean;
+  payment_reminders?: boolean;
+  support_updates?: boolean;
+  marketing_emails?: boolean;
   // Rendimiento
-  autoSave?: boolean;
-  autoSaveInterval?: number;
-  cacheEnabled?: boolean;
-  imageQuality?: string;
-  animationsEnabled?: boolean;
-  lowBandwidthMode?: boolean;
+  auto_save?: boolean;
+  auto_save_interval?: number;
+  cache_enabled?: boolean;
+  image_quality?: string;
+  animations_enabled?: boolean;
+  low_bandwidth_mode?: boolean;
   // Seguridad
-  sessionTimeout?: number;
-  maxLoginAttempts?: number;
-  requirePasswordChange?: boolean;
-  passwordExpiryDays?: number;
-  loginNotifications?: boolean;
-  deviceManagement?: boolean;
+  session_timeout?: number;
+  max_login_attempts?: number;
+  require_password_change?: boolean;
+  password_expiry_days?: number;
+  login_notifications?: boolean;
+  device_management?: boolean;
   // Timestamps
-  lastLogin?: string;
+  last_login?: string;
 }
 
 export interface ProjectLog {

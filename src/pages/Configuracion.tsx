@@ -47,38 +47,38 @@ export default function Configuracion() {
   const [generalSettings, setGeneralSettings] = useState({
     language: 'es',
     timezone: 'America/Argentina/Buenos_Aires',
-    dateFormat: 'DD/MM/YYYY',
-    timeFormat: '24h'
+    date_format: 'DD/MM/YYYY',
+    time_format: '24h'
   });
 
   // Configuración de privacidad
   const [privacySettings, setPrivacySettings] = useState({
-    profileVisibility: 'public',
-    showEmail: false,
-    showPhone: false,
-    allowAnalytics: true,
-    allowCookies: true,
-    twoFactorAuth: false
+    profile_visibility: 'public',
+    show_email: false,
+    show_phone: false,
+    allow_analytics: true,
+    allow_cookies: true,
+    two_factor_auth: false
   });
 
   // Configuración de rendimiento
   const [performanceSettings, setPerformanceSettings] = useState({
-    autoSave: true,
-    autoSaveInterval: 30,
-    cacheEnabled: true,
-    imageQuality: 'high',
-    animationsEnabled: true,
-    lowBandwidthMode: false
+    auto_save: true,
+    auto_save_interval: 30,
+    cache_enabled: true,
+    image_quality: 'high',
+    animations_enabled: true,
+    low_bandwidth_mode: false
   });
 
   // Configuración de seguridad
   const [securitySettings, setSecuritySettings] = useState({
-    sessionTimeout: 30,
-    maxLoginAttempts: 5,
-    requirePasswordChange: false,
-    passwordExpiryDays: 90,
-    loginNotifications: true,
-    deviceManagement: true
+    session_timeout: 30,
+    max_login_attempts: 5,
+    require_password_change: false,
+    password_expiry_days: 90,
+    login_notifications: true,
+    device_management: true
   });
 
   useEffect(() => {
@@ -87,35 +87,35 @@ export default function Configuracion() {
       setGeneralSettings({
         language: user.language || 'es',
         timezone: user.timezone || 'America/Argentina/Buenos_Aires',
-        dateFormat: user.dateFormat || 'DD/MM/YYYY',
-        timeFormat: user.timeFormat || '24h'
+        date_format: user.date_format || 'DD/MM/YYYY',
+        time_format: user.time_format || '24h'
       });
 
       setPrivacySettings({
-        profileVisibility: user.profileVisibility || 'public',
-        showEmail: user.showEmail || false,
-        showPhone: user.showPhone || false,
-        allowAnalytics: user.allowAnalytics !== false,
-        allowCookies: user.allowCookies !== false,
-        twoFactorAuth: user.twoFactorAuth || false
+        profile_visibility: user.profile_visibility || 'public',
+        show_email: user.show_email || false,
+        show_phone: user.show_phone || false,
+        allow_analytics: user.allow_analytics !== false,
+        allow_cookies: user.allow_cookies !== false,
+        two_factor_auth: user.two_factor_auth || false
       });
 
       setPerformanceSettings({
-        autoSave: user.autoSave !== false,
-        autoSaveInterval: user.autoSaveInterval || 30,
-        cacheEnabled: user.cacheEnabled !== false,
-        imageQuality: user.imageQuality || 'high',
-        animationsEnabled: user.animationsEnabled !== false,
-        lowBandwidthMode: user.lowBandwidthMode || false
+        auto_save: user.auto_save !== false,
+        auto_save_interval: user.auto_save_interval || 30,
+        cache_enabled: user.cache_enabled !== false,
+        image_quality: user.image_quality || 'high',
+        animations_enabled: user.animations_enabled !== false,
+        low_bandwidth_mode: user.low_bandwidth_mode || false
       });
 
       setSecuritySettings({
-        sessionTimeout: user.sessionTimeout || 30,
-        maxLoginAttempts: user.maxLoginAttempts || 5,
-        requirePasswordChange: user.requirePasswordChange || false,
-        passwordExpiryDays: user.passwordExpiryDays || 90,
-        loginNotifications: user.loginNotifications !== false,
-        deviceManagement: user.deviceManagement !== false
+        session_timeout: user.session_timeout || 30,
+        max_login_attempts: user.max_login_attempts || 5,
+        require_password_change: user.require_password_change || false,
+        password_expiry_days: user.password_expiry_days || 90,
+        login_notifications: user.login_notifications !== false,
+        device_management: user.device_management !== false
       });
     }
   }, [user]);
@@ -126,8 +126,8 @@ export default function Configuracion() {
       await updateUserSettings({
         language: generalSettings.language,
         timezone: generalSettings.timezone,
-        dateFormat: generalSettings.dateFormat,
-        timeFormat: generalSettings.timeFormat
+        date_format: generalSettings.date_format,
+        time_format: generalSettings.time_format
       });
       
       toast({
@@ -149,12 +149,12 @@ export default function Configuracion() {
     setLoading(true);
     try {
       await updateUserSettings({
-        profileVisibility: privacySettings.profileVisibility,
-        showEmail: privacySettings.showEmail,
-        showPhone: privacySettings.showPhone,
-        allowAnalytics: privacySettings.allowAnalytics,
-        allowCookies: privacySettings.allowCookies,
-        twoFactorAuth: privacySettings.twoFactorAuth
+        profile_visibility: privacySettings.profile_visibility,
+        show_email: privacySettings.show_email,
+        show_phone: privacySettings.show_phone,
+        allow_analytics: privacySettings.allow_analytics,
+        allow_cookies: privacySettings.allow_cookies,
+        two_factor_auth: privacySettings.two_factor_auth
       });
       
       toast({
@@ -176,12 +176,12 @@ export default function Configuracion() {
     setLoading(true);
     try {
       await updateUserSettings({
-        autoSave: performanceSettings.autoSave,
-        autoSaveInterval: performanceSettings.autoSaveInterval,
-        cacheEnabled: performanceSettings.cacheEnabled,
-        imageQuality: performanceSettings.imageQuality,
-        animationsEnabled: performanceSettings.animationsEnabled,
-        lowBandwidthMode: performanceSettings.lowBandwidthMode
+        auto_save: performanceSettings.auto_save,
+        auto_save_interval: performanceSettings.auto_save_interval,
+        cache_enabled: performanceSettings.cache_enabled,
+        image_quality: performanceSettings.image_quality,
+        animations_enabled: performanceSettings.animations_enabled,
+        low_bandwidth_mode: performanceSettings.low_bandwidth_mode
       });
       
       toast({
@@ -203,12 +203,12 @@ export default function Configuracion() {
     setLoading(true);
     try {
       await updateUserSettings({
-        sessionTimeout: securitySettings.sessionTimeout,
-        maxLoginAttempts: securitySettings.maxLoginAttempts,
-        requirePasswordChange: securitySettings.requirePasswordChange,
-        passwordExpiryDays: securitySettings.passwordExpiryDays,
-        loginNotifications: securitySettings.loginNotifications,
-        deviceManagement: securitySettings.deviceManagement
+        session_timeout: securitySettings.session_timeout,
+        max_login_attempts: securitySettings.max_login_attempts,
+        require_password_change: securitySettings.require_password_change,
+        password_expiry_days: securitySettings.password_expiry_days,
+        login_notifications: securitySettings.login_notifications,
+        device_management: securitySettings.device_management
       });
       
       toast({

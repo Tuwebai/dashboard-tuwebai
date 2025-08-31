@@ -21,7 +21,7 @@ FUNCIONALIDAD DE INVITACIONES NO FUNCIONA
 Facturacion.tsx:
 ✅ TODO: Sincronización de pagos no implementada
 BOTÓN "Sincronizar Pagos" NO FUNCIONA
-�� PROBLEMAS TÉCNICOS
+ PROBLEMAS TÉCNICOS
 4. INCONSISTENCIAS EN ESTRUCTURA DE DATOS
 ✅ RESUELTO: Página de Soporte alineada con esquema de base de datos
 Campos de usuario inconsistentes: avatar vs avatar_url
@@ -35,7 +35,7 @@ Logging inconsistente: Algunos console.log, otros no
 Loading states: No todos los componentes tienen estados de carga
 Skeleton loaders: Faltan en páginas principales
 Error boundaries: No implementados
-�� PROBLEMAS DE UX/UI
+PROBLEMAS DE UX/UI
 7. RESPONSIVIDAD INCOMPLETA
 Mobile-first: No todas las páginas están optimizadas para móvil
 Breakpoints: Inconsistencias en grid layouts
@@ -44,13 +44,13 @@ Touch targets: Algunos botones muy pequeños para móvil
 ARIA labels: No implementados en formularios
 Keyboard navigation: Limitada en algunos componentes
 Screen readers: Sin soporte completo
-🗄️ PROBLEMAS DE BASE DE DATOS
+PROBLEMAS DE BASE DE DATOS
 9. TABLAS FALTANTES
 10. RELACIONES NO DEFINIDAS
 Foreign keys: No hay constraints de integridad referencial
 Indexes: Faltan para consultas frecuentes
 Triggers: No hay para mantener consistencia de datos
-�� PROBLEMAS DE SEGURIDAD
+PROBLEMAS DE SEGURIDAD
 11. AUTENTICACIÓN INCOMPLETA
 Role-based access: Implementación básica sin middleware
 Session management: Sin timeout configurable
