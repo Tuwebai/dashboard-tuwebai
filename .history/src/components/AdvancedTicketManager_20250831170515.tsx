@@ -29,8 +29,7 @@ import {
   Trash2,
   Edit,
   Eye,
-  RefreshCw,
-  X
+  RefreshCw
 } from 'lucide-react';
 
 interface TicketFormData {

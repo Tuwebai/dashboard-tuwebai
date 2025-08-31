@@ -29,8 +29,7 @@ import {
   Trash2,
   Edit,
   Eye,
-  RefreshCw,
-  X
+  RefreshCw
 } from 'lucide-react';
 
 interface TicketFormData {
@@ -123,15 +122,15 @@ export default function AdvancedTicketManager({
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(ticket =>
-        (ticket.asunto || ticket.title)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (ticket.mensaje || ticket.description)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (ticket.email || ticket.assigned_to)?.toLowerCase().includes(searchTerm.toLowerCase())
+        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.category?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Apply status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(ticket => (ticket.estado || ticket.status) === statusFilter);
+      filtered = filtered.filter(ticket => ticket.status === statusFilter);
     }
 
     // Apply priority filter
@@ -146,26 +145,12 @@ export default function AdvancedTicketManager({
 
     // Apply sorting
     filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: any = a[sortBy as keyof Ticket];
+      let bValue: any = b[sortBy as keyof Ticket];
 
-      switch (sortBy) {
-        case 'title':
-          aValue = (a.asunto || a.title) || '';
-          bValue = (b.asunto || b.title) || '';
-          break;
-        case 'status':
-          aValue = (a.estado || a.status) || '';
-          bValue = (b.estado || b.status) || '';
-          break;
-        case 'priority':
-          aValue = a.priority || '';
-          bValue = b.priority || '';
-          break;
-        case 'created_at':
-        default:
-          aValue = new Date(a.fecha || a.created_at || 0);
-          bValue = new Date(b.fecha || b.created_at || 0);
-          break;
+      if (sortBy === 'created_at') {
+        aValue = new Date(aValue || 0);
+        bValue = new Date(bValue || 0);
       }
 
       if (sortOrder === 'asc') {
@@ -438,21 +423,6 @@ export default function AdvancedTicketManager({
       case 'cerrado': return <XCircle className="h-4 w-4" />;
       case 'respondido': return <MessageSquare className="h-4 w-4" />;
       default: return <AlertCircle className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'open':
-      case 'abierto': return 'Abierto';
-      case 'in_progress':
-      case 'en_progreso': return 'En Progreso';
-      case 'resolved':
-      case 'resuelto': return 'Resuelto';
-      case 'closed':
-      case 'cerrado': return 'Cerrado';
-      case 'respondido': return 'Respondido';
-      default: return 'Desconocido';
     }
   };
 
@@ -816,11 +786,10 @@ export default function AdvancedTicketManager({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="abierto">Abierto</SelectItem>
-                <SelectItem value="en_progreso">En Progreso</SelectItem>
-                <SelectItem value="resuelto">Resuelto</SelectItem>
-                <SelectItem value="cerrado">Cerrado</SelectItem>
-                <SelectItem value="respondido">Respondido</SelectItem>
+                <SelectItem value="open">Abierto</SelectItem>
+                <SelectItem value="in_progress">En Progreso</SelectItem>
+                <SelectItem value="resolved">Resuelto</SelectItem>
+                <SelectItem value="closed">Cerrado</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -875,55 +844,33 @@ export default function AdvancedTicketManager({
                       <div className="flex-1 space-y-3">
                         <div className="flex items-center gap-3">
                           <h3 className="font-bold text-slate-800 text-lg group-hover:text-slate-900 transition-colors duration-300">
-                            {ticket.asunto || ticket.title || 'Sin título'}
+                            {ticket.title}
                           </h3>
-                          <Badge className={`px-3 py-1 text-xs font-medium border ${getStatusColor(ticket.estado || ticket.status)}`}>
-                            {getStatusIcon(ticket.estado || ticket.status)}
-                            {getStatusText(ticket.estado || ticket.status)}
+                          <Badge className={`px-3 py-1 text-xs font-medium border ${getStatusColor(ticket.status)}`}>
+                            {getStatusIcon(ticket.status)}
+                            {ticket.status === 'open' && 'Abierto'}
+                            {ticket.status === 'in_progress' && 'En Progreso'}
+                            {ticket.status === 'resolved' && 'Resuelto'}
+                            {ticket.status === 'closed' && 'Cerrado'}
                           </Badge>
-                          <Badge className="px-3 py-1 text-xs font-medium border bg-yellow-100 text-yellow-800 border-yellow-200">
-                            Media
+                          <Badge className={`px-3 py-1 text-xs font-medium border ${getPriorityColor(ticket.priority)}`}>
+                            {ticket.priority === 'low' && 'Baja'}
+                            {ticket.priority === 'medium' && 'Media'}
+                            {ticket.priority === 'high' && 'Alta'}
+                            {ticket.priority === 'urgent' && 'Urgente'}
                           </Badge>
                         </div>
                         
-                        {(ticket.mensaje || ticket.description) && (
+                        {ticket.description && (
                           <p className="text-sm text-slate-600 line-clamp-2">
-                            {ticket.mensaje || ticket.description}
+                            {ticket.description}
                           </p>
-                        )}
-
-                        {/* Mostrar respuesta del admin si existe */}
-                        {ticket.respuesta && (
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
-                            <div className="flex items-center gap-2 mb-2">
-                              <MessageSquare className="h-4 w-4 text-blue-600" />
-                              <span className="text-sm font-medium text-blue-800">Respuesta del Admin:</span>
-                            </div>
-                            <p className="text-sm text-blue-700">{ticket.respuesta}</p>
-                            <div className="text-xs text-blue-600 mt-2">
-                              Respondido por: {ticket.respondido_por} - {ticket.fecha_respuesta ? new Date(ticket.fecha_respuesta).toLocaleDateString() : 'N/A'}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Mostrar respuesta del cliente si existe */}
-                        {ticket.respuesta_cliente && (
-                          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-3">
-                            <div className="flex items-center gap-2 mb-2">
-                              <User className="h-4 w-4 text-green-600" />
-                              <span className="text-sm font-medium text-green-800">Respuesta del Cliente:</span>
-                            </div>
-                            <p className="text-sm text-green-700">{ticket.respuesta_cliente}</p>
-                            <div className="text-xs text-green-600 mt-2">
-                              Respondido el: {ticket.fecha_respuesta_cliente ? new Date(ticket.fecha_respuesta_cliente).toLocaleDateString() : 'N/A'}
-                            </div>
-                          </div>
                         )}
 
                         <div className="flex items-center gap-6 text-xs text-slate-500">
                           <span className="flex items-center gap-2">
                             <User className="h-4 w-4" />
-                            {ticket.email || ticket.assigned_to || 'Sin asignar'}
+                            {ticket.assigned_to || 'Sin asignar'}
                           </span>
                           {ticket.category && (
                             <span className="flex items-center gap-2">
@@ -933,38 +880,26 @@ export default function AdvancedTicketManager({
                           )}
                           <span className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
-                            {ticket.fecha || ticket.created_at ? new Date(ticket.fecha || ticket.created_at).toLocaleDateString() : 'N/A'}
+                            {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'N/A'}
                           </span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3">
                         <Select
-                          value={ticket.estado || ticket.status}
+                          value={ticket.status}
                           onValueChange={(value) => handleStatusChange(ticket.id, value)}
                         >
                           <SelectTrigger className="w-36 bg-white border-slate-300 hover:border-slate-400 transition-colors duration-200 text-slate-800 font-medium">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="abierto">Abierto</SelectItem>
-                            <SelectItem value="en_progreso">En Progreso</SelectItem>
-                            <SelectItem value="resuelto">Resuelto</SelectItem>
-                            <SelectItem value="cerrado">Cerrado</SelectItem>
-                            <SelectItem value="respondido">Respondido</SelectItem>
+                            <SelectItem value="open">Abierto</SelectItem>
+                            <SelectItem value="in_progress">En Progreso</SelectItem>
+                            <SelectItem value="resolved">Resuelto</SelectItem>
+                            <SelectItem value="closed">Cerrado</SelectItem>
                           </SelectContent>
                         </Select>
-                        
-                        {/* Botón de responder */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setRespondingTicket(ticket)}
-                          className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:from-green-100 hover:to-emerald-100 text-green-700 hover:text-green-800 transition-all duration-200 px-3 py-2 h-9"
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                        </Button>
-                        
                         <Button
                           variant="outline"
                           size="sm"
@@ -1118,79 +1053,6 @@ export default function AdvancedTicketManager({
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Respuesta */}
-      {respondingTicket && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-slate-800">
-                Responder Ticket
-              </h2>
-              <button
-                onClick={() => {
-                  setRespondingTicket(null);
-                  setResponseText('');
-                }}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors duration-200 group"
-              >
-                <X className="h-4 w-4 text-slate-600 group-hover:text-slate-800" />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              {/* Información del ticket */}
-              <div className="bg-slate-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-slate-800 mb-2">
-                  {respondingTicket.asunto || respondingTicket.title || 'Sin título'}
-                </h3>
-                <p className="text-sm text-slate-600">
-                  {respondingTicket.mensaje || respondingTicket.description || 'Sin descripción'}
-                </p>
-                <div className="text-xs text-slate-500 mt-2">
-                  Cliente: {respondingTicket.email || respondingTicket.assigned_to || 'N/A'}
-                </div>
-              </div>
-
-              {/* Campo de respuesta */}
-              <div>
-                <Label htmlFor="response" className="text-slate-700 font-medium">Tu respuesta *</Label>
-                <Textarea
-                  id="response"
-                  value={responseText}
-                  onChange={(e) => setResponseText(e.target.value)}
-                  placeholder="Escribe tu respuesta al cliente..."
-                  rows={6}
-                  required
-                  className="mt-2 bg-white border-slate-300 text-slate-800"
-                />
-              </div>
-
-              {/* Botones */}
-              <div className="flex justify-end gap-3 pt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setRespondingTicket(null);
-                    setResponseText('');
-                  }}
-                  className="px-6 py-2 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-800 transition-all duration-200 font-medium"
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  onClick={handleSubmitResponse}
-                  disabled={!responseText.trim()}
-                  className="px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Enviar Respuesta
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
       )}

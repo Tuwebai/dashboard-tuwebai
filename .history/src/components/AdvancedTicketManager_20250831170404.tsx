@@ -29,8 +29,7 @@ import {
   Trash2,
   Edit,
   Eye,
-  RefreshCw,
-  X
+  RefreshCw
 } from 'lucide-react';
 
 interface TicketFormData {
@@ -123,15 +122,15 @@ export default function AdvancedTicketManager({
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(ticket =>
-        (ticket.asunto || ticket.title)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (ticket.mensaje || ticket.description)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (ticket.email || ticket.assigned_to)?.toLowerCase().includes(searchTerm.toLowerCase())
+        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.category?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Apply status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(ticket => (ticket.estado || ticket.status) === statusFilter);
+      filtered = filtered.filter(ticket => ticket.status === statusFilter);
     }
 
     // Apply priority filter
@@ -146,26 +145,12 @@ export default function AdvancedTicketManager({
 
     // Apply sorting
     filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: any = a[sortBy as keyof Ticket];
+      let bValue: any = b[sortBy as keyof Ticket];
 
-      switch (sortBy) {
-        case 'title':
-          aValue = (a.asunto || a.title) || '';
-          bValue = (b.asunto || b.title) || '';
-          break;
-        case 'status':
-          aValue = (a.estado || a.status) || '';
-          bValue = (b.estado || b.status) || '';
-          break;
-        case 'priority':
-          aValue = a.priority || '';
-          bValue = b.priority || '';
-          break;
-        case 'created_at':
-        default:
-          aValue = new Date(a.fecha || a.created_at || 0);
-          bValue = new Date(b.fecha || b.created_at || 0);
-          break;
+      if (sortBy === 'created_at') {
+        aValue = new Date(aValue || 0);
+        bValue = new Date(bValue || 0);
       }
 
       if (sortOrder === 'asc') {
@@ -816,11 +801,10 @@ export default function AdvancedTicketManager({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="abierto">Abierto</SelectItem>
-                <SelectItem value="en_progreso">En Progreso</SelectItem>
-                <SelectItem value="resuelto">Resuelto</SelectItem>
-                <SelectItem value="cerrado">Cerrado</SelectItem>
-                <SelectItem value="respondido">Respondido</SelectItem>
+                <SelectItem value="open">Abierto</SelectItem>
+                <SelectItem value="in_progress">En Progreso</SelectItem>
+                <SelectItem value="resolved">Resuelto</SelectItem>
+                <SelectItem value="closed">Cerrado</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1118,79 +1102,6 @@ export default function AdvancedTicketManager({
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Respuesta */}
-      {respondingTicket && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-slate-800">
-                Responder Ticket
-              </h2>
-              <button
-                onClick={() => {
-                  setRespondingTicket(null);
-                  setResponseText('');
-                }}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors duration-200 group"
-              >
-                <X className="h-4 w-4 text-slate-600 group-hover:text-slate-800" />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              {/* Información del ticket */}
-              <div className="bg-slate-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-slate-800 mb-2">
-                  {respondingTicket.asunto || respondingTicket.title || 'Sin título'}
-                </h3>
-                <p className="text-sm text-slate-600">
-                  {respondingTicket.mensaje || respondingTicket.description || 'Sin descripción'}
-                </p>
-                <div className="text-xs text-slate-500 mt-2">
-                  Cliente: {respondingTicket.email || respondingTicket.assigned_to || 'N/A'}
-                </div>
-              </div>
-
-              {/* Campo de respuesta */}
-              <div>
-                <Label htmlFor="response" className="text-slate-700 font-medium">Tu respuesta *</Label>
-                <Textarea
-                  id="response"
-                  value={responseText}
-                  onChange={(e) => setResponseText(e.target.value)}
-                  placeholder="Escribe tu respuesta al cliente..."
-                  rows={6}
-                  required
-                  className="mt-2 bg-white border-slate-300 text-slate-800"
-                />
-              </div>
-
-              {/* Botones */}
-              <div className="flex justify-end gap-3 pt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setRespondingTicket(null);
-                    setResponseText('');
-                  }}
-                  className="px-6 py-2 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-800 transition-all duration-200 font-medium"
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  onClick={handleSubmitResponse}
-                  disabled={!responseText.trim()}
-                  className="px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Enviar Respuesta
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
       )}

@@ -29,8 +29,7 @@ import {
   Trash2,
   Edit,
   Eye,
-  RefreshCw,
-  X
+  RefreshCw
 } from 'lucide-react';
 
 interface TicketFormData {
@@ -1118,79 +1117,6 @@ export default function AdvancedTicketManager({
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Respuesta */}
-      {respondingTicket && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-slate-800">
-                Responder Ticket
-              </h2>
-              <button
-                onClick={() => {
-                  setRespondingTicket(null);
-                  setResponseText('');
-                }}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors duration-200 group"
-              >
-                <X className="h-4 w-4 text-slate-600 group-hover:text-slate-800" />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              {/* Información del ticket */}
-              <div className="bg-slate-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-slate-800 mb-2">
-                  {respondingTicket.asunto || respondingTicket.title || 'Sin título'}
-                </h3>
-                <p className="text-sm text-slate-600">
-                  {respondingTicket.mensaje || respondingTicket.description || 'Sin descripción'}
-                </p>
-                <div className="text-xs text-slate-500 mt-2">
-                  Cliente: {respondingTicket.email || respondingTicket.assigned_to || 'N/A'}
-                </div>
-              </div>
-
-              {/* Campo de respuesta */}
-              <div>
-                <Label htmlFor="response" className="text-slate-700 font-medium">Tu respuesta *</Label>
-                <Textarea
-                  id="response"
-                  value={responseText}
-                  onChange={(e) => setResponseText(e.target.value)}
-                  placeholder="Escribe tu respuesta al cliente..."
-                  rows={6}
-                  required
-                  className="mt-2 bg-white border-slate-300 text-slate-800"
-                />
-              </div>
-
-              {/* Botones */}
-              <div className="flex justify-end gap-3 pt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setRespondingTicket(null);
-                    setResponseText('');
-                  }}
-                  className="px-6 py-2 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-800 transition-all duration-200 font-medium"
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  onClick={handleSubmitResponse}
-                  disabled={!responseText.trim()}
-                  className="px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Enviar Respuesta
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
       )}

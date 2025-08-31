@@ -40,10 +40,6 @@ export default function Soporte() {
     prioridad: 'media' as 'baja' | 'media' | 'alta'
   });
 
-  // Sistema de respuestas del cliente
-  const [respondingTicket, setRespondingTicket] = useState<Ticket | null>(null);
-  const [responseText, setResponseText] = useState('');
-
   useEffect(() => {
     if (!user) return;
     setLoading(true);
@@ -121,54 +117,6 @@ export default function Soporte() {
     })();
   };
 
-  // Función para responder a un ticket del admin
-  const handleClientResponse = async () => {
-    if (!respondingTicket || !responseText.trim()) return;
-
-    try {
-      const { error } = await supabase
-        .from('tickets')
-        .update({
-          respuesta_cliente: responseText,
-          fecha_respuesta_cliente: new Date().toISOString(),
-          estado: 'en_conversacion'
-        })
-        .eq('id', respondingTicket.id);
-
-      if (error) throw error;
-
-      // Actualizar estado local
-      const updatedTickets = tickets.map(ticket => 
-        ticket.id === respondingTicket.id 
-          ? { 
-              ...ticket, 
-              respuesta_cliente: responseText,
-              fecha_respuesta_cliente: new Date().toISOString(),
-              estado: 'en_conversacion'
-            }
-          : ticket
-      );
-
-      setTickets(updatedTickets);
-
-      toast({
-        title: 'Respuesta enviada',
-        description: 'Tu respuesta se ha enviado correctamente',
-        variant: 'default'
-      });
-
-      setRespondingTicket(null);
-      setResponseText('');
-    } catch (error) {
-      console.error('Error sending response:', error);
-      toast({
-        title: 'Error',
-        description: 'Error al enviar la respuesta',
-        variant: 'destructive'
-      });
-    }
-  };
-
   const getPriorityColor = (prioridad: string) => {
     switch (prioridad) {
       case 'alta': return 'bg-red-500/10 text-red-600 border-red-500/20';
@@ -182,7 +130,6 @@ export default function Soporte() {
     switch (estado) {
       case 'abierto': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
       case 'respondido': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
-      case 'en_conversacion': return 'bg-purple-500/10 text-purple-600 border-purple-500/20';
       case 'cerrado': return 'bg-green-500/10 text-green-600 border-green-500/20';
       default: return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
     }
@@ -192,7 +139,6 @@ export default function Soporte() {
     switch (estado) {
       case 'abierto': return 'Abierto';
       case 'respondido': return 'Respondido';
-      case 'en_conversacion': return 'En Conversación';
       case 'cerrado': return 'Cerrado';
       default: return 'Desconocido';
     }
@@ -436,7 +382,6 @@ export default function Soporte() {
                       </div>
                     </div>
                     
-                    {/* Respuesta del admin */}
                     {ticket.respuesta && (
                       <div className="mt-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
                         <div className="flex items-center gap-2 mb-2">
@@ -444,41 +389,14 @@ export default function Soporte() {
                           <span className="text-sm font-medium text-blue-800">Respuesta del equipo</span>
                         </div>
                         <p className="text-sm text-blue-700">{ticket.respuesta}</p>
-                        {ticket.respondido_por && (
+                        {ticket.respondidoPor && (
                           <p className="text-xs text-blue-600 mt-2">
-                            Respondido por: {ticket.respondido_por}
+                            Respondido por: {ticket.respondidoPor}
                           </p>
                         )}
-                        {ticket.fecha_respuesta && (
+                        {ticket.fechaRespuesta && (
                           <p className="text-xs text-blue-600">
-                            {formatDateSafe(ticket.fecha_respuesta)}
-                          </p>
-                        )}
-                        
-                        {/* Botón para responder al admin */}
-                        {ticket.estado !== 'cerrado' && (
-                          <Button
-                            onClick={() => setRespondingTicket(ticket)}
-                            className="mt-3 bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 h-8"
-                          >
-                            <MessageSquare className="h-3 w-3 mr-1" />
-                            Responder
-                          </Button>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Respuesta del cliente */}
-                    {ticket.respuesta_cliente && (
-                      <div className="mt-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
-                        <div className="flex items-center gap-2 mb-2">
-                          <MessageSquare className="h-4 w-4 text-green-600" />
-                          <span className="text-sm font-medium text-green-800">Tu respuesta</span>
-                        </div>
-                        <p className="text-sm text-green-700">{ticket.respuesta_cliente}</p>
-                        {ticket.fecha_respuesta_cliente && (
-                          <p className="text-xs text-green-600 mt-2">
-                            Respondido el: {formatDateSafe(ticket.fecha_respuesta_cliente)}
+                            {formatDateSafe(ticket.fechaRespuesta)}
                           </p>
                         )}
                       </div>
@@ -490,81 +408,6 @@ export default function Soporte() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Modal de respuesta del cliente */}
-      {respondingTicket && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-slate-800">
-                Responder al equipo de soporte
-              </h2>
-              <button
-                onClick={() => {
-                  setRespondingTicket(null);
-                  setResponseText('');
-                }}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors duration-200 group"
-              >
-                <span className="text-slate-600 group-hover:text-slate-800 text-lg font-semibold">×</span>
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              {/* Información del ticket */}
-              <div className="bg-slate-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-slate-800 mb-2">
-                  {respondingTicket.asunto}
-                </h3>
-                <p className="text-sm text-slate-600">
-                  {respondingTicket.mensaje}
-                </p>
-                <div className="text-xs text-slate-500 mt-2">
-                  Estado: {getStatusText(respondingTicket.estado)}
-                </div>
-              </div>
-
-              {/* Campo de respuesta */}
-              <div>
-                <label htmlFor="response" className="text-sm font-medium text-slate-700">
-                  Tu respuesta *
-                </label>
-                <Textarea
-                  id="response"
-                  value={responseText}
-                  onChange={(e) => setResponseText(e.target.value)}
-                  placeholder="Escribe tu respuesta o pregunta adicional..."
-                  rows={6}
-                  required
-                  className="mt-2 border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Botones */}
-              <div className="flex justify-end gap-3 pt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setRespondingTicket(null);
-                    setResponseText('');
-                  }}
-                  className="px-6 py-2 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-800 transition-all duration-200 font-medium"
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  onClick={handleClientResponse}
-                  disabled={!responseText.trim()}
-                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Enviar Respuesta
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 } 
