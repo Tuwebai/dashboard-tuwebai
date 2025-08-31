@@ -414,28 +414,24 @@ export default function AdminCollaborationPage() {
 
        // Enviar notificación al cliente sobre la nueva tarea
        try {
-         const notificationData = {
-           user_id: project?.created_by, // ID del cliente
-           title: 'Nueva tarea creada',
-           message: `${user.full_name || user.email} ha creado una nueva tarea: "${newTask.title}" en el proyecto "${project?.name}"`,
-           type: 'info',
-           category: 'project',
-           action_url: `/proyectos/${projectId}/colaboracion-admin`,
-           metadata: {
-             project_id: projectId,
-             project_name: project?.name,
-             task_id: data.id,
-             task_title: newTask.title,
-             sender_id: user.id,
-             sender_name: user.full_name || user.email
-           }
-         };
-         
-         console.log('🔔 [AdminCollaborationPage] Creando notificación de tarea:', notificationData);
-         
          await supabase
            .from('notifications')
-           .insert(notificationData);
+           .insert({
+             user_id: project?.created_by, // ID del cliente
+             title: 'Nueva tarea creada',
+             message: `${user.full_name || user.email} ha creado una nueva tarea: "${newTask.title}" en el proyecto "${project?.name}"`,
+             type: 'info',
+             category: 'project',
+             action_url: `/proyectos/${projectId}/colaboracion-admin`,
+             metadata: {
+               project_id: projectId,
+               project_name: project?.name,
+               task_id: data.id,
+               task_title: newTask.title,
+               sender_id: user.id,
+               sender_name: user.full_name || user.email
+             }
+           });
        } catch (notificationError) {
          console.error('Error enviando notificación de tarea:', notificationError);
        }
@@ -471,29 +467,25 @@ export default function AdminCollaborationPage() {
        try {
          const updatedTask = tasks.find(t => t.id === taskId);
          if (updatedTask) {
-           const notificationData = {
-             user_id: project?.created_by, // ID del cliente
-             title: 'Estado de tarea actualizado',
-             message: `La tarea "${updatedTask.title}" ha sido marcada como ${newStatus === 'completed' ? 'completada' : newStatus === 'in-progress' ? 'en progreso' : newStatus} en el proyecto "${project?.name}"`,
-             type: 'success',
-             category: 'project',
-             action_url: `/proyectos/${projectId}/colaboracion-admin`,
-             metadata: {
-               project_id: projectId,
-               project_name: project?.name,
-               task_id: taskId,
-               task_title: updatedTask.title,
-               new_status: newStatus,
-               sender_id: user.id,
-               sender_name: user.full_name || user.email
-             }
-           };
-           
-           console.log('🔔 [AdminCollaborationPage] Creando notificación de cambio de estado:', notificationData);
-           
            await supabase
              .from('notifications')
-             .insert(notificationData);
+             .insert({
+               user_id: project?.created_by, // ID del cliente
+               title: 'Estado de tarea actualizado',
+               message: `La tarea "${updatedTask.title}" ha sido marcada como ${newStatus === 'completed' ? 'completada' : newStatus === 'in-progress' ? 'en progreso' : newStatus} en el proyecto "${project?.name}"`,
+               type: 'success',
+               category: 'project',
+               action_url: `/proyectos/${projectId}/colaboracion-admin`,
+               metadata: {
+                 project_id: projectId,
+                 project_name: project?.name,
+                 task_id: taskId,
+                 task_title: updatedTask.title,
+                 new_status: newStatus,
+                 sender_id: user.id,
+                 sender_name: user.full_name || user.email
+               }
+             });
          }
        } catch (notificationError) {
          console.error('Error enviando notificación de cambio de estado:', notificationError);
@@ -548,28 +540,24 @@ export default function AdminCollaborationPage() {
 
        // Enviar notificación al cliente sobre el archivo subido
        try {
-         const notificationData = {
-           user_id: project?.created_by, // ID del cliente
-           title: 'Nuevo archivo compartido',
-           message: `${user.full_name || user.email} ha compartido un archivo: "${file.name}" en el proyecto "${project?.name}"`,
-           type: 'info',
-           category: 'project',
-           action_url: `/proyectos/${projectId}/colaboracion-admin`,
-           metadata: {
-             project_id: projectId,
-             project_name: project?.name,
-             file_id: data.id,
-             file_name: file.name,
-             sender_id: user.id,
-             sender_name: user.full_name || user.email
-           }
-         };
-         
-         console.log('🔔 [AdminCollaborationPage] Creando notificación de archivo:', notificationData);
-         
          await supabase
            .from('notifications')
-           .insert(notificationData);
+           .insert({
+             user_id: project?.created_by, // ID del cliente
+             title: 'Nuevo archivo compartido',
+             message: `${user.full_name || user.email} ha compartido un archivo: "${file.name}" en el proyecto "${project?.name}"`,
+             type: 'info',
+             category: 'project',
+             action_url: `/proyectos/${projectId}/colaboracion-admin`,
+             metadata: {
+               project_id: projectId,
+               project_name: project?.name,
+               file_id: data.id,
+               file_name: file.name,
+               sender_id: user.id,
+               sender_name: user.full_name || user.email
+             }
+           });
        } catch (notificationError) {
          console.error('Error enviando notificación de archivo:', notificationError);
        }

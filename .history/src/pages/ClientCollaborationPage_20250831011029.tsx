@@ -478,27 +478,23 @@ export default function ClientCollaborationPage() {
       
       // Enviar notificación al admin sobre el archivo subido
       try {
-        const notificationData = {
-          user_id: project.created_by, // ID del admin
-          title: 'Nuevo archivo compartido',
-          message: `${user.full_name || user.email} ha compartido un archivo: "${file.name}" en el proyecto "${project.name}"`,
-          type: 'info',
-          category: 'project',
-          action_url: `/proyectos/${project.id}/colaboracion-admin`,
-          metadata: {
-             project_id: project.id,
-             project_name: project.name,
-             file_name: file.name,
-             sender_id: user.id,
-             sender_name: user.full_name || user.email
-           }
-        };
-        
-        console.log('🔔 [ClientCollaborationPage] Creando notificación de archivo:', notificationData);
-        
         await supabase
           .from('notifications')
-          .insert(notificationData);
+          .insert({
+            user_id: project.created_by, // ID del admin
+            title: 'Nuevo archivo compartido',
+            message: `${user.full_name || user.email} ha compartido un archivo: "${file.name}" en el proyecto "${project.name}"`,
+            type: 'info',
+            category: 'project',
+            action_url: `/proyectos/${project.id}/colaboracion-admin`,
+            metadata: {
+               project_id: project.id,
+               project_name: project.name,
+               file_name: file.name,
+               sender_id: user.id,
+               sender_name: user.full_name || user.email
+             }
+           });
        } catch (notificationError) {
          console.error('Error enviando notificación de archivo:', notificationError);
        }
@@ -557,28 +553,24 @@ export default function ClientCollaborationPage() {
       
       // Enviar notificación al admin sobre el comentario de fase
       try {
-        const notificationData = {
-          user_id: project.created_by, // ID del admin
-          title: 'Nuevo comentario de fase',
-          message: `${user.full_name || user.email} ha agregado un comentario a la fase "${phaseKey}" en el proyecto "${project.name}"`,
-          type: 'info',
-          category: 'project',
-          action_url: `/proyectos/${project.id}/colaboracion-admin`,
-          metadata: {
-             project_id: project.id,
-             project_name: project.name,
-             phase_key: phaseKey,
-             comment_text: newComment.trim(),
-             sender_id: user.id,
-             sender_name: user.full_name || user.email
-           }
-        };
-        
-        console.log('🔔 [ClientCollaborationPage] Creando notificación de comentario de fase:', notificationData);
-        
         await supabase
           .from('notifications')
-          .insert(notificationData);
+          .insert({
+            user_id: project.created_by, // ID del admin
+            title: 'Nuevo comentario de fase',
+            message: `${user.full_name || user.email} ha agregado un comentario a la fase "${phaseKey}" en el proyecto "${project.name}"`,
+            type: 'info',
+            category: 'project',
+            action_url: `/proyectos/${project.id}/colaboracion-admin`,
+            metadata: {
+               project_id: project.id,
+               project_name: project.name,
+               phase_key: phaseKey,
+               comment_text: newComment.trim(),
+               sender_id: user.id,
+               sender_name: user.full_name || user.email
+             }
+           });
        } catch (notificationError) {
          console.error('Error enviando notificación de comentario:', notificationError);
        }

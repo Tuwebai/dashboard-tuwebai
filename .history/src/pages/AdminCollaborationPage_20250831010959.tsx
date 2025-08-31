@@ -548,28 +548,24 @@ export default function AdminCollaborationPage() {
 
        // Enviar notificación al cliente sobre el archivo subido
        try {
-         const notificationData = {
-           user_id: project?.created_by, // ID del cliente
-           title: 'Nuevo archivo compartido',
-           message: `${user.full_name || user.email} ha compartido un archivo: "${file.name}" en el proyecto "${project?.name}"`,
-           type: 'info',
-           category: 'project',
-           action_url: `/proyectos/${projectId}/colaboracion-admin`,
-           metadata: {
-             project_id: projectId,
-             project_name: project?.name,
-             file_id: data.id,
-             file_name: file.name,
-             sender_id: user.id,
-             sender_name: user.full_name || user.email
-           }
-         };
-         
-         console.log('🔔 [AdminCollaborationPage] Creando notificación de archivo:', notificationData);
-         
          await supabase
            .from('notifications')
-           .insert(notificationData);
+           .insert({
+             user_id: project?.created_by, // ID del cliente
+             title: 'Nuevo archivo compartido',
+             message: `${user.full_name || user.email} ha compartido un archivo: "${file.name}" en el proyecto "${project?.name}"`,
+             type: 'info',
+             category: 'project',
+             action_url: `/proyectos/${projectId}/colaboracion-admin`,
+             metadata: {
+               project_id: projectId,
+               project_name: project?.name,
+               file_id: data.id,
+               file_name: file.name,
+               sender_id: user.id,
+               sender_name: user.full_name || user.email
+             }
+           });
        } catch (notificationError) {
          console.error('Error enviando notificación de archivo:', notificationError);
        }
