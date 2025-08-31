@@ -1,96 +1,175 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { errorHandler, createErrorFallback } from '@/lib/errorHandler';
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
 interface State {
   hasError: boolean;
-  error?: Error;
-  errorInfo?: ErrorInfo;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
+  errorId: string;
 }
 
-class ErrorBoundaryClass extends Component<Props & { navigate: (path: string) => void }, State> {
-  constructor(props: Props & { navigate: (path: string) => void }) {
+class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      errorId: ''
+    };
   }
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+  static getDerivedStateFromError(error: Error): Partial<State> {
+    return {
+      hasError: true,
+      error,
+      errorId: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
-    this.setState({ error, errorInfo });
+    // Log del error usando el sistema centralizado
+    const supabaseError = errorHandler.handleSupabaseError(
+      { code: 'REACT_ERROR', message: error.message, details: error.stack },
+      {
+        component: 'ErrorBoundary',
+        action: 'componentDidCatch',
+        timestamp: new Date().toISOString()
+      }
+    );
+
+    this.setState({ errorInfo });
+
+    // Callback personalizado si se proporciona
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
+
+    // Log adicional para debugging
+    console.error('🚨 Error Boundary capturó un error:', {
+      error,
+      errorInfo,
+      errorId: this.state.errorId,
+      supabaseError
+    });
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+    this.setState({
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      errorId: ''
+    });
   };
 
   handleGoHome = () => {
-    this.props.navigate('/dashboard');
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+    window.location.href = '/';
+  };
+
+  handleGoBack = () => {
+    window.history.back();
   };
 
   render() {
     if (this.state.hasError) {
+      // Fallback personalizado si se proporciona
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
+      // Fallback por defecto con manejo de errores mejorado
+      const errorFallback = createErrorFallback(
+        {
+          code: 'REACT_ERROR',
+          message: this.state.error?.message || 'Error inesperado en la aplicación',
+          details: this.state.error?.stack || '',
+          hint: 'Intenta recargar la página o navegar a otra sección'
+        },
+        this.handleRetry
+      );
+
       return (
-        <div className="min-h-screen bg-zinc-900 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md bg-zinc-800 border-zinc-700">
-            <CardHeader className="text-center">
-              <div className="mx-auto w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
-                <AlertTriangle className="w-8 h-8 text-red-500" />
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md shadow-xl border-red-200">
+            <CardHeader className="text-center pb-4">
+              <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <AlertTriangle className="w-8 h-8 text-red-600" />
               </div>
-              <CardTitle className="text-xl text-white">Algo salió mal</CardTitle>
+              <CardTitle className="text-xl text-red-800">
+                {errorFallback.title}
+              </CardTitle>
             </CardHeader>
+            
             <CardContent className="space-y-4">
-              <p className="text-zinc-400 text-center">
-                Ha ocurrido un error inesperado. Por favor, intenta de nuevo.
-              </p>
-              
-              {import.meta.env.DEV && this.state.error && (
-                <details className="bg-zinc-900 p-3 rounded text-xs">
-                  <summary className="cursor-pointer text-zinc-400 mb-2">
-                    Detalles del error (solo desarrollo)
-                  </summary>
-                  <pre className="text-red-400 whitespace-pre-wrap">
-                    {this.state.error.toString()}
-                  </pre>
-                  {this.state.errorInfo && (
-                    <pre className="text-yellow-400 whitespace-pre-wrap mt-2">
-                      {this.state.errorInfo.componentStack}
-                    </pre>
-                  )}
-                </details>
+              <div className="text-center">
+                <p className="text-slate-700 mb-2">
+                  {errorFallback.message}
+                </p>
+                {errorFallback.hint && (
+                  <p className="text-sm text-slate-500">
+                    💡 {errorFallback.hint}
+                  </p>
+                )}
+              </div>
+
+              {this.state.errorId && (
+                <div className="bg-slate-50 p-3 rounded-lg">
+                  <p className="text-xs text-slate-500 font-mono">
+                    ID de Error: {this.state.errorId}
+                  </p>
+                </div>
               )}
-              
-              <div className="flex gap-2">
+
+              <div className="flex flex-col gap-2">
+                {errorFallback.isRecoverable && (
+                  <Button 
+                    onClick={this.handleRetry}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Reintentar
+                  </Button>
+                )}
+                
                 <Button 
-                  onClick={this.handleRetry} 
-                  className="flex-1"
+                  onClick={this.handleGoBack}
                   variant="outline"
+                  className="w-full"
                 >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Reintentar
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Volver Atrás
                 </Button>
+                
                 <Button 
                   onClick={this.handleGoHome}
-                  className="flex-1"
+                  variant="outline"
+                  className="w-full"
                 >
                   <Home className="w-4 h-4 mr-2" />
-                  Ir al inicio
+                  Ir al Inicio
                 </Button>
               </div>
+
+              {import.meta.env.DEV && this.state.errorInfo && (
+                <details className="mt-4">
+                  <summary className="cursor-pointer text-sm text-slate-600 hover:text-slate-800">
+                    🔍 Ver detalles técnicos (Solo desarrollo)
+                  </summary>
+                  <pre className="mt-2 p-3 bg-slate-100 rounded text-xs overflow-auto max-h-40">
+                    {this.state.errorInfo.componentStack}
+                  </pre>
+                </details>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -101,19 +180,7 @@ class ErrorBoundaryClass extends Component<Props & { navigate: (path: string) =>
   }
 }
 
-// Wrapper para usar con hooks
-export default function ErrorBoundary({ children, fallback }: Props) {
-  return (
-    <ErrorBoundaryClass navigate={(path: string) => {
-      // Usar window.location como fallback si no hay router
-      if (typeof window !== 'undefined') {
-        window.location.href = path;
-      }
-    }} fallback={fallback}>
-      {children}
-    </ErrorBoundaryClass>
-  );
-}
+export default ErrorBoundary;
 
 // Componente de error simple para mostrar errores de API
 export function ErrorMessage({ 
