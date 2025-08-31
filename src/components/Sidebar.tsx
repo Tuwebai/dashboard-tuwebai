@@ -54,7 +54,9 @@ export default function Sidebar() {
         supabase.from('users').select('id', { count: 'exact' }),
         supabase.from('projects').select('id', { count: 'exact' }),
         supabase.from('tickets').select('id', { count: 'exact' }),
-        supabase.from('payments').select('id', { count: 'exact' })
+        user?.role === 'admin' 
+          ? supabase.from('payments').select('id', { count: 'exact' })
+          : supabase.from('payments').select('id', { count: 'exact' }).eq('user_id', user.id)
       ]);
 
       setCounts({

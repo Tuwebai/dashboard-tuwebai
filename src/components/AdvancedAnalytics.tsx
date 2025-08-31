@@ -130,7 +130,9 @@ export default function AdvancedAnalytics() {
       const [projectsResponse, usersResponse, paymentsResponse, ticketsResponse] = await Promise.all([
         supabase.from('projects').select('*'),
         supabase.from('users').select('*'),
-        supabase.from('payments').select('*'),
+        user?.role === 'admin' 
+          ? supabase.from('payments').select('*')
+          : supabase.from('payments').select('*').eq('user_id', user.id),
         supabase.from('tickets').select('*')
       ]);
 

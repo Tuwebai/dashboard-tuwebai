@@ -78,8 +78,8 @@ export const createMercadoPagoPreference = async (paymentData: CreatePaymentData
       .from('payments')
       .insert({
         userId: paymentData.userId,
-        userEmail: paymentData.userEmail,
-        userName: paymentData.userName,
+        user_email: paymentData.userEmail,
+        user_name: paymentData.userName,
         paymentType: paymentData.paymentType,
         amount: amount,
         currency: paymentType.currency,
@@ -240,13 +240,13 @@ export const getUserPayments = (userEmail: string, callback: (payments: Payment[
   const subscription = supabase
     .channel('user_payments_changes')
     .on('postgres_changes', 
-      { event: '*', schema: 'public', table: 'payments', filter: `userEmail=eq.${userEmail}` },
+      { event: '*', schema: 'public', table: 'payments', filter: `user_email=eq.${userEmail}` },
       (payload) => {
         // Recargar pagos cuando hay cambios
         supabase
           .from('payments')
           .select('*')
-          .eq('userEmail', userEmail)
+          .eq('user_email', userEmail)
           .then(({ data, error }) => {
             if (!error && data) {
               callback(data as Payment[]);
@@ -260,7 +260,7 @@ export const getUserPayments = (userEmail: string, callback: (payments: Payment[
   supabase
     .from('payments')
     .select('*')
-    .eq('userEmail', userEmail)
+            .eq('user_email', userEmail)
     .then(({ data, error }) => {
       if (!error && data) {
         callback(data as Payment[]);

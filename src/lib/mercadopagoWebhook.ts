@@ -167,9 +167,9 @@ class MercadoPagoWebhookHandler {
       const { error: insertError } = await supabase
         .from('payments')
         .insert({
-          userId: userId,
-          userEmail: mercadopagoData.payer?.email,
-          userName: mercadopagoData.payer?.name || 'Usuario',
+                  userId: userId,
+        user_email: mercadopagoData.payer?.email,
+        user_name: mercadopagoData.payer?.name || 'Usuario',
           paymentType: this.determinePaymentType(mercadopagoData),
           amount: Math.round(mercadopagoData.transaction_amount * 100), // Convertir a centavos
           currency: mercadopagoData.currency,

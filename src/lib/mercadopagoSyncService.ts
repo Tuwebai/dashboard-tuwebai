@@ -154,9 +154,9 @@ class MercadoPagoSyncService {
         const { error: insertError } = await supabase
           .from('payments')
           .insert({
-            userId: await this.getUserIdByEmail(userEmail),
-            userEmail: userEmail,
-            userName: mpPayment.payer?.name || 'Usuario',
+                    userId: await this.getUserIdByEmail(userEmail),
+        user_email: userEmail,
+        user_name: mpPayment.payer?.name || 'Usuario',
             paymentType: this.determinePaymentType(mpPayment),
             amount: Math.round(mpPayment.transaction_amount * 100), // Convertir a centavos
             currency: mpPayment.currency,
@@ -275,7 +275,7 @@ class MercadoPagoSyncService {
       const { data: supabasePayments } = await supabase
         .from('payments')
         .select('*')
-        .eq('userEmail', userEmail);
+        .eq('user_email', userEmail);
 
       const totalPayments = supabasePayments?.length || 0;
       const syncedPayments = supabasePayments?.filter(p => p.mercadopagoId)?.length || 0;

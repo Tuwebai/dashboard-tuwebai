@@ -9,7 +9,7 @@
 
 ## 🔑 Configuración de Variables de Entorno
 
-### 1. Crear archivo `.env.local`
+### 1. Configurar archivo `.env`
 
 ```bash
 # MercadoPago Configuration
