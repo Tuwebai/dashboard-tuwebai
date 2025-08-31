@@ -265,14 +265,9 @@ export default function ClientCollaborationPage() {
             user_id: project.created_by, // ID del admin
             title: 'Nuevo mensaje en proyecto',
             message: `${user.full_name || user.email} ha enviado un mensaje en el proyecto "${project.name}"`,
-            type: 'info',
-            category: 'project',
-            metadata: {
-              project_id: project.id,
-              project_name: project.name,
-              sender_id: user.id,
-              sender_name: user.full_name || user.email
-            }
+            type: 'message',
+            project_id: project.id,
+            read: false
           });
       } catch (notificationError) {
         console.error('Error enviando notificación:', notificationError);
