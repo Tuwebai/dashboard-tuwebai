@@ -11,7 +11,8 @@ import {
   Clock, 
   TrendingUp,
   Zap,
-  ExternalLink
+  ExternalLink,
+  Info
 } from 'lucide-react';
 import { mercadopagoSyncService, SyncResult } from '@/lib/mercadopagoSyncService';
 import { useApp } from '@/contexts/AppContext';
@@ -30,6 +31,7 @@ export default function PaymentSync() {
   const [syncStats, setSyncStats] = useState<SyncStats | null>(null);
   const [lastSyncResult, setLastSyncResult] = useState<SyncResult | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     if (user?.email) {
@@ -40,10 +42,19 @@ export default function PaymentSync() {
 
   const loadSyncStats = async () => {
     try {
+      setHasError(false);
       const stats = await mercadopagoSyncService.getSyncStats(user!.email);
       setSyncStats(stats);
     } catch (error) {
       console.error('Error cargando estadísticas:', error);
+      setHasError(true);
+      // Crear estadísticas por defecto cuando no hay pagos
+      setSyncStats({
+        totalPayments: 0,
+        syncedPayments: 0,
+        pendingPayments: 0,
+        lastSync: null
+      });
     }
   };
 
@@ -200,44 +211,89 @@ export default function PaymentSync() {
       </Card>
 
       {/* Estadísticas de sincronización */}
-      {syncStats && (
-        <Card className="bg-white rounded-2xl shadow-lg border border-slate-200/50">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-              Estadísticas de Sincronización
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-slate-800">{syncStats.totalPayments}</div>
-                <div className="text-sm text-slate-600">Total de Pagos</div>
+      <Card className="bg-white rounded-2xl shadow-lg border border-slate-200/50">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-green-600" />
+            Estadísticas de Sincronización
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {syncStats ? (
+            <>
+              {syncStats.totalPayments === 0 ? (
+                <div className="text-center py-8">
+                  <Info className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                    No hay pagos registrados
+                  </h3>
+                  <p className="text-slate-600 mb-4">
+                    Cuando realices pagos a través de MercadoPago, aparecerán aquí automáticamente.
+                  </p>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
+                    <span className="text-sm font-medium">Estado:</span>
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                      Sin pagos
+                    </Badge>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-slate-800">{syncStats.totalPayments}</div>
+                      <div className="text-sm text-slate-600">Total de Pagos</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">{syncStats.syncedPayments}</div>
+                      <div className="text-sm text-slate-600">Sincronizados</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-yellow-600">{syncStats.pendingPayments}</div>
+                      <div className="text-sm text-slate-600">Pendientes</div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600">Progreso de sincronización</span>
+                      <span className="text-slate-800 font-medium">{Math.round(getSyncProgress())}%</span>
+                    </div>
+                    <Progress value={getSyncProgress()} className="h-2" />
+                  </div>
+                </>
+              )}
+              
+              <div className="text-sm text-slate-600">
+                <span className="font-medium">Última sincronización:</span> {formatLastSync(syncStats.lastSync)}
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{syncStats.syncedPayments}</div>
-                <div className="text-sm text-slate-600">Sincronizados</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">{syncStats.pendingPayments}</div>
-                <div className="text-sm text-slate-600">Pendientes</div>
-              </div>
+            </>
+          ) : hasError ? (
+            <div className="text-center py-8">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                Error al cargar estadísticas
+              </h3>
+              <p className="text-slate-600 mb-4">
+                No se pudieron cargar las estadísticas de pagos. Esto puede ser normal si no hay pagos registrados.
+              </p>
+              <Button
+                variant="outline"
+                onClick={loadSyncStats}
+                className="mx-auto"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Reintentar
+              </Button>
             </div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Progreso de sincronización</span>
-                <span className="text-slate-800 font-medium">{Math.round(getSyncProgress())}%</span>
-              </div>
-              <Progress value={getSyncProgress()} className="h-2" />
+          ) : (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-slate-600 mt-2">Cargando estadísticas...</p>
             </div>
-            
-            <div className="text-sm text-slate-600">
-              <span className="font-medium">Última sincronización:</span> {formatLastSync(syncStats.lastSync)}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       {/* Botón de sincronización */}
       <Card className="bg-white rounded-2xl shadow-lg border border-slate-200/50">
@@ -248,7 +304,10 @@ export default function PaymentSync() {
                 Sincronizar Pagos
               </h3>
               <p className="text-slate-600">
-                Sincroniza automáticamente los pagos realizados en MercadoPago con este dashboard
+                {syncStats && syncStats.totalPayments === 0 
+                  ? "Busca pagos pendientes en MercadoPago para sincronizar con este dashboard"
+                  : "Sincroniza automáticamente los pagos realizados en MercadoPago con este dashboard"
+                }
               </p>
             </div>
             
