@@ -13,7 +13,6 @@ import { getUserPayments, createMercadoPagoPreference, Payment } from '@/lib/pay
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import PaymentSync from '@/components/PaymentSync';
 import { useTranslation } from 'react-i18next';
 
 export default function Facturacion() {
@@ -208,7 +207,7 @@ export default function Facturacion() {
         </div>
 
         {/* Sincronización de Pagos */}
-        <PaymentSync />
+        {/* Removed PaymentSync component */}
 
         {/* Resumen de pagos */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
