@@ -971,7 +971,6 @@ export default function ClientCollaborationPage() {
                                  {(userData?.full_name || userData?.email || comment.sender_name || 'U').charAt(0).toUpperCase()}
                                </AvatarFallback>
                              </Avatar>
-                           </div>
                            <div className="flex-1">
                              <div className="flex items-center gap-2 mb-1">
                                <span className="font-medium text-slate-800">{comment.sender_name}</span>
@@ -987,8 +986,8 @@ export default function ClientCollaborationPage() {
                              <p className="text-sm text-slate-700">{comment.text.replace(/\[.*?\]/, '').trim()}</p>
                            </div>
                          </div>
-                       );
-                     })}
+                       </div>
+                     ))}
                 </div>
                 
                                  {comments.length === 0 && (

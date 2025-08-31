@@ -967,7 +967,7 @@ export default function ClientCollaborationPage() {
                                    className="object-cover"
                                  />
                                ) : null}
-                               <AvatarFallback className="bg-slate-100 text-slate-600 text-sm font-medium">
+                                                              <AvatarFallback className="bg-slate-100 text-slate-600 text-sm font-medium">
                                  {(userData?.full_name || userData?.email || comment.sender_name || 'U').charAt(0).toUpperCase()}
                                </AvatarFallback>
                              </Avatar>
@@ -987,8 +987,8 @@ export default function ClientCollaborationPage() {
                              <p className="text-sm text-slate-700">{comment.text.replace(/\[.*?\]/, '').trim()}</p>
                            </div>
                          </div>
-                       );
-                     })}
+                       </div>
+                     ))}
                 </div>
                 
                                  {comments.length === 0 && (

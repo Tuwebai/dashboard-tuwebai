@@ -239,9 +239,6 @@ export default function ClientCollaborationPage() {
 
         // Actualizar estadísticas
         updateCollaborationStats(chatData, tasksData, filesData, []);
-        
-        // Cargar avatares de usuarios
-        loadUserAvatars(chatData);
 
       } catch (error) {
         console.error('Error cargando datos de colaboración:', error);
@@ -255,45 +252,6 @@ export default function ClientCollaborationPage() {
 
     loadCollaborationData();
   }, [project, user]);
-
-  // Load user avatars for all participants in the chat
-  const loadUserAvatars = async (chatData: any[]) => {
-    if (!chatData || chatData.length === 0) return;
-    
-    try {
-      const uniqueUserIds = [...new Set(chatData.map(msg => msg.sender))];
-      const avatarsToLoad: Record<string, { avatar?: string; full_name?: string; email?: string }> = {};
-      
-      for (const userId of uniqueUserIds) {
-        // Skip if we already have this user's data
-        if (userAvatars[userId]) continue;
-        
-        try {
-          const { data: userData, error } = await supabase
-            .from('users')
-            .select('id, full_name, email, avatar')
-            .eq('id', userId)
-            .single();
-          
-          if (!error && userData) {
-            avatarsToLoad[userId] = {
-              avatar: userData.avatar,
-              full_name: userData.full_name,
-              email: userData.email
-            };
-          }
-        } catch (error) {
-          console.error(`Error loading avatar for user ${userId}:`, error);
-        }
-      }
-      
-      if (Object.keys(avatarsToLoad).length > 0) {
-        setUserAvatars(prev => ({ ...prev, ...avatarsToLoad }));
-      }
-    } catch (error) {
-      console.error('Error loading user avatars:', error);
-    }
-  };
 
   // Update collaboration stats
   const updateCollaborationStats = (chatData: any[], tasksData: any[], filesData: any[], commentsData: any[]) => {
@@ -711,23 +669,17 @@ export default function ClientCollaborationPage() {
                    {messages.length > 0 ? (
                      messages.map((message) => {
                        const isOwnMessage = message.sender === user.id;
-                                               const userData = userAvatars[message.sender];
-                        return (
-                          <div key={message.id} className={`flex items-start gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
-                            <Avatar className={`w-8 h-8 flex-shrink-0 ${isOwnMessage ? 'ring-2 ring-blue-500' : 'ring-2 ring-slate-200'}`}>
-                              {userData?.avatar ? (
-                                <AvatarImage 
-                                  src={userData.avatar} 
-                                  alt={userData.full_name || userData.email || 'Usuario'}
-                                  className="object-cover"
-                                />
-                              ) : null}
-                              <AvatarFallback className={`text-sm font-medium ${
-                                isOwnMessage ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600'
-                              }`}>
-                                {(userData?.full_name || userData?.email || message.sender_name || 'U').charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
+                       return (
+                         <div key={message.id} className={`flex items-start gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
+                           <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                             isOwnMessage ? 'bg-blue-500' : 'bg-blue-100'
+                           }`}>
+                             <span className={`text-sm font-medium ${
+                               isOwnMessage ? 'text-white' : 'text-blue-600'
+                             }`}>
+                               {message.sender_name?.charAt(0).toUpperCase()}
+                             </span>
+                           </div>
                            <div className={`flex-1 min-w-0 ${isOwnMessage ? 'text-right' : ''}`}>
                              <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'justify-end' : ''}`}>
                                <span className="font-medium text-slate-800">{message.sender_name}</span>
@@ -954,23 +906,13 @@ export default function ClientCollaborationPage() {
                                  <div className="space-y-3">
                    {comments
                      .filter(comment => !commentPhase || comment.text.includes(`[${commentPhase}]`))
-                                          .map((comment) => {
-                       const userData = userAvatars[comment.sender];
-                       return (
-                         <div key={comment.id} className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
-                           <div className="flex items-start gap-3">
-                             <Avatar className="w-8 h-8 flex-shrink-0 ring-2 ring-slate-200">
-                               {userData?.avatar ? (
-                                 <AvatarImage 
-                                   src={userData.avatar} 
-                                   alt={userData.full_name || userData.email || 'Usuario'}
-                                   className="object-cover"
-                                 />
-                               ) : null}
-                               <AvatarFallback className="bg-slate-100 text-slate-600 text-sm font-medium">
-                                 {(userData?.full_name || userData?.email || comment.sender_name || 'U').charAt(0).toUpperCase()}
-                               </AvatarFallback>
-                             </Avatar>
+                                          .map((comment) => (
+                       <div key={comment.id} className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                         <div className="flex items-start gap-3">
+                           <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                             <span className="text-sm font-medium text-blue-600">
+                               {comment.sender_name?.charAt(0).toUpperCase()}
+                             </span>
                            </div>
                            <div className="flex-1">
                              <div className="flex items-center gap-2 mb-1">
@@ -987,8 +929,8 @@ export default function ClientCollaborationPage() {
                              <p className="text-sm text-slate-700">{comment.text.replace(/\[.*?\]/, '').trim()}</p>
                            </div>
                          </div>
-                       );
-                     })}
+                       </div>
+                     ))}
                 </div>
                 
                                  {comments.length === 0 && (

@@ -954,23 +954,13 @@ export default function ClientCollaborationPage() {
                                  <div className="space-y-3">
                    {comments
                      .filter(comment => !commentPhase || comment.text.includes(`[${commentPhase}]`))
-                                          .map((comment) => {
-                       const userData = userAvatars[comment.sender];
-                       return (
-                         <div key={comment.id} className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
-                           <div className="flex items-start gap-3">
-                             <Avatar className="w-8 h-8 flex-shrink-0 ring-2 ring-slate-200">
-                               {userData?.avatar ? (
-                                 <AvatarImage 
-                                   src={userData.avatar} 
-                                   alt={userData.full_name || userData.email || 'Usuario'}
-                                   className="object-cover"
-                                 />
-                               ) : null}
-                               <AvatarFallback className="bg-slate-100 text-slate-600 text-sm font-medium">
-                                 {(userData?.full_name || userData?.email || comment.sender_name || 'U').charAt(0).toUpperCase()}
-                               </AvatarFallback>
-                             </Avatar>
+                                          .map((comment) => (
+                       <div key={comment.id} className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                         <div className="flex items-start gap-3">
+                           <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                             <span className="text-sm font-medium text-blue-600">
+                               {comment.sender_name?.charAt(0).toUpperCase()}
+                             </span>
                            </div>
                            <div className="flex-1">
                              <div className="flex items-center gap-2 mb-1">
@@ -987,8 +977,8 @@ export default function ClientCollaborationPage() {
                              <p className="text-sm text-slate-700">{comment.text.replace(/\[.*?\]/, '').trim()}</p>
                            </div>
                          </div>
-                       );
-                     })}
+                       </div>
+                     ))}
                 </div>
                 
                                  {comments.length === 0 && (
