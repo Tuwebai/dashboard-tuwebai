@@ -34,9 +34,9 @@ class MercadoPagoSyncService {
   private baseUrl: string;
 
   constructor() {
-    // En producción, estos valores vendrían de variables de entorno
-    this.accessToken = process.env.REACT_APP_MERCADOPAGO_ACCESS_TOKEN || '';
-    this.baseUrl = process.env.REACT_APP_MERCADOPAGO_API_URL || 'https://api.mercadopago.com';
+    // En Vite, las variables de entorno se acceden a través de import.meta.env
+    this.accessToken = import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN || '';
+    this.baseUrl = import.meta.env.VITE_MERCADOPAGO_API_URL || 'https://api.mercadopago.com';
   }
 
   // Sincronizar pagos desde MercadoPago

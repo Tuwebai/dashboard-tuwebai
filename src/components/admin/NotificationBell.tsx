@@ -136,9 +136,9 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
             }
             break;
           case 'ticket':
-            // Navegar a la página de tickets
-            console.log('🔔 [NotificationBell] Navegando a tickets');
-            window.location.href = '/admin/tickets';
+            // Navegar a la página de tickets del admin
+            console.log('🔔 [NotificationBell] Navegando a tickets del admin');
+            window.location.href = '/admin#tickets';
             break;
           case 'payment':
             // Navegar a la página de pagos

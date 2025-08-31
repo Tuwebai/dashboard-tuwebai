@@ -101,8 +101,8 @@ class MercadoPagoWebhookHandler {
   // Obtener información del pago desde MercadoPago
   private async getPaymentFromMercadoPago(paymentId: number): Promise<any> {
     try {
-      const accessToken = process.env.REACT_APP_MERCADOPAGO_ACCESS_TOKEN;
-      const baseUrl = process.env.REACT_APP_MERCADOPAGO_API_URL || 'https://api.mercadopago.com';
+          const accessToken = import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN;
+    const baseUrl = import.meta.env.VITE_MERCADOPAGO_API_URL || 'https://api.mercadopago.com';
       
       if (!accessToken) {
         throw new Error('Token de acceso de MercadoPago no configurado');

@@ -13,8 +13,8 @@
 
 ```bash
 # MercadoPago Configuration
-REACT_APP_MERCADOPAGO_ACCESS_TOKEN=your_mercadopago_access_token_here
-REACT_APP_MERCADOPAGO_API_URL=https://api.mercadopago.com
+VITE_MERCADOPAGO_ACCESS_TOKEN=your_mercadopago_access_token_here
+VITE_MERCADOPAGO_API_URL=https://api.mercadopago.com
 
 # Supabase Configuration (ya configurado)
 VITE_SUPABASE_URL=your_supabase_url_here
@@ -185,6 +185,23 @@ En producción, implementar:
 - [ ] Notificaciones por email
 - [ ] Reportes de sincronización
 - [ ] Dashboard de administración
+
+## 🚀 Despliegue en Netlify
+
+### 1. Configurar Variables de Entorno
+
+En tu dashboard de Netlify, ve a **Site settings** > **Environment variables** y agrega:
+
+```bash
+VITE_MERCADOPAGO_ACCESS_TOKEN=tu_token_aqui
+VITE_MERCADOPAGO_API_URL=https://api.mercadopago.com
+```
+
+### 2. Verificar Configuración
+
+- Asegúrate de que las variables estén configuradas antes del build
+- Las variables con prefijo `VITE_` estarán disponibles en el frontend
+- Reinicia el build después de agregar nuevas variables
 
 ## 📞 Soporte
 
