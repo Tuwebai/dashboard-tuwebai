@@ -333,16 +333,9 @@ export default function AdminCollaborationPage() {
       setMessages(prev => [...prev, data]);
       setNewMessage('');
       
-             // Enviar notificación al cliente (solo para el cliente, no para el admin)
-       try {
-
-           user_id: project?.created_by,
-           sender_id: user.id,
-           sender_name: user.full_name || user.email,
-           project_name: project?.name
-         });
-         
-                 // Crear notificación para el cliente
+      // Enviar notificación al cliente (solo para el cliente, no para el admin)
+      try {
+        // Crear notificación para el cliente
         const notificationData = {
           user_id: project?.created_by, // ID del cliente
           title: 'Nuevo mensaje del admin',

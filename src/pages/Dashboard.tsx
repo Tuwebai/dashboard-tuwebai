@@ -164,7 +164,7 @@ const FASES = [
 ];
 
 export default function Dashboard() {
-  const { user, projects, updateProject, addCommentToPhase, loading } = useApp();
+  const { user, projects, updateProject, addCommentToPhase, deleteProject, loading } = useApp();
   const navigate = useNavigate();
   
   // Configurar actualizaciones en tiempo real
@@ -465,6 +465,25 @@ export default function Dashboard() {
         title: 'Error', 
         description: 'No se pudo cargar la información del proyecto.', 
         variant: 'destructive' 
+      });
+    }
+  };
+
+  // Función para eliminar proyecto
+  const handleDeleteProject = async (projectId: string) => {
+    try {
+      await deleteProject(projectId);
+      toast({
+        title: '✅ Proyecto eliminado',
+        description: 'El proyecto ha sido eliminado exitosamente',
+        duration: 3000
+      });
+    } catch (error) {
+      toast({
+        title: '❌ Error al eliminar',
+        description: 'No se pudo eliminar el proyecto. Inténtalo de nuevo.',
+        variant: 'destructive',
+        duration: 5000
       });
     }
   };
@@ -1226,6 +1245,7 @@ export default function Dashboard() {
                               user={user}
                               projectCreators={projectCreators}
                               onViewProject={handleViewProject}
+                              onDeleteProject={handleDeleteProject}
                               onNavigateToCollaboration={(projectId) => {
                                 const url = `/proyectos/${projectId}/colaboracion-cliente`;
                                 try {
@@ -1260,6 +1280,7 @@ export default function Dashboard() {
                         user={user}
                         projectCreators={projectCreators}
                         onViewProject={handleViewProject}
+                        onDeleteProject={handleDeleteProject}
                         onNavigateToCollaboration={(projectId) => {
                           const url = `/proyectos/${projectId}/colaboracion-cliente`;
                           try {

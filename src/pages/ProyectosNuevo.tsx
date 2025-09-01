@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, FileText, Calendar, UploadCloud, AlertCircle, Info, Star, Trash2 } from 'lucide-react';
 import { useRef } from 'react';
+import ProjectTypeSelector from '@/components/ProjectTypeSelector';
+import { ProjectType } from '@/utils/projectTypeDetector';
 
 // Componente wrapper para usar como página
 export default function ProyectosNuevo() {
@@ -35,6 +37,7 @@ function ProyectosNuevoModal({ open, onClose }: { open: boolean; onClose: () => 
   const [fechaInicio, setFechaInicio] = useState('');
   const [prioridad, setPrioridad] = useState('Media');
   const [adjuntos, setAdjuntos] = useState<File[]>([]);
+  const [selectedProjectType, setSelectedProjectType] = useState<ProjectType | null>(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0);
   const steps = [
@@ -126,7 +129,8 @@ function ProyectosNuevoModal({ open, onClose }: { open: boolean; onClose: () => 
         description: descripcion,
         technologies: [],
         status: 'development' as const,
-        is_active: true
+        is_active: true,
+        type: selectedProjectType?.name || undefined
       };
       
       // Crear proyecto usando el contexto
@@ -299,6 +303,24 @@ function ProyectosNuevoModal({ open, onClose }: { open: boolean; onClose: () => 
                             <div className="flex items-center gap-1 text-xs text-red-500 mt-2"><AlertCircle className="w-4 h-4" />{errors.descripcion}</div>
                           )}
                         </div>
+
+                        {/* Selector de tipo de proyecto */}
+                        <div className="relative">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Tipo de proyecto
+                            <span className="text-slate-500 text-xs ml-1">(opcional - se detecta automáticamente)</span>
+                          </label>
+                          <ProjectTypeSelector
+                            selectedType={selectedProjectType?.name}
+                            onTypeSelect={setSelectedProjectType}
+                            projectData={{
+                              name: nombreProyecto,
+                              description: descripcion,
+                              technologies: []
+                            }}
+                            className="border border-slate-200 rounded-lg p-4 bg-slate-50"
+                          />
+                        </div>
                       </motion.div>
                     )}
                     {step === 1 && (
@@ -425,7 +447,7 @@ function ProyectosNuevoModal({ open, onClose }: { open: boolean; onClose: () => 
                             <div className="flex items-center gap-2">
                               <Star className="w-5 h-5 text-yellow-500" />
                               <span className="font-medium text-slate-700">Tipo:</span>
-                              <span className="text-slate-600">{tipoSitio}</span>
+                              <span className="text-slate-600">{selectedProjectType?.name || tipoSitio || 'Se detectará automáticamente'}</span>
                             </div>
                             <div className="flex items-center gap-2 col-span-1 sm:col-span-2">
                               <Info className="w-5 h-5 text-cyan-500" />

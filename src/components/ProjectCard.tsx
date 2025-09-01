@@ -29,9 +29,13 @@ import {
   Star,
   MoreVertical,
   GripVertical,
-  XCircle
+  XCircle,
+  Trash2
 } from 'lucide-react';
 import { formatDateSafe } from '@/utils/formatDateSafe';
+import { getTypeById, PROJECT_TYPES } from '@/utils/projectTypeDetector';
+import { toast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 interface ProjectPhase {
   key: string;
@@ -126,6 +130,31 @@ const getStatusIcon = (status: string) => {
 
 // Función para obtener el icono contextual del tipo de proyecto
 const getProjectTypeIcon = (type: string) => {
+  // Buscar el tipo en la lista de tipos predefinidos
+  const projectType = PROJECT_TYPES.find(t => 
+    t.name.toLowerCase() === type.toLowerCase() ||
+    t.id === type.toLowerCase().replace(/\s+/g, '-')
+  );
+  
+  if (projectType) {
+    // Mapear iconos por ID del tipo
+    switch (projectType.id) {
+      case 'landing-page': return <Globe className="h-4 w-4" />;
+      case 'ecommerce': return <ShoppingCart className="h-4 w-4" />;
+      case 'corporate': return <Briefcase className="h-4 w-4" />;
+      case 'portfolio': return <User className="h-4 w-4" />;
+      case 'blog': return <MessageSquare className="h-4 w-4" />;
+      case 'mobile-app': return <Smartphone className="h-4 w-4" />;
+      case 'web-app': return <Laptop className="h-4 w-4" />;
+      case 'ui-ux': return <Palette className="h-4 w-4" />;
+      case 'development': return <Code className="h-4 w-4" />;
+      case 'database': return <Database className="h-4 w-4" />;
+      case 'api': return <Zap className="h-4 w-4" />;
+      default: return <Home className="h-4 w-4" />;
+    }
+  }
+  
+  // Fallback para tipos no reconocidos
   switch (type?.toLowerCase()) {
     case 'landing page':
     case 'landing':
@@ -166,6 +195,31 @@ const getProjectTypeIcon = (type: string) => {
 
 // Función para obtener el color del tipo de proyecto
 const getProjectTypeColor = (type: string) => {
+  // Buscar el tipo en la lista de tipos predefinidos
+  const projectType = PROJECT_TYPES.find(t => 
+    t.name.toLowerCase() === type.toLowerCase() ||
+    t.id === type.toLowerCase().replace(/\s+/g, '-')
+  );
+  
+  if (projectType) {
+    // Mapear colores por ID del tipo
+    switch (projectType.id) {
+      case 'landing-page': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+      case 'ecommerce': return 'bg-green-500/10 text-green-600 border-green-500/20';
+      case 'corporate': return 'bg-purple-500/10 text-purple-600 border-purple-500/20';
+      case 'portfolio': return 'bg-pink-500/10 text-pink-600 border-pink-500/20';
+      case 'blog': return 'bg-orange-500/10 text-orange-600 border-orange-500/20';
+      case 'mobile-app': return 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20';
+      case 'web-app': return 'bg-cyan-500/10 text-cyan-600 border-cyan-500/20';
+      case 'ui-ux': return 'bg-rose-500/10 text-rose-600 border-rose-500/20';
+      case 'development': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+      case 'database': return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
+      case 'api': return 'bg-violet-500/10 text-violet-600 border-violet-500/20';
+      default: return 'bg-slate-500/10 text-slate-600 border-slate-500/20';
+    }
+  }
+  
+  // Fallback para tipos no reconocidos
   switch (type?.toLowerCase()) {
     case 'landing page':
     case 'landing':
@@ -237,12 +291,14 @@ export default function ProjectCard({
   isDragDisabled = false,
   dragMode = false
 }: ProjectCardProps) {
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const progress = calculateProjectProgress(project);
   const status = getProjectStatus(project);
   const totalComments = project.fases?.reduce((total: number, fase: ProjectPhase) => 
     total + (fase.comentarios?.length || 0), 0) || 0;
   const isUrgent = isProjectUrgent(project);
   const projectType = project.type || 'Sin tipo';
+  
   const approvalStatus = project.approval_status || 'approved'; // Por defecto aprobado para proyectos existentes
   const isPendingApproval = approvalStatus === 'pending';
   const isRejected = approvalStatus === 'rejected';
@@ -326,6 +382,21 @@ export default function ProjectCard({
                 </Button>
               )}
               
+              {/* Botón de eliminar - AL LADO DEL BOTÓN DE FAVORITOS */}
+              {onDeleteProject && isRejected && user?.role !== 'admin' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeleteDialog(true);
+                  }}
+                  className="h-8 w-8 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50 hover:shadow-md hover:scale-110 transition-all duration-300 ease-out rounded-full"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+              
               {user?.role === 'admin' && (
                 <>
                   {onDuplicateProject && (
@@ -396,10 +467,16 @@ export default function ProjectCard({
                 </Badge>
               )}
               
-              <Badge variant="outline" className={`${getProjectTypeColor(projectType)} text-xs px-3 py-1.5 font-medium shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 ease-out`}>
+              <Badge 
+                variant="outline" 
+                className={`${getProjectTypeColor(projectType)} text-xs px-3 py-1.5 font-medium shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 ease-out`}
+                title={`Tipo de proyecto: ${projectType}`}
+              >
                 {getProjectTypeIcon(projectType)}
                 <span className="ml-1.5">{projectType}</span>
               </Badge>
+              
+
             </div>
             
             {!isPendingApproval && !isRejected && (
@@ -522,21 +599,10 @@ export default function ProjectCard({
                         Editar
                       </Button>
                     )}
-                    {onDeleteProject && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 hover:shadow-md hover:scale-105 text-xs font-medium transition-all duration-300 ease-out"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteProject(project.id);
-                        }}
-                      >
-                        Eliminar
-                      </Button>
-                    )}
                   </>
                 )}
+                
+
               </>
             )}
             
@@ -602,5 +668,72 @@ export default function ProjectCard({
     );
   }
 
-  return cardContent;
+  return (
+    <>
+      {cardContent}
+      
+      {/* Diálogo de confirmación para eliminar proyecto */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              Eliminar proyecto
+            </DialogTitle>
+            <DialogDescription className="text-slate-600">
+              {user?.role === 'admin' ? (
+                <>
+                  ¿Estás seguro de que quieres eliminar el proyecto <strong>"{project.name}"</strong>?
+                  <br />
+                  <span className="text-red-600 font-medium">Esta acción no se puede deshacer.</span>
+                </>
+              ) : (
+                <>
+                  ¿Estás seguro de que quieres eliminar tu proyecto rechazado <strong>"{project.name}"</strong>?
+                  <br />
+                  <span className="text-red-600 font-medium">Esta acción no se puede deshacer.</span>
+                  <br />
+                  <span className="text-amber-600 font-medium">Solo puedes eliminar proyectos que han sido rechazados.</span>
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              className="border-slate-300 text-slate-600 hover:bg-slate-50"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                try {
+                  await onDeleteProject?.(project.id);
+                  setShowDeleteDialog(false);
+                  toast({
+                    title: '✅ Proyecto eliminado',
+                    description: 'El proyecto ha sido eliminado exitosamente',
+                    duration: 3000
+                  });
+                } catch (error) {
+                  toast({
+                    title: '❌ Error al eliminar',
+                    description: 'No se pudo eliminar el proyecto. Inténtalo de nuevo.',
+                    variant: 'destructive',
+                    duration: 5000
+                  });
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Eliminar definitivamente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }

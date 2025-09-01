@@ -99,13 +99,8 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
   // Manejar clic en notificación
   const handleNotificationClick = async (notification: Notification) => {
     try {
-
-        id: notification.id,
-        title: notification.title,
-        action_url: notification.action_url,
-        category: notification.category,
-        metadata: notification.metadata
-      });
+      // Marcar la notificación como leída
+      await markAsRead(notification.id);
 
       // Si la notificación tiene una URL de acción, navegar a ella
       if (notification.action_url) {
@@ -156,10 +151,6 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
             break;
         }
       }
-      
-      // Después de ejecutar la acción, marcar como leída
-
-      await markAsRead(notification.id);
       
     } catch (error) {
       console.error('Error handling notification click:', error);

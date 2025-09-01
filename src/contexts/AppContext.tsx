@@ -621,7 +621,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       
-      await projectService.deleteProject(id);
+      if (!user?.id) {
+        throw new Error('ID de usuario inválido. No se puede eliminar el proyecto.');
+      }
+      
+      await projectService.deleteProject(id, user.id, user.role);
+      
+      // Actualizar el estado local inmediatamente
+      setProjects(prevProjects => prevProjects.filter(p => p.id !== id));
       
       // Limpiar cache de proyectos
       if (user) {
@@ -630,6 +637,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
     } catch (error) {
       setError('Error al eliminar el proyecto');
+      throw error;
     } finally {
       setLoading(false);
     }

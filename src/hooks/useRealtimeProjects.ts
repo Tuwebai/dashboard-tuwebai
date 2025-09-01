@@ -71,9 +71,18 @@ export function useRealtimeProjects() {
     let channel: any = null;
     let retryCount = 0;
     const maxRetries = 3;
+    let isCleaningUp = false;
 
-    const setupChannel = () => {
+        const setupChannel = () => {
       try {
+        // Evitar crear canal si ya estamos limpiando
+        if (isCleaningUp) return;
+        
+        // Limpiar canal existente antes de crear uno nuevo
+        if (channel) {
+          supabase.removeChannel(channel).catch(() => {});
+        }
+        
         channel = supabase
           .channel(`projects-changes-${user.id}`)
           .on(
@@ -85,39 +94,38 @@ export function useRealtimeProjects() {
               filter: user.role === 'admin' ? undefined : `created_by=eq.${user.id}`
             },
             (payload) => {
-
               handleProjectUpdate(payload);
             }
           )
           .subscribe((status) => {
-
             if (status === 'SUBSCRIBED') {
-
               retryCount = 0; // Reset retry count on success
             } else if (status === 'CHANNEL_ERROR') {
-              console.error('❌ Error en listener de tiempo real');
               if (retryCount < maxRetries) {
                 retryCount++;
-
                 setTimeout(setupChannel, 2000 * retryCount);
-              } else {
-                console.error('❌ Máximo de reintentos alcanzado, deshabilitando Realtime');
               }
-            } else if (status === 'CLOSED') {
-
             }
           });
       } catch (error) {
-        console.error('❌ Error configurando canal de Realtime:', error);
+        // Error silencioso para evitar spam en consola
       }
     };
 
     setupChannel();
 
     return () => {
-
+      isCleaningUp = true;
       if (channel) {
-        supabase.removeChannel(channel);
+        try {
+          // removeChannel es asíncrono, pero no esperamos el resultado
+          supabase.removeChannel(channel).catch(() => {
+            // Ignorar errores de WebSocket al cerrar
+          });
+          channel = null;
+        } catch (error) {
+          // Ignorar errores de WebSocket al cerrar
+        }
       }
     };
   }, [user?.id, user?.role, handleProjectUpdate]);

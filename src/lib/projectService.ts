@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { Project, CreateProjectData, UpdateProjectData, ProjectFilters, ProjectSort, ProjectVersion, ChangeLog } from '@/types/project.types';
+import { detectProjectType } from '../utils/projectTypeDetector';
 
 // =====================================================
 // SERVICIO DE PROYECTOS COMPLETAMENTE INTEGRADO CON SUPABASE
@@ -126,6 +127,13 @@ export const projectService = {
       // Determinar el estado de aprobación basado en el rol del usuario
       const approvalStatus = userData.role === 'admin' ? 'approved' : 'pending';
 
+      // Detectar automáticamente el tipo de proyecto
+      const detectedType = detectProjectType({
+        name: projectData.name,
+        description: projectData.description,
+        technologies: projectData.technologies
+      });
+
       // Crear proyecto con estado de aprobación según el rol
       const projectToCreate = {
         name: projectData.name,
@@ -137,6 +145,7 @@ export const projectService = {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         approval_status: approvalStatus,
+        type: detectedType.name, // Asignar tipo detectado automáticamente
         // Si es admin, marcar como aprobado por él mismo
         ...(userData.role === 'admin' && {
           approved_by: projectData.created_by,
@@ -316,6 +325,84 @@ export const projectService = {
     } catch (error) {
       console.error('Error fetching projects by technologies:', error);
       throw new Error(`Error al obtener proyectos por tecnologías: ${error.message}`);
+    }
+  },
+
+  // =====================================================
+  // ELIMINACIÓN DE PROYECTOS
+  // =====================================================
+
+  /**
+   * Eliminar un proyecto
+   * - Admin: puede eliminar cualquier proyecto
+   * - Cliente: solo puede eliminar sus propios proyectos rechazados
+   */
+  async deleteProject(projectId: string, userId: string, userRole?: string): Promise<void> {
+    try {
+      // Obtener información del proyecto y del usuario
+      const { data: project, error: fetchError } = await supabase
+        .from('projects')
+        .select('created_by, approval_status')
+        .eq('id', projectId)
+        .single();
+
+      if (fetchError) {
+        console.error('❌ Error obteniendo proyecto:', fetchError);
+        throw new Error('No se pudo encontrar el proyecto');
+      }
+
+      // Obtener el rol del usuario si no se proporciona
+      let role = userRole;
+      if (!role) {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', userId)
+          .single();
+
+        if (userError) {
+          console.error('❌ Error obteniendo rol del usuario:', userError);
+          throw new Error('No se pudo verificar el rol del usuario');
+        }
+        role = userData.role;
+      }
+
+      // Verificar permisos
+      if (role === 'admin') {
+        // Admin puede eliminar cualquier proyecto
+        const { error } = await supabase
+          .from('projects')
+          .delete()
+          .eq('id', projectId);
+
+        if (error) {
+          console.error('❌ Error eliminando proyecto (admin):', error);
+          throw new Error('Error al eliminar el proyecto');
+        }
+      } else {
+        // Cliente solo puede eliminar sus propios proyectos rechazados
+        if (project.created_by !== userId) {
+          throw new Error('No tienes permisos para eliminar este proyecto');
+        }
+
+        if (project.approval_status !== 'rejected') {
+          throw new Error('Solo puedes eliminar proyectos que han sido rechazados');
+        }
+
+        const { error } = await supabase
+          .from('projects')
+          .delete()
+          .eq('id', projectId)
+          .eq('created_by', userId);
+
+        if (error) {
+          console.error('❌ Error eliminando proyecto (cliente):', error);
+          throw new Error('Error al eliminar el proyecto');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error en deleteProject:', error);
+      throw error;
     }
   },
 
