@@ -31,7 +31,10 @@ import {
   Eye,
   RefreshCw,
   UserCog,
-  Cog
+  Cog,
+  FileText,
+  Activity,
+  Download
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { notificationService } from '@/lib/notificationService';
@@ -44,6 +47,10 @@ import AdvancedTicketManager from '@/components/AdvancedTicketManager';
 import AutoVersionCreator from '@/components/admin/AutoVersionCreator';
 import AdvancedTools from '@/components/admin/AdvancedTools';
 import { VersionManagement } from '@/components/admin/VersionManagement';
+import AdvancedReportsManager from '@/components/admin/AdvancedReportsManager';
+import RealTimeMetrics from '@/components/admin/RealTimeMetrics';
+import DataExportSystem from '@/components/admin/DataExportSystem';
+import { ChartDashboard, RealTimeCharts } from '@/components/AdvancedCharts';
 
 
 
@@ -729,20 +736,14 @@ export default function Admin() {
                          {usuariosActivos}
                        </Badge>
                      </Button>
-                     <Button 
-                       variant="outline" 
-                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
-                       onClick={() => {
-                         // Ir a la página de proyectos con filtro por usuario
-                         if (selectedUser) {
-                           window.location.href = `/proyectos?user=${selectedUser.id}`;
-                         } else {
-                           // Si no hay usuario seleccionado, ir a todos los proyectos
-                           setActiveSection('proyectos');
-                           window.location.hash = 'proyectos';
-                         }
-                       }}
-                     >
+                                           <Button 
+                        variant="outline" 
+                        className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
+                        onClick={() => {
+                          setActiveSection('proyectos');
+                          window.location.hash = 'proyectos';
+                        }}
+                      >
                        <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-emerald-100 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white mr-6">
                          <FolderOpen size={28} />
                        </div>
@@ -804,6 +805,101 @@ export default function Admin() {
                          Analytics Avanzado
                        </span>
                        <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-indigo-500 text-white shadow-lg group-hover:bg-indigo-600 group-hover:scale-105">
+                         <BarChart3 size={16} />
+                       </Badge>
+                     </Button>
+
+                     <Button 
+                       variant="outline" 
+                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
+                       onClick={() => {
+                         setActiveSection('reports-analytics');
+                         window.location.hash = 'reports-analytics';
+                       }}
+                     >
+                       <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-purple-100 text-purple-600 group-hover:bg-purple-500 group-hover:text-white mr-6">
+                         <FileText size={28} />
+                       </div>
+                       <span className="text-slate-700 font-bold text-lg group-hover:text-slate-900 transition-colors duration-300">
+                         Reportes & Analytics
+                       </span>
+                       <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-purple-500 text-white shadow-lg group-hover:bg-purple-600 group-hover:scale-105">
+                         <FileText size={16} />
+                       </Badge>
+                     </Button>
+
+                     <Button 
+                       variant="outline" 
+                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
+                       onClick={() => {
+                         setActiveSection('real-time-metrics');
+                         window.location.hash = 'real-time-metrics';
+                       }}
+                     >
+                       <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-green-100 text-green-600 group-hover:bg-green-500 group-hover:text-white mr-6">
+                         <Activity size={28} />
+                       </div>
+                       <span className="text-slate-700 font-bold text-lg group-hover:text-slate-900 transition-colors duration-300">
+                         Métricas en Tiempo Real
+                       </span>
+                       <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-green-500 text-white shadow-lg group-hover:bg-green-600 group-hover:scale-105">
+                         <Activity size={16} />
+                       </Badge>
+                     </Button>
+
+                     <Button 
+                       variant="outline" 
+                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
+                       onClick={() => {
+                         setActiveSection('data-export');
+                         window.location.hash = 'data-export';
+                       }}
+                     >
+                       <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-orange-100 text-orange-600 group-hover:bg-orange-500 group-hover:text-white mr-6">
+                         <Download size={28} />
+                       </div>
+                       <span className="text-slate-700 font-bold text-lg group-hover:text-slate-900 transition-colors duration-300">
+                         Exportación de Datos
+                       </span>
+                       <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-orange-500 text-white shadow-lg group-hover:bg-orange-600 group-hover:scale-105">
+                         <Download size={16} />
+                       </Badge>
+                     </Button>
+
+                     <Button 
+                       variant="outline" 
+                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
+                       onClick={() => {
+                         setActiveSection('advanced-charts');
+                         window.location.hash = 'advanced-charts';
+                       }}
+                     >
+                       <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-pink-100 text-pink-600 group-hover:bg-pink-500 group-hover:text-white mr-6">
+                         <BarChart3 size={28} />
+                       </div>
+                       <span className="text-slate-700 font-bold text-lg group-hover:text-slate-900 transition-colors duration-300">
+                         Gráficos Avanzados
+                       </span>
+                       <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-pink-500 text-white shadow-lg group-hover:bg-pink-600 group-hover:scale-105">
+                         <BarChart3 size={16} />
+                       </Badge>
+                     </Button>
+
+                     <Button 
+                       variant="outline" 
+                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
+                       onClick={() => {
+                         setActiveSection('chart-dashboard');
+                         window.location.hash = 'chart-dashboard';
+                       }}
+                     >
+                       <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-cyan-100 text-cyan-600 group-hover:bg-cyan-500 group-hover:text-white mr-6">
+                         <BarChart3 size={28} />
+                       </div>
+                       <span className="text-slate-700 font-bold text-lg group-hover:text-slate-900 transition-colors duration-300">
+                         Dashboard Personalizable
+                       </span>
+                       <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-cyan-500 text-white shadow-lg group-hover:bg-cyan-600 group-hover:scale-105">
                          <BarChart3 size={16} />
                        </Badge>
                      </Button>
@@ -1092,10 +1188,7 @@ export default function Admin() {
             {activeSection === 'advanced-analytics' && (
                 <div className="h-full flex flex-col">
                   <div className="flex-1 overflow-y-auto">
-              <ExecutiveCharts 
-                refreshData={loadData}
-                lastUpdate={lastUpdate}
-              />
+              <RealTimeCharts />
                   </div>
                 </div>
             )}
@@ -1116,9 +1209,27 @@ export default function Admin() {
               <VersionManagement projectId={proyectos.length > 0 ? proyectos[0].id : undefined} />
             )}
 
+            {activeSection === 'reports-analytics' && (
+              <AdvancedReportsManager />
+            )}
+
+            {activeSection === 'real-time-metrics' && (
+              <RealTimeMetrics />
+            )}
+
+            {activeSection === 'data-export' && (
+              <DataExportSystem />
+            )}
+
+            {activeSection === 'advanced-charts' && (
+              <RealTimeCharts />
+            )}
+
+            {activeSection === 'chart-dashboard' && (
+              <ChartDashboard />
+            )}
+
             
-
-
 
             {activeSection === 'notifications' && (
               <NotificationsManager />

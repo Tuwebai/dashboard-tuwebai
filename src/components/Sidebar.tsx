@@ -323,8 +323,6 @@ export default function Sidebar() {
               <div className="h-px bg-gradient-to-r from-gray-200 to-transparent mb-2"></div>
               <div className="space-y-1">
                 {adminNavItem('advanced-analytics', <BarChart size={18} />, t('Analytics Avanzado'))}
-                {adminNavItem('version-management', <GitBranch size={18} />, 'Gestión de Versiones')}
-
               </div>
             </div>
 
@@ -335,7 +333,6 @@ export default function Sidebar() {
               <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2 mb-2">Sistema</div>
               <div className="h-px bg-gradient-to-r from-gray-200 to-transparent mb-2"></div>
               <div className="space-y-1">
-                {navItem('/environment', <Key size={18} />, 'Variables de Entorno')}
                 {adminNavItem('notifications', <Bell size={18} />, 'Notificaciones')}
                 {navItem('/configuracion', <Settings size={18} />, 'Configuración')}
               </div>

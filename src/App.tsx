@@ -38,6 +38,7 @@ const Soporte = lazy(() => import('./pages/Soporte'));
 const Team = lazy(() => import('./pages/Team'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const AdvancedAnalytics = lazy(() => import('./components/AdvancedAnalytics'));
+const RealTimeCharts = lazy(() => import('./components/AdvancedCharts/RealTimeCharts'));
 const CustomizableDashboard = lazy(() => import('./components/CustomizableDashboard'));
 const AdvancedUserManagement = lazy(() => import('./components/AdvancedUserManagement'));
 const InvitationPage = lazy(() => import('./pages/InvitationPage'));

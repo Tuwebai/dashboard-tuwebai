@@ -30,15 +30,15 @@ self.addEventListener('activate', (event) => {
   console.log('🔄 Service Worker activado');
   event.waitUntil(
     caches.keys().then(cacheNames => {
-      return Promise.all(
+        return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
             console.log('🗑️ Eliminando cache antiguo:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
   );
   self.clients.claim();
 });
@@ -59,7 +59,7 @@ self.addEventListener('push', function(event) {
       
       event.waitUntil(
         self.registration.showNotification(notification.title, options)
-          .then(() => {
+      .then(() => {
             console.log('✅ Notificación mostrada');
             // Cachear la notificación
             cacheNotification(notification);
@@ -362,7 +362,7 @@ self.addEventListener('message', function(event) {
     case 'GET_NOTIFICATIONS':
       // Enviar notificaciones cacheadas al cliente
       getCachedNotifications().then(notifications => {
-        event.ports[0].postMessage({
+      event.ports[0].postMessage({
           type: 'CACHED_NOTIFICATIONS',
           notifications: notifications
         });
