@@ -1,17 +1,17 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { productionConfig, isDevelopment } from '@/config/production';
 
-// Configuración de Supabase usando variables de entorno o configuración de producción
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || productionConfig.supabase.url;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || productionConfig.supabase.anonKey;
+// Configuración de Supabase usando variables de entorno
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Verificar configuración
+console.log('🔧 URL de Supabase:', supabaseUrl);
+console.log('🔧 Clave configurada:', supabaseAnonKey ? 'Sí' : 'No');
+
+// Verificar que las variables estén definidas
 if (!supabaseUrl || !supabaseAnonKey) {
-  if (isDevelopment()) {
-    console.warn('⚠️ Variables de entorno de Supabase no configuradas, usando configuración de producción');
-  } else {
-    throw new Error('Faltan las variables de entorno de Supabase: VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY');
-  }
+  console.error('❌ Variables de entorno de Supabase no encontradas');
+  console.error('VITE_SUPABASE_URL:', supabaseUrl);
+  console.error('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Presente' : 'Faltante');
 }
 
 // Patrón Singleton para evitar múltiples instancias de GoTrueClient
@@ -63,34 +63,16 @@ const createCustomStorage = () => {
 // Función para obtener o crear la instancia única de Supabase
 const getSupabaseClient = (): SupabaseClient => {
   if (!supabaseInstance) {
+    console.log('🚀 Creando cliente de Supabase...');
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: true,
-        flowType: 'pkce',
-        // Configuración específica para evitar múltiples instancias
-        storage: createCustomStorage(),
-        storageKey: 'tuwebai-supabase-auth'
-      },
-      realtime: {
-        params: {
-          eventsPerSecond: 10
-        }
-      },
-      global: {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-        }
-      },
-      db: {
-        schema: 'public'
+        flowType: 'pkce'
       }
     });
+    console.log('✅ Cliente de Supabase creado exitosamente');
   }
   return supabaseInstance;
 };
