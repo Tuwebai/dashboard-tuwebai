@@ -109,7 +109,7 @@ export class AppErrorHandler {
   }
 
   // Manejar errores genéricos
-  private handleGenericError(error: any, context: string): void {
+  public handleGenericError(error: any, context: string): void {
     const message = error?.message || error?.details || 'Error desconocido';
     
     toast({
@@ -194,7 +194,6 @@ export const setupErrorHandler = () => {
     errorHandler.handleGenericError(event.reason, 'Promesa Rechazada');
   });
 
-  console.log('✅ Manejador de errores configurado');
 };
 
 // Función para crear fallbacks de error

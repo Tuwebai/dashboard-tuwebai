@@ -39,7 +39,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { notificationService } from '@/lib/notificationService';
 import { ProjectsManagement } from '@/components/admin/ProjectsManagement';
-import NotificationsManager from '@/components/admin/NotificationsManager';
+import AdminNotifications from '@/pages/AdminNotifications';
 import NotificationBell from '@/components/admin/NotificationBell';
 import ExecutiveCharts from '@/components/admin/ExecutiveCharts';
 import AutomationSystem from '@/components/admin/AutomationSystem';
@@ -1155,7 +1155,7 @@ export default function Admin() {
             
 
             {activeSection === 'notifications' && (
-              <NotificationsManager />
+              <AdminNotifications />
             )}
 
             {activeSection === 'settings' && (
