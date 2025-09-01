@@ -2,10 +2,10 @@
 // Este archivo se usa cuando las variables de entorno no están configuradas
 
 export const productionConfig = {
-  // Configuración de Supabase para producción
+  // Configuración de Supabase para producción - LEE DESDE VARIABLES DE ENTORNO
   supabase: {
-    url: 'https://xebnhwjzchrsbhzbtlsg.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlYm5od2p6Y2hyc2JoemJ0bHNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5NzQ4MDAsImV4cCI6MjA1MDU1MDgwMH0.placeholder_key'
+    url: import.meta.env.VITE_SUPABASE_URL || '',
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || ''
   },
   
   // Configuración de la aplicación
@@ -36,6 +36,11 @@ export const productionConfig = {
 
 // Función para obtener configuración de producción
 export const getProductionConfig = () => {
+  // Validar que las variables de entorno estén configuradas
+  if (!productionConfig.supabase.url || !productionConfig.supabase.anonKey) {
+    throw new Error('❌ Variables de entorno VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY son requeridas');
+  }
+  
   return productionConfig;
 };
 

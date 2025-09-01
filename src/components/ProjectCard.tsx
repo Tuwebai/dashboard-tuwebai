@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Draggable } from 'react-beautiful-dnd';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -26,7 +27,9 @@ import {
   Copy,
   Archive,
   Star,
-  MoreVertical
+  MoreVertical,
+  GripVertical,
+  XCircle
 } from 'lucide-react';
 import { formatDateSafe } from '@/utils/formatDateSafe';
 
@@ -75,6 +78,8 @@ interface ProjectCardProps {
   onToggleFavorite?: (projectId: string) => void;
   showAdminActions?: boolean;
   index?: number;
+  isDragDisabled?: boolean;
+  dragMode?: boolean;
 }
 
 // Función para calcular progreso del proyecto
@@ -228,7 +233,9 @@ export default function ProjectCard({
   onArchiveProject,
   onToggleFavorite,
   showAdminActions = false,
-  index = 0
+  index = 0,
+  isDragDisabled = false,
+  dragMode = false
 }: ProjectCardProps) {
   const progress = calculateProjectProgress(project);
   const status = getProjectStatus(project);
@@ -240,7 +247,7 @@ export default function ProjectCard({
   const isPendingApproval = approvalStatus === 'pending';
   const isRejected = approvalStatus === 'rejected';
 
-  return (
+  const cardContent = (
     <motion.div
       key={project.id}
       initial={{ opacity: 0, y: 20 }}
@@ -257,8 +264,8 @@ export default function ProjectCard({
       <div 
         className={`bg-white rounded-2xl shadow-lg border border-slate-200/50 hover:shadow-2xl hover:border-slate-300/50 transition-all duration-300 overflow-hidden relative w-full h-[480px] flex flex-col group ${
           isPendingApproval || isRejected ? 'cursor-default opacity-75' : 'cursor-pointer'
-        }`}
-        onClick={() => !isPendingApproval && !isRejected && onViewProject(project)}
+        } ${dragMode ? 'ring-2 ring-blue-500 ring-opacity-50' : ''}`}
+        onClick={() => !isPendingApproval && !isRejected && !dragMode && onViewProject(project)}
       >
         {/* Barra superior de gradiente animado */}
         <div className={`absolute top-0 left-0 w-full h-1.5 rounded-t-2xl transition-all duration-300 group-hover:h-2 ${
@@ -276,6 +283,11 @@ export default function ProjectCard({
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2">
+                {dragMode && (
+                  <div className="flex items-center justify-center w-6 h-6 text-slate-400 hover:text-slate-600 cursor-grab active:cursor-grabbing transition-colors duration-200">
+                    <GripVertical className="h-4 w-4" />
+                  </div>
+                )}
                 <h3 className="text-lg font-bold text-slate-800 truncate">{project.name}</h3>
                 {isUrgent && (
                   <Badge variant="destructive" className="text-xs animate-pulse">
@@ -538,4 +550,28 @@ export default function ProjectCard({
       </div>
     </motion.div>
   );
+
+  // Si está en modo drag, envolver con Draggable
+  if (dragMode) {
+    return (
+      <Draggable 
+        draggableId={project.id} 
+        index={index} 
+        isDragDisabled={isDragDisabled}
+      >
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            className={`${snapshot.isDragging ? 'rotate-2 scale-105 shadow-2xl' : ''} transition-all duration-200`}
+          >
+            {cardContent}
+          </div>
+        )}
+      </Draggable>
+    );
+  }
+
+  return cardContent;
 }

@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { Navigate } from 'react-router-dom';
+import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -42,7 +43,10 @@ import {
   Pause,
   Archive,
   Trash2,
-  Copy
+  Copy,
+  GripVertical,
+  Keyboard,
+  HelpCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -53,6 +57,7 @@ import ProjectCard from '@/components/ProjectCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { userService } from '@/lib/supabaseService';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
 // Estilos CSS personalizados para animaciones
 const customStyles = `
@@ -174,6 +179,9 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
   const [bulkActionMode, setBulkActionMode] = useState(false);
+  const [dragMode, setDragMode] = useState(false);
+  const [projectOrder, setProjectOrder] = useState<string[]>([]);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation();
 
   // Función para calcular progreso del proyecto
@@ -293,7 +301,18 @@ export default function Dashboard() {
       filtered = filtered.filter(project => getProjectStatus(project) === statusFilter);
     }
 
-    // Ordenamiento
+    // Si hay orden personalizado (drag & drop), aplicarlo
+    if (dragMode && projectOrder.length > 0) {
+      const orderedProjects = projectOrder
+        .map(id => filtered.find(p => p.id === id))
+        .filter(Boolean) as Project[];
+      
+      // Agregar proyectos que no están en el orden personalizado
+      const remainingProjects = filtered.filter(p => !projectOrder.includes(p.id));
+      return [...orderedProjects, ...remainingProjects];
+    }
+
+    // Ordenamiento normal
     filtered.sort((a, b) => {
       let comparison = 0;
       
@@ -320,7 +339,7 @@ export default function Dashboard() {
     });
 
     return filtered;
-  }, [userProjects, searchTerm, statusFilter, sortBy, sortOrder]);
+  }, [userProjects, searchTerm, statusFilter, sortBy, sortOrder, dragMode, projectOrder]);
 
   // Estadísticas calculadas
   const dashboardStats = useMemo(() => {
@@ -583,6 +602,57 @@ export default function Dashboard() {
     toast({ title: 'Archivado', description: 'Proyecto archivado correctamente.' });
   }, []);
 
+  // Funciones para drag & drop
+  const handleToggleDragMode = useCallback(() => {
+    setDragMode(prev => !prev);
+    if (!dragMode) {
+      // Inicializar orden con el orden actual
+      setProjectOrder(filteredAndSortedProjects.map(p => p.id));
+    } else {
+      // Limpiar orden personalizado
+      setProjectOrder([]);
+    }
+  }, [dragMode, filteredAndSortedProjects]);
+
+  const handleDragEnd = useCallback((result: DropResult) => {
+    if (!result.destination) return;
+
+    const newOrder = Array.from(projectOrder);
+    const [reorderedItem] = newOrder.splice(result.source.index, 1);
+    newOrder.splice(result.destination.index, 0, reorderedItem);
+
+    setProjectOrder(newOrder);
+    
+    toast({
+      title: 'Orden actualizado',
+      description: 'Los proyectos han sido reordenados por prioridad',
+    });
+  }, [projectOrder]);
+
+  // Funciones para keyboard shortcuts
+  const handleSearchFocus = useCallback(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, []);
+
+  // Configurar keyboard shortcuts
+  const keyboardShortcuts = useKeyboardShortcuts({
+    onToggleDragMode: handleToggleDragMode,
+    onClearFilters: clearFilters,
+    onExportData: exportDashboardData,
+    onCreateProject: handleCreateProject,
+    onRefreshData: refreshData,
+    onToggleBulkMode: () => setBulkActionMode(!bulkActionMode),
+    onSelectAll: handleSelectAll,
+    onSearchFocus: handleSearchFocus,
+    isDragMode: dragMode,
+    isBulkMode: bulkActionMode,
+    hasProjects: hasValidProjects
+  });
+
+  const { showShortcutsHelp } = keyboardShortcuts;
+
   // Si es admin, redirigir al panel de admin
   if (user?.role === 'admin') {
     return <Navigate to="/admin" replace />;
@@ -832,6 +902,21 @@ export default function Dashboard() {
                     Limpiar
                   </Button>
                 </div>
+
+                {/* Barra de búsqueda */}
+                <div className="flex items-center gap-3 w-full lg:w-auto">
+                  <div className="relative flex-1 lg:flex-none lg:w-80">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      ref={searchInputRef}
+                      type="text"
+                      placeholder="Buscar proyectos... (Ctrl+F)"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 pr-4 py-2 bg-white border-slate-200 text-slate-800 placeholder-slate-500 focus:border-blue-400 focus:ring-blue-400 transition-all duration-300 shadow-sm hover:shadow-md"
+                    />
+                  </div>
+                </div>
                 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
                   {/* Filtro por estado */}
@@ -907,6 +992,30 @@ export default function Dashboard() {
                     <Download className="h-4 w-4 mr-2" />
                     Exportar
                   </Button>
+
+                  {/* Modo Drag & Drop */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleToggleDragMode}
+                    className={`border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 w-full sm:w-auto ${
+                      dragMode ? 'bg-blue-50 border-blue-400 text-blue-700' : 'hover:border-blue-400 hover:text-blue-700'
+                    }`}
+                  >
+                    <GripVertical className="h-4 w-4 mr-2" />
+                    {dragMode ? 'Salir de Arrastrar' : 'Arrastrar Proyectos'}
+                  </Button>
+
+                  {/* Ayuda de shortcuts */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={showShortcutsHelp}
+                    className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-purple-400 hover:text-purple-700 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 w-full sm:w-auto"
+                  >
+                    <HelpCircle className="h-4 w-4 mr-2" />
+                    Atajos
+                  </Button>
                 </div>
               </div>
               
@@ -933,8 +1042,15 @@ export default function Dashboard() {
                 
                 <Badge variant="outline" className="bg-gradient-to-r from-violet-50 to-purple-50 text-violet-700 border-violet-300 px-3 py-1.5 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
                   <SortAsc className="h-3 w-3 mr-1" />
-                  Orden: {sortBy === 'recent' ? 'Más Recientes' : sortBy === 'name' ? 'Nombre' : sortBy === 'progress' ? 'Progreso' : 'Estado'}
+                  Orden: {dragMode ? 'Personalizado' : sortBy === 'recent' ? 'Más Recientes' : sortBy === 'name' ? 'Nombre' : sortBy === 'progress' ? 'Progreso' : 'Estado'}
                 </Badge>
+                
+                {dragMode && (
+                  <Badge variant="outline" className="bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-300 px-3 py-1.5 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 animate-pulse">
+                    <GripVertical className="h-3 w-3 mr-1" />
+                    Modo Arrastrar Activo
+                  </Badge>
+                )}
               </div>
             </motion.div>
 
@@ -1071,34 +1187,119 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-                          <div className="flex flex-wrap gap-6">
-                {filteredAndSortedProjects.filter(project => project && project.id).map((project, index) => (
-                  <ProjectCard
-                key={project.id}
-                    project={project}
-                    user={user}
-                    projectCreators={projectCreators}
-                    onViewProject={handleViewProject}
-                    onNavigateToCollaboration={(projectId) => {
-                      const url = `/proyectos/${projectId}/colaboracion-cliente`;
-                              try {
-                                navigate(url);
-                              } catch (error) {
-                                toast({ 
-                                  title: 'Error de navegación', 
-                                  description: 'No se pudo navegar a la página de colaboración', 
-                                variant: 'destructive' 
-                              });
-                            }
-                          }}
-                    onDuplicateProject={handleDuplicateProject}
-                    onToggleFavorite={handleToggleFavorite}
-                    onArchiveProject={handleArchiveProject}
-                    index={index}
-                  />
-                ))}
-        </div>
-      )}
+              <div className="space-y-6">
+                {/* Indicador de modo drag */}
+                {dragMode && (
+                  <motion.div 
+                    className="bg-blue-50 border border-blue-200 rounded-2xl p-4 shadow-lg"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <GripVertical className="h-4 w-4 text-white" />
+                          </div>
+                          <span className="font-semibold text-blue-800">
+                            Modo Arrastrar Activo
+                          </span>
+                        </div>
+                        <p className="text-sm text-blue-600">
+                          Arrastra los proyectos para reordenarlos por prioridad. Presiona ESC o Ctrl+D para salir.
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleToggleDragMode}
+                        className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                      >
+                        Salir
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Contenedor de proyectos con drag & drop */}
+                {dragMode ? (
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <Droppable droppableId="projects" direction="horizontal">
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className={`flex flex-wrap gap-6 p-4 rounded-2xl transition-all duration-300 ${
+                            snapshot.isDraggingOver 
+                              ? 'bg-blue-50 border-2 border-dashed border-blue-300' 
+                              : 'bg-transparent'
+                          }`}
+                        >
+                          {filteredAndSortedProjects.filter(project => project && project.id).map((project, index) => (
+                            <ProjectCard
+                              key={project.id}
+                              project={project}
+                              user={user}
+                              projectCreators={projectCreators}
+                              onViewProject={handleViewProject}
+                              onNavigateToCollaboration={(projectId) => {
+                                const url = `/proyectos/${projectId}/colaboracion-cliente`;
+                                try {
+                                  navigate(url);
+                                } catch (error) {
+                                  toast({ 
+                                    title: 'Error de navegación', 
+                                    description: 'No se pudo navegar a la página de colaboración', 
+                                    variant: 'destructive' 
+                                  });
+                                }
+                              }}
+                              onDuplicateProject={handleDuplicateProject}
+                              onToggleFavorite={handleToggleFavorite}
+                              onArchiveProject={handleArchiveProject}
+                              index={index}
+                              dragMode={true}
+                              isDragDisabled={false}
+                            />
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+                ) : (
+                  <div className="flex flex-wrap gap-6">
+                    {filteredAndSortedProjects.filter(project => project && project.id).map((project, index) => (
+                      <ProjectCard
+                        key={project.id}
+                        project={project}
+                        user={user}
+                        projectCreators={projectCreators}
+                        onViewProject={handleViewProject}
+                        onNavigateToCollaboration={(projectId) => {
+                          const url = `/proyectos/${projectId}/colaboracion-cliente`;
+                          try {
+                            navigate(url);
+                          } catch (error) {
+                            toast({ 
+                              title: 'Error de navegación', 
+                              description: 'No se pudo navegar a la página de colaboración', 
+                              variant: 'destructive' 
+                            });
+                          }
+                        }}
+                        onDuplicateProject={handleDuplicateProject}
+                        onToggleFavorite={handleToggleFavorite}
+                        onArchiveProject={handleArchiveProject}
+                        index={index}
+                        dragMode={false}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
       {/* Actividad Reciente */}
       {hasValidProjects && dashboardStats.recentActivity.length > 0 && (

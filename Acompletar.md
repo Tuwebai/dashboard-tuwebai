@@ -56,8 +56,8 @@
 - ✅ **Hover effects mejorados**: Animaciones más sutiles con `whileHover`, `whileTap`, y efectos de grupo
 - ✅ **Quick actions**: Botones de acción rápida (favorito, duplicar, archivar) que aparecen en hover
 - ✅ **Bulk actions**: Selección múltiple con barra de acciones en lote (archivar, eliminar)
-- **Drag & drop**: Reordenar proyectos por prioridad (pendiente)
-- **Keyboard shortcuts**: Navegación con teclado (pendiente)
+- **Drag & drop**: Reordenar proyectos por prioridad ✅ **COMPLETADO**
+- **Keyboard shortcuts**: Navegación con teclado ✅ **COMPLETADO**
 
 #### **4. ESTADOS Y PROGRESO:**
 - **Progress bar animado**: Barra de progreso con animación suave

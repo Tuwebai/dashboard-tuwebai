@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { productionConfig, isDevelopment } from '@/config/production';
 
 // Configuración de Supabase usando variables de entorno o configuración de producción
@@ -14,32 +14,48 @@ if (!supabaseUrl || !supabaseAnonKey) {
   }
 }
 
-// Crear cliente de Supabase con configuración mejorada
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce'
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 10
-    }
-  },
-  global: {
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-    }
-  },
-  db: {
-    schema: 'public'
+// Patrón Singleton para evitar múltiples instancias de GoTrueClient
+let supabaseInstance: SupabaseClient | null = null;
+
+// Función para obtener o crear la instancia única de Supabase
+const getSupabaseClient = (): SupabaseClient => {
+  if (!supabaseInstance) {
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce',
+        // Configuración específica para evitar múltiples instancias
+        storage: {
+          key: 'tuwebai-supabase-auth',
+          storage: typeof window !== 'undefined' ? window.localStorage : undefined
+        }
+      },
+      realtime: {
+        params: {
+          eventsPerSecond: 10
+        }
+      },
+      global: {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        }
+      },
+      db: {
+        schema: 'public'
+      }
+    });
   }
-});
+  return supabaseInstance;
+};
+
+// Exportar la instancia única de Supabase
+export const supabase = getSupabaseClient();
 
 // Exportar tipos útiles
 export type Database = {
