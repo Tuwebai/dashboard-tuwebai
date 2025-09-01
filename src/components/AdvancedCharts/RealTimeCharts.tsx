@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError, handleNetworkError } from '@/lib/errorHandler';
 import AdvancedChart, { ChartConfig } from './AdvancedChart';
 import { Label } from '@/components/ui/label';
 
@@ -239,11 +240,7 @@ export default function RealTimeCharts({ className = '' }: RealTimeChartsProps) 
 
     } catch (error) {
       console.error('Error loading system metrics:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las métricas del sistema",
-        variant: "destructive"
-      });
+      handleSupabaseError(error, 'Cargar métricas del sistema');
     } finally {
       setLoading(false);
     }
@@ -282,32 +279,26 @@ export default function RealTimeCharts({ className = '' }: RealTimeChartsProps) 
   const chartConfigs = useMemo(() => {
     if (!metrics) return [];
 
-    // Si no hay proyectos con estados específicos, usar datos de ejemplo para evitar gráficos vacíos
-    const projectsData = validateChartData([
-      { name: 'Activos', value: metrics.projects.active || 1, color: '#10B981' },
-      { name: 'Completados', value: metrics.projects.completed || 1, color: '#3B82F6' },
-      { name: 'Pendientes', value: metrics.projects.pending || 1, color: '#F59E0B' }
-    ]);
+    // Usar datos reales de proyectos
+    const projectsData = [
+      { name: 'Activos', value: metrics.projects.active, color: '#10B981' },
+      { name: 'Completados', value: metrics.projects.completed, color: '#3B82F6' },
+      { name: 'Pendientes', value: metrics.projects.pending, color: '#F59E0B' }
+    ].filter(item => item.value > 0); // Solo mostrar categorías con datos
 
-    // Usar datos reales de ingresos por mes en lugar de simulados
-    const revenueData = validateChartData([
-      { name: 'Ene', value: metrics.revenue.thisMonth * 0.7 },
-      { name: 'Feb', value: metrics.revenue.thisMonth * 0.8 },
-      { name: 'Mar', value: metrics.revenue.thisMonth * 0.75 },
-      { name: 'Abr', value: metrics.revenue.thisMonth * 0.9 },
-      { name: 'May', value: metrics.revenue.thisMonth * 0.85 },
-      { name: 'Jun', value: metrics.revenue.thisMonth }
-    ]);
+    // Usar datos reales de ingresos (sin simulación)
+    const revenueData = [
+      { name: 'Este Mes', value: metrics.revenue.thisMonth },
+      { name: 'Mes Anterior', value: metrics.revenue.lastMonth },
+      { name: 'Total', value: metrics.revenue.total }
+    ].filter(item => item.value > 0);
 
-    // Usar datos reales de crecimiento de usuarios
-    const userGrowthData = validateChartData([
-      { name: 'Ene', value: Math.max(1, Math.floor(metrics.users.total * 0.6)) },
-      { name: 'Feb', value: Math.max(1, Math.floor(metrics.users.total * 0.7)) },
-      { name: 'Mar', value: Math.max(1, Math.floor(metrics.users.total * 0.75)) },
-      { name: 'Abr', value: Math.max(1, Math.floor(metrics.users.total * 0.8)) },
-      { name: 'May', value: Math.max(1, Math.floor(metrics.users.total * 0.85)) },
-      { name: 'Jun', value: Math.max(1, metrics.users.total) }
-    ]);
+    // Usar datos reales de usuarios
+    const userGrowthData = [
+      { name: 'Total', value: metrics.users.total },
+      { name: 'Nuevos Este Mes', value: metrics.users.newThisMonth },
+      { name: 'Activos', value: metrics.users.active }
+    ].filter(item => item.value > 0);
 
     const performanceData = validateChartData([
       { name: 'Tiempo Promedio', value: Math.min(metrics.performance.averageCompletionTime, 30), max: 30 },

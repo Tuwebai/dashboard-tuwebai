@@ -30,6 +30,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import AdvancedChart, { ChartConfig } from './AdvancedChart';
+import { chartDataService, ChartData } from '@/lib/chartDataService';
 
 interface ChartDashboardProps {
   className?: string;
@@ -48,78 +49,74 @@ interface DashboardConfig {
   refreshInterval: number;
 }
 
-const CHART_TEMPLATES = [
-  {
-    name: 'Gráfico de Línea',
-    type: 'line' as const,
-    data: [
-      { name: 'Ene', value: 120 },
-      { name: 'Feb', value: 200 },
-      { name: 'Mar', value: 150 },
-      { name: 'Abr', value: 80 },
-      { name: 'May', value: 70 },
-      { name: 'Jun', value: 110 }
-    ]
-  },
-  {
-    name: 'Gráfico de Barras',
-    type: 'bar' as const,
-    data: [
-      { name: 'Producto A', value: 45 },
-      { name: 'Producto B', value: 67 },
-      { name: 'Producto C', value: 23 },
-      { name: 'Producto D', value: 89 },
-      { name: 'Producto E', value: 34 }
-    ]
-  },
-  {
-    name: 'Gráfico Circular',
-    type: 'pie' as const,
-    data: [
-      { name: 'Ventas', value: 335 },
-      { name: 'Marketing', value: 310 },
-      { name: 'Desarrollo', value: 234 },
-      { name: 'Soporte', value: 135 },
-      { name: 'Otros', value: 148 }
-    ]
-  },
-  {
-    name: 'Gráfico de Área',
-    type: 'area' as const,
-    data: [
-      { name: 'Lun', value: 820 },
-      { name: 'Mar', value: 932 },
-      { name: 'Mié', value: 901 },
-      { name: 'Jue', value: 934 },
-      { name: 'Vie', value: 1290 },
-      { name: 'Sáb', value: 1330 },
-      { name: 'Dom', value: 1320 }
-    ]
-  },
-  {
-    name: 'Gráfico de Dispersión',
-    type: 'scatter' as const,
-    data: [
-      { x: 10, y: 20 },
-      { x: 20, y: 30 },
-      { x: 30, y: 25 },
-      { x: 40, y: 50 },
-      { x: 50, y: 35 },
-      { x: 60, y: 70 }
-    ]
-  },
-  {
-    name: 'Gráfico Radar',
-    type: 'radar' as const,
-    data: [
-      { name: 'Ventas', value: 80, max: 100 },
-      { name: 'Marketing', value: 90, max: 100 },
-      { name: 'Desarrollo', value: 70, max: 100 },
-      { name: 'Soporte', value: 85, max: 100 },
-      { name: 'Finanzas', value: 75, max: 100 }
-    ]
+// Plantillas de gráficos con datos reales
+const getChartTemplates = async (): Promise<ChartData[]> => {
+  try {
+    const [
+      userGrowthData,
+      projectStatusData,
+      revenueData,
+      ticketPriorityData,
+      weeklyActivityData,
+      systemPerformanceData
+    ] = await Promise.all([
+      chartDataService.getUserGrowthData(),
+      chartDataService.getProjectStatusData(),
+      chartDataService.getRevenueData(),
+      chartDataService.getTicketPriorityData(),
+      chartDataService.getWeeklyActivityData(),
+      chartDataService.getSystemPerformanceData()
+    ]);
+
+    return [
+      {
+        name: 'Crecimiento de Usuarios',
+        type: 'line' as const,
+        data: userGrowthData,
+        title: 'Crecimiento de Usuarios por Mes',
+        description: 'Evolución del número de usuarios registrados'
+      },
+      {
+        name: 'Estado de Proyectos',
+        type: 'bar' as const,
+        data: projectStatusData,
+        title: 'Proyectos por Estado',
+        description: 'Distribución de proyectos según su estado actual'
+      },
+      {
+        name: 'Prioridad de Tickets',
+        type: 'pie' as const,
+        data: ticketPriorityData,
+        title: 'Tickets por Prioridad',
+        description: 'Distribución de tickets según su nivel de prioridad'
+      },
+      {
+        name: 'Actividad Semanal',
+        type: 'area' as const,
+        data: weeklyActivityData,
+        title: 'Actividad por Día de la Semana',
+        description: 'Actividad del sistema por día de la semana'
+      },
+      {
+        name: 'Ingresos Mensuales',
+        type: 'line' as const,
+        data: revenueData,
+        title: 'Ingresos por Mes',
+        description: 'Evolución de los ingresos mensuales'
+      },
+      {
+        name: 'Rendimiento del Sistema',
+        type: 'radar' as const,
+        data: systemPerformanceData,
+        title: 'Métricas del Sistema',
+        description: 'Rendimiento general del sistema'
+      }
+    ];
+  } catch (error) {
+    console.error('Error loading chart templates:', error);
+    return [];
   }
-];
+};
 
 export default function ChartDashboard({ 
   className = '', 
@@ -141,8 +138,10 @@ export default function ChartDashboard({
   const [showSettings, setShowSettings] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [chartTemplates, setChartTemplates] = useState<ChartData[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
 
-  // Cargar dashboard guardado al montar el componente
+  // Cargar dashboard guardado y plantillas al montar el componente
   useEffect(() => {
     if (onLoad) {
       const savedDashboard = onLoad();
@@ -150,7 +149,27 @@ export default function ChartDashboard({
         setDashboard(savedDashboard);
       }
     }
+    
+    // Cargar plantillas de gráficos
+    loadChartTemplates();
   }, [onLoad]);
+
+  const loadChartTemplates = async () => {
+    setTemplatesLoading(true);
+    try {
+      const templates = await getChartTemplates();
+      setChartTemplates(templates);
+    } catch (error) {
+      console.error('Error loading chart templates:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las plantillas de gráficos",
+        variant: "destructive"
+      });
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
 
   // Auto-refresh si está habilitado
   useEffect(() => {
@@ -170,7 +189,7 @@ export default function ChartDashboard({
   const createChartFromTemplate = useCallback(() => {
     if (!selectedTemplate) return;
 
-    const template = CHART_TEMPLATES.find(t => t.name === selectedTemplate);
+    const template = chartTemplates.find(t => t.name === selectedTemplate);
     if (!template) return;
 
     const newChart: ChartConfig = {
@@ -537,7 +556,7 @@ export default function ChartDashboard({
             <div>
               <Label>Seleccionar Plantilla</Label>
               <div className="grid grid-cols-2 gap-3 mt-2">
-                {CHART_TEMPLATES.map((template) => (
+                {chartTemplates.map((template) => (
                   <div
                     key={template.name}
                     className={`p-3 border rounded-lg cursor-pointer transition-all ${

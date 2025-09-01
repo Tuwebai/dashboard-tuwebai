@@ -1,497 +1,175 @@
-// =====================================================
-// SERVICE WORKER PARA NOTIFICACIONES PUSH
-// =====================================================
+// Service Worker para Push Notifications
+const CACHE_NAME = 'tuwebai-v1';
+const urlsToCache = [
+  '/',
+  '/static/js/bundle.js',
+  '/static/css/main.css',
+  '/favicon.ico'
+];
 
-const CACHE_NAME = 'tuwebai-notifications-v1';
-const NOTIFICATION_CACHE = 'notifications-cache';
-
-// =====================================================
-// INSTALACIÓN Y ACTIVACIÓN
-// =====================================================
-
+// Instalar Service Worker
 self.addEventListener('install', (event) => {
-  console.log('🚀 Service Worker instalado');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('✅ Cache abierto');
-        return cache.addAll([
-          '/',
-          '/dashboard',
-          '/notifications',
-          '/offline.html'
-        ]);
+      .then((cache) => {
+        return cache.addAll(urlsToCache);
       })
   );
-  self.skipWaiting();
 });
 
+// Activar Service Worker
 self.addEventListener('activate', (event) => {
-  console.log('🔄 Service Worker activado');
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-        return Promise.all(
-        cacheNames.map(cacheName => {
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('🗑️ Eliminando cache antiguo:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
   );
-  self.clients.claim();
 });
 
-// =====================================================
-// MANEJO DE NOTIFICACIONES PUSH
-// =====================================================
-
-self.addEventListener('push', function(event) {
-  console.log('📱 Evento push recibido:', event);
-  
-  if (event.data) {
-    try {
-      const notification = event.data.json();
-      console.log('📋 Datos de notificación:', notification);
-      
-      const options = buildNotificationOptions(notification);
-      
-      event.waitUntil(
-        self.registration.showNotification(notification.title, options)
-      .then(() => {
-            console.log('✅ Notificación mostrada');
-            // Cachear la notificación
-            cacheNotification(notification);
-          })
-          .catch(error => {
-            console.error('❌ Error mostrando notificación:', error);
-          })
-      );
-    } catch (error) {
-      console.error('❌ Error parseando datos de notificación:', error);
-      // Mostrar notificación por defecto
-      const defaultOptions = {
-        body: 'Nueva notificación recibida',
-        icon: '/icon-192x192.png',
-        badge: '/badge-72x72.png',
-        tag: 'default-notification',
-        requireInteraction: false,
-        silent: false
-      };
-      
-      event.waitUntil(
-        self.registration.showNotification('TuWebAI', defaultOptions)
-      );
-    }
-  } else {
-    // Sin datos, mostrar notificación por defecto
-    const defaultOptions = {
-      body: 'Tienes una nueva notificación',
-      icon: '/icon-192x192.png',
-      badge: '/badge-72x72.png',
-      tag: 'default-notification',
-      requireInteraction: false,
-      silent: false
-    };
-    
-    event.waitUntil(
-      self.registration.showNotification('TuWebAI', defaultOptions)
-    );
-  }
+// Interceptar fetch requests
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        // Devolver desde caché si está disponible
+        if (response) {
+          return response;
+        }
+        
+        // Si no está en caché, hacer fetch
+        return fetch(event.request);
+      }
+    )
+  );
 });
 
-// =====================================================
-// MANEJO DE CLICKS EN NOTIFICACIONES
-// =====================================================
-
-self.addEventListener('notificationclick', function(event) {
-  console.log('👆 Click en notificación:', event);
-  
-  event.notification.close();
-  
-  if (event.action) {
-    // Manejar acciones personalizadas
-    handleNotificationAction(event.action, event.notification.data);
-  } else {
-    // Click en el cuerpo de la notificación
-    handleNotificationClick(event.notification.data);
-  }
-});
-
-// =====================================================
-// MANEJO DE CIERRE DE NOTIFICACIONES
-// =====================================================
-
-self.addEventListener('notificationclose', function(event) {
-  console.log('❌ Notificación cerrada:', event);
-  
-  // Registrar que la notificación fue cerrada
-  if (event.notification.data) {
-    logNotificationInteraction(event.notification.data, 'closed');
-  }
-});
-
-// =====================================================
-// FUNCIONES AUXILIARES
-// =====================================================
-
-function buildNotificationOptions(notification) {
-  const baseOptions = {
-    body: notification.message || notification.body || 'Nueva notificación',
-    icon: notification.icon || '/icon-192x192.png',
-    badge: notification.badge || '/badge-72x72.png',
-    tag: notification.id || `notification-${Date.now()}`,
-    data: notification,
-    requireInteraction: notification.isUrgent || false,
-    silent: notification.silent || false,
-    vibrate: notification.vibrate || [200, 100, 200],
-    timestamp: notification.timestamp || Date.now()
+// Manejar push notifications
+self.addEventListener('push', (event) => {
+  let notificationData = {
+    title: 'TuWebAI',
+    body: 'Nueva notificación',
+    icon: '/favicon.ico',
+    badge: '/favicon.ico',
+    data: {}
   };
 
-  // Agregar acciones si están definidas
-  if (notification.actions && Array.isArray(notification.actions)) {
-    baseOptions.actions = notification.actions.map(action => ({
-      action: action.action || action.id,
-      title: action.title || action.label,
-      icon: action.icon
-    }));
-  }
-
-  // Agregar imagen si está definida
-  if (notification.image) {
-    baseOptions.image = notification.image;
-  }
-
-  // Agregar badge personalizado
-  if (notification.badge) {
-    baseOptions.badge = notification.badge;
-  }
-
-  // Agregar datos adicionales
-  if (notification.metadata) {
-    baseOptions.data = {
-      ...baseOptions.data,
-      ...notification.metadata
-    };
-  }
-
-  return baseOptions;
-}
-
-function handleNotificationAction(action, notificationData) {
-  console.log('⚡ Acción de notificación:', action, notificationData);
-  
-  // Registrar la interacción
-  logNotificationInteraction(notificationData, `action_${action}`);
-  
-  // Manejar acciones específicas
-  switch (action) {
-    case 'view':
-    case 'open':
-      openNotificationTarget(notificationData);
-      break;
-      
-    case 'dismiss':
-      // Solo cerrar la notificación
-      break;
-      
-    case 'reply':
-      handleReplyAction(notificationData);
-      break;
-      
-    case 'snooze':
-      handleSnoozeAction(notificationData);
-      break;
-      
-    default:
-      // Acción personalizada
-      handleCustomAction(action, notificationData);
-      break;
-  }
-}
-
-function handleNotificationClick(notificationData) {
-  console.log('👆 Click en notificación:', notificationData);
-  
-  // Registrar la interacción
-  logNotificationInteraction(notificationData, 'clicked');
-  
-  // Abrir el objetivo de la notificación
-  openNotificationTarget(notificationData);
-}
-
-function openNotificationTarget(notificationData) {
-  let targetUrl = '/dashboard';
-  
-  // Determinar URL objetivo basado en la categoría y metadata
-  if (notificationData.actionUrl) {
-    targetUrl = notificationData.actionUrl;
-  } else if (notificationData.category) {
-    switch (notificationData.category) {
-      case 'project':
-        if (notificationData.metadata?.projectId) {
-          targetUrl = `/proyectos/${notificationData.metadata.projectId}`;
-        } else {
-          targetUrl = '/proyectos';
-        }
-        break;
-        
-      case 'ticket':
-        if (notificationData.metadata?.ticketId) {
-          targetUrl = `/tickets/${notificationData.metadata.ticketId}`;
-        } else {
-          targetUrl = '/soporte';
-        }
-        break;
-        
-      case 'payment':
-        targetUrl = '/facturacion';
-        break;
-        
-      case 'security':
-        targetUrl = '/admin/security';
-        break;
-        
-      case 'user':
-        targetUrl = '/perfil';
-        break;
-        
-      default:
-        targetUrl = '/dashboard';
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      notificationData = { ...notificationData, ...payload };
+    } catch (error) {
+      console.error('Error parsing push data:', error);
     }
   }
-  
-  // Abrir la URL en una nueva pestaña o enfocar una existente
+
+  const options = {
+    body: notificationData.body,
+    icon: notificationData.icon,
+    badge: notificationData.badge,
+    data: notificationData.data,
+    requireInteraction: notificationData.requireInteraction || false,
+    silent: notificationData.silent || false,
+    tag: notificationData.tag,
+    timestamp: notificationData.timestamp || Date.now(),
+    actions: notificationData.actions || []
+  };
+
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then(clientList => {
-        // Buscar si ya hay una pestaña abierta con la URL
-        for (const client of clientList) {
-          if (client.url.includes(targetUrl) && 'focus' in client) {
-            return client.focus();
-          }
-        }
-        
-        // Si no hay pestaña abierta, abrir una nueva
-        if (clients.openWindow) {
-          return clients.openWindow(targetUrl);
-        }
-      })
+    self.registration.showNotification(notificationData.title, options)
   );
-}
-
-function handleReplyAction(notificationData) {
-  console.log('💬 Acción de respuesta:', notificationData);
-  
-  // Implementar lógica de respuesta
-  // Por ejemplo, abrir un modal de respuesta o redirigir a un formulario
-  const replyUrl = `/notifications/${notificationData.id}/reply`;
-  
-  event.waitUntil(
-    clients.openWindow(replyUrl)
-  );
-}
-
-function handleSnoozeAction(notificationData) {
-  console.log('⏰ Acción de posponer:', notificationData);
-  
-  // Implementar lógica de posponer
-  // Por ejemplo, programar la notificación para más tarde
-  const snoozeTime = 15 * 60 * 1000; // 15 minutos
-  
-  setTimeout(() => {
-    // Reenviar la notificación
-    self.registration.showNotification(notificationData.title, {
-      body: notificationData.message,
-      icon: notificationData.icon || '/icon-192x192.png',
-      tag: `snoozed-${notificationData.id}`,
-      data: notificationData
-    });
-  }, snoozeTime);
-}
-
-function handleCustomAction(action, notificationData) {
-  console.log('🔧 Acción personalizada:', action, notificationData);
-  
-  // Implementar lógica para acciones personalizadas
-  // Por ejemplo, enviar analytics, actualizar estado, etc.
-  
-  // Enviar mensaje al cliente principal
-  clients.matchAll().then(clients => {
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'CUSTOM_NOTIFICATION_ACTION',
-        action: action,
-        notificationData: notificationData
-      });
-    });
-  });
-}
-
-function cacheNotification(notification) {
-  // Cachear la notificación para acceso offline
-  caches.open(NOTIFICATION_CACHE).then(cache => {
-    const notificationKey = `notification-${notification.id || Date.now()}`;
-    cache.put(notificationKey, new Response(JSON.stringify(notification)));
-  });
-}
-
-function logNotificationInteraction(notificationData, interactionType) {
-  // Enviar analytics o logging de interacciones
-  console.log('📊 Interacción con notificación:', {
-    notificationId: notificationData.id,
-    interactionType: interactionType,
-    timestamp: new Date().toISOString(),
-    category: notificationData.category,
-    type: notificationData.type
-  });
-  
-  // Aquí se podría enviar a un servicio de analytics
-  // o guardar en IndexedDB para sincronización posterior
-}
-
-// =====================================================
-// MANEJO DE MENSAJES DEL CLIENTE
-// =====================================================
-
-self.addEventListener('message', function(event) {
-  console.log('📨 Mensaje recibido del cliente:', event.data);
-  
-  switch (event.data.type) {
-    case 'GET_NOTIFICATIONS':
-      // Enviar notificaciones cacheadas al cliente
-      getCachedNotifications().then(notifications => {
-      event.ports[0].postMessage({
-          type: 'CACHED_NOTIFICATIONS',
-          notifications: notifications
-        });
-      });
-      break;
-      
-    case 'CLEAR_NOTIFICATIONS':
-      // Limpiar notificaciones cacheadas
-      clearCachedNotifications().then(() => {
-        event.ports[0].postMessage({
-          type: 'NOTIFICATIONS_CLEARED'
-        });
-      });
-      break;
-      
-    case 'UPDATE_NOTIFICATION':
-      // Actualizar notificación existente
-      updateNotification(event.data.notification).then(() => {
-        event.ports[0].postMessage({
-          type: 'NOTIFICATION_UPDATED'
-        });
-      });
-      break;
-      
-    default:
-      console.log('❓ Tipo de mensaje desconocido:', event.data.type);
-  }
 });
 
-// =====================================================
-// FUNCIONES DE CACHE
-// =====================================================
+// Manejar clic en notificación
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
 
-async function getCachedNotifications() {
-  try {
-    const cache = await caches.open(NOTIFICATION_CACHE);
-    const keys = await cache.keys();
-    const notifications = [];
-    
-    for (const key of keys) {
-      const response = await cache.match(key);
-      if (response) {
-        const notification = await response.json();
-        notifications.push(notification);
+  const notificationData = event.notification.data;
+  const url = notificationData?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then((clientList) => {
+      // Si ya hay una ventana abierta, enfocarla
+      for (const client of clientList) {
+        if (client.url === url && 'focus' in client) {
+          return client.focus();
+        }
       }
-    }
-    
-    return notifications;
-  } catch (error) {
-    console.error('Error obteniendo notificaciones cacheadas:', error);
-    return [];
-  }
-}
-
-async function clearCachedNotifications() {
-  try {
-    const cache = await caches.open(NOTIFICATION_CACHE);
-    const keys = await cache.keys();
-    
-    for (const key of keys) {
-      await cache.delete(key);
-    }
-    
-    console.log('🗑️ Notificaciones cacheadas eliminadas');
-  } catch (error) {
-    console.error('Error limpiando notificaciones cacheadas:', error);
-  }
-}
-
-async function updateNotification(notification) {
-  try {
-    const cache = await caches.open(NOTIFICATION_CACHE);
-    const notificationKey = `notification-${notification.id}`;
-    
-    await cache.put(notificationKey, new Response(JSON.stringify(notification)));
-    console.log('✅ Notificación actualizada en cache');
-  } catch (error) {
-    console.error('Error actualizando notificación:', error);
-  }
-}
-
-// =====================================================
-// MANEJO DE ERRORES
-// =====================================================
-
-self.addEventListener('error', function(event) {
-  console.error('❌ Error en Service Worker:', event.error);
+      
+      // Si no hay ventana abierta, abrir una nueva
+      if (clients.openWindow) {
+        return clients.openWindow(url);
+      }
+    })
+  );
 });
 
-self.addEventListener('unhandledrejection', function(event) {
-  console.error('❌ Promesa rechazada no manejada:', event.reason);
+// Manejar acción de notificación
+self.addEventListener('notificationclick', (event) => {
+  if (event.action) {
+    const action = event.action;
+    const notificationData = event.notification.data;
+    
+    // Manejar diferentes acciones
+    switch (action) {
+      case 'view':
+        // Abrir la URL específica
+        event.waitUntil(
+          clients.openWindow(notificationData?.url || '/')
+        );
+        break;
+      case 'dismiss':
+        // Solo cerrar la notificación
+        event.notification.close();
+        break;
+      default:
+        // Acción por defecto
+        break;
+    }
+  }
 });
 
-// =====================================================
-// FUNCIONES DE UTILIDAD
-// =====================================================
+// Manejar cierre de notificación
+self.addEventListener('notificationclose', (event) => {
+  // Registrar que la notificación fue cerrada
+  console.log('Notification closed:', event.notification.tag);
+});
 
-function formatNotificationTime(timestamp) {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diff = now - date;
-  
-  if (diff < 60000) { // Menos de 1 minuto
-    return 'Ahora mismo';
-  } else if (diff < 3600000) { // Menos de 1 hora
-    const minutes = Math.floor(diff / 60000);
-    return `Hace ${minutes} minuto${minutes > 1 ? 's' : ''}`;
-  } else if (diff < 86400000) { // Menos de 1 día
-    const hours = Math.floor(diff / 3600000);
-    return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
-  } else {
-    return date.toLocaleDateString();
+// Manejar mensajes del cliente
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
+});
+
+// Manejar errores
+self.addEventListener('error', (event) => {
+  console.error('Service Worker error:', event.error);
+});
+
+// Manejar promesas rechazadas
+self.addEventListener('unhandledrejection', (event) => {
+  console.error('Service Worker unhandled rejection:', event.reason);
+});
+
+// Función para limpiar notificaciones antiguas
+function cleanupOldNotifications() {
+  self.registration.getNotifications().then((notifications) => {
+    const now = Date.now();
+    const maxAge = 24 * 60 * 60 * 1000; // 24 horas
+    
+    notifications.forEach((notification) => {
+      if (notification.timestamp && (now - notification.timestamp) > maxAge) {
+        notification.close();
+      }
+    });
+  });
 }
 
-function getNotificationPriority(notification) {
-  if (notification.isUrgent || notification.type === 'critical') {
-    return 'high';
-  } else if (notification.type === 'warning' || notification.type === 'error') {
-    return 'normal';
-  } else {
-    return 'low';
-  }
-}
-
-// =====================================================
-// INICIALIZACIÓN
-// =====================================================
-
-console.log('🚀 Service Worker de TuWebAI inicializado');
-console.log('📱 Listo para manejar notificaciones push');
-console.log('🔧 Versión:', CACHE_NAME); 
+// Limpiar notificaciones antiguas cada hora
+setInterval(cleanupOldNotifications, 60 * 60 * 1000);

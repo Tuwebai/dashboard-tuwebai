@@ -432,16 +432,14 @@ export default function AdvancedChart({
                    <DialogHeader>
                      <DialogTitle>Personalizar Gráfico</DialogTitle>
                      <DialogDescription id="chart-settings-description">
-                       Configura la apariencia, datos y opciones avanzadas del gráfico
+                       Configura la apariencia y opciones del gráfico
                      </DialogDescription>
                    </DialogHeader>
                   
                   <Tabs defaultValue="general" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="general">General</TabsTrigger>
                       <TabsTrigger value="apariencia">Apariencia</TabsTrigger>
-                      <TabsTrigger value="datos">Datos</TabsTrigger>
-                      <TabsTrigger value="avanzado">Avanzado</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="general" className="space-y-4">
@@ -622,54 +620,8 @@ export default function AdvancedChart({
                           </Button>
                         </div>
                       </div>
-                    </TabsContent>
 
-                    <TabsContent value="datos" className="space-y-4">
-                      <div>
-                        <Label>Intervalo de Actualización (segundos)</Label>
-                        <Slider
-                          value={[localConfig.refreshInterval || 0]}
-                          onValueChange={([value]) => handleConfigChange({ refreshInterval: value })}
-                          max={300}
-                          min={0}
-                          step={5}
-                          className="mt-2"
-                        />
-                        <div className="text-sm text-muted-foreground mt-1">
-                          {localConfig.refreshInterval ? `${localConfig.refreshInterval}s` : 'Sin actualización automática'}
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label>Vista Previa de Datos</Label>
-                        <div className="mt-2 p-3 bg-muted rounded-md max-h-32 overflow-y-auto">
-                          <pre className="text-xs">
-                            {JSON.stringify(localConfig.data.slice(0, 5), null, 2)}
-                            {localConfig.data.length > 5 && '\n...'}
-                          </pre>
-                        </div>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="avanzado" className="space-y-4">
-                      <div>
-                        <Label>Opciones Personalizadas (JSON)</Label>
-                        <textarea
-                          className="w-full h-32 p-2 border rounded-md font-mono text-sm"
-                          value={JSON.stringify(localConfig.customOptions || {}, null, 2)}
-                          onChange={(e) => {
-                            try {
-                              const parsed = JSON.parse(e.target.value);
-                              handleConfigChange({ customOptions: parsed });
-                            } catch (error) {
-                              // Ignorar errores de JSON inválido
-                            }
-                          }}
-                          placeholder='{"xAxis": {"axisLabel": {"rotate": 45}}}'
-                        />
-                      </div>
-
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-2 pt-4 border-t">
                         <Button onClick={resetToDefaults} variant="outline">
                           Restablecer Valores
                         </Button>
@@ -681,6 +633,7 @@ export default function AdvancedChart({
                         </Button>
                       </div>
                     </TabsContent>
+
                   </Tabs>
                 </DialogContent>
               </Dialog>

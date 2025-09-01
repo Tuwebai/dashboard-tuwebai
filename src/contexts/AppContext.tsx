@@ -5,6 +5,7 @@ import { userService } from '@/lib/supabaseService';
 import { projectService } from '@/lib/projectService';
 import { toast as toastGlobal } from '@/hooks/use-toast';
 import { SupabaseError } from '@/components/SupabaseError';
+import { userPreferencesService } from '@/lib/userPreferencesService';
 
 export interface Project {
   id: string;
@@ -315,14 +316,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setIsAuthenticated(true);
         setError(null);
 
+        // Migrar localStorage a base de datos
+        await userPreferencesService.migrateLocalStorageToDB(user.id);
+        
         // Mostrar toast de bienvenida cuando se complete la autenticación
         // Solo si no es la carga inicial
-        if (!localStorage.getItem('tuwebai_welcome_back')) {
+        const welcomeBack = await userPreferencesService.getUserPreferences(user.id, 'welcome_back');
+        if (welcomeBack.length === 0) {
           toastGlobal({
             title: '¡Bienvenido!',
             description: 'Has iniciado sesión correctamente.'
           });
-          localStorage.setItem('tuwebai_welcome_back', 'true');
+          await userPreferencesService.saveUserPreference(user.id, 'welcome_back', 'tuwebai_welcome_back', 'true');
         }
         
       } catch (error) {
@@ -336,7 +341,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setProjects([]);
       setLogs([]);
       clearCache();
-      localStorage.removeItem('tuwebai_welcome_back');
+      // Limpiar preferencias de bienvenida
+      if (user) {
+        await userPreferencesService.deleteUserPreference(user.id, 'welcome_back', 'tuwebai_welcome_back');
+      }
       setLoading(false); // ¡AQUÍ ESTABA EL PROBLEMA!
     }
   }, [supabaseUser, session, authLoading]);
@@ -499,7 +507,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       await signOut();
       clearCache();
-      localStorage.removeItem('tuwebai_welcome_back');
+      // Limpiar preferencias de bienvenida
+      if (user) {
+        await userPreferencesService.deleteUserPreference(user.id, 'welcome_back', 'tuwebai_welcome_back');
+      }
     } catch (error) {
       setError('Error al cerrar sesión');
     } finally {

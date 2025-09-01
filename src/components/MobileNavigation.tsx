@@ -1,9 +1,92 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Home, User, Settings, FileText, Users, CreditCard, Bell, LogOut } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
+import { useMobileOptimization } from '@/hooks/useMobileOptimization';
 import { useApp } from '@/contexts/AppContext';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { MOBILE_NAV_CLASSES, TOUCH_TARGET_CLASSES } from '@/lib/breakpoints';
+import {
+  Menu,
+  Home,
+  FolderOpen,
+  Users,
+  Settings,
+  Bell,
+  BarChart3,
+  FileText,
+  CreditCard,
+  HelpCircle,
+  X,
+  ChevronRight
+} from 'lucide-react';
+
+interface NavigationItem {
+  id: string;
+  label: string;
+  icon: React.ComponentType<any>;
+  path: string;
+  badge?: number;
+  subItems?: NavigationItem[];
+}
+
+const navigationItems: NavigationItem[] = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    icon: Home,
+    path: '/'
+  },
+  {
+    id: 'projects',
+    label: 'Proyectos',
+    icon: FolderOpen,
+    path: '/projects'
+  },
+  {
+    id: 'team',
+    label: 'Equipo',
+    icon: Users,
+    path: '/team'
+  },
+  {
+    id: 'tickets',
+    label: 'Tickets',
+    icon: FileText,
+    path: '/tickets',
+    badge: 0 // Se actualizará dinámicamente
+  },
+  {
+    id: 'analytics',
+    label: 'Analytics',
+    icon: BarChart3,
+    path: '/analytics'
+  },
+  {
+    id: 'payments',
+    label: 'Pagos',
+    icon: CreditCard,
+    path: '/payments'
+  },
+  {
+    id: 'notifications',
+    label: 'Notificaciones',
+    icon: Bell,
+    path: '/notifications',
+    badge: 0 // Se actualizará dinámicamente
+  },
+  {
+    id: 'settings',
+    label: 'Configuración',
+    icon: Settings,
+    path: '/settings'
+  },
+  {
+    id: 'help',
+    label: 'Ayuda',
+    icon: HelpCircle,
+    path: '/help'
+  }
+];
 
 interface MobileNavigationProps {
   className?: string;
@@ -11,222 +94,216 @@ interface MobileNavigationProps {
 
 export default function MobileNavigation({ className = '' }: MobileNavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, logout } = useApp();
-  const navigate = useNavigate();
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isMobile, isTouchDevice, triggerHaptic, getTouchOptimizedStyle } = useMobileOptimization();
+  const { user, unreadNotifications, openTickets } = useApp();
 
-  // Cerrar navegación al cambiar de ruta
+  // Actualizar badges dinámicamente
+  const itemsWithBadges = navigationItems.map(item => {
+    if (item.id === 'tickets') {
+      return { ...item, badge: openTickets };
+    }
+    if (item.id === 'notifications') {
+      return { ...item, badge: unreadNotifications };
+    }
+    return item;
+  });
+
+  // Cerrar menú al navegar
   useEffect(() => {
     setIsOpen(false);
   }, [location.pathname]);
 
-  // Cerrar navegación al hacer clic fuera
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (isOpen && !target.closest('.mobile-nav')) {
-        setIsOpen(false);
+  // Solo mostrar en dispositivos móviles
+  if (!isMobile) {
+    return null;
+  }
+
+  const handleNavigation = (path: string) => {
+    triggerHaptic('light');
+    navigate(path);
+  };
+
+  const toggleExpanded = (itemId: string) => {
+    triggerHaptic('light');
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
       }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.body.style.overflow = 'hidden';
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    }
+      return newSet;
+    });
   };
 
-  const navigationItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Proyectos', href: '/proyectos', icon: FileText },
-    { name: 'Equipo', href: '/team', icon: Users },
-    { name: 'Facturación', href: '/facturacion', icon: CreditCard },
-    { name: 'Soporte', href: '/soporte', icon: Bell },
-    { name: 'Configuración', href: '/configuracion', icon: Settings },
-    { name: 'Mi Perfil', href: '/perfil', icon: User }
-  ];
-
-  const isActiveRoute = (href: string) => {
-    return location.pathname === href;
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
   };
 
   return (
-    <>
-      {/* Botón de menú */}
-      <Button
-        variant="ghost"
-        onClick={() => setIsOpen(true)}
-        className={`${MOBILE_NAV_CLASSES.menuButton} ${TOUCH_TARGET_CLASSES.icon} mobile-nav`}
-        aria-label="Abrir menú de navegación"
-      >
-        <Menu className="w-6 h-6" />
-      </Button>
-
-      {/* Overlay */}
-      {isOpen && (
-        <div className={`${MOBILE_NAV_CLASSES.overlay} mobile-nav`} />
-      )}
-
-      {/* Sidebar móvil */}
-      <div
-        className={`${MOBILE_NAV_CLASSES.sidebar} mobile-nav ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        {/* Header del sidebar */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">T</span>
-            </div>
-            <span className="text-lg font-semibold text-gray-900">TuWebAI</span>
-          </div>
-          
-          <Button
-            variant="ghost"
-            onClick={() => setIsOpen(false)}
-            className={`${MOBILE_NAV_CLASSES.closeButton} ${TOUCH_TARGET_CLASSES.icon}`}
-            aria-label="Cerrar menú de navegación"
-          >
-            <X className="w-6 h-6" />
-          </Button>
-        </div>
-
-        {/* Información del usuario */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-              {user?.avatar_url ? (
-                <img
-                  src={user.avatar_url}
-                  alt={user.full_name || 'Usuario'}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-              ) : (
-                <User className="w-6 h-6 text-gray-500" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.full_name || 'Usuario'}
-              </p>
-              <p className="text-sm text-gray-500 truncate">
-                {user?.email}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Navegación principal */}
-        <nav className="flex-1 px-4 py-6 space-y-2">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = isActiveRoute(item.href);
-            
-            return (
-              <Button
-                key={item.name}
-                variant={isActive ? 'default' : 'ghost'}
-                onClick={() => navigate(item.href)}
-                className={`w-full justify-start ${TOUCH_TARGET_CLASSES.button} ${
-                  isActive 
-                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <Icon className="w-5 h-5 mr-3" />
-                {item.name}
-              </Button>
-            );
-          })}
-        </nav>
-
-        {/* Footer con logout */}
-        <div className="p-4 border-t border-gray-200">
-          <Button
-            variant="ghost"
-            onClick={handleLogout}
-            className={`w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700 ${TOUCH_TARGET_CLASSES.button}`}
-          >
-            <LogOut className="w-5 h-5 mr-3" />
-            Cerrar Sesión
-          </Button>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// Componente de navegación inferior para móviles
-export function BottomNavigation() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const bottomNavItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Proyectos', href: '/proyectos', icon: FileText },
-    { name: 'Equipo', href: '/team', icon: Users },
-    { name: 'Perfil', href: '/perfil', icon: User }
-  ];
-
-  const isActiveRoute = (href: string) => {
-    return location.pathname === href;
-  };
-
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-40">
-      <div className="flex justify-around">
-        {bottomNavItems.map((item) => {
+    <div className={`fixed bottom-0 left-0 right-0 z-50 bg-background border-t ${className}`}>
+      {/* Navegación inferior */}
+      <div className="flex items-center justify-around px-2 py-2">
+        {itemsWithBadges.slice(0, 5).map((item) => {
           const Icon = item.icon;
-          const isActive = isActiveRoute(item.href);
+          const active = isActive(item.path);
           
           return (
-            <button
-              key={item.name}
-              onClick={() => navigate(item.href)}
-              className={`flex flex-col items-center py-2 px-3 ${TOUCH_TARGET_CLASSES.button} ${
-                isActive 
-                  ? 'text-blue-600' 
-                  : 'text-gray-500 hover:text-gray-700'
+            <Button
+              key={item.id}
+              variant={active ? "default" : "ghost"}
+              size="sm"
+              onClick={() => handleNavigation(item.path)}
+              className={`flex flex-col items-center gap-1 h-auto py-2 px-3 ${
+                active ? 'text-primary-foreground' : 'text-muted-foreground'
               }`}
-              aria-label={item.name}
+              style={getTouchOptimizedStyle()}
             >
-              <Icon className={`w-6 h-6 mb-1 ${isActive ? 'text-blue-600' : ''}`} />
-              <span className="text-xs font-medium">{item.name}</span>
-            </button>
+              <div className="relative">
+                <Icon className="h-5 w-5" />
+                {item.badge && item.badge > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex items-center justify-center"
+                  >
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </Badge>
+                )}
+              </div>
+              <span className="text-xs font-medium">{item.label}</span>
+            </Button>
           );
         })}
       </div>
+
+      {/* Menú completo */}
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-2 right-2"
+            style={getTouchOptimizedStyle()}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-80 p-0">
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+                  <span className="text-primary-foreground font-semibold text-sm">
+                    {user?.email?.charAt(0).toUpperCase() || 'U'}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-medium text-sm">{user?.email || 'Usuario'}</p>
+                  <p className="text-xs text-muted-foreground">{user?.role || 'Usuario'}</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsOpen(false)}
+                style={getTouchOptimizedStyle()}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
+            {/* Navegación */}
+            <div className="flex-1 overflow-y-auto">
+              <nav className="p-4 space-y-2">
+                {itemsWithBadges.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.path);
+                  const hasSubItems = item.subItems && item.subItems.length > 0;
+                  const isExpanded = expandedItems.has(item.id);
+
+                  return (
+                    <div key={item.id}>
+                      <Button
+                        variant={active ? "secondary" : "ghost"}
+                        className={`w-full justify-start gap-3 h-12 ${
+                          active ? 'bg-primary/10 text-primary' : 'text-foreground'
+                        }`}
+                        onClick={() => {
+                          if (hasSubItems) {
+                            toggleExpanded(item.id);
+                          } else {
+                            handleNavigation(item.path);
+                          }
+                        }}
+                        style={getTouchOptimizedStyle()}
+                      >
+                        <Icon className="h-5 w-5" />
+                        <span className="flex-1 text-left">{item.label}</span>
+                        {item.badge && item.badge > 0 && (
+                          <Badge variant="destructive" className="ml-auto">
+                            {item.badge > 99 ? '99+' : item.badge}
+                          </Badge>
+                        )}
+                        {hasSubItems && (
+                          <ChevronRight 
+                            className={`h-4 w-4 transition-transform ${
+                              isExpanded ? 'rotate-90' : ''
+                            }`} 
+                          />
+                        )}
+                      </Button>
+
+                      {/* Sub-items */}
+                      {hasSubItems && isExpanded && (
+                        <div className="ml-6 mt-2 space-y-1">
+                          {item.subItems!.map((subItem) => {
+                            const SubIcon = subItem.icon;
+                            const subActive = isActive(subItem.path);
+                            
+                            return (
+                              <Button
+                                key={subItem.id}
+                                variant={subActive ? "secondary" : "ghost"}
+                                className={`w-full justify-start gap-3 h-10 ${
+                                  subActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
+                                }`}
+                                onClick={() => handleNavigation(subItem.path)}
+                                style={getTouchOptimizedStyle()}
+                              >
+                                <SubIcon className="h-4 w-4" />
+                                <span className="flex-1 text-left text-sm">{subItem.label}</span>
+                                {subItem.badge && subItem.badge > 0 && (
+                                  <Badge variant="destructive" className="ml-auto text-xs">
+                                    {subItem.badge > 99 ? '99+' : subItem.badge}
+                                  </Badge>
+                                )}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t">
+              <div className="text-xs text-muted-foreground text-center">
+                TuWebAI Dashboard v1.0
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
-}
-
-// Hook para detectar si estamos en móvil
-export function useMobileNavigation() {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  return isMobile;
 }

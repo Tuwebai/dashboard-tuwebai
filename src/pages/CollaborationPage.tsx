@@ -956,10 +956,10 @@ export default function CollaborationPage() {
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                       {openFileMenuId === file.id && (
-                        <div className="absolute right-0 top-8 z-20 w-48 rounded-md bg-zinc-900/95 shadow-lg border border-zinc-800">
-                          <button className="block w-full text-left px-4 py-2 hover:bg-zinc-800" onClick={() => { window.open(file.url, '_blank'); setOpenFileMenuId(null); }}>Descargar</button>
+                        <div className="absolute right-0 top-8 z-20 w-48 rounded-md bg-white shadow-lg border border-slate-200">
+                          <button className="block w-full text-left px-4 py-2 hover:bg-slate-100" onClick={() => { window.open(file.url, '_blank'); setOpenFileMenuId(null); }}>Descargar</button>
                           {user.email === file.uploadedBy && (
-                            <button className="block w-full text-left px-4 py-2 text-red-500 hover:bg-zinc-800" onClick={async () => { 
+                            <button className="block w-full text-left px-4 py-2 text-red-500 hover:bg-slate-100" onClick={async () => { 
   const { error } = await supabase
     .from('projectFiles')
     .delete()
@@ -1059,7 +1059,7 @@ export default function CollaborationPage() {
 
         {/* Activity Tab */}
         <TabsContent value="activity" className="space-y-4">
-          <Card className="bg-zinc-900/95">
+          <Card className="bg-white border border-slate-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">Información de Sesión</CardTitle>
             </CardHeader>
@@ -1083,7 +1083,7 @@ export default function CollaborationPage() {
 
       {/* Task Modal */}
       <Dialog open={isTaskModalOpen} onOpenChange={setIsTaskModalOpen}>
-        <DialogContent className="max-w-md bg-zinc-900/95">
+        <DialogContent className="max-w-md bg-white border border-slate-200">
           <DialogHeader>
             <DialogTitle>Crear Nueva Tarea</DialogTitle>
             <DialogDescription>
@@ -1168,7 +1168,7 @@ export default function CollaborationPage() {
 
       {/* Modal de edición de tarea */}
       <Dialog open={editTaskModalOpen} onOpenChange={setEditTaskModalOpen}>
-        <DialogContent className="max-w-md bg-zinc-900/95">
+        <DialogContent className="max-w-md bg-white border border-slate-200">
           <DialogHeader>
             <DialogTitle>Editar Tarea</DialogTitle>
             <DialogDescription>Modifica los campos de la tarea y guarda los cambios.</DialogDescription>
@@ -1262,7 +1262,7 @@ export default function CollaborationPage() {
 
       {/* Modal para detalles de archivo */}
       <Dialog open={!!fileDetails} onOpenChange={() => setFileDetails(null)}>
-        <DialogContent className="max-w-md bg-zinc-900/95">
+        <DialogContent className="max-w-md bg-white border border-slate-200">
           <DialogHeader>
             <DialogTitle>Detalles del Archivo</DialogTitle>
           </DialogHeader>
@@ -1280,7 +1280,7 @@ export default function CollaborationPage() {
 
       {/* Modal de configuración de sesión */}
       <Dialog open={sessionConfigOpen} onOpenChange={setSessionConfigOpen}>
-        <DialogContent className="max-w-md bg-zinc-900/95">
+        <DialogContent className="max-w-md bg-white border border-slate-200">
           <DialogHeader>
             <DialogTitle>Configuración de Sesión</DialogTitle>
           </DialogHeader>

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { handleSupabaseError, handleNetworkError } from './errorHandler';
 
 export interface Notification {
   id: string;
@@ -117,7 +118,8 @@ class NotificationService {
       return filteredData;
     } catch (error) {
       console.error('Error in getUserNotifications:', error);
-      throw error;
+      handleSupabaseError(error, 'Obtener notificaciones');
+      return [];
     }
   }
 

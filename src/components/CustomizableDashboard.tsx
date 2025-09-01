@@ -28,6 +28,8 @@ import {
   EyeOff
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useApp } from '@/contexts/AppContext';
+import { userPreferencesService, DashboardLayout } from '@/lib/userPreferencesService';
 import { reportService } from '@/lib/reportService';
 
 interface Widget {
@@ -48,7 +50,7 @@ interface Widget {
   visible: boolean;
 }
 
-interface DashboardLayout {
+interface CustomDashboardLayout {
   id: string;
   name: string;
   description: string;
@@ -141,9 +143,11 @@ const DATA_SOURCES = [
 ];
 
 export default function CustomizableDashboard() {
-  const [layouts, setLayouts] = useState<DashboardLayout[]>([]);
-  const [currentLayout, setCurrentLayout] = useState<DashboardLayout | null>(null);
+  const { user, isAuthenticated } = useApp();
+  const [layouts, setLayouts] = useState<CustomDashboardLayout[]>([]);
+  const [currentLayout, setCurrentLayout] = useState<CustomDashboardLayout | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [layoutsLoaded, setLayoutsLoaded] = useState(false);
   const [showAddWidget, setShowAddWidget] = useState(false);
   const [editingWidget, setEditingWidget] = useState<Widget | null>(null);
   const [newWidget, setNewWidget] = useState<Partial<Widget>>({});
@@ -152,44 +156,82 @@ export default function CustomizableDashboard() {
     loadDashboardLayouts();
   }, []);
 
-  const loadDashboardLayouts = () => {
-    try {
-      const saved = localStorage.getItem('dashboardLayouts');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setLayouts(parsed);
-        const defaultLayout = parsed.find((l: DashboardLayout) => l.isDefault);
-        setCurrentLayout(defaultLayout || parsed[0]);
-      } else {
-        // Crear layout por defecto
-        const defaultLayout: DashboardLayout = {
-          id: 'default',
-          name: 'Dashboard Principal',
-          description: 'Dashboard por defecto',
-          widgets: DEFAULT_WIDGETS,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          isDefault: true
-        };
-        setLayouts([defaultLayout]);
-        setCurrentLayout(defaultLayout);
-        saveDashboardLayouts([defaultLayout]);
+  const loadDashboardLayouts = async () => {
+    if (isAuthenticated && user && !layoutsLoaded) {
+      try {
+        const userLayouts = await userPreferencesService.getDashboardLayouts(user.id);
+        if (userLayouts.length > 0) {
+          setLayouts(userLayouts);
+          const defaultLayout = userLayouts.find((l: CustomDashboardLayout) => l.isDefault);
+          setCurrentLayout(defaultLayout || userLayouts[0]);
+        } else {
+          // Crear layout por defecto
+          const defaultLayout: CustomDashboardLayout = {
+            id: 'default',
+            name: 'Dashboard Principal',
+            description: 'Dashboard por defecto',
+            widgets: DEFAULT_WIDGETS,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            isDefault: true
+          };
+          setLayouts([defaultLayout]);
+          setCurrentLayout(defaultLayout);
+          await saveDashboardLayouts([defaultLayout]);
+        }
+        setLayoutsLoaded(true);
+      } catch (error) {
+        console.error('Error loading dashboard layouts:', error);
+        setLayoutsLoaded(true);
       }
-    } catch (error) {
-      console.error('Error loading dashboard layouts:', error);
+    } else if (!isAuthenticated) {
+      // Fallback a localStorage
+      try {
+        const saved = localStorage.getItem('dashboardLayouts');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setLayouts(parsed);
+          const defaultLayout = parsed.find((l: CustomDashboardLayout) => l.isDefault);
+          setCurrentLayout(defaultLayout || parsed[0]);
+        } else {
+          // Crear layout por defecto
+          const defaultLayout: CustomDashboardLayout = {
+            id: 'default',
+            name: 'Dashboard Principal',
+            description: 'Dashboard por defecto',
+            widgets: DEFAULT_WIDGETS,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            isDefault: true
+          };
+          setLayouts([defaultLayout]);
+          setCurrentLayout(defaultLayout);
+          saveDashboardLayouts([defaultLayout]);
+        }
+        setLayoutsLoaded(true);
+      } catch (error) {
+        console.error('Error loading dashboard layouts from localStorage:', error);
+        setLayoutsLoaded(true);
+      }
     }
   };
 
-  const saveDashboardLayouts = (layoutsToSave: DashboardLayout[]) => {
+  const saveDashboardLayouts = async (layoutsToSave: CustomDashboardLayout[]) => {
     try {
+      // Guardar en localStorage como fallback
       localStorage.setItem('dashboardLayouts', JSON.stringify(layoutsToSave));
+      
+      // Guardar en base de datos si el usuario está autenticado
+      if (isAuthenticated && user) {
+        await userPreferencesService.saveDashboardLayouts(user.id, layoutsToSave);
+      }
     } catch (error) {
       console.error('Error saving dashboard layouts:', error);
     }
   };
 
   const createNewLayout = () => {
-    const newLayout: DashboardLayout = {
+    const newLayout: CustomDashboardLayout = {
       id: `layout-${Date.now()}`,
       name: 'Nuevo Dashboard',
       description: 'Dashboard personalizado',

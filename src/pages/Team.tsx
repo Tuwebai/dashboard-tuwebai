@@ -64,7 +64,7 @@ export default function Team() {
         setTeamMembers(users);
         setLoading(false);
       } catch (error) {
-        console.error('Error loading team members:', error);
+
         setLoading(false);
       }
     };
@@ -77,7 +77,7 @@ export default function Team() {
         setInvitations(invitationsData);
         setInvitationsLoading(false);
       } catch (error) {
-        console.error('Error loading invitations:', error);
+
         setInvitationsLoading(false);
       }
     };
@@ -126,11 +126,13 @@ export default function Team() {
     if (!inviteEmail || !user) return;
     
     try {
-      await userManagementService.createInvitation({
+      const newInvitation = await userManagementService.createInvitation({
         email: inviteEmail,
-        invited_by: user.id,
         message: `Invitación para unirse al equipo de ${user.full_name || user.email}`
       });
+      
+      // Actualizar el estado local inmediatamente
+      setInvitations(prev => [newInvitation, ...prev]);
       
       toast({
         title: 'Invitación enviada',
@@ -138,7 +140,7 @@ export default function Team() {
       });
       setInviteEmail('');
     } catch (error) {
-      console.error('Error creating invitation:', error);
+
       toast({
         title: 'Error',
         description: 'No se pudo enviar la invitación',
@@ -158,7 +160,7 @@ export default function Team() {
         description: 'El rol del miembro ha sido actualizado'
       });
     } catch (error) {
-      console.error('Error updating role:', error);
+
       toast({
         title: 'Error',
         description: 'No se pudo actualizar el rol',
@@ -178,7 +180,7 @@ export default function Team() {
         description: 'El miembro ha sido removido del equipo'
       });
     } catch (error) {
-      console.error('Error removing member:', error);
+
       toast({
         title: 'Error',
         description: 'No se pudo remover el miembro',
@@ -199,12 +201,21 @@ export default function Team() {
       
       if (error) throw error;
       
+      // Actualizar el estado local inmediatamente
+      setInvitations(prev => 
+        prev.map(inv => 
+          inv.id === invitationId 
+            ? { ...inv, status: 'cancelled' as const }
+            : inv
+        )
+      );
+      
       toast({
         title: 'Invitación cancelada',
         description: 'La invitación ha sido cancelada correctamente'
       });
     } catch (error) {
-      console.error('Error cancelling invitation:', error);
+
       toast({
         title: 'Error',
         description: 'No se pudo cancelar la invitación',
@@ -433,7 +444,7 @@ export default function Team() {
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
                   <p className="mt-2 text-slate-600">Cargando invitaciones...</p>
                 </div>
-              ) : invitations.length === 0 ? (
+              ) : invitations.filter(inv => inv.status === 'pending').length === 0 ? (
                 <div className="text-center py-8">
                   <Mail className="h-12 w-12 text-slate-400 mx-auto mb-3" />
                   <p className="text-slate-600">No hay invitaciones pendientes</p>
@@ -441,7 +452,7 @@ export default function Team() {
               ) : (
                 <div className="space-y-3">
                   <AnimatePresence>
-                    {invitations.map((invitation, index) => (
+                    {invitations.filter(inv => inv.status === 'pending').map((invitation, index) => (
                       <motion.div
                         key={invitation.id}
                         initial={{ opacity: 0, x: -20 }}

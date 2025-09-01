@@ -1,16 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
+import { productionConfig, isDevelopment } from '@/config/production';
 
-// Configuración de Supabase usando variables de entorno
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Configuración de Supabase usando variables de entorno o configuración de producción
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || productionConfig.supabase.url;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || productionConfig.supabase.anonKey;
 
-
-
+// Verificar configuración
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Faltan las variables de entorno de Supabase: VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY');
+  if (isDevelopment()) {
+    console.warn('⚠️ Variables de entorno de Supabase no configuradas, usando configuración de producción');
+  } else {
+    throw new Error('Faltan las variables de entorno de Supabase: VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY');
+  }
 }
 
-// Crear cliente de Supabase
+// Crear cliente de Supabase con configuración mejorada
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -26,8 +30,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   global: {
     headers: {
       'Accept': 'application/json',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     }
+  },
+  db: {
+    schema: 'public'
   }
 });
 

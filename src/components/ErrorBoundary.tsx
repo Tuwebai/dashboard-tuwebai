@@ -38,13 +38,9 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log del error usando el sistema centralizado
-    const supabaseError = errorHandler.handleSupabaseError(
+    errorHandler.handleSupabaseError(
       { code: 'REACT_ERROR', message: error.message, details: error.stack },
-      {
-        component: 'ErrorBoundary',
-        action: 'componentDidCatch',
-        timestamp: new Date().toISOString()
-      }
+      'ErrorBoundary'
     );
 
     this.setState({ errorInfo });
@@ -58,8 +54,7 @@ class ErrorBoundary extends Component<Props, State> {
     console.error('🚨 Error Boundary capturó un error:', {
       error,
       errorInfo,
-      errorId: this.state.errorId,
-      supabaseError
+      errorId: this.state.errorId
     });
   }
 

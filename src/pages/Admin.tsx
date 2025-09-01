@@ -47,9 +47,9 @@ import AdvancedTicketManager from '@/components/AdvancedTicketManager';
 import AutoVersionCreator from '@/components/admin/AutoVersionCreator';
 import AdvancedTools from '@/components/admin/AdvancedTools';
 import { VersionManagement } from '@/components/admin/VersionManagement';
-import AdvancedReportsManager from '@/components/admin/AdvancedReportsManager';
-import RealTimeMetrics from '@/components/admin/RealTimeMetrics';
-import DataExportSystem from '@/components/admin/DataExportSystem';
+
+
+
 import { ChartDashboard, RealTimeCharts } from '@/components/AdvancedCharts';
 
 
@@ -211,11 +211,18 @@ export default function Admin() {
   const usuariosActivos = usuarios.length;
   const usuariosNuevos = usuarios.filter(u => {
     const userDate = new Date(u.created_at);
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    return userDate >= thirtyDaysAgo;
+    const currentDate = new Date();
+    return userDate.getMonth() === currentDate.getMonth() && 
+           userDate.getFullYear() === currentDate.getFullYear();
   }).length;
   
+  const proyectosTotales = proyectos.length;
+  const proyectosNuevos = proyectos.filter(p => {
+    const projectDate = new Date(p.created_at);
+    const currentDate = new Date();
+    return projectDate.getMonth() === currentDate.getMonth() && 
+           projectDate.getFullYear() === currentDate.getFullYear();
+  }).length;
   const proyectosEnCurso = proyectos.filter(p => p.status !== 'completed').length;
   const proyectosCompletados = proyectos.filter(p => p.status === 'completed').length;
   const proyectosPendientes = proyectos.filter(p => p.status === 'pending').length;
@@ -562,16 +569,14 @@ export default function Admin() {
                           <FolderOpen size={24} className="sm:w-7 sm:h-7" />
                 </div>
                         <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
-                  {proyectosEnCurso}
+                  {proyectosTotales}
                 </div>
                         <div className="text-sm sm:text-lg font-semibold text-slate-600 mb-1">
-                  Proyectos en Curso
+                  Proyectos Totales
                 </div>
                         <div className="text-xs sm:text-sm text-slate-500 flex items-center space-x-1">
-                  <span className="text-blue-600 font-semibold">{proyectosEnDesarrollo}</span>
-                  <span>desarrollo, </span>
-                  <span className="text-yellow-600 font-semibold">{proyectosPendientes}</span>
-                  <span>pendientes</span>
+                  <span className="text-green-600 font-semibold">+{proyectosNuevos}</span>
+                  <span>este mes</span>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
               </div>
@@ -809,62 +814,11 @@ export default function Admin() {
                        </Badge>
                      </Button>
 
-                     <Button 
-                       variant="outline" 
-                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
-                       onClick={() => {
-                         setActiveSection('reports-analytics');
-                         window.location.hash = 'reports-analytics';
-                       }}
-                     >
-                       <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-purple-100 text-purple-600 group-hover:bg-purple-500 group-hover:text-white mr-6">
-                         <FileText size={28} />
-                       </div>
-                       <span className="text-slate-700 font-bold text-lg group-hover:text-slate-900 transition-colors duration-300">
-                         Reportes & Analytics
-                       </span>
-                       <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-purple-500 text-white shadow-lg group-hover:bg-purple-600 group-hover:scale-105">
-                         <FileText size={16} />
-                       </Badge>
-                     </Button>
 
-                     <Button 
-                       variant="outline" 
-                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
-                       onClick={() => {
-                         setActiveSection('real-time-metrics');
-                         window.location.hash = 'real-time-metrics';
-                       }}
-                     >
-                       <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-green-100 text-green-600 group-hover:bg-green-500 group-hover:text-white mr-6">
-                         <Activity size={28} />
-                       </div>
-                       <span className="text-slate-700 font-bold text-lg group-hover:text-slate-900 transition-colors duration-300">
-                         Métricas en Tiempo Real
-                       </span>
-                       <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-green-500 text-white shadow-lg group-hover:bg-green-600 group-hover:scale-105">
-                         <Activity size={16} />
-                       </Badge>
-                     </Button>
 
-                     <Button 
-                       variant="outline" 
-                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
-                       onClick={() => {
-                         setActiveSection('data-export');
-                         window.location.hash = 'data-export';
-                       }}
-                     >
-                       <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-orange-100 text-orange-600 group-hover:bg-orange-500 group-hover:text-white mr-6">
-                         <Download size={28} />
-                       </div>
-                       <span className="text-slate-700 font-bold text-lg group-hover:text-slate-900 transition-colors duration-300">
-                         Exportación de Datos
-                       </span>
-                       <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-orange-500 text-white shadow-lg group-hover:bg-orange-600 group-hover:scale-105">
-                         <Download size={16} />
-                       </Badge>
-                     </Button>
+
+
+
 
                      <Button 
                        variant="outline" 
@@ -881,25 +835,6 @@ export default function Admin() {
                          Gráficos Avanzados
                        </span>
                        <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-pink-500 text-white shadow-lg group-hover:bg-pink-600 group-hover:scale-105">
-                         <BarChart3 size={16} />
-                       </Badge>
-                     </Button>
-
-                     <Button 
-                       variant="outline" 
-                       className="w-full justify-start p-6 rounded-2xl hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-300 cursor-pointer group border border-transparent hover:border-slate-200/50 hover:shadow-lg"
-                       onClick={() => {
-                         setActiveSection('chart-dashboard');
-                         window.location.hash = 'chart-dashboard';
-                       }}
-                     >
-                       <div className="flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-cyan-100 text-cyan-600 group-hover:bg-cyan-500 group-hover:text-white mr-6">
-                         <BarChart3 size={28} />
-                       </div>
-                       <span className="text-slate-700 font-bold text-lg group-hover:text-slate-900 transition-colors duration-300">
-                         Dashboard Personalizable
-                       </span>
-                       <Badge className="ml-auto px-5 py-3 rounded-2xl text-base font-bold transition-all duration-300 bg-cyan-500 text-white shadow-lg group-hover:bg-cyan-600 group-hover:scale-105">
                          <BarChart3 size={16} />
                        </Badge>
                      </Button>
@@ -1209,25 +1144,13 @@ export default function Admin() {
               <VersionManagement projectId={proyectos.length > 0 ? proyectos[0].id : undefined} />
             )}
 
-            {activeSection === 'reports-analytics' && (
-              <AdvancedReportsManager />
-            )}
 
-            {activeSection === 'real-time-metrics' && (
-              <RealTimeMetrics />
-            )}
-
-            {activeSection === 'data-export' && (
-              <DataExportSystem />
-            )}
 
             {activeSection === 'advanced-charts' && (
               <RealTimeCharts />
             )}
 
-            {activeSection === 'chart-dashboard' && (
-              <ChartDashboard />
-            )}
+
 
             
 

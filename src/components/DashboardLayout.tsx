@@ -7,6 +7,7 @@ import { useAvatarSync } from '@/hooks/useAvatarSync';
 import SkipLink from './SkipLink';
 import LiveRegion from './LiveRegion';
 import { useAccessibility } from '@/hooks/useAccessibility';
+import { userPreferencesService } from '@/lib/userPreferencesService';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -31,12 +32,13 @@ const WIDGETS = [
 ];
 
 export default function DashboardLayout({ children, dashboardProps }: DashboardLayoutProps) {
-  const { isAuthenticated, loading } = useApp();
+  const { isAuthenticated, loading, user } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [visibleWidgets, setVisibleWidgets] = useState<string[]>(() => {
     const saved = localStorage.getItem('dashboard_widgets');
     return saved ? JSON.parse(saved) : WIDGETS.map(w => w.key);
   });
+  const [widgetsLoaded, setWidgetsLoaded] = useState(false);
   const location = useLocation();
   
   // Configurar accesibilidad
@@ -52,9 +54,39 @@ export default function DashboardLayout({ children, dashboardProps }: DashboardL
   // Sincronizar avatar automáticamente
   useAvatarSync();
 
+  // Cargar widgets del usuario desde la base de datos
   useEffect(() => {
+    const loadUserWidgets = async () => {
+      if (isAuthenticated && user && !widgetsLoaded) {
+        try {
+          const userWidgets = await userPreferencesService.getDashboardWidgets(user.id);
+          if (userWidgets.length > 0) {
+            setVisibleWidgets(userWidgets);
+          }
+          setWidgetsLoaded(true);
+        } catch (error) {
+          console.error('Error loading user widgets:', error);
+          setWidgetsLoaded(true);
+        }
+      } else if (!isAuthenticated) {
+        setWidgetsLoaded(true);
+      }
+    };
+
+    loadUserWidgets();
+  }, [isAuthenticated, user, widgetsLoaded]);
+
+  useEffect(() => {
+    // Guardar en localStorage como fallback
     localStorage.setItem('dashboard_widgets', JSON.stringify(visibleWidgets));
-  }, [visibleWidgets]);
+    
+    // Guardar en base de datos si el usuario está autenticado
+    if (isAuthenticated && user && widgetsLoaded) {
+      userPreferencesService.saveDashboardWidgets(user.id, visibleWidgets).catch(error => {
+        console.error('Error saving user widgets:', error);
+      });
+    }
+  }, [visibleWidgets, isAuthenticated, user, widgetsLoaded]);
 
   // Anunciar cambios de página a lectores de pantalla
   useEffect(() => {

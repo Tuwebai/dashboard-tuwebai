@@ -1,5 +1,6 @@
 
 import { supabase } from './supabase';
+import { handleSupabaseError, handleNetworkError } from './errorHandler';
 import { toast } from '@/hooks/use-toast';
 
 // Tipos de usuario basados en la estructura real de la base de datos
@@ -96,7 +97,7 @@ export class UserManagementService {
   // Obtener todos los usuarios
   public async getUsers(filters?: any, sort?: any, page: number = 1, limit: number = 50): Promise<{ users: User[]; total: number; page: number; totalPages: number }> {
     try {
-      console.log('🔍 Cargando usuarios desde Supabase...');
+
       
       // Obtener usuarios de Supabase con la estructura real de la tabla
       const { data: allUsers, error: countError } = await supabase
@@ -105,15 +106,14 @@ export class UserManagementService {
         .order('created_at', { ascending: false });
 
       if (countError) {
-        console.error('❌ Error obteniendo usuarios de Supabase:', countError);
+
         throw new Error(`Error de Supabase: ${countError.message}`);
       }
 
-      console.log(`📊 Total de usuarios en Supabase: ${allUsers?.length || 0}`);
-      console.log('👥 Usuarios cargados:', allUsers);
+
 
       if (!allUsers || allUsers.length === 0) {
-        console.log('⚠️ No hay usuarios en la base de datos');
+
         return { users: [], total: 0, page: 1, totalPages: 0 };
       }
 
@@ -155,7 +155,7 @@ export class UserManagementService {
       const endIndex = startIndex + limit;
       const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
 
-      console.log(`✅ Usuarios filtrados y paginados: ${paginatedUsers.length}/${total}`);
+
 
         return {
         users: paginatedUsers,
@@ -165,7 +165,7 @@ export class UserManagementService {
       };
 
     } catch (error) {
-      console.error('❌ Error en getUsers:', error);
+
       throw error;
     }
   }
@@ -408,6 +408,7 @@ export class UserManagementService {
       return data || [];
     } catch (error) {
       console.error('Error getting invitations:', error);
+      handleSupabaseError(error, 'Obtener invitaciones');
       return [];
     }
   }
@@ -415,6 +416,27 @@ export class UserManagementService {
   // Crear una invitación
   public async createInvitation(invitationData: Partial<UserInvitation>): Promise<UserInvitation> {
     try {
+      // Obtener el usuario actual
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Usuario no autenticado');
+      }
+
+      // Verificar que el usuario tiene permisos de administrador
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (userError || !userData) {
+        throw new Error('No se pudo verificar el rol del usuario');
+      }
+
+      if (userData.role !== 'admin') {
+        throw new Error('Solo los administradores pueden crear invitaciones');
+      }
+
       const token = this.generateToken();
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7); // Expira en 7 días
@@ -424,7 +446,7 @@ export class UserManagementService {
         .insert([{
           email: invitationData.email!,
           role_id: invitationData.role_id || null,
-          invited_by: invitationData.invited_by || null,
+          invited_by: user.id, // Usar el ID del usuario actual
           status: 'pending',
           token: token,
           expires_at: expiresAt.toISOString(),
@@ -443,11 +465,7 @@ export class UserManagementService {
       return data;
     } catch (error) {
       console.error('Error creating invitation:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo crear la invitación.",
-        variant: "destructive",
-      });
+      handleSupabaseError(error, 'Crear invitación');
       throw error;
     }
   }

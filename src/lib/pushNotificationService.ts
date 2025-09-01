@@ -1,487 +1,404 @@
 import { supabase } from './supabase';
-import { notificationChannelService } from './notificationChannelService';
-
-// =====================================================
-// INTERFACES Y TIPOS
-// =====================================================
-
-export interface PushSubscriptionData {
-  endpoint: string;
-  p256dh: string;
-  auth: string;
-}
+import { handleSupabaseError } from './errorHandler';
 
 export interface PushNotificationPayload {
   title: string;
-  message: string;
+  body: string;
   icon?: string;
   badge?: string;
   image?: string;
-  tag?: string;
   data?: Record<string, any>;
-  actions?: PushNotificationAction[];
+  actions?: NotificationAction[];
   requireInteraction?: boolean;
   silent?: boolean;
-  vibrate?: number[];
+  tag?: string;
   timestamp?: number;
-  isUrgent?: boolean;
-  category?: string;
-  metadata?: Record<string, any>;
 }
 
-export interface PushNotificationAction {
-  action: string;
-  title: string;
-  icon?: string;
+export interface NotificationChannel {
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+  types: string[];
+  settings: {
+    sound: boolean;
+    vibration: boolean;
+    badge: boolean;
+    priority: 'low' | 'normal' | 'high';
+  };
 }
 
-export interface DeviceInfo {
-  userAgent: string;
-  platform: string;
-  language: string;
-  timezone: string;
-  screenResolution?: string;
-  deviceMemory?: number;
-  hardwareConcurrency?: number;
-  connectionType?: string;
-  effectiveType?: string;
+export interface UserNotificationSettings {
+  userId: string;
+  channels: Record<string, boolean>;
+  globalEnabled: boolean;
+  quietHours: {
+    enabled: boolean;
+    start: string; // HH:MM format
+    end: string;   // HH:MM format
+    timezone: string;
+  };
+  frequency: 'immediate' | 'digest' | 'disabled';
 }
-
-export interface PushSubscriptionStatus {
-  isSupported: boolean;
-  permission: NotificationPermission;
-  isSubscribed: boolean;
-  subscription?: PushSubscriptionData;
-  error?: string;
-}
-
-// =====================================================
-// SERVICIO DE NOTIFICACIONES PUSH
-// =====================================================
 
 export class PushNotificationService {
-  private static instance: PushNotificationService;
-  private registration: ServiceWorkerRegistration | null = null;
-  private isInitialized = false;
-  private vapidPublicKey: string | null = null;
+  private serviceWorkerRegistration: ServiceWorkerRegistration | null = null;
+  private isSupported = 'Notification' in window && 'serviceWorker' in navigator;
 
-  private constructor() {
-    this.initialize();
+  constructor() {
+    this.initializeServiceWorker();
   }
 
-  static getInstance(): PushNotificationService {
-    if (!PushNotificationService.instance) {
-      PushNotificationService.instance = new PushNotificationService();
+  // Inicializar Service Worker
+  private async initializeServiceWorker(): Promise<void> {
+    if (!this.isSupported) {
+      console.warn('Push notifications not supported');
+      return;
     }
-    return PushNotificationService.instance;
-  }
 
-  // =====================================================
-  // INICIALIZACIÓN
-  // =====================================================
-
-  private async initialize(): Promise<void> {
     try {
-      // Verificar soporte para Service Workers
-      if (!('serviceWorker' in navigator)) {
-        console.warn('⚠️ Service Workers no soportados');
-        return;
-      }
-
-      // Verificar soporte para Push API
-      if (!('PushManager' in window)) {
-        console.warn('⚠️ Push API no soportada');
-        return;
-      }
-
-      // Registrar Service Worker
-      await this.registerServiceWorker();
-      
-      // Obtener clave VAPID pública
-      await this.loadVapidPublicKey();
-      
-      this.isInitialized = true;
-      console.log('✅ PushNotificationService inicializado correctamente');
+      this.serviceWorkerRegistration = await navigator.serviceWorker.register('/sw.js');
+      console.log('Service Worker registered:', this.serviceWorkerRegistration);
     } catch (error) {
-      console.error('❌ Error inicializando PushNotificationService:', error);
+      console.error('Service Worker registration failed:', error);
     }
   }
 
-  private async registerServiceWorker(): Promise<void> {
-    try {
-      this.registration = await navigator.serviceWorker.register('/sw.js');
-      console.log('✅ Service Worker registrado:', this.registration);
-      
-      // Esperar a que el Service Worker esté activo
-      await navigator.serviceWorker.ready;
-      console.log('✅ Service Worker listo');
-    } catch (error) {
-      console.error('❌ Error registrando Service Worker:', error);
-      throw error;
-    }
-  }
-
-  private async loadVapidPublicKey(): Promise<void> {
-    try {
-      // En producción, esto vendría de las variables de entorno
-      this.vapidPublicKey = process.env.VAPID_PUBLIC_KEY || 
-        'BEl62iUYgUivxIkv69yViEuiBIa1HI0F-K-Yw6X5N3iE5qVcK7o5cGcJPBXvRHnMHYfJs5t2ns1DmjX1xDnBUR9c';
-      
-      console.log('🔑 Clave VAPID pública cargada');
-    } catch (error) {
-      console.error('❌ Error cargando clave VAPID:', error);
-    }
-  }
-
-  // =====================================================
-  // GESTIÓN DE PERMISOS
-  // =====================================================
-
+  // Solicitar permisos de notificación
   async requestPermission(): Promise<NotificationPermission> {
-    try {
-      if (!('Notification' in window)) {
-        throw new Error('Este navegador no soporta notificaciones push');
-      }
-
-      const permission = await Notification.requestPermission();
-      console.log('🔐 Permiso de notificaciones:', permission);
-      
-      return permission;
-    } catch (error) {
-      console.error('❌ Error solicitando permiso:', error);
-      throw error;
-    }
-  }
-
-  async getPermissionStatus(): Promise<NotificationPermission> {
-    if (!('Notification' in window)) {
+    if (!this.isSupported) {
       return 'denied';
     }
-    
-    return Notification.permission;
-  }
 
-  // =====================================================
-  // GESTIÓN DE SUSCRIPCIONES
-  // =====================================================
-
-  async subscribeToPush(userId: string): Promise<PushSubscriptionData | null> {
     try {
-      if (!this.registration) {
-        throw new Error('Service Worker no registrado');
-      }
-
-      // Verificar permisos
-      const permission = await this.getPermissionStatus();
-      if (permission !== 'granted') {
-        const newPermission = await this.requestPermission();
-        if (newPermission !== 'granted') {
-          throw new Error('Permiso de notificaciones denegado');
-        }
-      }
-
-      // Obtener suscripción existente
-      let subscription = await this.registration.pushManager.getSubscription();
-      
-      if (!subscription) {
-        // Crear nueva suscripción
-        subscription = await this.registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: this.urlBase64ToUint8Array(this.vapidPublicKey!)
-        });
-      }
-
-      // Convertir a formato compatible
-      const subscriptionData: PushSubscriptionData = {
-        endpoint: subscription.endpoint,
-        p256dh: this.arrayBufferToBase64(subscription.getKey('p256dh')!),
-        auth: this.arrayBufferToBase64(subscription.getKey('auth')!)
-      };
-
-      // Obtener información del dispositivo
-      const deviceInfo = this.getDeviceInfo();
-
-      // Guardar suscripción en la base de datos
-      await notificationChannelService.addPushSubscription(userId, {
-        endpoint: subscriptionData.endpoint,
-        p256dh: subscriptionData.p256dh,
-        auth: subscriptionData.auth,
-        deviceInfo,
-        isActive: true
-      });
-
-      console.log('✅ Suscripción push creada para usuario:', userId);
-      return subscriptionData;
+      const permission = await Notification.requestPermission();
+      return permission;
     } catch (error) {
-      console.error('❌ Error suscribiendo a push:', error);
-      throw error;
+      console.error('Error requesting notification permission:', error);
+      return 'denied';
     }
   }
 
-  async unsubscribeFromPush(userId: string): Promise<boolean> {
+  // Verificar si las notificaciones están habilitadas
+  isNotificationEnabled(): boolean {
+    return this.isSupported && Notification.permission === 'granted';
+  }
+
+  // Suscribirse a push notifications
+  async subscribeToPush(userId: string): Promise<PushSubscription | null> {
+    if (!this.isSupported || !this.serviceWorkerRegistration) {
+      return null;
+    }
+
     try {
-      if (!this.registration) {
-        throw new Error('Service Worker no registrado');
-      }
+      const subscription = await this.serviceWorkerRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: this.urlBase64ToUint8Array(
+          import.meta.env.VITE_VAPID_PUBLIC_KEY || ''
+        )
+      });
 
-      // Obtener suscripción actual
-      const subscription = await this.registration.pushManager.getSubscription();
+      // Guardar suscripción en la base de datos
+      await this.saveSubscription(userId, subscription);
       
-      if (subscription) {
-        // Cancelar suscripción
-        await subscription.unsubscribe();
-        console.log('✅ Suscripción push cancelada');
-      }
-
-      // Desactivar en la base de datos
-      const userSubscriptions = await notificationChannelService.getUserPushSubscriptions(userId);
-      for (const sub of userSubscriptions) {
-        await notificationChannelService.deactivatePushSubscription(sub.id);
-      }
-
-      console.log('✅ Usuario desuscrito de push notifications');
-      return true;
+      return subscription;
     } catch (error) {
-      console.error('❌ Error desuscribiendo de push:', error);
+      console.error('Error subscribing to push notifications:', error);
+      return null;
+    }
+  }
+
+  // Desuscribirse de push notifications
+  async unsubscribeFromPush(userId: string): Promise<boolean> {
+    if (!this.serviceWorkerRegistration) {
+      return false;
+    }
+
+    try {
+      const subscription = await this.serviceWorkerRegistration.pushManager.getSubscription();
+      if (subscription) {
+        await subscription.unsubscribe();
+        await this.removeSubscription(userId, subscription);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error unsubscribing from push notifications:', error);
       return false;
     }
   }
 
-  async getSubscriptionStatus(userId: string): Promise<PushSubscriptionStatus> {
+  // Enviar notificación local
+  async sendLocalNotification(payload: PushNotificationPayload): Promise<void> {
+    if (!this.isNotificationEnabled()) {
+      return;
+    }
+
     try {
-      const isSupported = 'serviceWorker' in navigator && 'PushManager' in window;
-      const permission = await this.getPermissionStatus();
-      
-      if (!isSupported || permission !== 'granted') {
-        return {
-          isSupported,
-          permission,
-          isSubscribed: false
-        };
-      }
+      const notification = new Notification(payload.title, {
+        body: payload.body,
+        icon: payload.icon || '/favicon.ico',
+        badge: payload.badge || '/favicon.ico',
+        image: payload.image,
+        data: payload.data,
+        requireInteraction: payload.requireInteraction || false,
+        silent: payload.silent || false,
+        tag: payload.tag,
+        timestamp: payload.timestamp || Date.now()
+      });
 
-      // Verificar suscripción en Service Worker
-      let isSubscribed = false;
-      let subscription: PushSubscriptionData | undefined;
-
-      if (this.registration) {
-        const swSubscription = await this.registration.pushManager.getSubscription();
-        if (swSubscription) {
-          isSubscribed = true;
-          subscription = {
-            endpoint: swSubscription.endpoint,
-            p256dh: this.arrayBufferToBase64(swSubscription.getKey('p256dh')!),
-            auth: this.arrayBufferToBase64(swSubscription.getKey('auth')!)
-          };
+      // Manejar clic en notificación
+      notification.onclick = (event) => {
+        event.preventDefault();
+        window.focus();
+        
+        if (payload.data?.url) {
+          window.location.href = payload.data.url;
         }
-      }
-
-      // Verificar en base de datos
-      const dbSubscriptions = await notificationChannelService.getUserPushSubscriptions(userId);
-      const hasActiveSubscription = dbSubscriptions.some(sub => sub.isActive);
-
-      return {
-        isSupported,
-        permission,
-        isSubscribed: isSubscribed && hasActiveSubscription,
-        subscription: subscription || undefined
+        
+        notification.close();
       };
+
+      // Auto-cerrar después de 5 segundos
+      setTimeout(() => {
+        notification.close();
+      }, 5000);
+
     } catch (error) {
-      console.error('❌ Error obteniendo estado de suscripción:', error);
-      return {
-        isSupported: false,
-        permission: 'denied',
-        isSubscribed: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
+      console.error('Error sending local notification:', error);
     }
   }
 
-  // =====================================================
-  // ENVÍO DE NOTIFICACIONES
-  // =====================================================
-
+  // Enviar notificación push
   async sendPushNotification(
-    userIds: string[], 
+    userId: string, 
     payload: PushNotificationPayload
   ): Promise<boolean> {
     try {
-      if (!this.isInitialized) {
-        throw new Error('PushNotificationService no inicializado');
-      }
-
-      // Enviar a través del canal de push
-      const results = await Promise.allSettled(
-        userIds.map(userId => 
-          notificationChannelService.sendToChannels(
-            payload,
-            { id: userId },
-            ['push']
-          )
-        )
-      );
-
-      const successCount = results.filter(r => r.status === 'fulfilled').length;
-      const totalCount = results.length;
-
-      console.log(`📱 Push notifications enviadas: ${successCount}/${totalCount}`);
-      return successCount > 0;
-    } catch (error) {
-      console.error('❌ Error enviando push notifications:', error);
-      return false;
-    }
-  }
-
-  async sendPushToAllUsers(payload: PushNotificationPayload): Promise<boolean> {
-    try {
-      // Obtener todos los usuarios con suscripciones push activas
-      const { data: users, error } = await supabase
-        .from('users')
-        .select('id')
-        .eq('push_notifications', true);
+      const { data, error } = await supabase.functions.invoke('send-push-notification', {
+        body: {
+          userId,
+          payload
+        }
+      });
 
       if (error) throw error;
-
-      if (!users || users.length === 0) {
-        console.log('📱 No hay usuarios con push notifications habilitadas');
-        return false;
-      }
-
-      const userIds = users.map(user => user.id);
-      return await this.sendPushNotification(userIds, payload);
+      return true;
     } catch (error) {
-      console.error('❌ Error enviando push a todos los usuarios:', error);
+      handleSupabaseError(error, 'Enviar notificación push');
       return false;
     }
   }
 
-  // =====================================================
-  // NOTIFICACIONES PROGRAMADAS
-  // =====================================================
-
-  async schedulePushNotification(
-    userIds: string[],
-    payload: PushNotificationPayload,
-    sendAt: Date
-  ): Promise<string> {
+  // Obtener configuración de notificaciones del usuario
+  async getUserNotificationSettings(userId: string): Promise<UserNotificationSettings | null> {
     try {
-      const now = new Date();
-      const delay = sendAt.getTime() - now.getTime();
+      const { data, error } = await supabase
+        .from('user_notification_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
 
-      if (delay <= 0) {
-        throw new Error('La fecha de envío debe ser en el futuro');
-      }
-
-      // Crear ID único para la notificación programada
-      const scheduledId = `scheduled_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      // Programar envío
-      setTimeout(async () => {
-        try {
-          await this.sendPushNotification(userIds, payload);
-          console.log(`📅 Notificación programada enviada: ${scheduledId}`);
-        } catch (error) {
-          console.error(`❌ Error enviando notificación programada ${scheduledId}:`, error);
-        }
-      }, delay);
-
-      console.log(`📅 Notificación programada para ${sendAt.toISOString()}: ${scheduledId}`);
-      return scheduledId;
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
     } catch (error) {
-      console.error('❌ Error programando notificación:', error);
-      throw error;
+      handleSupabaseError(error, 'Obtener configuración de notificaciones');
+      return null;
     }
   }
 
-  // =====================================================
-  // NOTIFICACIONES RECURRENTES
-  // =====================================================
-
-  async createRecurringPushNotification(
-    userIds: string[],
-    payload: PushNotificationPayload,
-    interval: 'daily' | 'weekly' | 'monthly',
-    startDate: Date,
-    endDate?: Date
-  ): Promise<string> {
+  // Actualizar configuración de notificaciones
+  async updateUserNotificationSettings(
+    userId: string, 
+    settings: Partial<UserNotificationSettings>
+  ): Promise<boolean> {
     try {
-      const recurringId = `recurring_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      const intervalMs = {
-        daily: 24 * 60 * 60 * 1000,
-        weekly: 7 * 24 * 60 * 60 * 1000,
-        monthly: 30 * 24 * 60 * 60 * 1000
-      }[interval];
+      const { error } = await supabase
+        .from('user_notification_settings')
+        .upsert({
+          user_id: userId,
+          ...settings,
+          updated_at: new Date().toISOString()
+        });
 
-      let currentDate = new Date(startDate);
-      
-      const sendRecurring = async () => {
-        if (endDate && currentDate > endDate) {
-          console.log(`🔄 Notificación recurrente terminada: ${recurringId}`);
-          return;
-        }
-
-        try {
-          await this.sendPushNotification(userIds, payload);
-          console.log(`🔄 Notificación recurrente enviada: ${recurringId} - ${currentDate.toISOString()}`);
-        } catch (error) {
-          console.error(`❌ Error enviando notificación recurrente ${recurringId}:`, error);
-        }
-
-        currentDate = new Date(currentDate.getTime() + intervalMs);
-        
-        // Programar siguiente envío
-        setTimeout(sendRecurring, intervalMs);
-      };
-
-      // Iniciar envío recurrente
-      sendRecurring();
-
-      console.log(`🔄 Notificación recurrente creada: ${recurringId} - ${interval}`);
-      return recurringId;
+      if (error) throw error;
+      return true;
     } catch (error) {
-      console.error('❌ Error creando notificación recurrente:', error);
-      throw error;
+      handleSupabaseError(error, 'Actualizar configuración de notificaciones');
+      return false;
     }
   }
 
-  // =====================================================
-  // UTILIDADES
-  // =====================================================
+  // Obtener canales de notificación disponibles
+  async getNotificationChannels(): Promise<NotificationChannel[]> {
+    try {
+      const { data, error } = await supabase
+        .from('notification_channels')
+        .select('*')
+        .eq('enabled', true)
+        .order('name');
 
-  private getDeviceInfo(): DeviceInfo {
-    const deviceInfo: DeviceInfo = {
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      language: navigator.language,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-    };
-
-    // Información de pantalla
-    if (screen.width && screen.height) {
-      deviceInfo.screenResolution = `${screen.width}x${screen.height}`;
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      handleSupabaseError(error, 'Obtener canales de notificación');
+      return [];
     }
-
-    // Memoria del dispositivo
-    if ('deviceMemory' in navigator) {
-      deviceInfo.deviceMemory = (navigator as any).deviceMemory;
-    }
-
-    // Núcleos del procesador
-    if ('hardwareConcurrency' in navigator) {
-      deviceInfo.hardwareConcurrency = (navigator as any).hardwareConcurrency;
-    }
-
-    // Tipo de conexión
-    if ('connection' in navigator) {
-      const connection = (navigator as any).connection;
-      deviceInfo.connectionType = connection.effectiveType || connection.type;
-      deviceInfo.effectiveType = connection.effectiveType;
-    }
-
-    return deviceInfo;
   }
 
+  // Crear canal de notificación
+  async createNotificationChannel(channel: Omit<NotificationChannel, 'id'>): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('notification_channels')
+        .insert([channel]);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      handleSupabaseError(error, 'Crear canal de notificación');
+      return false;
+    }
+  }
+
+  // Enviar notificación a canal específico
+  async sendNotificationToChannel(
+    channelId: string,
+    payload: PushNotificationPayload,
+    targetUsers?: string[]
+  ): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-channel-notification', {
+        body: {
+          channelId,
+          payload,
+          targetUsers
+        }
+      });
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      handleSupabaseError(error, 'Enviar notificación a canal');
+      return false;
+    }
+  }
+
+  // Programar notificación
+  async scheduleNotification(
+    userId: string,
+    payload: PushNotificationPayload,
+    scheduledTime: Date
+  ): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('scheduled_notifications')
+        .insert([{
+          user_id: userId,
+          payload,
+          scheduled_time: scheduledTime.toISOString(),
+          status: 'pending'
+        }]);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      handleSupabaseError(error, 'Programar notificación');
+      return false;
+    }
+  }
+
+  // Obtener notificaciones programadas
+  async getScheduledNotifications(userId: string): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('scheduled_notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'pending')
+        .order('scheduled_time');
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      handleSupabaseError(error, 'Obtener notificaciones programadas');
+      return [];
+    }
+  }
+
+  // Cancelar notificación programada
+  async cancelScheduledNotification(notificationId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('scheduled_notifications')
+        .update({ status: 'cancelled' })
+        .eq('id', notificationId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      handleSupabaseError(error, 'Cancelar notificación programada');
+      return false;
+    }
+  }
+
+  // Verificar si está en horas silenciosas
+  isInQuietHours(settings: UserNotificationSettings): boolean {
+    if (!settings.quietHours.enabled) {
+      return false;
+    }
+
+    const now = new Date();
+    const currentTime = now.toLocaleTimeString('en-US', { 
+      hour12: false, 
+      timeZone: settings.quietHours.timezone 
+    });
+    
+    const start = settings.quietHours.start;
+    const end = settings.quietHours.end;
+
+    // Si el rango cruza medianoche
+    if (start > end) {
+      return currentTime >= start || currentTime <= end;
+    }
+    
+    return currentTime >= start && currentTime <= end;
+  }
+
+  // Guardar suscripción en la base de datos
+  private async saveSubscription(userId: string, subscription: PushSubscription): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('push_subscriptions')
+        .upsert({
+          user_id: userId,
+          subscription: subscription.toJSON(),
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      handleSupabaseError(error, 'Guardar suscripción push');
+    }
+  }
+
+  // Eliminar suscripción de la base de datos
+  private async removeSubscription(userId: string, subscription: PushSubscription): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('push_subscriptions')
+        .delete()
+        .eq('user_id', userId)
+        .eq('subscription->>endpoint', subscription.endpoint);
+
+      if (error) throw error;
+    } catch (error) {
+      handleSupabaseError(error, 'Eliminar suscripción push');
+    }
+  }
+
+  // Convertir clave VAPID a Uint8Array
   private urlBase64ToUint8Array(base64String: string): Uint8Array {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding)
@@ -496,65 +413,6 @@ export class PushNotificationService {
     }
     return outputArray;
   }
-
-  private arrayBufferToBase64(buffer: ArrayBuffer): string {
-    const bytes = new Uint8Array(buffer);
-    let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return window.btoa(binary);
-  }
-
-  // =====================================================
-  // MÉTODOS PÚBLICOS
-  // =====================================================
-
-  async isSupported(): Promise<boolean> {
-    return 'serviceWorker' in navigator && 'PushManager' in window;
-  }
-
-  async getRegistration(): Promise<ServiceWorkerRegistration | null> {
-    if (!this.registration) {
-      await this.initialize();
-    }
-    return this.registration;
-  }
-
-  async refreshSubscription(userId: string): Promise<PushSubscriptionData | null> {
-    try {
-      // Desuscribir primero
-      await this.unsubscribeFromPush(userId);
-      
-      // Crear nueva suscripción
-      return await this.subscribeToPush(userId);
-    } catch (error) {
-      console.error('❌ Error refrescando suscripción:', error);
-      return null;
-    }
-  }
-
-  async testPushNotification(userId: string): Promise<boolean> {
-    try {
-      const testPayload: PushNotificationPayload = {
-        title: '🧪 Notificación de Prueba',
-        message: 'Esta es una notificación de prueba para verificar que las push notifications funcionan correctamente.',
-        icon: '/icon-192x192.png',
-        tag: 'test-notification',
-        data: {
-          type: 'test',
-          timestamp: Date.now()
-        }
-      };
-
-      return await this.sendPushNotification([userId], testPayload);
-    } catch (error) {
-      console.error('❌ Error enviando notificación de prueba:', error);
-      return false;
-    }
-  }
 }
 
-// Instancia global del servicio
-export const pushNotificationService = PushNotificationService.getInstance();
-export default pushNotificationService;
+export const pushNotificationService = new PushNotificationService();

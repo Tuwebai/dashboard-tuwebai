@@ -161,16 +161,32 @@ export default function RealTimeMetrics() {
       .reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
     const openTickets = tickets.filter(t => t.status !== 'closed').length;
 
+    // Calcular valores históricos reales
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+    const previousActiveProjects = projects.filter(p => 
+      new Date(p.created_at) <= twoHoursAgo && 
+      (p.status === 'active' || p.status === 'in_progress')
+    ).length;
+    
+    const previousNewUsers = users.filter(u => 
+      new Date(u.created_at) <= twoHoursAgo && 
+      new Date(u.created_at) > new Date(now.getTime() - 2 * 60 * 60 * 1000)
+    ).length;
+    
+    const previousRevenue = payments
+      .filter(p => new Date(p.created_at) <= twoHoursAgo && p.status === 'completed')
+      .reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+
     return [
       {
         id: 'active-projects',
         name: 'Proyectos Activos',
         value: activeProjects,
-        previousValue: activeProjects - Math.floor(Math.random() * 3),
-        change: activeProjects - (activeProjects - Math.floor(Math.random() * 3)),
-        changePercent: Math.round(((activeProjects - (activeProjects - Math.floor(Math.random() * 3))) / (activeProjects - Math.floor(Math.random() * 3))) * 100),
-        trend: 'up',
-        status: 'normal',
+        previousValue: previousActiveProjects,
+        change: activeProjects - previousActiveProjects,
+        changePercent: previousActiveProjects > 0 ? Math.round(((activeProjects - previousActiveProjects) / previousActiveProjects) * 100) : 0,
+        trend: activeProjects >= previousActiveProjects ? 'up' : 'down',
+        status: activeProjects > 100 ? 'critical' : activeProjects > 50 ? 'warning' : 'normal',
         lastUpdated: now,
         threshold: { warning: 50, critical: 100 }
       },
@@ -178,11 +194,11 @@ export default function RealTimeMetrics() {
         id: 'new-users-hour',
         name: 'Usuarios Nuevos (1h)',
         value: newUsersThisHour,
-        previousValue: Math.max(0, newUsersThisHour - Math.floor(Math.random() * 5)),
-        change: newUsersThisHour - Math.max(0, newUsersThisHour - Math.floor(Math.random() * 5)),
-        changePercent: Math.round(((newUsersThisHour - Math.max(0, newUsersThisHour - Math.floor(Math.random() * 5))) / Math.max(1, newUsersThisHour - Math.floor(Math.random() * 5))) * 100),
-        trend: 'up',
-        status: 'normal',
+        previousValue: previousNewUsers,
+        change: newUsersThisHour - previousNewUsers,
+        changePercent: previousNewUsers > 0 ? Math.round(((newUsersThisHour - previousNewUsers) / previousNewUsers) * 100) : 0,
+        trend: newUsersThisHour >= previousNewUsers ? 'up' : 'down',
+        status: newUsersThisHour > 20 ? 'critical' : newUsersThisHour > 10 ? 'warning' : 'normal',
         lastUpdated: now,
         threshold: { warning: 10, critical: 20 }
       },
@@ -190,11 +206,11 @@ export default function RealTimeMetrics() {
         id: 'revenue-hour',
         name: 'Ingresos (1h)',
         value: revenueThisHour,
-        previousValue: Math.max(0, revenueThisHour - Math.floor(Math.random() * 1000)),
-        change: revenueThisHour - Math.max(0, revenueThisHour - Math.floor(Math.random() * 1000)),
-        changePercent: Math.round(((revenueThisHour - Math.max(0, revenueThisHour - Math.floor(Math.random() * 1000))) / Math.max(1, revenueThisHour - Math.floor(Math.random() * 1000))) * 100),
-        trend: 'up',
-        status: 'normal',
+        previousValue: previousRevenue,
+        change: revenueThisHour - previousRevenue,
+        changePercent: previousRevenue > 0 ? Math.round(((revenueThisHour - previousRevenue) / previousRevenue) * 100) : 0,
+        trend: revenueThisHour >= previousRevenue ? 'up' : 'down',
+        status: revenueThisHour > 10000 ? 'critical' : revenueThisHour > 5000 ? 'warning' : 'normal',
         lastUpdated: now,
         threshold: { warning: 5000, critical: 10000 }
       },
