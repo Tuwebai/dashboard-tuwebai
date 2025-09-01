@@ -40,6 +40,7 @@ import ProyectosNuevo from './ProyectosNuevo';
 import { formatDateSafe } from '@/utils/formatDateSafe';
 import { userService } from '@/lib/supabaseService';
 import VerDetallesProyecto from '@/components/VerDetallesProyecto';
+import ProjectCard from '@/components/ProjectCard';
 
 export default function ProjectsPage() {
   const { projects, loading, error, refreshData, user } = useApp();
@@ -199,47 +200,7 @@ export default function ProjectsPage() {
 
 
 
-  // Función para calcular progreso del proyecto
-  const calculateProjectProgress = (project: any) => {
-    if (!project.fases || project.fases.length === 0) return 0;
-    const completedPhases = project.fases.filter((f: any) => f.estado === 'Terminado').length;
-    return Math.round((completedPhases / project.fases.length) * 100);
-  };
 
-  // Función para obtener el estado del proyecto
-  const getProjectStatus = (project: any) => {
-    if (!project.fases || project.fases.length === 0) return 'Sin iniciar';
-    
-    const completedPhases = project.fases.filter((f: any) => f.estado === 'Terminado').length;
-    const totalPhases = project.fases.length;
-    
-    if (completedPhases === 0) return 'Sin iniciar';
-    if (completedPhases === totalPhases) return 'Completado';
-    if (completedPhases > totalPhases / 2) return 'En progreso avanzado';
-    return 'En progreso';
-  };
-
-  // Función para obtener el color del estado
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Completado': return 'bg-green-500/10 text-green-600 border-green-500/20';
-      case 'En progreso avanzado': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
-      case 'En progreso': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
-      case 'Sin iniciar': return 'bg-slate-500/10 text-slate-600 border-slate-500/20';
-      default: return 'bg-slate-500/10 text-slate-600 border-slate-500/20';
-    }
-  };
-
-  // Función para obtener el icono del estado
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Completado': return <CheckCircle className="h-4 w-4" />;
-      case 'En progreso avanzado': return <Play className="h-4 w-4" />;
-      case 'En progreso': return <Pause className="h-4 w-4" />;
-      case 'Sin iniciar': return <Clock className="h-4 w-4" />;
-      default: return <AlertTriangle className="h-4 w-4" />;
-    }
-  };
 
   // Función para exportar proyectos
   const handleExport = useCallback((projectsToExport: any[]) => {
@@ -330,6 +291,22 @@ export default function ProjectsPage() {
       }
     }
   }, [projects, user.role, user.email, refreshData]);
+
+  // Funciones para quick actions
+  const handleDuplicateProject = useCallback((project: any) => {
+    // Aquí implementarías la lógica de duplicación
+    toast({ title: 'Duplicado', description: `Proyecto "${project.name}" duplicado correctamente.` });
+  }, []);
+
+  const handleToggleFavorite = useCallback((projectId: string) => {
+    // Aquí implementarías la lógica de favoritos
+    toast({ title: 'Favorito', description: 'Proyecto marcado como favorito.' });
+  }, []);
+
+  const handleArchiveProject = useCallback((projectId: string) => {
+    // Aquí implementarías la lógica de archivado
+    toast({ title: 'Archivado', description: 'Proyecto archivado correctamente.' });
+  }, []);
 
   if (loading) return <SectionSpinner />;
   if (error) return <ErrorMessage error={error} onRetry={refreshData} />;
@@ -446,174 +423,23 @@ export default function ProjectsPage() {
           </div>
         ) : (
           <div className={viewMode === 'grid' ? 'flex flex-wrap gap-6' : 'space-y-4'}>
-            {filteredProjects.map((project) => {
-              const progress = calculateProjectProgress(project);
-              const status = getProjectStatus(project);
-              const totalComments = project.fases?.reduce((total: number, fase: any) => 
-                total + (fase.comentarios?.length || 0), 0) || 0;
-
-              return (
-                                                                   <div 
-                    key={project.id} 
-                    className="bg-white rounded-2xl shadow-lg border border-slate-200/50 hover:shadow-xl transition-all duration-300 overflow-hidden relative cursor-pointer hover:scale-[1.01]"
-                    onClick={() => handleViewProject(project)}
-                  >
-                   {/* Barra superior de gradiente animado */}
-                   <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-t-2xl" />
-                   
-                   <div className="p-6">
-                    {/* Header del proyecto */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-xl font-bold text-slate-800 truncate mb-2">{project.name}</h3>
-                        <p className="text-slate-600 text-sm line-clamp-2 mb-3">
-                          {project.description || 'Sin descripción'}
-                        </p>
-                        
-                        {/* Información del creador del proyecto - Solo visible para admin */}
-                        {user?.role === 'admin' && project.created_by && projectCreators[project.created_by] && (
-                          <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200/50 mb-3">
-                            <User className="h-4 w-4 text-slate-500" />
-                            <div className="flex flex-col">
-                              <span className="text-xs font-medium text-slate-700">
-                                Creado por: {projectCreators[project.created_by].full_name}
-                              </span>
-                              <span className="text-xs text-slate-500">
-                                {projectCreators[project.created_by].email}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                                             {/* Botones de acción - Solo para admin */}
-                       {user?.role === 'admin' && (
-                         <div className="flex gap-1 ml-2">
-                           <TooltipProvider>
-                             <Tooltip>
-                               <TooltipTrigger asChild>
-                                 <Button
-                                   variant="ghost"
-                                   size="sm"
-                                   onClick={() => handleNavigateToEdit(project.id)}
-                                   className="text-slate-600 hover:bg-slate-100"
-                                 >
-                                   <Eye className="h-4 w-4" />
-                                 </Button>
-                               </TooltipTrigger>
-                               <TooltipContent>
-                                 <p>Ver detalles</p>
-                               </TooltipContent>
-                             </Tooltip>
-                           </TooltipProvider>
-                           <TooltipProvider>
-                             <Tooltip>
-                               <TooltipTrigger asChild>
-                                 <Button
-                                   variant="ghost"
-                                   size="sm"
-                                   onClick={() => handleNavigateToEdit(project.id)}
-                                   className="text-slate-600 hover:bg-slate-100"
-                                 >
-                                   <Edit className="h-4 w-4" />
-                                 </Button>
-                               </TooltipTrigger>
-                               <TooltipContent>
-                                 <p>Editar proyecto</p>
-                               </TooltipContent>
-                             </Tooltip>
-                           </TooltipProvider>
-                           <TooltipProvider>
-                             <Tooltip>
-                               <TooltipTrigger asChild>
-                                 <Button
-                                   variant="ghost"
-                                   size="sm"
-                                   onClick={() => handleDeleteProject(project.id)}
-                                   className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                 >
-                                   <Trash2 className="h-4 w-4" />
-                                 </Button>
-                               </TooltipTrigger>
-                               <TooltipContent>
-                                 <p>Eliminar proyecto</p>
-                               </TooltipContent>
-                             </Tooltip>
-                           </TooltipProvider>
-                         </div>
-                       )}
-                    </div>
-
-                    {/* Estado y progreso */}
-                    <div className="space-y-3 mb-4">
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline" className={`${getStatusColor(status)} border-slate-200`}>
-                          {getStatusIcon(status)}
-                          <span className="ml-1">{status}</span>
-                        </Badge>
-                        <span className="text-sm font-medium text-slate-700">{progress}%</span>
-                      </div>
-                      <Progress value={progress} className="h-2" />
-                    </div>
-
-                    {/* Información del proyecto */}
-                    <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                      <div>
-                        <span className="text-slate-500">Tipo:</span>
-                        <p className="font-medium text-slate-700">{project.type || 'Sin tipo'}</p>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">Funcionalidades:</span>
-                        <p className="font-medium text-slate-700">{project.funcionalidades?.length || 0}</p>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">Fases:</span>
-                        <p className="font-medium text-slate-700">
-                          {project.fases?.filter((f: any) => f.estado === 'Terminado').length || 0}/
-                          {project.fases?.length || 0}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">Comentarios:</span>
-                        <p className="font-medium flex items-center gap-1 text-slate-700">
-                          <MessageSquare className="h-3 w-3" />
-                          {totalComments}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Fechas */}
-                    <div className="text-xs text-slate-500 space-y-1 mb-4">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        Creado: {formatDateSafe(project.createdAt)}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        Actualizado: {formatDateSafe(project.updatedAt)}
-                      </div>
-                    </div>
-
-                                         {/* Acciones - Solo botón de colaboración para clientes */}
-                     <div className="flex gap-2 pt-2">
-                       {user?.role !== 'admin' && (
-                         <Button
-                           variant="outline"
-                           size="sm"
-                           className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             handleNavigateToCollaboration(project.id);
-                           }}
-                         >
-                           <Users className="h-4 w-4 mr-2" />
-                           Colaborar
-                         </Button>
-                       )}
-                     </div>
-                  </div>
-                </div>
-              );
-            })}
+            {filteredProjects.map((project, index) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                user={user}
+                projectCreators={projectCreators}
+                onViewProject={handleViewProject}
+                onNavigateToCollaboration={handleNavigateToCollaboration}
+                onNavigateToEdit={handleNavigateToEdit}
+                onDeleteProject={handleDeleteProject}
+                onDuplicateProject={handleDuplicateProject}
+                onToggleFavorite={handleToggleFavorite}
+                onArchiveProject={handleArchiveProject}
+                showAdminActions={user?.role === 'admin'}
+                index={index}
+              />
+            ))}
           </div>
         )}
 

@@ -22,7 +22,11 @@ import {
   Palette,
   Code,
   Database,
-  Zap
+  Zap,
+  Copy,
+  Archive,
+  Star,
+  MoreVertical
 } from 'lucide-react';
 import { formatDateSafe } from '@/utils/formatDateSafe';
 
@@ -53,6 +57,9 @@ interface Project {
   ownerEmail?: string;
   createdAt?: string;
   fases?: ProjectPhase[];
+  approval_status?: 'pending' | 'approved' | 'rejected';
+  approval_notes?: string;
+  approved_at?: string;
 }
 
 interface ProjectCardProps {
@@ -63,6 +70,9 @@ interface ProjectCardProps {
   onNavigateToCollaboration?: (projectId: string) => void;
   onNavigateToEdit?: (projectId: string) => void;
   onDeleteProject?: (projectId: string) => void;
+  onDuplicateProject?: (project: Project) => void;
+  onArchiveProject?: (projectId: string) => void;
+  onToggleFavorite?: (projectId: string) => void;
   showAdminActions?: boolean;
   index?: number;
 }
@@ -214,6 +224,9 @@ export default function ProjectCard({
   onNavigateToCollaboration,
   onNavigateToEdit,
   onDeleteProject,
+  onDuplicateProject,
+  onArchiveProject,
+  onToggleFavorite,
   showAdminActions = false,
   index = 0
 }: ProjectCardProps) {
@@ -223,6 +236,9 @@ export default function ProjectCard({
     total + (fase.comentarios?.length || 0), 0) || 0;
   const isUrgent = isProjectUrgent(project);
   const projectType = project.type || 'Sin tipo';
+  const approvalStatus = project.approval_status || 'approved'; // Por defecto aprobado para proyectos existentes
+  const isPendingApproval = approvalStatus === 'pending';
+  const isRejected = approvalStatus === 'rejected';
 
   return (
     <motion.div
@@ -230,16 +246,27 @@ export default function ProjectCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      whileHover={{ y: -5 }}
+      whileHover={{ 
+        y: -8,
+        scale: 1.02,
+        transition: { duration: 0.2, ease: "easeOut" }
+      }}
+      whileTap={{ scale: 0.98 }}
       className="w-full max-w-xs"
     >
       <div 
-        className="bg-white rounded-2xl shadow-lg border border-slate-200/50 hover:shadow-xl transition-all duration-300 overflow-hidden relative cursor-pointer hover:scale-[1.01] w-full h-[480px] flex flex-col"
-        onClick={() => onViewProject(project)}
+        className={`bg-white rounded-2xl shadow-lg border border-slate-200/50 hover:shadow-2xl hover:border-slate-300/50 transition-all duration-300 overflow-hidden relative w-full h-[480px] flex flex-col group ${
+          isPendingApproval || isRejected ? 'cursor-default opacity-75' : 'cursor-pointer'
+        }`}
+        onClick={() => !isPendingApproval && !isRejected && onViewProject(project)}
       >
         {/* Barra superior de gradiente animado */}
-        <div className={`absolute top-0 left-0 w-full h-1.5 rounded-t-2xl ${
-          isUrgent 
+        <div className={`absolute top-0 left-0 w-full h-1.5 rounded-t-2xl transition-all duration-300 group-hover:h-2 ${
+          approvalStatus === 'rejected' 
+            ? 'bg-gradient-to-r from-red-500 to-red-600' 
+            : approvalStatus === 'pending'
+            ? 'bg-gradient-to-r from-yellow-500 to-orange-500 animate-pulse'
+            : isUrgent 
             ? 'bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 animate-pulse' 
             : 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500'
         }`} />
@@ -260,34 +287,102 @@ export default function ProjectCard({
               <p className="text-slate-600 text-sm line-clamp-2 mb-3">
                 {project.description || 'Sin descripción'}
               </p>
+            </div>
+            
+            {/* Quick Actions Menu */}
+            <div className="flex items-center gap-1 opacity-30 group-hover:opacity-100 transition-opacity duration-200">
+              {/* Botón de favoritos - Disponible para todos */}
+              {onToggleFavorite && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleFavorite(project.id);
+                  }}
+                  className="h-8 w-8 p-0 text-slate-400 hover:text-yellow-500 hover:bg-yellow-50"
+                >
+                  <Star className="h-4 w-4" />
+                </Button>
+              )}
               
-              {/* Información del creador del proyecto - Solo visible para admin */}
-              {user?.role === 'admin' && project.created_by && projectCreators[project.created_by] && (
-                <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200/50 mb-3">
-                  <User className="h-3 w-3 text-slate-500" />
-                  <div className="flex flex-col">
-                    <span className="text-xs font-medium text-slate-700">
-                      Creado por: {projectCreators[project.created_by].full_name}
-                    </span>
-                    <span className="text-xs text-slate-500">
-                      {projectCreators[project.created_by].email}
-                    </span>
-                  </div>
-                </div>
+              {/* Botones de admin - Solo para administradores */}
+              {user?.role === 'admin' && (
+                <>
+                  {onDuplicateProject && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDuplicateProject(project);
+                      }}
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-blue-500 hover:bg-blue-50"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {onArchiveProject && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onArchiveProject(project.id);
+                      }}
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-orange-500 hover:bg-orange-50"
+                    >
+                      <Archive className="h-4 w-4" />
+                    </Button>
+                  )}
+                </>
               )}
             </div>
+          </div>
+          
+          <div className="flex-1 flex flex-col">
+            {/* Información del creador del proyecto - Solo visible para admin */}
+            {user?.role === 'admin' && project.created_by && projectCreators[project.created_by] && (
+              <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200/50 mb-3">
+                <User className="h-3 w-3 text-slate-500" />
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-slate-700">
+                    Creado por: {projectCreators[project.created_by].full_name}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {projectCreators[project.created_by].email}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Estado y progreso */}
           <div className="space-y-2 mb-3">
             <div className="flex items-center justify-between">
-              <Badge variant="outline" className={`${getStatusColor(status)} border-slate-200 text-xs`}>
-                {getStatusIcon(status)}
-                <span className="ml-1">{status}</span>
-              </Badge>
-              <span className="text-sm font-medium text-slate-700">{progress}%</span>
+              {isPendingApproval ? (
+                <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 text-xs">
+                  <Clock className="h-4 w-4" />
+                  <span className="ml-1">Esperando Aprobación</span>
+                </Badge>
+              ) : isRejected ? (
+                <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20 text-xs">
+                  <XCircle className="h-4 w-4" />
+                  <span className="ml-1">Rechazado</span>
+                </Badge>
+              ) : (
+                <Badge variant="outline" className={`${getStatusColor(status)} border-slate-200 text-xs`}>
+                  {getStatusIcon(status)}
+                  <span className="ml-1">{status}</span>
+                </Badge>
+              )}
+              {!isPendingApproval && !isRejected && (
+                <span className="text-sm font-medium text-slate-700">{progress}%</span>
+              )}
             </div>
-            <Progress value={progress} className="h-1.5" />
+            {!isPendingApproval && !isRejected && (
+              <Progress value={progress} className="h-1.5" />
+            )}
           </div>
 
           {/* Tag de tipo de proyecto */}
@@ -299,26 +394,46 @@ export default function ProjectCard({
           </div>
 
           {/* Información del proyecto */}
-          <div className="grid grid-cols-2 gap-3 text-xs mb-3 flex-1">
-            <div>
-              <span className="text-slate-500">Funcionalidades:</span>
-              <p className="font-medium text-slate-700">{(project as any).funcionalidades?.length || 0}</p>
+          {!isPendingApproval && !isRejected ? (
+            <div className="grid grid-cols-2 gap-3 text-xs mb-3 flex-1">
+              <div>
+                <span className="text-slate-500">Funcionalidades:</span>
+                <p className="font-medium text-slate-700">{(project as any).funcionalidades?.length || 0}</p>
+              </div>
+              <div>
+                <span className="text-slate-500">Fases:</span>
+                <p className="font-medium text-slate-700">
+                  {project.fases?.filter((f: ProjectPhase) => f.estado === 'Terminado').length || 0}/
+                  {project.fases?.length || 0}
+                </p>
+              </div>
+              <div>
+                <span className="text-slate-500">Comentarios:</span>
+                <p className="font-medium flex items-center gap-1 text-slate-700">
+                  <MessageSquare className="h-3 w-3" />
+                  {totalComments}
+                </p>
+              </div>
             </div>
-            <div>
-              <span className="text-slate-500">Fases:</span>
-              <p className="font-medium text-slate-700">
-                {project.fases?.filter((f: ProjectPhase) => f.estado === 'Terminado').length || 0}/
-                {project.fases?.length || 0}
-              </p>
+          ) : (
+            <div className="mb-3 flex-1 flex items-center justify-center">
+              <div className="text-center text-slate-500">
+                {isPendingApproval ? (
+                  <div className="space-y-2">
+                    <Clock className="h-8 w-8 mx-auto text-yellow-500" />
+                    <p className="text-sm font-medium">Esperando aprobación</p>
+                    <p className="text-xs">Los administradores revisarán tu proyecto</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <XCircle className="h-8 w-8 mx-auto text-red-500" />
+                    <p className="text-sm font-medium">Proyecto rechazado</p>
+                    <p className="text-xs">Contacta a los administradores</p>
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <span className="text-slate-500">Comentarios:</span>
-              <p className="font-medium flex items-center gap-1 text-slate-700">
-                <MessageSquare className="h-3 w-3" />
-                {totalComments}
-              </p>
-            </div>
-          </div>
+          )}
 
           {/* Fechas */}
           <div className="text-xs text-slate-500 space-y-1 mb-3">
@@ -334,50 +449,89 @@ export default function ProjectCard({
 
           {/* Acciones */}
           <div className="flex gap-2 pt-2 mt-auto">
-            {user?.role !== 'admin' && onNavigateToCollaboration && (
+            {!isPendingApproval && !isRejected && (
+              <>
+                {user?.role !== 'admin' && onNavigateToCollaboration && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onNavigateToCollaboration(project.id);
+                    }}
+                  >
+                    <Users className="h-3 w-3 mr-1" />
+                    Colaborar
+                  </Button>
+                )}
+                
+                {showAdminActions && user?.role === 'admin' && (
+                  <>
+                    {onNavigateToEdit && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onNavigateToEdit(project.id);
+                        }}
+                      >
+                        Editar
+                      </Button>
+                    )}
+                    {onDeleteProject && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-red-300 text-red-700 hover:bg-red-50 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteProject(project.id);
+                        }}
+                      >
+                        Eliminar
+                      </Button>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+            
+            {/* Botón para proyectos rechazados */}
+            {isRejected && user?.role !== 'admin' && (
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50 text-xs"
-                onClick={(e) => {
+                className="flex-1 border-orange-300 text-orange-700 hover:bg-orange-50 text-xs"
+                onClick={async (e) => {
                   e.stopPropagation();
-                  onNavigateToCollaboration(project.id);
+                  try {
+                    // Importar el servicio dinámicamente para evitar dependencias circulares
+                    const { projectService } = await import('@/lib/projectService');
+                    await projectService.createApprovalRequest(project.id, 'Solicitud de nueva revisión del proyecto rechazado');
+                    
+                    // Mostrar mensaje de éxito
+                    const { toast } = await import('@/hooks/use-toast');
+                    toast({
+                      title: 'Solicitud enviada',
+                      description: 'Tu solicitud de revisión ha sido enviada a los administradores'
+                    });
+                  } catch (error) {
+                    console.error('Error creating approval request:', error);
+                    const { toast } = await import('@/hooks/use-toast');
+                    toast({
+                      title: 'Error',
+                      description: 'No se pudo enviar la solicitud de revisión',
+                      variant: 'destructive'
+                    });
+                  }
                 }}
               >
-                <Users className="h-3 w-3 mr-1" />
-                Colaborar
+                <MessageSquare className="h-3 w-3 mr-1" />
+                Solicitar revisión
               </Button>
-            )}
-            
-            {showAdminActions && user?.role === 'admin' && (
-              <>
-                {onNavigateToEdit && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onNavigateToEdit(project.id);
-                    }}
-                  >
-                    Editar
-                  </Button>
-                )}
-                {onDeleteProject && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-red-300 text-red-700 hover:bg-red-50 text-xs"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteProject(project.id);
-                    }}
-                  >
-                    Eliminar
-                  </Button>
-                )}
-              </>
             )}
           </div>
         </div>

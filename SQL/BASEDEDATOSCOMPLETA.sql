@@ -1,353 +1,6 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
--- =====================================================
--- TABLAS DEL SISTEMA DE USUARIOS Y ROLES
--- =====================================================
-
--- Tabla de usuarios (ya existe, pero agregamos políticas RLS)
-CREATE TABLE public.users (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  email text NOT NULL UNIQUE,
-  full_name text,
-  role text DEFAULT 'user'::text CHECK (role = ANY (ARRAY['admin'::text, 'user'::text])),
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  avatar_url text,
-  CONSTRAINT users_pkey PRIMARY KEY (id)
-);
-
--- Tabla de roles de usuario
-CREATE TABLE public.user_roles (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  name character varying NOT NULL UNIQUE,
-  display_name character varying NOT NULL,
-  description text,
-  permissions text[] DEFAULT '{}'::text[],
-  is_system boolean DEFAULT false,
-  can_delete boolean DEFAULT true,
-  can_edit boolean DEFAULT true,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT user_roles_pkey PRIMARY KEY (id)
-);
-
--- Tabla de invitaciones de usuario
-CREATE TABLE public.user_invitations (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  email character varying NOT NULL,
-  role_id uuid,
-  invited_by uuid,
-  status character varying DEFAULT 'pending'::character varying CHECK (status = ANY (ARRAY['pending'::character varying, 'accepted'::character varying, 'expired'::character varying, 'cancelled'::character varying, 'declined'::character varying])),
-  token character varying NOT NULL UNIQUE,
-  expires_at timestamp with time zone NOT NULL,
-  message text,
-  accepted_at timestamp with time zone,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT user_invitations_pkey PRIMARY KEY (id),
-  CONSTRAINT user_invitations_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES auth.users(id),
-  CONSTRAINT user_invitations_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.user_roles(id)
-);
-
--- Tabla de logs de auditoría
-CREATE TABLE public.audit_logs (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  user_id uuid,
-  action character varying NOT NULL,
-  details jsonb DEFAULT '{}'::jsonb,
-  ip_address character varying,
-  user_agent text,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT audit_logs_pkey PRIMARY KEY (id),
-  CONSTRAINT audit_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
-);
-
--- =====================================================
--- POLÍTICAS RLS (ROW LEVEL SECURITY)
--- =====================================================
-
--- Habilitar RLS en todas las tablas
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.user_invitations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
-
--- Políticas para la tabla users
-CREATE POLICY "Users can view their own profile" ON public.users
-  FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Admins can view all users" ON public.users
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
-CREATE POLICY "Admins can insert users" ON public.users
-  FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
-CREATE POLICY "Admins can update users" ON public.users
-  FOR UPDATE USING (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
-CREATE POLICY "Admins can delete users" ON public.users
-  FOR DELETE USING (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
--- Políticas para la tabla user_roles
-CREATE POLICY "Admins can view all roles" ON public.user_roles
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
-CREATE POLICY "Admins can insert roles" ON public.user_roles
-  FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
-CREATE POLICY "Admins can update roles" ON public.user_roles
-  FOR UPDATE USING (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
-CREATE POLICY "Admins can delete roles" ON public.user_roles
-  FOR DELETE USING (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
--- Políticas para la tabla user_invitations
-CREATE POLICY "Admins can view all invitations" ON public.user_invitations
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
-CREATE POLICY "Admins can insert invitations" ON public.user_invitations
-  FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
-CREATE POLICY "Admins can update invitations" ON public.user_invitations
-  FOR UPDATE USING (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
-CREATE POLICY "Admins can delete invitations" ON public.user_invitations
-  FOR DELETE USING (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
--- Políticas para la tabla audit_logs
-CREATE POLICY "Admins can view all audit logs" ON public.audit_logs
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
-CREATE POLICY "System can insert audit logs" ON public.audit_logs
-  FOR INSERT WITH CHECK (true);
-
--- =====================================================
--- DATOS INICIALES
--- =====================================================
-
--- Insertar roles por defecto
-INSERT INTO public.user_roles (name, display_name, description, permissions, is_system, can_delete, can_edit) VALUES
-('admin', 'Administrador', 'Acceso completo al sistema', ARRAY['*'], true, false, false),
-('user', 'Usuario', 'Usuario con permisos básicos', ARRAY['projects.view', 'tickets.view'], true, false, false),
-('manager', 'Gerente', 'Gestión de proyectos y equipos', ARRAY['projects.manage', 'teams.manage', 'users.view'], false, true, true),
-('developer', 'Desarrollador', 'Desarrollo y colaboración en proyectos', ARRAY['projects.manage', 'collaboration.manage', 'files.manage'], false, true, true);
-
--- Insertar usuario administrador por defecto (si no existe)
-INSERT INTO public.users (email, full_name, role, created_at, updated_at)
-SELECT 'admin@tuwebai.com', 'Administrador del Sistema', 'admin', now(), now()
-WHERE NOT EXISTS (SELECT 1 FROM public.users WHERE email = 'admin@tuwebai.com');
-
--- =====================================================
--- FUNCIONES Y TRIGGERS
--- =====================================================
-
--- Función para actualizar updated_at automáticamente
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = now();
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
-
--- Triggers para actualizar updated_at
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON public.users
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_user_roles_updated_at BEFORE UPDATE ON public.user_roles
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_user_invitations_updated_at BEFORE UPDATE ON public.user_invitations
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- Función para crear log de auditoría automáticamente
-CREATE OR REPLACE FUNCTION log_user_action()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF TG_OP = 'INSERT' THEN
-        INSERT INTO public.audit_logs (user_id, action, details)
-        VALUES (NEW.id, 'user_created', jsonb_build_object('email', NEW.email, 'role', NEW.role));
-        RETURN NEW;
-    ELSIF TG_OP = 'UPDATE' THEN
-        INSERT INTO public.audit_logs (user_id, action, details)
-        VALUES (NEW.id, 'user_updated', jsonb_build_object('email', NEW.email, 'role', NEW.role, 'changes', jsonb_build_object('old_role', OLD.role, 'new_role', NEW.role)));
-        RETURN NEW;
-    ELSIF TG_OP = 'DELETE' THEN
-        INSERT INTO public.audit_logs (user_id, action, details)
-        VALUES (OLD.id, 'user_deleted', jsonb_build_object('email', OLD.email, 'role', OLD.role));
-        RETURN OLD;
-    END IF;
-    RETURN NULL;
-END;
-$$ language 'plpgsql';
-
--- Trigger para logs de auditoría de usuarios
-CREATE TRIGGER audit_users_changes
-    AFTER INSERT OR UPDATE OR DELETE ON public.users
-    FOR EACH ROW EXECUTE FUNCTION log_user_action();
-
--- =====================================================
--- ÍNDICES PARA OPTIMIZACIÓN
--- =====================================================
-
--- Índices para la tabla users
-CREATE INDEX idx_users_email ON public.users(email);
-CREATE INDEX idx_users_role ON public.users(role);
-CREATE INDEX idx_users_created_at ON public.users(created_at);
-
--- Índices para la tabla user_roles
-CREATE INDEX idx_user_roles_name ON public.user_roles(name);
-CREATE INDEX idx_user_roles_is_system ON public.user_roles(is_system);
-
--- Índices para la tabla user_invitations
-CREATE INDEX idx_user_invitations_email ON public.user_invitations(email);
-CREATE INDEX idx_user_invitations_status ON public.user_invitations(status);
-CREATE INDEX idx_user_invitations_token ON public.user_invitations(token);
-CREATE INDEX idx_user_invitations_expires_at ON public.user_invitations(expires_at);
-
--- Índices para la tabla audit_logs
-CREATE INDEX idx_audit_logs_user_id ON public.audit_logs(user_id);
-CREATE INDEX idx_audit_logs_action ON public.audit_logs(action);
-CREATE INDEX idx_audit_logs_created_at ON public.audit_logs(created_at);
-
--- =====================================================
--- VISTAS ÚTILES
--- =====================================================
-
--- Vista para usuarios con información de roles
-CREATE OR REPLACE VIEW public.users_with_roles AS
-SELECT 
-    u.id,
-    u.email,
-    u.full_name,
-    u.role,
-    u.created_at,
-    u.updated_at,
-    u.avatar_url,
-    ur.display_name as role_display_name,
-    ur.description as role_description,
-    ur.permissions as role_permissions
-FROM public.users u
-LEFT JOIN public.user_roles ur ON u.role = ur.name;
-
--- Vista para estadísticas de usuarios
-CREATE OR REPLACE VIEW public.user_stats AS
-SELECT 
-    COUNT(*) as total_users,
-    COUNT(CASE WHEN role = 'admin' THEN 1 END) as admin_count,
-    COUNT(CASE WHEN role = 'user' THEN 1 END) as user_count,
-    COUNT(CASE WHEN created_at >= now() - interval '30 days' THEN 1 END) as new_users_month,
-    COUNT(CASE WHEN created_at >= now() - interval '7 days' THEN 1 END) as new_users_week
-FROM public.users;
-
--- =====================================================
--- RESTRICCIONES ADICIONALES
--- =====================================================
-
--- Asegurar que no se pueda eliminar el último administrador
-CREATE OR REPLACE FUNCTION prevent_last_admin_deletion()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF OLD.role = 'admin' THEN
-        IF (SELECT COUNT(*) FROM public.users WHERE role = 'admin') <= 1 THEN
-            RAISE EXCEPTION 'No se puede eliminar el último administrador del sistema';
-        END IF;
-    END IF;
-    RETURN OLD;
-END;
-$$ language 'plpgsql';
-
-CREATE TRIGGER prevent_last_admin_deletion_trigger
-    BEFORE DELETE ON public.users
-    FOR EACH ROW EXECUTE FUNCTION prevent_last_admin_deletion();
-
--- Asegurar que no se pueda cambiar el rol del último administrador
-CREATE OR REPLACE FUNCTION prevent_last_admin_role_change()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF OLD.role = 'admin' AND NEW.role != 'admin' THEN
-        IF (SELECT COUNT(*) FROM public.users WHERE role = 'admin') <= 1 THEN
-            RAISE EXCEPTION 'No se puede cambiar el rol del último administrador del sistema';
-        END IF;
-    END IF;
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
-
-CREATE TRIGGER prevent_last_admin_role_change_trigger
-    BEFORE UPDATE ON public.users
-    FOR EACH ROW EXECUTE FUNCTION prevent_last_admin_role_change();
-
--- =====================================================
--- TABLAS EXISTENTES (mantener estructura original)
--- =====================================================
-
 CREATE TABLE public.automation_logs (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   automation_type character varying NOT NULL CHECK (automation_type::text = ANY (ARRAY['workflow'::character varying, 'trigger'::character varying, 'task'::character varying, 'pipeline'::character varying]::text[])),
@@ -448,45 +101,6 @@ CREATE TABLE public.commits (
   CONSTRAINT commits_pkey PRIMARY KEY (id),
   CONSTRAINT commits_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id)
 );
-CREATE TABLE public.deployment_configs (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  project_id uuid,
-  environment character varying NOT NULL CHECK (environment::text = ANY (ARRAY['development'::character varying, 'staging'::character varying, 'production'::character varying]::text[])),
-  build_command text NOT NULL,
-  test_command text,
-  deploy_command text NOT NULL,
-  health_check_path character varying NOT NULL DEFAULT '/health'::character varying,
-  health_check_timeout integer DEFAULT 30,
-  max_deployment_time integer DEFAULT 600,
-  rollback_threshold integer DEFAULT 5,
-  notifications jsonb DEFAULT '[]'::jsonb,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT deployment_configs_pkey PRIMARY KEY (id),
-  CONSTRAINT deployment_configs_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id)
-);
-CREATE TABLE public.deployments (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  version_id uuid,
-  project_id uuid,
-  environment character varying NOT NULL CHECK (environment::text = ANY (ARRAY['development'::character varying, 'staging'::character varying, 'production'::character varying]::text[])),
-  status character varying NOT NULL DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'failed'::character varying, 'cancelled'::character varying]::text[])),
-  started_at timestamp with time zone DEFAULT now(),
-  completed_at timestamp with time zone,
-  deployed_by uuid,
-  deployment_logs text NOT NULL DEFAULT ''::text,
-  rollback_available boolean DEFAULT false,
-  rollback_to character varying,
-  health_check_url character varying,
-  health_check_status character varying CHECK (health_check_status::text = ANY (ARRAY['healthy'::character varying, 'unhealthy'::character varying, 'unknown'::character varying]::text[])),
-  performance_metrics jsonb,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT deployments_pkey PRIMARY KEY (id),
-  CONSTRAINT deployments_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id),
-  CONSTRAINT deployments_version_id_fkey FOREIGN KEY (version_id) REFERENCES public.project_versions(id),
-  CONSTRAINT deployments_deployed_by_fkey FOREIGN KEY (deployed_by) REFERENCES auth.users(id)
-);
 CREATE TABLE public.environment_variables (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   key character varying NOT NULL,
@@ -498,8 +112,8 @@ CREATE TABLE public.environment_variables (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT environment_variables_pkey PRIMARY KEY (id),
-  CONSTRAINT environment_variables_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),
-  CONSTRAINT environment_variables_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id)
+  CONSTRAINT environment_variables_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id),
+  CONSTRAINT environment_variables_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.environments (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -517,6 +131,81 @@ CREATE TABLE public.environments (
   CONSTRAINT environments_pkey PRIMARY KEY (id),
   CONSTRAINT environments_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id)
 );
+CREATE TABLE public.export_jobs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL,
+  description text,
+  data_type character varying NOT NULL CHECK (data_type::text = ANY (ARRAY['projects'::character varying, 'users'::character varying, 'payments'::character varying, 'tickets'::character varying, 'custom'::character varying]::text[])),
+  format character varying NOT NULL CHECK (format::text = ANY (ARRAY['pdf'::character varying, 'excel'::character varying, 'csv'::character varying, 'json'::character varying]::text[])),
+  filters jsonb DEFAULT '{}'::jsonb,
+  status character varying NOT NULL DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'processing'::character varying, 'completed'::character varying, 'failed'::character varying]::text[])),
+  created_at timestamp with time zone DEFAULT now(),
+  completed_at timestamp with time zone,
+  download_url text,
+  error text,
+  file_size bigint,
+  record_count integer,
+  created_by uuid,
+  CONSTRAINT export_jobs_pkey PRIMARY KEY (id),
+  CONSTRAINT export_jobs_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.notification_analytics (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  date date NOT NULL,
+  channel character varying NOT NULL,
+  category character varying NOT NULL,
+  sent_count integer DEFAULT 0,
+  delivered_count integer DEFAULT 0,
+  opened_count integer DEFAULT 0,
+  clicked_count integer DEFAULT 0,
+  failed_count integer DEFAULT 0,
+  bounce_count integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT notification_analytics_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.notification_channels (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL UNIQUE,
+  display_name text NOT NULL DEFAULT ''::text,
+  description text,
+  type text NOT NULL DEFAULT 'general'::text,
+  types ARRAY NOT NULL DEFAULT '{}'::text[],
+  settings jsonb NOT NULL DEFAULT '{"badge": true, "sound": true, "priority": "normal", "vibration": true}'::jsonb,
+  enabled boolean NOT NULL DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT notification_channels_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.notification_delivery_logs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  notification_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  channel_id uuid NOT NULL,
+  status character varying NOT NULL CHECK (status::text = ANY (ARRAY['pending'::character varying, 'sent'::character varying, 'delivered'::character varying, 'failed'::character varying, 'bounced'::character varying]::text[])),
+  sent_at timestamp with time zone,
+  delivered_at timestamp with time zone,
+  error_message text,
+  retry_count integer DEFAULT 0,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT notification_delivery_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT notification_delivery_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT notification_delivery_logs_notification_id_fkey FOREIGN KEY (notification_id) REFERENCES public.notifications(id)
+);
+CREATE TABLE public.notification_rules (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL UNIQUE,
+  description text,
+  trigger_event character varying NOT NULL,
+  conditions jsonb DEFAULT '{}'::jsonb,
+  actions jsonb NOT NULL,
+  is_active boolean DEFAULT true,
+  priority integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT notification_rules_pkey PRIMARY KEY (id)
+);
 CREATE TABLE public.notification_settings (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid UNIQUE,
@@ -533,6 +222,22 @@ CREATE TABLE public.notification_settings (
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT notification_settings_pkey PRIMARY KEY (id),
   CONSTRAINT notification_settings_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.notification_templates (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL UNIQUE,
+  display_name character varying NOT NULL,
+  description text,
+  category character varying NOT NULL,
+  channels ARRAY NOT NULL,
+  subject text,
+  content text NOT NULL,
+  html_content text,
+  variables jsonb DEFAULT '{}'::jsonb,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT notification_templates_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.notifications (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -554,34 +259,69 @@ CREATE TABLE public.notifications (
 CREATE TABLE public.payments (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   user_id uuid,
-  amount numeric NOT NULL,
   currency text DEFAULT 'USD'::text,
   status text DEFAULT 'pending'::text,
   payment_method text,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
+  user_email text,
+  user_name text,
+  payment_type text DEFAULT 'custom'::text,
+  mercadopago_id text UNIQUE,
+  mercadopago_status text,
+  installments integer DEFAULT 1,
+  description text,
+  features ARRAY DEFAULT '{}'::text[],
+  paid_at timestamp with time zone,
+  invoice_url text,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  amount integer NOT NULL,
   CONSTRAINT payments_pkey PRIMARY KEY (id),
   CONSTRAINT payments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.project_files (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
-  name character varying NOT NULL,
-  path text NOT NULL,
-  size bigint NOT NULL DEFAULT 0,
-  type character varying NOT NULL DEFAULT 'other'::character varying,
-  mime_type character varying,
+  project_id uuid NOT NULL,
+  name text NOT NULL,
+  url text NOT NULL,
+  size bigint NOT NULL,
+  type text NOT NULL,
+  uploaded_by uuid NOT NULL,
+  uploaded_by_name text NOT NULL,
+  uploaded_at timestamp with time zone DEFAULT now(),
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  created_by uuid,
-  project_id uuid,
-  version integer NOT NULL DEFAULT 1,
-  is_public boolean NOT NULL DEFAULT false,
-  permissions ARRAY NOT NULL DEFAULT ARRAY['read'::text, 'write'::text],
-  folder_path character varying DEFAULT ''::character varying,
-  metadata jsonb DEFAULT '{}'::jsonb,
-  CONSTRAINT project_files_pkey PRIMARY KEY (id),
-  CONSTRAINT project_files_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),
-  CONSTRAINT project_files_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id)
+  CONSTRAINT project_files_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.project_messages (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  project_id uuid NOT NULL,
+  text text NOT NULL,
+  sender uuid NOT NULL,
+  sender_name text NOT NULL,
+  timestamp timestamp with time zone DEFAULT now(),
+  type text DEFAULT 'text'::text,
+  file_url text,
+  file_name text,
+  role text DEFAULT 'cliente'::text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT project_messages_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.project_tasks (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  project_id uuid NOT NULL,
+  title text NOT NULL,
+  description text,
+  status text DEFAULT 'pending'::text,
+  priority text DEFAULT 'medium'::text,
+  assignee uuid,
+  assignee_name text,
+  due_date date,
+  phase_key text DEFAULT 'general'::text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT project_tasks_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.project_versions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -633,6 +373,95 @@ CREATE TABLE public.projects (
   CONSTRAINT projects_pkey PRIMARY KEY (id),
   CONSTRAINT projects_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id)
 );
+CREATE TABLE public.push_subscriptions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  endpoint text NOT NULL,
+  p256dh text NOT NULL,
+  auth text NOT NULL,
+  device_info jsonb DEFAULT '{}'::jsonb,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT push_subscriptions_pkey PRIMARY KEY (id),
+  CONSTRAINT push_subscriptions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.report_executions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  template_id uuid,
+  status character varying NOT NULL DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'processing'::character varying, 'completed'::character varying, 'failed'::character varying]::text[])),
+  started_at timestamp with time zone DEFAULT now(),
+  completed_at timestamp with time zone,
+  download_url text,
+  error text,
+  file_size bigint,
+  record_count integer,
+  created_at timestamp with time zone DEFAULT now(),
+  created_by uuid,
+  CONSTRAINT report_executions_pkey PRIMARY KEY (id),
+  CONSTRAINT report_executions_template_id_fkey FOREIGN KEY (template_id) REFERENCES public.report_templates(id),
+  CONSTRAINT report_executions_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.report_templates (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL,
+  description text,
+  type character varying NOT NULL CHECK (type::text = ANY (ARRAY['executive'::character varying, 'financial'::character varying, 'user'::character varying, 'project'::character varying, 'custom'::character varying]::text[])),
+  filters jsonb DEFAULT '{}'::jsonb,
+  schedule jsonb,
+  last_generated timestamp with time zone,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  created_by uuid,
+  updated_by uuid,
+  CONSTRAINT report_templates_pkey PRIMARY KEY (id),
+  CONSTRAINT report_templates_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT report_templates_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.scheduled_exports (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL,
+  description text,
+  data_type character varying NOT NULL CHECK (data_type::text = ANY (ARRAY['projects'::character varying, 'users'::character varying, 'payments'::character varying, 'tickets'::character varying, 'custom'::character varying]::text[])),
+  format character varying NOT NULL CHECK (format::text = ANY (ARRAY['pdf'::character varying, 'excel'::character varying, 'csv'::character varying, 'json'::character varying]::text[])),
+  schedule jsonb NOT NULL,
+  recipients ARRAY DEFAULT '{}'::text[],
+  is_active boolean DEFAULT true,
+  last_executed timestamp with time zone,
+  next_execution timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  created_by uuid,
+  updated_by uuid,
+  CONSTRAINT scheduled_exports_pkey PRIMARY KEY (id),
+  CONSTRAINT scheduled_exports_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(id),
+  CONSTRAINT scheduled_exports_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.scheduled_notifications (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  template_id uuid,
+  rule_id uuid,
+  channels ARRAY NOT NULL,
+  subject text,
+  content text NOT NULL,
+  html_content text,
+  variables jsonb DEFAULT '{}'::jsonb,
+  scheduled_for timestamp with time zone NOT NULL,
+  status character varying DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'sent'::character varying, 'failed'::character varying, 'cancelled'::character varying]::text[])),
+  attempts integer DEFAULT 0,
+  max_attempts integer DEFAULT 3,
+  last_attempt_at timestamp with time zone,
+  error_message text,
+  sent_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT scheduled_notifications_pkey PRIMARY KEY (id),
+  CONSTRAINT scheduled_notifications_template_id_fkey FOREIGN KEY (template_id) REFERENCES public.notification_templates(id),
+  CONSTRAINT scheduled_notifications_rule_id_fkey FOREIGN KEY (rule_id) REFERENCES public.notification_rules(id),
+  CONSTRAINT scheduled_notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
 CREATE TABLE public.scheduled_reports (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   name character varying NOT NULL,
@@ -652,6 +481,21 @@ CREATE TABLE public.scheduled_reports (
   CONSTRAINT scheduled_reports_pkey PRIMARY KEY (id),
   CONSTRAINT scheduled_reports_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id)
 );
+CREATE TABLE public.system_alerts (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  type character varying NOT NULL CHECK (type::text = ANY (ARRAY['info'::character varying, 'warning'::character varying, 'critical'::character varying]::text[])),
+  message text NOT NULL,
+  metric character varying,
+  value numeric,
+  threshold numeric,
+  timestamp timestamp with time zone DEFAULT now(),
+  acknowledged boolean DEFAULT false,
+  acknowledged_by uuid,
+  acknowledged_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT system_alerts_pkey PRIMARY KEY (id),
+  CONSTRAINT system_alerts_acknowledged_by_fkey FOREIGN KEY (acknowledged_by) REFERENCES public.users(id)
+);
 CREATE TABLE public.tasks (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   title character varying NOT NULL,
@@ -669,17 +513,122 @@ CREATE TABLE public.tasks (
 );
 CREATE TABLE public.tickets (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  title text NOT NULL,
-  description text,
-  status text DEFAULT 'open'::text,
-  priority text DEFAULT 'medium'::text,
+  asunto text NOT NULL,
+  mensaje text NOT NULL,
+  email text NOT NULL,
+  fecha timestamp with time zone DEFAULT now(),
+  estado text DEFAULT 'abierto'::text CHECK (estado = ANY (ARRAY['abierto'::text, 'respondido'::text, 'cerrado'::text])),
+  prioridad text DEFAULT 'media'::text CHECK (prioridad = ANY (ARRAY['baja'::text, 'media'::text, 'alta'::text])),
+  respuesta text,
+  respondido_por text,
+  fecha_respuesta timestamp with time zone,
   user_id uuid,
-  assigned_to uuid,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT tickets_pkey PRIMARY KEY (id),
-  CONSTRAINT tickets_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.users(id),
-  CONSTRAINT tickets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT tickets_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.user_channel_subscriptions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  channel_id uuid NOT NULL,
+  is_enabled boolean DEFAULT true,
+  preferences jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_channel_subscriptions_pkey PRIMARY KEY (id),
+  CONSTRAINT user_channel_subscriptions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.user_invitations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  email character varying NOT NULL,
+  role_id uuid,
+  invited_by uuid,
+  status character varying DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'accepted'::character varying, 'expired'::character varying, 'cancelled'::character varying, 'declined'::character varying]::text[])),
+  token character varying NOT NULL UNIQUE,
+  expires_at timestamp with time zone NOT NULL,
+  message text,
+  accepted_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_invitations_pkey PRIMARY KEY (id),
+  CONSTRAINT user_invitations_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES public.users(id),
+  CONSTRAINT user_invitations_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.user_roles(id)
+);
+CREATE TABLE public.user_preferences (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  preference_type text NOT NULL CHECK (preference_type = ANY (ARRAY['theme'::text, 'dashboard_widgets'::text, 'dashboard_layouts'::text, 'language'::text, 'welcome_back'::text, 'auth_state'::text])),
+  preference_key text NOT NULL,
+  preference_value jsonb NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_preferences_pkey PRIMARY KEY (id),
+  CONSTRAINT user_preferences_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.user_roles (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL UNIQUE,
+  display_name character varying NOT NULL,
+  description text,
+  permissions ARRAY DEFAULT '{}'::text[],
+  is_system boolean DEFAULT false,
+  can_delete boolean DEFAULT true,
+  can_edit boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_roles_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.users (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  email text NOT NULL UNIQUE,
+  full_name text,
+  role text DEFAULT 'user'::text CHECK (role = ANY (ARRAY['admin'::text, 'user'::text])),
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  avatar_url text,
+  language text DEFAULT 'es'::text,
+  timezone text DEFAULT 'America/Argentina/Buenos_Aires'::text,
+  date_format text DEFAULT 'DD/MM/YYYY'::text,
+  time_format text DEFAULT '24h'::text,
+  profile_visibility text DEFAULT 'public'::text,
+  show_email boolean DEFAULT false,
+  show_phone boolean DEFAULT false,
+  allow_analytics boolean DEFAULT true,
+  allow_cookies boolean DEFAULT true,
+  two_factor_auth boolean DEFAULT false,
+  push_notifications boolean DEFAULT true,
+  email_notifications boolean DEFAULT true,
+  sms_notifications boolean DEFAULT false,
+  sound_enabled boolean DEFAULT true,
+  vibration_enabled boolean DEFAULT true,
+  quiet_hours boolean DEFAULT false,
+  quiet_hours_start text DEFAULT '22:00'::text,
+  quiet_hours_end text DEFAULT '08:00'::text,
+  project_updates boolean DEFAULT true,
+  payment_reminders boolean DEFAULT true,
+  support_updates boolean DEFAULT true,
+  marketing_emails boolean DEFAULT false,
+  auto_save boolean DEFAULT true,
+  auto_save_interval integer DEFAULT 30,
+  cache_enabled boolean DEFAULT true,
+  image_quality text DEFAULT 'high'::text,
+  animations_enabled boolean DEFAULT true,
+  low_bandwidth_mode boolean DEFAULT false,
+  session_timeout integer DEFAULT 30,
+  max_login_attempts integer DEFAULT 5,
+  require_password_change boolean DEFAULT false,
+  password_expiry_days integer DEFAULT 90,
+  login_notifications boolean DEFAULT true,
+  device_management boolean DEFAULT true,
+  phone text,
+  company text,
+  position text,
+  bio text,
+  location text,
+  website text,
+  last_login timestamp with time zone,
+  CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.version_comments (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -721,3 +670,4 @@ CREATE TABLE public.workflow_steps (
   CONSTRAINT workflow_steps_pkey PRIMARY KEY (id),
   CONSTRAINT workflow_steps_workflow_id_fkey FOREIGN KEY (workflow_id) REFERENCES public.project_workflows(id)
 );
+

@@ -48,6 +48,19 @@
 ### **8. Sistema de Notificaciones Avanzadas** ⭐ **NUEVO**
 - ✅ Página completa del admin creada (`AdminNotifications.tsx`)
 - ✅ Dashboard de analytics integrado
+
+### **9. Sistema de Aprobación de Proyectos** ⭐ **NUEVO**
+- ✅ Base de datos actualizada con columnas de aprobación
+- ✅ Función `create_project_with_approval` implementada
+- ✅ Funciones de aprobación/rechazo (`approve_project`, `reject_project`)
+- ✅ Tabla `project_approval_requests` creada
+- ✅ RLS policies para aprobaciones implementadas
+- ✅ Frontend actualizado: `ProjectCard` con estados de aprobación
+- ✅ Componente `ProjectApprovalManager` para administradores
+- ✅ Integración en panel de admin con contador de aprobaciones pendientes
+- ✅ Botón "Solicitar revisión" funcional para proyectos rechazados
+- ✅ Sistema completo de notificaciones para aprobaciones
+- ✅ **Lógica de aprobación por rol**: Admins no necesitan aprobación
 - ✅ Sistema de notificaciones programadas funcional
 - ✅ Gestión de plantillas implementada
 - ✅ Métricas en tiempo real con gráficos animados

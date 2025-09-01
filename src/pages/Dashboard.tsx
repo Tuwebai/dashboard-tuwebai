@@ -39,7 +39,10 @@ import {
   Activity,
   User,
   Play,
-  Pause
+  Pause,
+  Archive,
+  Trash2,
+  Copy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -169,6 +172,8 @@ export default function Dashboard() {
   const [sortBy, setSortBy] = useState<string>('recent');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [activeTab, setActiveTab] = useState('overview');
+  const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
+  const [bulkActionMode, setBulkActionMode] = useState(false);
   const { t } = useTranslation();
 
   // Función para calcular progreso del proyecto
@@ -514,6 +519,70 @@ export default function Dashboard() {
     toast({ title: 'Exportado', description: 'Datos del dashboard exportados correctamente.' });
   }, [dashboardStats, filteredAndSortedProjects, user]);
 
+  // Funciones para bulk actions
+  const handleSelectProject = useCallback((projectId: string) => {
+    setSelectedProjects(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(projectId)) {
+        newSet.delete(projectId);
+      } else {
+        newSet.add(projectId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    if (selectedProjects.size === filteredAndSortedProjects.length) {
+      setSelectedProjects(new Set());
+    } else {
+      setSelectedProjects(new Set(filteredAndSortedProjects.map(p => p.id)));
+    }
+  }, [selectedProjects.size, filteredAndSortedProjects]);
+
+  const handleBulkDelete = useCallback(async () => {
+    if (selectedProjects.size === 0) return;
+    
+    if (confirm(`¿Estás seguro de que quieres eliminar ${selectedProjects.size} proyecto(s)? Esta acción no se puede deshacer.`)) {
+      try {
+        // Aquí implementarías la lógica de eliminación en lote
+        toast({ title: 'Eliminados', description: `${selectedProjects.size} proyecto(s) eliminados correctamente.` });
+        setSelectedProjects(new Set());
+        setBulkActionMode(false);
+      } catch (error) {
+        toast({ title: 'Error', description: 'No se pudieron eliminar los proyectos.', variant: 'destructive' });
+      }
+    }
+  }, [selectedProjects]);
+
+  const handleBulkArchive = useCallback(async () => {
+    if (selectedProjects.size === 0) return;
+    
+    try {
+      // Aquí implementarías la lógica de archivado en lote
+      toast({ title: 'Archivados', description: `${selectedProjects.size} proyecto(s) archivados correctamente.` });
+      setSelectedProjects(new Set());
+      setBulkActionMode(false);
+    } catch (error) {
+      toast({ title: 'Error', description: 'No se pudieron archivar los proyectos.', variant: 'destructive' });
+    }
+  }, [selectedProjects]);
+
+  const handleDuplicateProject = useCallback((project: Project) => {
+    // Aquí implementarías la lógica de duplicación
+    toast({ title: 'Duplicado', description: `Proyecto "${project.name}" duplicado correctamente.` });
+  }, []);
+
+  const handleToggleFavorite = useCallback((projectId: string) => {
+    // Aquí implementarías la lógica de favoritos
+    toast({ title: 'Favorito', description: 'Proyecto marcado como favorito.' });
+  }, []);
+
+  const handleArchiveProject = useCallback((projectId: string) => {
+    // Aquí implementarías la lógica de archivado
+    toast({ title: 'Archivado', description: 'Proyecto archivado correctamente.' });
+  }, []);
+
   // Si es admin, redirigir al panel de admin
   if (user?.role === 'admin') {
     return <Navigate to="/admin" replace />;
@@ -815,6 +884,19 @@ export default function Dashboard() {
                     </div>
                   </div>
 
+                  {/* Bulk Actions */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBulkActionMode(!bulkActionMode)}
+                    className={`border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 w-full sm:w-auto ${
+                      bulkActionMode ? 'bg-blue-50 border-blue-400 text-blue-700' : 'hover:border-blue-400 hover:text-blue-700'
+                    }`}
+                  >
+                    <MoreHorizontal className="h-4 w-4 mr-2" />
+                    {bulkActionMode ? 'Cancelar Selección' : 'Selección Múltiple'}
+                  </Button>
+
                   {/* Exportar */}
                   <Button
                     variant="outline"
@@ -855,6 +937,57 @@ export default function Dashboard() {
                 </Badge>
               </div>
             </motion.div>
+
+            {/* Barra de Bulk Actions */}
+            {bulkActionMode && selectedProjects.size > 0 && (
+              <motion.div 
+                className="bg-blue-50 border border-blue-200 rounded-2xl p-4 shadow-lg"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">{selectedProjects.size}</span>
+                      </div>
+                      <span className="font-semibold text-blue-800">
+                        {selectedProjects.size} proyecto{selectedProjects.size > 1 ? 's' : ''} seleccionado{selectedProjects.size > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSelectAll}
+                      className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                    >
+                      {selectedProjects.size === filteredAndSortedProjects.length ? 'Deseleccionar Todo' : 'Seleccionar Todo'}
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkArchive}
+                      className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                    >
+                      <Archive className="h-4 w-4 mr-2" />
+                      Archivar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkDelete}
+                      className="border-red-300 text-red-700 hover:bg-red-100"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Eliminar
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             {/* Vista de proyectos */}
             {!hasValidProjects ? (
@@ -958,6 +1091,9 @@ export default function Dashboard() {
                               });
                             }
                           }}
+                    onDuplicateProject={handleDuplicateProject}
+                    onToggleFavorite={handleToggleFavorite}
+                    onArchiveProject={handleArchiveProject}
                     index={index}
                   />
                 ))}

@@ -52,10 +52,11 @@ export const ProjectsManagement: React.FC = () => {
 
     setFormLoading(true);
     try {
-      // Agregar el ID del usuario creador
+      // Agregar el ID del usuario creador y su rol
       const projectDataWithCreator = {
         ...data,
-        created_by: user.id
+        created_by: user.id,
+        user_role: user.role
       };
       
       await createProject(projectDataWithCreator);

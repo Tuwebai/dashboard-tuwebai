@@ -94,9 +94,9 @@ export const projectService = {
   },
 
   /**
-   * Crear un nuevo proyecto
+   * Crear un nuevo proyecto con sistema de aprobación
    */
-  async createProject(projectData: CreateProjectData & { created_by?: string }): Promise<Project> {
+  async createProject(projectData: CreateProjectData & { created_by?: string, user_role?: string }): Promise<Project> {
     try {
       // Validar datos antes de crear
       const validation = this.validateProjectData(projectData);
@@ -111,17 +111,26 @@ export const projectService = {
 
       console.log('🔐 Creando proyecto con created_by:', projectData.created_by);
 
-      // Agregar timestamps y estado por defecto
+      // Determinar el estado de aprobación basado en el rol del usuario
+      const approvalStatus = projectData.user_role === 'admin' ? 'approved' : 'pending';
+
+      // Crear proyecto con estado de aprobación según el rol
       const projectToCreate = {
         ...projectData,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         is_active: true,
         status: projectData.status || 'development',
-        created_by: projectData.created_by // Asegurar que se incluya el created_by
+        approval_status: approvalStatus,
+        created_by: projectData.created_by,
+        // Si es admin, marcar como aprobado por él mismo
+        ...(projectData.user_role === 'admin' && {
+          approved_by: projectData.created_by,
+          approved_at: new Date().toISOString()
+        })
       };
 
-      const { data, error } = await supabase
+      const { data: createdProject, error } = await supabase
         .from('projects')
         .insert([projectToCreate])
         .select()
@@ -129,7 +138,7 @@ export const projectService = {
 
       if (error) throw error;
       
-      return data as Project;
+      return createdProject as Project;
     } catch (error) {
       console.error('Error creating project:', error);
       throw new Error(`Error al crear el proyecto: ${error.message}`);
@@ -469,6 +478,86 @@ export const projectService = {
     } catch (error) {
       console.error('Error fetching similar projects:', error);
       return [];
+    }
+  },
+
+  // =====================================================
+  // FUNCIONES DE APROBACIÓN DE PROYECTOS
+  // =====================================================
+
+  /**
+   * Obtener solicitudes de aprobación pendientes (solo para admins)
+   */
+  async getApprovalRequests() {
+    try {
+      const { data, error } = await supabase
+        .from('approval_requests_with_details')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching approval requests:', error);
+      throw new Error(`Error al obtener solicitudes de aprobación: ${error.message}`);
+    }
+  },
+
+  /**
+   * Aprobar un proyecto (solo para admins)
+   */
+  async approveProject(projectId: string, adminNotes?: string): Promise<boolean> {
+    try {
+      const { error } = await supabase.rpc('approve_project', {
+        p_project_id: projectId,
+        p_admin_notes: adminNotes || null
+      });
+
+      if (error) throw error;
+      
+      return true;
+    } catch (error) {
+      console.error('Error approving project:', error);
+      throw new Error(`Error al aprobar el proyecto: ${error.message}`);
+    }
+  },
+
+  /**
+   * Rechazar un proyecto (solo para admins)
+   */
+  async rejectProject(projectId: string, adminNotes?: string): Promise<boolean> {
+    try {
+      const { error } = await supabase.rpc('reject_project', {
+        p_project_id: projectId,
+        p_admin_notes: adminNotes || null
+      });
+
+      if (error) throw error;
+      
+      return true;
+    } catch (error) {
+      console.error('Error rejecting project:', error);
+      throw new Error(`Error al rechazar el proyecto: ${error.message}`);
+    }
+  },
+
+  /**
+   * Crear una solicitud de aprobación manual (para proyectos rechazados)
+   */
+  async createApprovalRequest(projectId: string, requestNotes?: string): Promise<string> {
+    try {
+      const { data, error } = await supabase.rpc('create_project_approval_request', {
+        p_project_id: projectId,
+        p_request_notes: requestNotes || null
+      });
+
+      if (error) throw error;
+      
+      return data;
+    } catch (error) {
+      console.error('Error creating approval request:', error);
+      throw new Error(`Error al crear solicitud de aprobación: ${error.message}`);
     }
   }
 };

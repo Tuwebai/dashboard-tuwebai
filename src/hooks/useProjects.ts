@@ -79,7 +79,10 @@ export const useProjects = () => {
         return null;
       }
 
-      const newProject = await projectService.createProject(projectData);
+      const newProject = await projectService.createProject({
+        ...projectData,
+        user_role: user.role
+      });
       
       // Actualizar lista
       setProjects(prev => [newProject, ...prev]);

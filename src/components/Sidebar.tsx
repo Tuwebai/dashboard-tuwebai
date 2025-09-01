@@ -18,6 +18,7 @@ import {
   Cpu,
   Shield,
   TrendingUp,
+  CheckCircle,
   FileText,
   BarChart,
   Eye,
@@ -42,7 +43,8 @@ export default function Sidebar() {
     users: 0,
     projects: 0,
     tickets: 0,
-    payments: 0
+    payments: 0,
+    pendingApprovals: 0
   });
   const { t } = useTranslation();
 
@@ -50,20 +52,24 @@ export default function Sidebar() {
   const loadCounts = useCallback(async () => {
     try {
       // Cargar contadores desde Supabase
-      const [usersResult, projectsResult, ticketsResult, paymentsResult] = await Promise.all([
+      const [usersResult, projectsResult, ticketsResult, paymentsResult, approvalsResult] = await Promise.all([
         supabase.from('users').select('id', { count: 'exact' }),
         supabase.from('projects').select('id', { count: 'exact' }),
         supabase.from('tickets').select('id', { count: 'exact' }),
         user?.role === 'admin' 
           ? supabase.from('payments').select('id', { count: 'exact' })
-          : supabase.from('payments').select('id', { count: 'exact' }).eq('user_id', user.id)
+          : supabase.from('payments').select('id', { count: 'exact' }).eq('user_id', user.id),
+        user?.role === 'admin' 
+          ? supabase.from('projects').select('id', { count: 'exact' }).eq('approval_status', 'pending')
+          : Promise.resolve({ count: 0 })
       ]);
 
       setCounts({
         users: usersResult.count || 0,
         projects: projectsResult.count || 0,
         tickets: ticketsResult.count || 0,
-        payments: paymentsResult.count || 0
+        payments: paymentsResult.count || 0,
+        pendingApprovals: approvalsResult.count || 0
       });
     } catch (error) {
       console.error('Error loading counts:', error);
@@ -72,7 +78,8 @@ export default function Sidebar() {
         users: 0,
         projects: 0,
         tickets: 0,
-        payments: 0
+        payments: 0,
+        pendingApprovals: 0
       });
     }
   }, []);
@@ -273,6 +280,7 @@ export default function Sidebar() {
                 {adminNavItem('dashboard', <BarChart3 size={18} />, t('Dashboard'))}
                 {adminNavItem('usuarios', <Users size={18} />, t('Usuarios'), counts.users)}
                 {adminNavItem('proyectos', <FolderKanban size={18} />, t('Proyectos'), counts.projects)}
+                {adminNavItem('aprobar-proyectos', <CheckCircle size={18} />, 'Aprobar Proyectos', counts.pendingApprovals)}
                 {adminNavItem('tickets', <Ticket size={18} />, t('Tickets'), counts.tickets)}
                 {adminNavItem('pagos', <CreditCard size={18} />, t('Pagos'), counts.payments)}
                 <NavLink

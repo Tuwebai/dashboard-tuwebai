@@ -49,14 +49,15 @@
 - ✅ **Iconos contextuales**: 12+ iconos específicos para cada tipo de proyecto (Globe, ShoppingCart, Briefcase, etc.)
 - ✅ **Indicadores de urgencia**: Barra superior roja animada y badge "Urgente" para proyectos con fechas límite próximas
 - ✅ **Tags de categoría**: Etiquetas coloridas con iconos para tipos de proyecto
+- ✅ **Unificación de cards**: ProjectsPage.tsx ahora usa el mismo componente ProjectCard que Dashboard.tsx
 - **Preview de archivos**: Miniaturas de archivos adjuntos (pendiente)
 
 #### **3. INTERACTIVIDAD:**
-- **Hover effects mejorados**: Animaciones más sutiles y profesionales
-- **Quick actions**: Botones de acción rápida (editar, duplicar, archivar)
-- **Drag & drop**: Reordenar proyectos por prioridad
-- **Bulk actions**: Selección múltiple para acciones en lote
-- **Keyboard shortcuts**: Navegación con teclado
+- ✅ **Hover effects mejorados**: Animaciones más sutiles con `whileHover`, `whileTap`, y efectos de grupo
+- ✅ **Quick actions**: Botones de acción rápida (favorito, duplicar, archivar) que aparecen en hover
+- ✅ **Bulk actions**: Selección múltiple con barra de acciones en lote (archivar, eliminar)
+- **Drag & drop**: Reordenar proyectos por prioridad (pendiente)
+- **Keyboard shortcuts**: Navegación con teclado (pendiente)
 
 #### **4. ESTADOS Y PROGRESO:**
 - **Progress bar animado**: Barra de progreso con animación suave

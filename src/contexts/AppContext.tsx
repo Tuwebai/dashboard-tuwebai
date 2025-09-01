@@ -538,6 +538,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const newProject = {
         ...projectData,
         created_by: user.id, // SIEMPRE usar el ID del usuario autenticado
+        user_role: user.role, // Pasar el rol del usuario para la lógica de aprobación
         status: 'development' as const,
         technologies: projectData.technologies || []
       };

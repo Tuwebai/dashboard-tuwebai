@@ -47,6 +47,7 @@ import AdvancedTicketManager from '@/components/AdvancedTicketManager';
 import AutoVersionCreator from '@/components/admin/AutoVersionCreator';
 import AdvancedTools from '@/components/admin/AdvancedTools';
 import { VersionManagement } from '@/components/admin/VersionManagement';
+import ProjectApprovalManager from '@/components/ProjectApprovalManager';
 
 
 
@@ -1051,6 +1052,16 @@ export default function Admin() {
 
             {activeSection === 'proyectos' && (
               <ProjectsManagement />
+            )}
+
+            {activeSection === 'aprobar-proyectos' && (
+              <ProjectApprovalManager 
+                user={user} 
+                onRefresh={() => {
+                  loadData();
+                  setLastUpdate(new Date());
+                }} 
+              />
             )}
 
             {activeSection === 'tickets' && (
