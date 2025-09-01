@@ -279,7 +279,7 @@ export class NotificationTemplateService {
       for (const template of this.defaultTemplates) {
         await this.createTemplate(template);
       }
-      console.log('✅ Plantillas por defecto creadas exitosamente');
+
     } catch (error) {
       console.error('Error creating default templates:', error);
     }

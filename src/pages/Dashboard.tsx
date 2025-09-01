@@ -58,6 +58,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { userService } from '@/lib/supabaseService';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useRealtimeProjects } from '@/hooks/useRealtimeProjects';
 
 // Estilos CSS personalizados para animaciones
 const customStyles = `
@@ -165,6 +166,9 @@ const FASES = [
 export default function Dashboard() {
   const { user, projects, updateProject, addCommentToPhase, loading } = useApp();
   const navigate = useNavigate();
+  
+  // Configurar actualizaciones en tiempo real
+  const { refreshProjects } = useRealtimeProjects();
   const [comentarioInput, setComentarioInput] = useState<Record<string, string>>({});
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -969,17 +973,15 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* Bulk Actions */}
+                  {/* Actualizar */}
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setBulkActionMode(!bulkActionMode)}
-                    className={`border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 w-full sm:w-auto ${
-                      bulkActionMode ? 'bg-blue-50 border-blue-400 text-blue-700' : 'hover:border-blue-400 hover:text-blue-700'
-                    }`}
+                    onClick={refreshProjects}
+                    className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-blue-400 hover:text-blue-700 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 w-full sm:w-auto"
                   >
-                    <MoreHorizontal className="h-4 w-4 mr-2" />
-                    {bulkActionMode ? 'Cancelar Selección' : 'Selección Múltiple'}
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Actualizar
                   </Button>
 
                   {/* Exportar */}
@@ -992,30 +994,6 @@ export default function Dashboard() {
                     <Download className="h-4 w-4 mr-2" />
                     Exportar
                   </Button>
-
-                  {/* Modo Drag & Drop */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleToggleDragMode}
-                    className={`border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 w-full sm:w-auto ${
-                      dragMode ? 'bg-blue-50 border-blue-400 text-blue-700' : 'hover:border-blue-400 hover:text-blue-700'
-                    }`}
-                  >
-                    <GripVertical className="h-4 w-4 mr-2" />
-                    {dragMode ? 'Salir de Arrastrar' : 'Arrastrar Proyectos'}
-                  </Button>
-
-                  {/* Ayuda de shortcuts */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={showShortcutsHelp}
-                    className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-purple-400 hover:text-purple-700 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 w-full sm:w-auto"
-                  >
-                    <HelpCircle className="h-4 w-4 mr-2" />
-                    Atajos
-                  </Button>
                 </div>
               </div>
               
@@ -1024,6 +1002,11 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg border border-slate-200">
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                   <span className="font-medium">Mostrando {filteredAndSortedProjects.length} de {userProjects.length} proyectos</span>
+                </div>
+                
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-200">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="font-medium text-green-700">Actualizaciones en tiempo real activas</span>
                 </div>
                 
                 {searchTerm && (

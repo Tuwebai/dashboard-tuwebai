@@ -335,7 +335,7 @@ export default function AdminCollaborationPage() {
       
              // Enviar notificación al cliente (solo para el cliente, no para el admin)
        try {
-         console.log('📤 [AdminCollaborationPage] Enviando notificación de mensaje:', {
+
            user_id: project?.created_by,
            sender_id: user.id,
            sender_name: user.full_name || user.email,
@@ -358,13 +358,13 @@ export default function AdminCollaborationPage() {
           }
         };
         
-        console.log('🔔 [AdminCollaborationPage] Creando notificación:', notificationData);
+
         
         await supabase
           .from('notifications')
           .insert(notificationData);
          
-         console.log('✅ [AdminCollaborationPage] Notificación enviada exitosamente');
+
        } catch (notificationError) {
          console.error('❌ [AdminCollaborationPage] Error enviando notificación:', notificationError);
        }
@@ -436,7 +436,7 @@ export default function AdminCollaborationPage() {
            }
          };
          
-         console.log('🔔 [AdminCollaborationPage] Creando notificación de tarea:', notificationData);
+
          
          await supabase
            .from('notifications')
@@ -494,7 +494,7 @@ export default function AdminCollaborationPage() {
              }
            };
            
-           console.log('🔔 [AdminCollaborationPage] Creando notificación de cambio de estado:', notificationData);
+
            
            await supabase
              .from('notifications')
@@ -570,7 +570,7 @@ export default function AdminCollaborationPage() {
            }
          };
          
-         console.log('🔔 [AdminCollaborationPage] Creando notificación de archivo:', notificationData);
+
          
          await supabase
            .from('notifications')

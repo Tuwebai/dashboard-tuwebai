@@ -99,7 +99,7 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
   // Manejar clic en notificación
   const handleNotificationClick = async (notification: Notification) => {
     try {
-      console.log('🔔 [NotificationBell] Click en notificación:', {
+
         id: notification.id,
         title: notification.title,
         action_url: notification.action_url,
@@ -109,21 +109,21 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
 
       // Si la notificación tiene una URL de acción, navegar a ella
       if (notification.action_url) {
-        console.log('🔔 [NotificationBell] Navegando a action_url:', notification.action_url);
+
         
         // Determinar si es una URL externa o interna
         if (notification.action_url.startsWith('http')) {
           // URL externa - abrir en nueva pestaña
-          console.log('🔔 [NotificationBell] Abriendo URL externa en nueva pestaña');
+
           window.open(notification.action_url, '_blank');
         } else {
           // URL interna - navegar en la misma pestaña
-          console.log('🔔 [NotificationBell] Navegando a URL interna:', notification.action_url);
+
           window.location.href = notification.action_url;
         }
       } else {
         // Si no hay action_url, intentar determinar la acción basada en la categoría y metadata
-        console.log('🔔 [NotificationBell] No hay action_url, determinando acción por categoría:', notification.category);
+
         
         // Lógica para diferentes categorías
         switch (notification.category) {
@@ -131,34 +131,34 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
             // Navegar a la página de colaboración del proyecto
             if (notification.metadata?.project_id) {
               const fallbackUrl = `/proyectos/${notification.metadata.project_id}/colaboracion-admin`;
-              console.log('🔔 [NotificationBell] Navegando a fallback URL:', fallbackUrl);
+
               window.location.href = fallbackUrl;
             }
             break;
           case 'ticket':
             // Navegar a la página de tickets del admin
-            console.log('🔔 [NotificationBell] Navegando a tickets del admin');
+
             window.location.href = '/admin#tickets';
             break;
           case 'payment':
             // Navegar a la página de pagos
-            console.log('🔔 [NotificationBell] Navegando a pagos');
+
             window.location.href = '/admin/payments';
             break;
           case 'user':
             // Navegar a la gestión de usuarios
-            console.log('🔔 [NotificationBell] Navegando a usuarios');
+
             window.location.href = '/admin/users';
             break;
           default:
             // Para notificaciones del sistema o sin acción específica, solo marcar como leída
-            console.log('🔔 [NotificationBell] Sin acción específica, solo marcando como leída');
+
             break;
         }
       }
       
       // Después de ejecutar la acción, marcar como leída
-      console.log('🔔 [NotificationBell] Marcando notificación como leída');
+
       await markAsRead(notification.id);
       
     } catch (error) {

@@ -675,7 +675,7 @@ class TicketWorkflowService {
 
   private async executeTransition(ticketData: any, transition: AutoTransitionRule): Promise<void> {
     // Implementar transición automática
-    console.log(`Transición automática: ${ticketData.stage} -> ${transition.targetStage}`);
+
   }
 
   private isWithinBusinessHours(businessHours: BusinessHours, date: Date): boolean {

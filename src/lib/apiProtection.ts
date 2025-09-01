@@ -460,7 +460,7 @@ export class APIProtection {
 
     // Log a consola si está habilitado
     if (API_CONFIG.LOGGING.LOG_SUCCESS && status === 'SUCCESS') {
-      console.log(`✅ API ${context.method} ${context.endpoint} - ${duration}ms`);
+
     }
     
     if (API_CONFIG.LOGGING.LOG_FAILURES && status === 'ERROR') {

@@ -444,7 +444,7 @@ class TicketEscalationService {
       };
 
       // Aquí se enviaría el email usando el servicio de email
-      console.log('Sending escalation email:', emailData);
+
       return true;
     } catch (error) {
       console.error('Error executing send email action:', error);

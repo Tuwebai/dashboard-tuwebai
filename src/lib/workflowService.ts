@@ -433,7 +433,7 @@ export class WorkflowService {
   private async executeNotificationAction(actionData: any, projectId: string): Promise<void> {
     try {
       // Aquí integrarías con tu sistema de notificaciones
-      console.log('Ejecutando notificación:', actionData);
+
       
       // Ejemplo: crear notificación en la base de datos
       const { error } = await supabase
@@ -477,7 +477,7 @@ export class WorkflowService {
   private async executeEmailAction(actionData: any, projectId: string): Promise<void> {
     try {
       // Aquí integrarías con tu servicio de email
-      console.log('Ejecutando envío de email:', actionData);
+
       
       // Por ahora solo log
       await this.logWorkflowAction('workflow', projectId, 'email', 'info', `Email enviado a: ${actionData.recipients}`);

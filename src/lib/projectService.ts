@@ -109,22 +109,36 @@ export const projectService = {
         throw new Error('El campo created_by es requerido y debe ser un ID de usuario válido');
       }
 
-      console.log('🔐 Creando proyecto con created_by:', projectData.created_by);
+
+
+      // Obtener el rol del usuario desde la tabla users
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', projectData.created_by)
+        .single();
+
+      if (userError) {
+        console.error('❌ Error obteniendo rol del usuario:', userError);
+        throw new Error('No se pudo verificar el rol del usuario');
+      }
 
       // Determinar el estado de aprobación basado en el rol del usuario
-      const approvalStatus = projectData.user_role === 'admin' ? 'approved' : 'pending';
+      const approvalStatus = userData.role === 'admin' ? 'approved' : 'pending';
 
       // Crear proyecto con estado de aprobación según el rol
       const projectToCreate = {
-        ...projectData,
+        name: projectData.name,
+        description: projectData.description,
+        technologies: projectData.technologies,
+        status: projectData.status || 'development',
+        is_active: true,
+        created_by: projectData.created_by,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        is_active: true,
-        status: projectData.status || 'development',
         approval_status: approvalStatus,
-        created_by: projectData.created_by,
         // Si es admin, marcar como aprobado por él mismo
-        ...(projectData.user_role === 'admin' && {
+        ...(userData.role === 'admin' && {
           approved_by: projectData.created_by,
           approved_at: new Date().toISOString()
         })
@@ -136,12 +150,34 @@ export const projectService = {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error de Supabase al crear proyecto:', error);
+        
+        // Manejar errores específicos de Supabase
+        if (error.code === '23505') {
+          throw new Error('Ya existe un proyecto con ese nombre');
+        } else if (error.code === '23503') {
+          throw new Error('Usuario no válido para crear el proyecto');
+        } else if (error.code === '42501') {
+          throw new Error('No tienes permisos para crear proyectos');
+        } else {
+          throw new Error(`Error de base de datos: ${error.message}`);
+        }
+      }
       
+
       return createdProject as Project;
     } catch (error) {
-      console.error('Error creating project:', error);
-      throw new Error(`Error al crear el proyecto: ${error.message}`);
+      console.error('❌ Error creating project:', error);
+      
+      // Si ya es un Error personalizado, re-lanzarlo
+      if (error instanceof Error && !error.message.includes('Error al crear el proyecto')) {
+        throw error;
+      }
+      
+      // Crear un error más descriptivo
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      throw new Error(`Error al crear el proyecto: ${errorMessage}`);
     }
   },
 

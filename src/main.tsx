@@ -8,6 +8,7 @@ import i18n from './lib/i18n';
 import { setupErrorHandler } from './lib/errorHandler';
 import { setupAutoCacheCleanup } from './lib/cacheManager';
 
+
 // Configurar manejador de errores personalizado
 setupErrorHandler();
 

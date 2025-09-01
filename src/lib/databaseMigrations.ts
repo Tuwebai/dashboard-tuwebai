@@ -294,7 +294,7 @@ export class DatabaseMigrations {
       failed: number;
     };
   }> {
-    console.log('🚀 Iniciando migraciones de base de datos...');
+
 
     const indexes = await this.createIndexes();
     const helperFunctions = await this.createHelperFunctions();
@@ -310,7 +310,7 @@ export class DatabaseMigrations {
       failed
     };
 
-    console.log(`✅ Migraciones completadas: ${successful} exitosas, ${failed} fallidas`);
+
 
     return {
       indexes,

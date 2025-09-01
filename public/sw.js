@@ -137,7 +137,7 @@ self.addEventListener('notificationclick', (event) => {
 // Manejar cierre de notificación
 self.addEventListener('notificationclose', (event) => {
   // Registrar que la notificación fue cerrada
-  console.log('Notification closed:', event.notification.tag);
+
 });
 
 // Manejar mensajes del cliente

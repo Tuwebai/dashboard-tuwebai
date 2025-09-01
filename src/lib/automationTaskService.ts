@@ -256,7 +256,7 @@ export class AutomationTaskService {
         throw new Error('Tarea no está activa');
       }
 
-      console.log(`⚡ Ejecutando tarea: ${task.name}`);
+
       const startTime = Date.now();
 
       // Ejecutar script según el tipo
@@ -312,7 +312,7 @@ export class AutomationTaskService {
         error
       });
 
-      console.log(`✅ Tarea ${task.name} ejecutada en ${executionTime}ms`);
+
       return result;
 
     } catch (error) {
@@ -326,16 +326,16 @@ export class AutomationTaskService {
    */
   async executePendingTasks(): Promise<TaskExecutionResult[]> {
     try {
-      console.log('🚀 Ejecutando tareas pendientes...');
+
       
       const tasksToExecute = await this.getTasksToExecute();
       
       if (tasksToExecute.length === 0) {
-        console.log('ℹ️ No hay tareas pendientes para ejecutar');
+
         return [];
       }
 
-      console.log(`📋 Encontradas ${tasksToExecute.length} tareas para ejecutar`);
+
 
       const results: TaskExecutionResult[] = [];
 
@@ -357,7 +357,7 @@ export class AutomationTaskService {
         }
       }
 
-      console.log(`✅ Ejecución de tareas completada. ${results.filter(r => r.success).length}/${results.length} exitosas`);
+
       return results;
 
     } catch (error) {
@@ -375,7 +375,7 @@ export class AutomationTaskService {
    */
   private async executeSqlScript(script: string, parameters: Record<string, any>): Promise<any> {
     try {
-      console.log('🗄️ Ejecutando script SQL:', script);
+
       
       // Reemplazar parámetros en el script
       let processedScript = script;
@@ -391,7 +391,7 @@ export class AutomationTaskService {
 
       if (error) throw error;
       
-      console.log('✅ Script SQL ejecutado exitosamente');
+
       return data;
     } catch (error) {
       console.error('Error executing SQL script:', error);
@@ -404,7 +404,7 @@ export class AutomationTaskService {
    */
   private async executeJavaScriptScript(script: string, parameters: Record<string, any>): Promise<any> {
     try {
-      console.log('🟨 Ejecutando script JavaScript:', script);
+
       
       // Crear función segura para ejecutar el script
       const safeFunction = new Function('parameters', 'supabase', script);
@@ -412,7 +412,7 @@ export class AutomationTaskService {
       // Ejecutar script con parámetros y acceso a Supabase
       const result = await safeFunction(parameters, supabase);
       
-      console.log('✅ Script JavaScript ejecutado exitosamente');
+
       return result;
     } catch (error) {
       console.error('Error executing JavaScript script:', error);
@@ -425,7 +425,7 @@ export class AutomationTaskService {
    */
   private async executeShellScript(script: string, parameters: Record<string, any>): Promise<any> {
     try {
-      console.log('🐚 Ejecutando script Shell:', script);
+
       
       // En un entorno web, los scripts shell no se pueden ejecutar directamente
       // Aquí podrías implementar una simulación o usar un servicio backend
@@ -434,7 +434,7 @@ export class AutomationTaskService {
       // Por ahora, simulamos la ejecución
       const simulatedOutput = `Simulación de ejecución de script shell: ${script}`;
       
-      console.log('✅ Script Shell simulado exitosamente');
+
       return simulatedOutput;
     } catch (error) {
       console.error('Error executing shell script:', error);
@@ -484,7 +484,7 @@ export class AutomationTaskService {
 
       if (error) throw error;
       
-      console.log(`📅 Próxima ejecución programada para: ${nextRun.toISOString()}`);
+
     } catch (error) {
       console.error('Error scheduling next run:', error);
     }
@@ -502,7 +502,7 @@ export class AutomationTaskService {
 
       if (error) throw error;
       
-      console.log(`📅 Tarea programada para: ${dateTime}`);
+
     } catch (error) {
       console.error('Error scheduling task:', error);
       throw error;

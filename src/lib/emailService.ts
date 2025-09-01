@@ -72,7 +72,7 @@ export const sendEmailWithTemplate = async (emailType: string, data: any) => {
       email_type: emailType
     };
 
-    console.log('Enviando email con parámetros:', templateParams);
+
 
     // Enviar email usando EmailJS
     const result = await sendEmailWithEmailJS(
@@ -81,7 +81,7 @@ export const sendEmailWithTemplate = async (emailType: string, data: any) => {
     );
 
     if (result.success) {
-      console.log(`Email ${emailType} enviado exitosamente`);
+
       return { success: true, message: 'Email enviado correctamente' };
     } else {
       console.error(`Error enviando email ${emailType}:`, result.error);

@@ -254,56 +254,64 @@ export default function ProjectCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       whileHover={{ 
-        y: -8,
-        scale: 1.02,
-        transition: { duration: 0.2, ease: "easeOut" }
+        y: -12,
+        scale: 1.03,
+        transition: { duration: 0.3, ease: "easeOut" }
       }}
-      whileTap={{ scale: 0.98 }}
+      whileTap={{ scale: 0.97 }}
       className="w-full max-w-xs"
     >
       <div 
-        className={`bg-white rounded-2xl shadow-lg border border-slate-200/50 hover:shadow-2xl hover:border-slate-300/50 transition-all duration-300 overflow-hidden relative w-full h-[480px] flex flex-col group ${
+        className={`bg-white rounded-2xl shadow-lg border border-slate-200/50 hover:shadow-2xl hover:border-slate-300/50 hover:shadow-blue-500/10 transition-all duration-500 ease-out overflow-hidden relative w-full h-[420px] flex flex-col group ${
           isPendingApproval || isRejected ? 'cursor-default opacity-75' : 'cursor-pointer'
         } ${dragMode ? 'ring-2 ring-blue-500 ring-opacity-50' : ''}`}
         onClick={() => !isPendingApproval && !isRejected && !dragMode && onViewProject(project)}
       >
-        {/* Barra superior de gradiente animado */}
-        <div className={`absolute top-0 left-0 w-full h-1.5 rounded-t-2xl transition-all duration-300 group-hover:h-2 ${
+        {/* Header con gradiente sutil y profesional */}
+        <div className={`relative h-16 bg-gradient-to-br transition-all duration-500 ease-out group-hover:shadow-lg ${
           approvalStatus === 'rejected' 
-            ? 'bg-gradient-to-r from-red-500 to-red-600' 
+            ? 'from-red-50 to-red-100 group-hover:from-red-100 group-hover:to-red-200' 
             : approvalStatus === 'pending'
-            ? 'bg-gradient-to-r from-yellow-500 to-orange-500 animate-pulse'
+            ? 'from-amber-50 to-orange-100 group-hover:from-amber-100 group-hover:to-orange-200'
             : isUrgent 
-            ? 'bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 animate-pulse' 
-            : 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500'
-        }`} />
-        
-        <div className="p-5 flex-1 flex flex-col">
-          {/* Header del proyecto */}
-          <div className="flex items-start justify-between mb-3">
+            ? 'from-red-50 via-orange-50 to-yellow-100 group-hover:from-red-100 group-hover:via-orange-100 group-hover:to-yellow-200' 
+            : 'from-slate-50 via-blue-50 to-indigo-100 group-hover:from-slate-100 group-hover:via-blue-100 group-hover:to-indigo-200'
+        } border-b border-slate-200/50 group-hover:border-slate-300/70`}>
+          {/* Barra de estado sutil */}
+          <div className={`absolute top-0 left-0 w-full h-1 ${
+            approvalStatus === 'rejected' 
+              ? 'bg-gradient-to-r from-red-500 to-red-600' 
+              : approvalStatus === 'pending'
+              ? 'bg-gradient-to-r from-amber-500 to-orange-500'
+              : isUrgent 
+              ? 'bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500' 
+              : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500'
+          }`} />
+          
+          {/* Contenido del header */}
+          <div className="p-4 h-full flex items-center justify-between">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-1">
                 {dragMode && (
-                  <div className="flex items-center justify-center w-6 h-6 text-slate-400 hover:text-slate-600 cursor-grab active:cursor-grabbing transition-colors duration-200">
-                    <GripVertical className="h-4 w-4" />
+                  <div className="flex items-center justify-center w-5 h-5 text-slate-400 hover:text-slate-600 cursor-grab active:cursor-grabbing transition-colors duration-200">
+                    <GripVertical className="h-3 w-3" />
                   </div>
                 )}
-                <h3 className="text-lg font-bold text-slate-800 truncate">{project.name}</h3>
+                <h3 className="text-lg font-bold text-slate-900 truncate leading-tight tracking-tight">{project.name}</h3>
                 {isUrgent && (
-                  <Badge variant="destructive" className="text-xs animate-pulse">
+                  <Badge variant="destructive" className="text-xs px-2 py-0.5 animate-pulse shadow-sm">
                     <AlertCircle className="h-3 w-3 mr-1" />
                     Urgente
                   </Badge>
                 )}
               </div>
-              <p className="text-slate-600 text-sm line-clamp-2 mb-3">
+              <p className="text-slate-600 text-sm line-clamp-1 leading-tight font-medium">
                 {project.description || 'Sin descripción'}
               </p>
             </div>
             
             {/* Quick Actions Menu */}
-            <div className="flex items-center gap-1 opacity-30 group-hover:opacity-100 transition-opacity duration-200">
-              {/* Botón de favoritos - Disponible para todos */}
+            <div className="flex items-center gap-1 opacity-30 group-hover:opacity-100 transition-all duration-300 ml-2">
               {onToggleFavorite && (
                 <Button
                   variant="ghost"
@@ -312,13 +320,12 @@ export default function ProjectCard({
                     e.stopPropagation();
                     onToggleFavorite(project.id);
                   }}
-                  className="h-8 w-8 p-0 text-slate-400 hover:text-yellow-500 hover:bg-yellow-50"
+                  className="h-8 w-8 p-0 text-slate-400 hover:text-yellow-500 hover:bg-yellow-50 hover:shadow-md hover:scale-110 transition-all duration-300 ease-out rounded-full"
                 >
                   <Star className="h-4 w-4" />
                 </Button>
               )}
               
-              {/* Botones de admin - Solo para administradores */}
               {user?.role === 'admin' && (
                 <>
                   {onDuplicateProject && (
@@ -329,7 +336,7 @@ export default function ProjectCard({
                         e.stopPropagation();
                         onDuplicateProject(project);
                       }}
-                      className="h-8 w-8 p-0 text-slate-400 hover:text-blue-500 hover:bg-blue-50"
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-blue-500 hover:bg-blue-50 hover:shadow-md hover:scale-110 transition-all duration-300 ease-out rounded-full"
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -342,7 +349,7 @@ export default function ProjectCard({
                         e.stopPropagation();
                         onArchiveProject(project.id);
                       }}
-                      className="h-8 w-8 p-0 text-slate-400 hover:text-orange-500 hover:bg-orange-50"
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-orange-500 hover:bg-orange-50 hover:shadow-md hover:scale-110 transition-all duration-300 ease-out rounded-full"
                     >
                       <Archive className="h-4 w-4" />
                     </Button>
@@ -351,80 +358,102 @@ export default function ProjectCard({
               )}
             </div>
           </div>
-          
-          <div className="flex-1 flex flex-col">
-            {/* Información del creador del proyecto - Solo visible para admin */}
-            {user?.role === 'admin' && project.created_by && projectCreators[project.created_by] && (
-              <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200/50 mb-3">
-                <User className="h-3 w-3 text-slate-500" />
-                <div className="flex flex-col">
-                  <span className="text-xs font-medium text-slate-700">
-                    Creado por: {projectCreators[project.created_by].full_name}
-                  </span>
-                  <span className="text-xs text-slate-500">
-                    {projectCreators[project.created_by].email}
-                  </span>
-                </div>
+        </div>
+        
+        <div className="p-4 flex-1 flex flex-col">
+          {/* Información del creador del proyecto - Solo visible para admin */}
+          {user?.role === 'admin' && project.created_by && projectCreators[project.created_by] && (
+            <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200/50 mb-3">
+              <User className="h-3 w-3 text-slate-500" />
+              <div className="flex flex-col">
+                <span className="text-xs font-medium text-slate-700">
+                  Creado por: {projectCreators[project.created_by].full_name}
+                </span>
+                <span className="text-xs text-slate-500">
+                  {projectCreators[project.created_by].email}
+                </span>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Estado y progreso */}
-          <div className="space-y-2 mb-3">
-            <div className="flex items-center justify-between">
+          {/* Estado, tipo y progreso en una sola línea */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
               {isPendingApproval ? (
-                <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 text-xs">
-                  <Clock className="h-4 w-4" />
-                  <span className="ml-1">Esperando Aprobación</span>
+                <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-300 text-xs px-3 py-1.5 font-medium shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 ease-out">
+                  <Clock className="h-3 w-3 mr-1.5" />
+                  Esperando Aprobación
                 </Badge>
               ) : isRejected ? (
-                <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20 text-xs">
-                  <XCircle className="h-4 w-4" />
-                  <span className="ml-1">Rechazado</span>
+                <Badge variant="outline" className="bg-red-50 text-red-800 border-red-300 text-xs px-3 py-1.5 font-medium shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 ease-out">
+                  <XCircle className="h-3 w-3 mr-1.5" />
+                  Rechazado
                 </Badge>
               ) : (
-                <Badge variant="outline" className={`${getStatusColor(status)} border-slate-200 text-xs`}>
+                <Badge variant="outline" className={`${getStatusColor(status)} text-xs px-3 py-1.5 font-medium shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 ease-out`}>
                   {getStatusIcon(status)}
-                  <span className="ml-1">{status}</span>
+                  <span className="ml-1.5">{status}</span>
                 </Badge>
               )}
-              {!isPendingApproval && !isRejected && (
-                <span className="text-sm font-medium text-slate-700">{progress}%</span>
-              )}
+              
+              <Badge variant="outline" className={`${getProjectTypeColor(projectType)} text-xs px-3 py-1.5 font-medium shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 ease-out`}>
+                {getProjectTypeIcon(projectType)}
+                <span className="ml-1.5">{projectType}</span>
+              </Badge>
             </div>
+            
             {!isPendingApproval && !isRejected && (
-              <Progress value={progress} className="h-1.5" />
+              <div className="flex items-center gap-1">
+                <div className="text-sm font-bold text-slate-800">{progress}%</div>
+                <div className="w-2 h-2 rounded-full bg-slate-300"></div>
+              </div>
             )}
           </div>
+          
+          {/* Barra de progreso mejorada */}
+          {!isPendingApproval && !isRejected && (
+            <div className="mb-3">
+              <div className="relative">
+                <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-500 ease-out ${
+                      progress === 100 
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
+                        : progress >= 75 
+                        ? 'bg-gradient-to-r from-blue-500 to-indigo-500'
+                        : progress >= 50
+                        ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                        : 'bg-gradient-to-r from-slate-400 to-slate-500'
+                    }`}
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                {progress > 0 && (
+                  <div className="absolute top-0 right-0 w-1 h-2.5 bg-white rounded-full shadow-sm"></div>
+                )}
+              </div>
+            </div>
+          )}
 
-          {/* Tag de tipo de proyecto */}
-          <div className="mb-3">
-            <Badge variant="outline" className={`${getProjectTypeColor(projectType)} border-slate-200 text-xs`}>
-              {getProjectTypeIcon(projectType)}
-              <span className="ml-1">{projectType}</span>
-            </Badge>
-          </div>
-
-          {/* Información del proyecto */}
+          {/* Metadatos del proyecto compactos */}
           {!isPendingApproval && !isRejected ? (
-            <div className="grid grid-cols-2 gap-3 text-xs mb-3 flex-1">
-              <div>
-                <span className="text-slate-500">Funcionalidades:</span>
-                <p className="font-medium text-slate-700">{(project as any).funcionalidades?.length || 0}</p>
+            <div className="grid grid-cols-3 gap-2 text-xs mb-3 flex-1">
+              <div className="text-center p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+                <div className="font-bold text-blue-800 text-sm">{(project as any).funcionalidades?.length || 0}</div>
+                <div className="text-blue-600 font-medium text-xs">Funciones</div>
               </div>
-              <div>
-                <span className="text-slate-500">Fases:</span>
-                <p className="font-medium text-slate-700">
-                  {project.fases?.filter((f: ProjectPhase) => f.estado === 'Terminado').length || 0}/
-                  {project.fases?.length || 0}
-                </p>
+              <div className="text-center p-2 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-100">
+                <div className="font-bold text-green-800 text-sm">
+                  {project.fases?.filter((f: ProjectPhase) => f.estado === 'Terminado').length || 0}/{project.fases?.length || 0}
+                </div>
+                <div className="text-green-600 font-medium text-xs">Fases</div>
               </div>
-              <div>
-                <span className="text-slate-500">Comentarios:</span>
-                <p className="font-medium flex items-center gap-1 text-slate-700">
+              <div className="text-center p-2 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-100">
+                <div className="font-bold text-purple-800 text-sm flex items-center justify-center gap-1">
                   <MessageSquare className="h-3 w-3" />
                   {totalComments}
-                </p>
+                </div>
+                <div className="text-purple-600 font-medium text-xs">Comentarios</div>
               </div>
             </div>
           ) : (
@@ -432,7 +461,7 @@ export default function ProjectCard({
               <div className="text-center text-slate-500">
                 {isPendingApproval ? (
                   <div className="space-y-2">
-                    <Clock className="h-8 w-8 mx-auto text-yellow-500" />
+                    <Clock className="h-8 w-8 mx-auto text-amber-500" />
                     <p className="text-sm font-medium">Esperando aprobación</p>
                     <p className="text-xs">Los administradores revisarán tu proyecto</p>
                   </div>
@@ -447,27 +476,27 @@ export default function ProjectCard({
             </div>
           )}
 
-          {/* Fechas */}
-          <div className="text-xs text-slate-500 space-y-1 mb-3">
-            <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              <span className="truncate">Creado: {formatDateSafe(project.created_at || project.createdAt)}</span>
+          {/* Fechas mejor organizadas */}
+          <div className="flex items-center justify-between text-xs mb-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="flex items-center gap-1.5 text-slate-600">
+              <Calendar className="h-3 w-3 text-slate-500" />
+              <span className="truncate font-medium">{formatDateSafe(project.created_at || project.createdAt)}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              <span className="truncate">Actualizado: {formatDateSafe(project.updated_at)}</span>
+            <div className="flex items-center gap-1.5 text-slate-600">
+              <Clock className="h-3 w-3 text-slate-500" />
+              <span className="truncate font-medium">{formatDateSafe(project.updated_at)}</span>
             </div>
           </div>
 
           {/* Acciones */}
-          <div className="flex gap-2 pt-2 mt-auto">
+          <div className="flex gap-2 mt-auto">
             {!isPendingApproval && !isRejected && (
               <>
                 {user?.role !== 'admin' && onNavigateToCollaboration && (
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50 text-xs"
+                    className="flex-1 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 hover:shadow-md hover:scale-105 text-xs font-medium transition-all duration-300 ease-out"
                     onClick={(e) => {
                       e.stopPropagation();
                       onNavigateToCollaboration(project.id);
@@ -484,7 +513,7 @@ export default function ProjectCard({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs"
+                        className="border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 hover:shadow-md hover:scale-105 text-xs font-medium transition-all duration-300 ease-out"
                         onClick={(e) => {
                           e.stopPropagation();
                           onNavigateToEdit(project.id);
@@ -497,7 +526,7 @@ export default function ProjectCard({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-red-300 text-red-700 hover:bg-red-50 text-xs"
+                        className="border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 hover:shadow-md hover:scale-105 text-xs font-medium transition-all duration-300 ease-out"
                         onClick={(e) => {
                           e.stopPropagation();
                           onDeleteProject(project.id);
@@ -516,7 +545,7 @@ export default function ProjectCard({
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 border-orange-300 text-orange-700 hover:bg-orange-50 text-xs"
+                className="flex-1 border-amber-200 text-amber-700 hover:bg-amber-50 hover:border-amber-300 hover:shadow-md hover:scale-105 text-xs font-medium transition-all duration-300 ease-out"
                 onClick={async (e) => {
                   e.stopPropagation();
                   try {

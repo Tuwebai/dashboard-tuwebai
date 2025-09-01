@@ -326,7 +326,7 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
       
       // Construir URL pública directamente
       const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
-      console.log('🔗 URL generada:', publicUrl);
+
       
       return publicUrl;
     } catch (error) {
@@ -346,7 +346,7 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
         // Generar URL directamente sin pre-carga compleja
         const url = await getFilePreviewUrl(file);
         if (url) {
-          console.log('🔗 URL generada para vista previa:', url);
+
           setFilePreviewUrl(url);
         } else {
           console.error('❌ No se pudo obtener URL para la imagen');
@@ -921,7 +921,7 @@ export default function FileManager({ projectId, isAdmin }: FileManagerProps) {
                             console.error('📊 Tipo detectado:', getRealFileType(showFilePreview));
                           }}
                           onLoad={() => {
-                            console.log('✅ Imagen cargada correctamente en modal:', filePreviewUrl);
+
                           }}
                         />
 

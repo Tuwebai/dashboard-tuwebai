@@ -376,7 +376,7 @@ export default function ClientCollaborationPage() {
 
              // Enviar notificación al admin
        try {
-         console.log('📤 [ClientCollaborationPage] Enviando notificación de mensaje:', {
+
            user_id: project.created_by,
            sender_id: user.id,
            sender_name: user.full_name || user.email,
@@ -398,13 +398,13 @@ export default function ClientCollaborationPage() {
            }
          };
          
-         console.log('🔔 [ClientCollaborationPage] Creando notificación de mensaje:', notificationData);
+
          
          await supabase
            .from('notifications')
            .insert(notificationData);
          
-         console.log('✅ [ClientCollaborationPage] Notificación enviada exitosamente');
+
        } catch (notificationError) {
          console.error('❌ [ClientCollaborationPage] Error enviando notificación:', notificationError);
        }
@@ -499,7 +499,7 @@ export default function ClientCollaborationPage() {
            }
         };
         
-        console.log('🔔 [ClientCollaborationPage] Creando notificación de archivo:', notificationData);
+
         
         await supabase
           .from('notifications')
@@ -579,7 +579,7 @@ export default function ClientCollaborationPage() {
            }
         };
         
-        console.log('🔔 [ClientCollaborationPage] Creando notificación de comentario de fase:', notificationData);
+
         
         await supabase
           .from('notifications')

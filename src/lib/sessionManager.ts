@@ -86,7 +86,7 @@ export class SessionManager {
       this.setupAuthListeners();
       
       this.isInitialized = true;
-      console.log('SessionManager inicializado correctamente');
+
     } catch (error) {
       console.error('Error inicializando SessionManager:', error);
       throw error;
@@ -138,7 +138,7 @@ export class SessionManager {
         sessionInfo
       });
 
-      console.log('Usuario autenticado:', sessionInfo.email);
+
     } catch (error) {
       console.error('Error manejando inicio de sesión:', error);
     }
@@ -163,7 +163,7 @@ export class SessionManager {
       }
       
       this.currentSession = null;
-      console.log('Usuario desconectado');
+
     } catch (error) {
       console.error('Error manejando cierre de sesión:', error);
     }
@@ -184,7 +184,7 @@ export class SessionManager {
       // Actualizar en la base de datos
       await this.updateSessionActivity(this.currentSession.id);
       
-      console.log('Token renovado para:', this.currentSession.email);
+
     } catch (error) {
       console.error('Error manejando renovación de token:', error);
     }
@@ -204,7 +204,7 @@ export class SessionManager {
       // Actualizar en la base de datos
       await this.updateSessionUser(this.currentSession.id, session.user);
       
-      console.log('Usuario actualizado:', this.currentSession.email);
+
     } catch (error) {
       console.error('Error manejando actualización de usuario:', error);
     }
@@ -407,7 +407,7 @@ export class SessionManager {
         sessionInfo
       });
 
-      console.log('Sesión renovada para:', sessionInfo.email);
+
       return true;
     } catch (error) {
       console.error('Error renovando sesión:', error);
@@ -434,7 +434,7 @@ export class SessionManager {
       // Limpiar estado local
       this.currentSession = null;
       
-      console.log('Sesión cerrada forzadamente');
+
     } catch (error) {
       console.error('Error cerrando sesión forzadamente:', error);
     }

@@ -35,11 +35,11 @@ class NotificationWorker {
 
   start() {
     if (this.isRunning) {
-      console.log('🔔 [NotificationWorker] Ya está ejecutándose');
+
       return;
     }
 
-    console.log('🚀 [NotificationWorker] Iniciando worker de notificaciones...');
+
     this.isRunning = true;
 
     // Ejecutar inmediatamente la primera verificación
@@ -50,7 +50,7 @@ class NotificationWorker {
       this.processScheduledNotifications();
     }, this.CHECK_INTERVAL);
 
-    console.log('✅ [NotificationWorker] Worker iniciado correctamente');
+
   }
 
   // =====================================================
@@ -59,11 +59,11 @@ class NotificationWorker {
 
   stop() {
     if (!this.isRunning) {
-      console.log('🔔 [NotificationWorker] No está ejecutándose');
+
       return;
     }
 
-    console.log('🛑 [NotificationWorker] Deteniendo worker...');
+
     this.isRunning = false;
 
     if (this.intervalId) {
@@ -71,7 +71,7 @@ class NotificationWorker {
       this.intervalId = null;
     }
 
-    console.log('✅ [NotificationWorker] Worker detenido correctamente');
+
   }
 
   // =====================================================
@@ -80,7 +80,7 @@ class NotificationWorker {
 
   private async processScheduledNotifications() {
     try {
-      console.log('🔍 [NotificationWorker] Verificando notificaciones programadas...');
+
 
       // Obtener notificaciones pendientes que ya deberían haberse enviado
       const now = new Date().toISOString();
@@ -97,18 +97,18 @@ class NotificationWorker {
       }
 
       if (!notifications || notifications.length === 0) {
-        console.log('ℹ️ [NotificationWorker] No hay notificaciones pendientes para enviar');
+
         return;
       }
 
-      console.log(`📤 [NotificationWorker] Procesando ${notifications.length} notificaciones...`);
+
 
       // Procesar cada notificación
       for (const notification of notifications) {
         await this.processNotification(notification);
       }
 
-      console.log('✅ [NotificationWorker] Procesamiento completado');
+
     } catch (error) {
       console.error('❌ [NotificationWorker] Error en el procesamiento:', error);
     }
@@ -120,7 +120,7 @@ class NotificationWorker {
 
   private async processNotification(notification: ScheduledNotification) {
     try {
-      console.log(`📨 [NotificationWorker] Procesando notificación ${notification.id}...`);
+
 
       // Incrementar intentos
       const newAttempts = notification.attempts + 1;
@@ -139,15 +139,15 @@ class NotificationWorker {
       if (allFailed && newAttempts >= notification.max_attempts) {
         // Marcar como fallida si se agotaron los intentos
         await this.updateNotificationStatus(notification.id, 'failed', newAttempts, 'Se agotaron los intentos de envío');
-        console.log(`❌ [NotificationWorker] Notificación ${notification.id} marcada como fallida`);
+
       } else if (allFailed) {
         // Actualizar intentos si aún hay oportunidades
         await this.updateNotificationAttempts(notification.id, newAttempts);
-        console.log(`⚠️ [NotificationWorker] Notificación ${notification.id} - Intento ${newAttempts}/${notification.max_attempts}`);
+
       } else {
         // Marcar como enviada si al menos un canal funcionó
         await this.updateNotificationStatus(notification.id, 'sent', newAttempts);
-        console.log(`✅ [NotificationWorker] Notificación ${notification.id} enviada exitosamente`);
+
       }
 
       // Registrar analytics
@@ -224,7 +224,7 @@ class NotificationWorker {
 
       // Aquí implementarías el envío real de email
       // Por ahora simulamos el envío exitoso
-      console.log(`📧 [NotificationWorker] Enviando email a ${user.email}: ${notification.subject}`);
+
       
       // Simular delay de envío
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -268,7 +268,7 @@ class NotificationWorker {
       }
 
       // Simular envío de push notifications
-      console.log(`📱 [NotificationWorker] Enviando push a ${subscriptions.length} dispositivos`);
+
       
       // Simular delay de envío
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -319,7 +319,7 @@ class NotificationWorker {
         };
       }
 
-      console.log(`💬 [NotificationWorker] Notificación in-app creada para usuario ${notification.user_id}`);
+
       
       return {
         success: true,
@@ -491,6 +491,6 @@ export const notificationWorker = new NotificationWorker();
 
 if (process.env.NODE_ENV === 'development') {
   // Solo iniciar en desarrollo para testing
-  console.log('🔧 [NotificationWorker] Modo desarrollo detectado');
+
   // notificationWorker.start();
 }

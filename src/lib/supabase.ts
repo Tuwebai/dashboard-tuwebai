@@ -4,18 +4,14 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-console.log('🔧 URL de Supabase:', supabaseUrl);
-console.log('🔧 Clave configurada:', supabaseAnonKey ? 'Sí' : 'No');
-
 // Verificar que las variables estén definidas
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Variables de entorno de Supabase no encontradas');
-  console.error('VITE_SUPABASE_URL:', supabaseUrl);
-  console.error('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Presente' : 'Faltante');
+  throw new Error('Variables de entorno de Supabase requeridas');
 }
 
 // Patrón Singleton para evitar múltiples instancias de GoTrueClient
 let supabaseInstance: SupabaseClient | null = null;
+let isInitializing = false;
 
 // Storage personalizado compatible con Supabase
 const createCustomStorage = () => {
@@ -62,18 +58,39 @@ const createCustomStorage = () => {
 
 // Función para obtener o crear la instancia única de Supabase
 const getSupabaseClient = (): SupabaseClient => {
-  if (!supabaseInstance) {
-    console.log('🚀 Creando cliente de Supabase...');
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-        flowType: 'pkce'
-      }
-    });
-    console.log('✅ Cliente de Supabase creado exitosamente');
+  if (!supabaseInstance && !isInitializing) {
+    isInitializing = true;
+    
+    try {
+      supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true,
+          flowType: 'pkce',
+          storage: createCustomStorage()
+        },
+        realtime: {
+          params: {
+            eventsPerSecond: 10
+          }
+        }
+      });
+      
+
+    } catch (error) {
+      console.error('❌ Error creando instancia de Supabase:', error);
+      isInitializing = false;
+      throw error;
+    } finally {
+      isInitializing = false;
+    }
   }
+  
+  if (!supabaseInstance) {
+    throw new Error('No se pudo crear la instancia de Supabase');
+  }
+  
   return supabaseInstance;
 };
 

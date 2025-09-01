@@ -317,17 +317,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setError(null);
 
         // Migrar localStorage a base de datos
-        await userPreferencesService.migrateLocalStorageToDB(user.id);
+        if (userData && userData.id) {
+          await userPreferencesService.migrateLocalStorageToDB(userData.id);
+        }
         
         // Mostrar toast de bienvenida cuando se complete la autenticación
         // Solo si no es la carga inicial
-        const welcomeBack = await userPreferencesService.getUserPreferences(user.id, 'welcome_back');
-        if (welcomeBack.length === 0) {
-          toastGlobal({
-            title: '¡Bienvenido!',
-            description: 'Has iniciado sesión correctamente.'
-          });
-          await userPreferencesService.saveUserPreference(user.id, 'welcome_back', 'tuwebai_welcome_back', 'true');
+        if (userData && userData.id) {
+          const welcomeBack = await userPreferencesService.getUserPreferences(userData.id, 'welcome_back');
+          if (welcomeBack.length === 0) {
+            toastGlobal({
+              title: '¡Bienvenido!',
+              description: 'Has iniciado sesión correctamente.'
+            });
+            await userPreferencesService.saveUserPreference(userData.id, 'welcome_back', 'tuwebai_welcome_back', 'true');
+          }
         }
         
       } catch (error) {
@@ -342,10 +346,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLogs([]);
       clearCache();
       // Limpiar preferencias de bienvenida
-      if (user) {
+      if (user && user.id) {
         await userPreferencesService.deleteUserPreference(user.id, 'welcome_back', 'tuwebai_welcome_back');
       }
-      setLoading(false); // ¡AQUÍ ESTABA EL PROBLEMA!
+      setLoading(false);
     }
   }, [supabaseUser, session, authLoading]);
 
@@ -538,7 +542,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const newProject = {
         ...projectData,
         created_by: user.id, // SIEMPRE usar el ID del usuario autenticado
-        user_role: user.role, // Pasar el rol del usuario para la lógica de aprobación
         status: 'development' as const,
         technologies: projectData.technologies || []
       };

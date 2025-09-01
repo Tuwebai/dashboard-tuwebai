@@ -59,7 +59,7 @@ export class PushNotificationService {
 
     try {
       this.serviceWorkerRegistration = await navigator.serviceWorker.register('/sw.js');
-      console.log('Service Worker registered:', this.serviceWorkerRegistration);
+
     } catch (error) {
       console.error('Service Worker registration failed:', error);
     }

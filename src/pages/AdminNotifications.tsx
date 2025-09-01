@@ -168,7 +168,7 @@ export default function AdminNotifications() {
         .select('*');
 
       if (notificationsError) {
-        console.log('Tabla notifications no disponible, usando datos básicos');
+
         setStats({
           total: 0,
           sent: 0,
@@ -192,7 +192,7 @@ export default function AdminNotifications() {
           deliveryLogs = logs || [];
         }
       } catch (logsError) {
-        console.log('Tabla notification_delivery_logs no disponible');
+
       }
 
       const stats: NotificationStats = {
@@ -266,7 +266,7 @@ export default function AdminNotifications() {
         .limit(30);
 
       if (error) {
-        console.log('Tabla notification_analytics no disponible, usando datos vacíos');
+
         setAnalytics([]);
         return;
       }

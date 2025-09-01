@@ -126,7 +126,7 @@ export class NotificationRuleEngine {
     try {
       await this.loadRules();
       this.isInitialized = true;
-      console.log('✅ NotificationRuleEngine inicializado correctamente');
+
     } catch (error) {
       console.error('❌ Error inicializando NotificationRuleEngine:', error);
     }
@@ -147,7 +147,7 @@ export class NotificationRuleEngine {
         this.rules.set(rule.id, this.mapDatabaseRule(rule));
       });
 
-      console.log(`📋 ${this.rules.size} reglas de notificación cargadas`);
+
     } catch (error) {
       console.error('Error loading notification rules:', error);
       throw error;
@@ -167,7 +167,7 @@ export class NotificationRuleEngine {
     const results: RuleEvaluationResult[] = [];
     const matchingRules = this.getMatchingRules(eventContext.event);
 
-    console.log(`🔍 Evaluando ${matchingRules.length} reglas para evento: ${eventContext.event}`);
+
 
     for (const rule of matchingRules) {
       try {
@@ -193,7 +193,7 @@ export class NotificationRuleEngine {
     }
 
     const totalTime = Date.now() - startTime;
-    console.log(`✅ Evaluación completada en ${totalTime}ms. ${results.filter(r => r.matched).length} reglas ejecutadas`);
+
 
     return results;
   }
@@ -316,7 +316,7 @@ export class NotificationRuleEngine {
     const successCount = results.filter(r => r.status === 'fulfilled').length;
     const totalCount = results.length;
 
-    console.log(`⚡ Acciones ejecutadas: ${successCount}/${totalCount} exitosas`);
+
 
     return successCount > 0;
   }
@@ -419,7 +419,7 @@ export class NotificationRuleEngine {
         );
 
         // Aquí se integraría con el servicio de email existente
-        console.log(`📧 Email enviado a ${recipient.email}: ${renderedTemplate.subject}`);
+
       }
 
       return true;
@@ -525,7 +525,7 @@ export class NotificationRuleEngine {
       const { title, description, assignee, priority, dueDate } = action.config;
       
       // Aquí se integraría con el sistema de tareas
-      console.log(`📋 Tarea creada: ${title} para ${assignee}`);
+
       
       return true;
     } catch (error) {
@@ -539,7 +539,7 @@ export class NotificationRuleEngine {
       const { escalationLevel, assignee, message } = action.config;
       
       // Aquí se implementaría la lógica de escalación
-      console.log(`🚨 Escalación a nivel ${escalationLevel} para ${assignee}`);
+
       
       return true;
     } catch (error) {

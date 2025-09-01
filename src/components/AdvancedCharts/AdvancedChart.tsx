@@ -672,7 +672,7 @@ export default function AdvancedChart({
                     theme={localConfig.theme === 'auto' ? undefined : localConfig.theme}
                     onEvents={{
                       click: (params) => {
-                        console.log('Chart clicked:', params);
+
                       }
                     }}
                     onChartReady={(chart) => {

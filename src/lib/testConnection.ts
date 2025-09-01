@@ -9,13 +9,13 @@ import { projectService } from './projectService';
 
 export async function testSupabaseConnection() {
   try {
-    console.log('🔌 Probando conexión con Supabase...');
+
     
     // 1. Verificar que las variables de entorno están configuradas
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     
-    console.log('📋 Variables de entorno:');
+
     console.log('- VITE_SUPABASE_URL:', supabaseUrl ? '✅ Configurada' : '❌ No configurada');
     console.log('- VITE_SUPABASE_ANON_KEY:', supabaseKey ? '✅ Configurada' : '❌ No configurada');
     

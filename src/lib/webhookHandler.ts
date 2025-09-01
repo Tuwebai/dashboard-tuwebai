@@ -19,7 +19,7 @@ export interface MercadoPagoWebhook {
 // Procesar webhook de Mercado Pago
 export const handleMercadoPagoWebhook = async (webhookData: MercadoPagoWebhook) => {
   try {
-    console.log('Processing Mercado Pago webhook:', webhookData);
+
 
     // Validar que sea un webhook válido
     if (!webhookData || !webhookData.data || !webhookData.data.id) {
