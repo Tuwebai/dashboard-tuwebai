@@ -33,7 +33,7 @@ import SearchAndFilters from '@/components/SearchAndFilters';
 
 import { exportProjects, exportCompleteReport } from '@/utils/exportUtils';
 import { ErrorMessage } from '@/components/ErrorBoundary';
-import { SectionLoading } from '@/components/LoadingSpinner';
+import { SectionSpinner } from '@/components/LoadingSpinner';
 import { useDebounce } from '@/hooks/usePerformance';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import ProyectosNuevo from './ProyectosNuevo';
@@ -329,7 +329,7 @@ export default function ProjectsPage() {
     }
   }, [projects, user.role, user.email, refreshData]);
 
-  if (loading) return <SectionLoading />;
+  if (loading) return <SectionSpinner />;
   if (error) return <ErrorMessage error={error} onRetry={refreshData} />;
 
   return (

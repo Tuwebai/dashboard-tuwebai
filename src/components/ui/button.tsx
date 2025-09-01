@@ -5,17 +5,17 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 select-none active:scale-95 transition-transform duration-100 shadow-lg",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-gradient-to-r from-blue-500 via-blue-600 to-violet-600 text-white hover:from-blue-600 hover:to-violet-700 hover:shadow-xl",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
-          "bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700 hover:shadow-xl",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-gradient-to-r hover:from-blue-500 hover:to-violet-600 hover:text-white hover:shadow-xl",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "bg-gradient-to-r from-gray-700 to-gray-900 text-white hover:from-gray-800 hover:to-gray-950 hover:shadow-xl",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },
@@ -37,16 +37,43 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
+  ariaLabel?: string
+  ariaDescribedBy?: string
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, ariaLabel, ariaDescribedBy, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+    
+    // Mejorar accesibilidad con ARIA labels y descripciones
+    const accessibilityProps = {
+      ...(ariaLabel && { "aria-label": ariaLabel }),
+      ...(ariaDescribedBy && { "aria-describedby": ariaDescribedBy }),
+      ...(props.role && { role: props.role }),
+      ...(props.tabIndex !== undefined && { tabIndex: props.tabIndex }),
+      // Asegurar que el botón sea accesible por teclado
+      ...(props.onClick && { tabIndex: props.tabIndex ?? 0 }),
+    }
+
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        {...accessibilityProps}
         {...props}
+        // Mejorar navegación por teclado
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            if (props.onClick) {
+              props.onClick(e as any)
+            }
+          }
+          // Llamar al onKeyDown original si existe
+          if (props.onKeyDown) {
+            props.onKeyDown(e)
+          }
+        }}
       />
     )
   }

@@ -189,3 +189,69 @@ export const createErrorFallback = (error: SupabaseError, retryAction?: () => vo
     retryAction
   };
 };
+
+// Función para configurar el manejador de errores global
+export const setupErrorHandler = (): void => {
+  // Configurar manejador de errores global para errores no capturados
+  window.addEventListener('error', (event) => {
+    const context: ErrorContext = {
+      component: 'Global',
+      action: 'Unhandled Error',
+      timestamp: new Date().toISOString()
+    };
+
+    const supabaseError: SupabaseError = {
+      code: 'UNHANDLED_ERROR',
+      message: event.error?.message || 'Error no manejado',
+      details: event.filename,
+      hint: 'Revisa la consola para más detalles'
+    };
+
+    errorHandler.handleSupabaseError(supabaseError, context);
+  });
+
+  // Configurar manejador para promesas rechazadas
+  window.addEventListener('unhandledrejection', (event) => {
+    const context: ErrorContext = {
+      component: 'Global',
+      action: 'Unhandled Promise Rejection',
+      timestamp: new Date().toISOString()
+    };
+
+    const supabaseError: SupabaseError = {
+      code: 'UNHANDLED_PROMISE',
+      message: event.reason?.message || 'Promesa rechazada no manejada',
+      details: event.reason?.stack,
+      hint: 'Verifica el manejo de promesas en tu código'
+    };
+
+    errorHandler.handleSupabaseError(supabaseError, context);
+  });
+
+  // Configurar manejador para errores de React
+  if (typeof window !== 'undefined') {
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+      // Llamar al console.error original
+      originalConsoleError.apply(console, args);
+      
+      // Capturar errores de React
+      if (args[0] && typeof args[0] === 'string' && args[0].includes('React')) {
+        const context: ErrorContext = {
+          component: 'React',
+          action: 'React Error',
+          timestamp: new Date().toISOString()
+        };
+
+        const supabaseError: SupabaseError = {
+          code: 'REACT_ERROR',
+          message: args[0],
+          details: args.slice(1).join(' '),
+          hint: 'Revisa el componente que está causando el error'
+        };
+
+        errorHandler.handleSupabaseError(supabaseError, context);
+      }
+    };
+  }
+};

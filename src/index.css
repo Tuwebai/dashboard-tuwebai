@@ -239,3 +239,286 @@ h1, .text-3xl, .text-2xl, .font-bold, .font-semibold {
 .bg-gradient-danger {
   background: linear-gradient(90deg, #ff5858 0%, #f09819 100%);
 }
+
+/* Estilos de accesibilidad */
+@layer utilities {
+  /* Clase para ocultar elementos visualmente pero mantenerlos accesibles para lectores de pantalla */
+  .sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
+  /* Clase para mostrar elementos solo cuando están enfocados por teclado */
+  .focus-visible-only {
+    @apply opacity-0 focus-visible:opacity-100;
+  }
+
+  /* Mejoras para navegación por teclado */
+  .keyboard-focus {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  }
+
+  /* Estilos para skip links */
+  .skip-link {
+    @apply absolute -top-10 left-6 z-50 bg-blue-600 text-white px-4 py-2 rounded-md transition-all duration-200;
+  }
+
+  .skip-link:focus {
+    @apply top-6;
+  }
+
+  /* Mejoras para contraste y legibilidad */
+  .high-contrast {
+    @apply text-black bg-white border-2 border-black;
+  }
+
+  /* Estilos para elementos con alto contraste en modo oscuro */
+  .dark .high-contrast {
+    @apply text-white bg-black border-white;
+  }
+
+  /* Mejoras para elementos interactivos */
+  .interactive-element {
+    @apply cursor-pointer transition-all duration-200;
+  }
+
+  .interactive-element:hover {
+    @apply scale-105 shadow-lg;
+  }
+
+  .interactive-element:focus {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2 scale-105;
+  }
+
+  /* Estilos para estados de error accesibles */
+  .error-state {
+    @apply border-red-500 bg-red-50;
+  }
+
+  .error-state:focus {
+    @apply ring-red-500;
+  }
+
+  /* Estilos para estados de éxito accesibles */
+  .success-state {
+    @apply border-green-500 bg-green-50;
+  }
+
+  .success-state:focus {
+    @apply ring-green-500;
+  }
+
+  /* Mejoras para formularios */
+  .form-field {
+    @apply relative;
+  }
+
+  .form-field label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+
+  .form-field input:focus + label,
+  .form-field textarea:focus + label,
+  .form-field select:focus + label {
+    @apply text-blue-600;
+  }
+
+  /* Estilos para mensajes de error en formularios */
+  .form-error {
+    @apply text-red-600 text-sm mt-1;
+  }
+
+  .form-error[aria-live="assertive"] {
+    @apply font-semibold;
+  }
+
+  /* Mejoras para navegación */
+  .nav-item {
+    @apply relative;
+  }
+
+  .nav-item:focus-within .nav-dropdown {
+    @apply block;
+  }
+
+  /* Estilos para tooltips accesibles */
+  .tooltip {
+    @apply absolute z-50 px-2 py-1 text-sm text-white bg-gray-900 rounded shadow-lg;
+  }
+
+  .tooltip[aria-hidden="true"] {
+    @apply hidden;
+  }
+
+  /* Mejoras para modales */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-50 z-40;
+  }
+
+  .modal-content {
+    @apply relative z-50 bg-white rounded-lg shadow-xl max-w-md mx-auto mt-20 p-6;
+  }
+
+  .modal-content:focus {
+    @apply outline-none;
+  }
+
+  /* Estilos para notificaciones accesibles */
+  .notification {
+    @apply fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg;
+  }
+
+  .notification[aria-live="polite"] {
+    @apply bg-blue-500 text-white;
+  }
+
+  .notification[aria-live="assertive"] {
+    @apply bg-red-500 text-white;
+  }
+
+  /* Mejoras para tablas */
+  .table-container {
+    @apply overflow-x-auto;
+  }
+
+  .table {
+    @apply w-full border-collapse;
+  }
+
+  .table th {
+    @apply bg-gray-100 text-left p-3 border border-gray-300;
+  }
+
+  .table td {
+    @apply p-3 border border-gray-300;
+  }
+
+  /* Estilos para elementos de carga accesibles */
+  .loading-spinner {
+    @apply inline-block w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin;
+  }
+
+  .loading-spinner[aria-label] {
+    @apply sr-only;
+  }
+
+  /* Mejoras para botones */
+  .btn-primary {
+    @apply bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+  }
+
+  /* Estilos para elementos deshabilitados */
+  .disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .disabled:focus {
+    @apply ring-0;
+  }
+
+  /* Mejoras para elementos de lista */
+  .list-item {
+    @apply p-3 border-b border-gray-200 hover:bg-gray-50 focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
+
+  .list-item:last-child {
+    @apply border-b-0;
+  }
+
+  /* Estilos para elementos de entrada */
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+
+  .input-field:invalid {
+    @apply border-red-500;
+  }
+
+  .input-field:valid {
+    @apply border-green-500;
+  }
+
+  /* Mejoras para elementos de selección */
+  .select-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+
+  /* Estilos para elementos de texto */
+  .text-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical;
+  }
+
+  /* Mejoras para elementos de checkbox y radio */
+  .checkbox-field,
+  .radio-field {
+    @apply w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500;
+  }
+
+  .checkbox-field:focus,
+  .radio-field:focus {
+    @apply ring-2 ring-offset-2;
+  }
+
+  /* Estilos para elementos de progreso */
+  .progress-bar {
+    @apply w-full bg-gray-200 rounded-full h-2.5;
+  }
+
+  .progress-fill {
+    @apply bg-blue-600 h-2.5 rounded-full transition-all duration-300;
+  }
+
+  /* Mejoras para elementos de navegación */
+  .nav-link {
+    @apply text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200;
+  }
+
+  .nav-link:focus {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  }
+
+  .nav-link.active {
+    @apply bg-blue-100 text-blue-700;
+  }
+
+  /* Estilos para elementos de búsqueda */
+  .search-field {
+    @apply w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+
+  .search-icon {
+    @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400;
+  }
+
+  /* Mejoras para elementos de paginación */
+  .pagination {
+    @apply flex items-center space-x-2;
+  }
+
+  .page-link {
+    @apply px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+
+  .page-link.active {
+    @apply z-10 bg-blue-600 border-blue-600 text-white;
+  }
+
+  .page-link:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+}

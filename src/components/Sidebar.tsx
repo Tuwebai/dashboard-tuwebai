@@ -90,6 +90,8 @@ export default function Sidebar() {
         `relative group cursor-pointer transition-all duration-300 ease-out hover:bg-gray-50 w-full
         ${isActive ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500' : ''}`
       }
+      aria-label={`Navegar a ${label}`}
+      aria-describedby={count ? `count-${label.toLowerCase()}` : undefined}
     >
       {({ isActive }) => (
         <>
@@ -99,45 +101,32 @@ export default function Sidebar() {
                 ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25' 
                 : 'bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600'
             }`}>
-              {isActive && (
-                <div className="absolute inset-0 bg-blue-400 rounded-xl animate-ping opacity-25"></div>
-              )}
-              <div className="transition-transform duration-300 group-hover:scale-110">
-                {icon}
-              </div>
+              {icon}
             </div>
-            <span className={`font-medium text-sm flex-1 text-center ${
-              isActive ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
-            }`}>
-              {t(label)}
-            </span>
-            <div className="flex items-center gap-1 ml-auto">
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                {label}
+              </span>
               {count !== undefined && (
-                <Badge variant="secondary" className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                  isActive 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-red-100 text-red-600 group-hover:bg-red-500 group-hover:text-white'
-                }`}>
+                <div 
+                  id={`count-${label.toLowerCase()}`}
+                  className="text-xs text-gray-500 mt-1"
+                  aria-label={`${count} ${label.toLowerCase()}`}
+                >
                   {count}
-                </Badge>
-              )}
-              {badge && (
-                <Badge variant="destructive" className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                  isActive 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-red-500 text-white group-hover:bg-red-600'
-                }`}>
-                  {badge}
-                </Badge>
-              )}
-              {isActive && (
-                <ChevronRight size={16} className="text-blue-500 animate-pulse" />
+                </div>
               )}
             </div>
+            {badge && (
+              <Badge 
+                variant="secondary" 
+                className="text-xs"
+                aria-label={`Estado: ${badge}`}
+              >
+                {badge}
+              </Badge>
+            )}
           </div>
-          {isActive && (
-            <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-blue-400 to-blue-600 rounded-r-full"></div>
-          )}
         </>
       )}
     </NavLink>

@@ -4,6 +4,9 @@ import { Navigate, useLocation, Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import { useAvatarSync } from '@/hooks/useAvatarSync';
+import SkipLink from './SkipLink';
+import LiveRegion from './LiveRegion';
+import { useAccessibility } from '@/hooks/useAccessibility';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -36,6 +39,13 @@ export default function DashboardLayout({ children, dashboardProps }: DashboardL
   });
   const location = useLocation();
   
+  // Configurar accesibilidad
+  const { announceToScreenReader } = useAccessibility({
+    enableKeyboardNavigation: true,
+    enableScreenReader: true,
+    enableFocusManagement: true
+  });
+  
   // SOLUCIÓN FINAL: Key dinámico basado en la ruta actual
   const routeKey = location.pathname.replace(/\//g, '-').substring(1) || 'root';
 
@@ -46,12 +56,22 @@ export default function DashboardLayout({ children, dashboardProps }: DashboardL
     localStorage.setItem('dashboard_widgets', JSON.stringify(visibleWidgets));
   }, [visibleWidgets]);
 
+  // Anunciar cambios de página a lectores de pantalla
+  useEffect(() => {
+    const pageTitle = document.title || 'Dashboard TuWebAI';
+    announceToScreenReader(`Navegando a ${pageTitle}`, 'polite');
+  }, [location.pathname, announceToScreenReader]);
+
   // Mostrar loading mientras se verifica la autenticación
   if (loading) {
     return (
       <div className="h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <div 
+            className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"
+            role="status"
+            aria-label="Cargando..."
+          ></div>
           <p className="text-muted-foreground">Verificando sesión...</p>
         </div>
       </div>
@@ -75,43 +95,64 @@ export default function DashboardLayout({ children, dashboardProps }: DashboardL
   };
 
   return (
-    <div key={routeKey} className="h-screen bg-background flex">
-      {/* Desktop sidebar */}
-      <div className="hidden md:block">
-        <Sidebar />
-      </div>
-
-      {/* Mobile sidebar overlay */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
-          <div 
-            className="fixed inset-0 bg-black/50" 
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-          <div className="relative">
-            <Sidebar />
-          </div>
+    <>
+      {/* Skip Link para accesibilidad */}
+      <SkipLink targetId="main-content" />
+      
+      {/* Live Region para anuncios a lectores de pantalla */}
+      <LiveRegion 
+        message=""
+        priority="polite"
+        autoClear={true}
+        clearDelay={3000}
+      />
+      
+      <div key={routeKey} className="h-screen bg-background flex">
+        {/* Desktop sidebar */}
+        <div className="hidden md:block">
+          <Sidebar />
         </div>
-      )}
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Topbar 
-          onMenuClick={() => setIsMobileMenuOpen(true)}
-          showMobileMenu={true}
-          onRefreshData={isAdminPage ? handleRefreshData : undefined}
-          lastUpdate={isAdminPage || isClientDashboardPage ? new Date() : undefined}
-          isAdmin={isAdminPage}
-          isClientDashboard={isClientDashboardPage}
-          clientDashboardStats={isClientDashboardPage && dashboardProps?.stats ? dashboardProps.stats : undefined}
-          onClientRefresh={isClientDashboardPage && dashboardProps?.onRefresh ? dashboardProps.onRefresh : undefined}
-          onClientSearch={isClientDashboardPage && dashboardProps?.onSearch ? dashboardProps.onSearch : undefined}
-          clientSearchTerm={isClientDashboardPage && dashboardProps?.searchTerm ? dashboardProps.searchTerm : ''}
-        />
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+        {/* Mobile sidebar overlay */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-50 flex">
+            <div 
+              className="fixed inset-0 bg-black/50" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              role="button"
+              tabIndex={0}
+              aria-label="Cerrar menú móvil"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setIsMobileMenuOpen(false);
+                }
+              }}
+            />
+            <div className="relative">
+              <Sidebar />
+            </div>
+          </div>
+        )}
+
+        {/* Main content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Topbar 
+            onMenuClick={() => setIsMobileMenuOpen(true)}
+            showMobileMenu={true}
+            onRefreshData={isAdminPage ? handleRefreshData : undefined}
+            lastUpdate={isAdminPage || isClientDashboardPage ? new Date() : undefined}
+            isAdmin={isAdminPage}
+            isClientDashboard={isClientDashboardPage}
+            clientDashboardStats={isClientDashboardPage && dashboardProps?.stats ? dashboardProps.stats : undefined}
+            onClientRefresh={isClientDashboardPage && dashboardProps?.onRefresh ? dashboardProps.onRefresh : undefined}
+            onClientSearch={isClientDashboardPage && dashboardProps?.onSearch ? dashboardProps.onSearch : undefined}
+            clientSearchTerm={isClientDashboardPage && dashboardProps?.searchTerm ? dashboardProps.searchTerm : ''}
+          />
+          <main id="main-content" className="flex-1 overflow-y-auto">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
