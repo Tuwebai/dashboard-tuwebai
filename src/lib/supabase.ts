@@ -17,6 +17,49 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Patrón Singleton para evitar múltiples instancias de GoTrueClient
 let supabaseInstance: SupabaseClient | null = null;
 
+// Storage personalizado compatible con Supabase
+const createCustomStorage = () => {
+  if (typeof window === 'undefined') {
+    // Servidor - retornar storage mock
+    return {
+      getItem: (key: string) => Promise.resolve(null),
+      setItem: (key: string, value: string) => Promise.resolve(),
+      removeItem: (key: string) => Promise.resolve()
+    };
+  }
+
+  // Cliente - usar localStorage con manejo de errores
+  return {
+    getItem: (key: string) => {
+      try {
+        const item = localStorage.getItem(key);
+        return Promise.resolve(item);
+      } catch (error) {
+        console.warn('Error reading from localStorage:', error);
+        return Promise.resolve(null);
+      }
+    },
+    setItem: (key: string, value: string) => {
+      try {
+        localStorage.setItem(key, value);
+        return Promise.resolve();
+      } catch (error) {
+        console.warn('Error writing to localStorage:', error);
+        return Promise.resolve();
+      }
+    },
+    removeItem: (key: string) => {
+      try {
+        localStorage.removeItem(key);
+        return Promise.resolve();
+      } catch (error) {
+        console.warn('Error removing from localStorage:', error);
+        return Promise.resolve();
+      }
+    }
+  };
+};
+
 // Función para obtener o crear la instancia única de Supabase
 const getSupabaseClient = (): SupabaseClient => {
   if (!supabaseInstance) {
@@ -27,10 +70,8 @@ const getSupabaseClient = (): SupabaseClient => {
         detectSessionInUrl: true,
         flowType: 'pkce',
         // Configuración específica para evitar múltiples instancias
-        storage: {
-          key: 'tuwebai-supabase-auth',
-          storage: typeof window !== 'undefined' ? window.localStorage : undefined
-        }
+        storage: createCustomStorage(),
+        storageKey: 'tuwebai-supabase-auth'
       },
       realtime: {
         params: {
