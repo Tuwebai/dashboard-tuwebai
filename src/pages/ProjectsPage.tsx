@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -65,11 +65,13 @@ export default function ProjectsPage() {
   // - Si hay userId en la URL: mostrar solo proyectos de ese usuario
   // - Si es admin sin userId: mostrar todos los proyectos
   // - Si es usuario normal sin userId: mostrar solo sus proyectos
-  const visibleProjects = userId 
-    ? projects.filter(p => p.created_by === userId)
-    : user.role === 'admin'
-      ? projects
-      : projects.filter(p => p.created_by === user.id);
+  const visibleProjects = useMemo(() => {
+    return userId 
+      ? projects.filter(p => p.created_by === userId)
+      : user.role === 'admin'
+        ? projects
+        : projects.filter(p => p.created_by === user.id);
+  }, [projects, userId, user.role, user.id]);
 
   // Actualizar proyectos filtrados cuando cambien los proyectos o el usuario
   useEffect(() => {
@@ -334,7 +336,7 @@ export default function ProjectsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
-      <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="p-6 space-y-6">
         {/* Header con diseño claro */}
         <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200/50">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -443,7 +445,7 @@ export default function ProjectsPage() {
             )}
           </div>
         ) : (
-          <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
+          <div className={viewMode === 'grid' ? 'flex flex-wrap gap-6' : 'space-y-4'}>
             {filteredProjects.map((project) => {
               const progress = calculateProjectProgress(project);
               const status = getProjectStatus(project);

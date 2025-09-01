@@ -37,13 +37,16 @@ import {
   Target,
   Award,
   Activity,
-  User
+  User,
+  Play,
+  Pause
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTranslation } from 'react-i18next';
 import { formatDateSafe } from '@/utils/formatDateSafe';
 import VerDetallesProyecto from '@/components/VerDetallesProyecto';
+import ProjectCard from '@/components/ProjectCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { userService } from '@/lib/supabaseService';
@@ -55,6 +58,21 @@ const customStyles = `
     50% { background-position: 100% 50%; }
   }
   
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+    50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.6); }
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
   .animate-gradient-x {
     background-size: 200% 200%;
     animation: gradient-x 3s ease infinite;
@@ -62,6 +80,38 @@ const customStyles = `
   
   .animate-spin-slow {
     animation: spin 3s linear infinite;
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+  
+  .card-hover-effect {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .card-hover-effect:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+  
+  .metric-value-animation {
+    transition: all 0.3s ease;
+  }
+  
+  .metric-value-animation:hover {
+    transform: scale(1.1);
+    text-shadow: 0 0 20px currentColor;
   }
 `;
 
@@ -121,27 +171,45 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const { t } = useTranslation();
 
-  // Función para obtener el estado general del proyecto
-  const getProjectStatus = (project: Project) => {
-    if (!project || !project.fases || project.fases.length === 0) return 'Pendiente';
-    if (project.fases.every(fase => fase.estado === 'Terminado')) return 'Completado';
-    if (project.fases.some(fase => fase.estado === 'En Progreso')) return 'En Progreso';
-    return 'Pendiente';
+  // Función para calcular progreso del proyecto
+  const calculateProjectProgress = (project: Project) => {
+    if (!project.fases || project.fases.length === 0) return 0;
+    const completedPhases = project.fases.filter((f: ProjectPhase) => f.estado === 'Terminado').length;
+    return Math.round((completedPhases / project.fases.length) * 100);
   };
 
-  // Función para calcular progreso del proyecto
-  const getProjectProgress = (project: Project) => {
-    if (!project || !project.fases || project.fases.length === 0) return 0;
-    const completed = project.fases.filter((f: ProjectPhase) => f.estado === 'Terminado').length;
-    return (completed / project.fases.length) * 100;
+  // Función para obtener el estado del proyecto
+  const getProjectStatus = (project: Project) => {
+    if (!project.fases || project.fases.length === 0) return 'Sin iniciar';
+    
+    const completedPhases = project.fases.filter((f: ProjectPhase) => f.estado === 'Terminado').length;
+    const totalPhases = project.fases.length;
+    
+    if (completedPhases === 0) return 'Sin iniciar';
+    if (completedPhases === totalPhases) return 'Completado';
+    if (completedPhases > totalPhases / 2) return 'En progreso avanzado';
+    return 'En progreso';
   };
 
   // Función para obtener el color del estado
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Completado': return 'bg-green-100 text-green-800 border-green-200';
-      case 'En Progreso': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'Completado': return 'bg-green-500/10 text-green-600 border-green-500/20';
+      case 'En progreso avanzado': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+      case 'En progreso': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
+      case 'Sin iniciar': return 'bg-slate-500/10 text-slate-600 border-slate-500/20';
+      default: return 'bg-slate-500/10 text-slate-600 border-slate-500/20';
+    }
+  };
+
+  // Función para obtener el icono del estado
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'Completado': return <CheckCircle className="h-4 w-4" />;
+      case 'En progreso avanzado': return <Play className="h-4 w-4" />;
+      case 'En progreso': return <Pause className="h-4 w-4" />;
+      case 'Sin iniciar': return <Clock className="h-4 w-4" />;
+      default: return <AlertCircle className="h-4 w-4" />;
     }
   };
 
@@ -229,7 +297,7 @@ export default function Dashboard() {
           comparison = (a.name || '').localeCompare(b.name || '');
           break;
         case 'progress':
-          comparison = getProjectProgress(a) - getProjectProgress(b);
+          comparison = calculateProjectProgress(a) - calculateProjectProgress(b);
           break;
         case 'recent':
           comparison = new Date(a.created_at || a.createdAt || '').getTime() - new Date(b.created_at || b.createdAt || '').getTime();
@@ -252,9 +320,9 @@ export default function Dashboard() {
   // Estadísticas calculadas
   const dashboardStats = useMemo(() => {
     const totalProjects = userProjects.length;
-    const inProgressProjects = userProjects.filter(p => getProjectStatus(p) === 'En Progreso').length;
+    const inProgressProjects = userProjects.filter(p => getProjectStatus(p) === 'En progreso' || getProjectStatus(p) === 'En progreso avanzado').length;
     const completedProjects = userProjects.filter(p => getProjectStatus(p) === 'Completado').length;
-    const pendingProjects = userProjects.filter(p => getProjectStatus(p) === 'Pendiente').length;
+    const pendingProjects = userProjects.filter(p => getProjectStatus(p) === 'Sin iniciar').length;
     
     const totalComments = userProjects.reduce((acc, p) => 
       acc + (p.fases?.reduce((sum: number, f: ProjectPhase) => 
@@ -262,7 +330,7 @@ export default function Dashboard() {
     );
 
     const averageProgress = totalProjects > 0 
-      ? Math.round(userProjects.reduce((acc, p) => acc + getProjectProgress(p), 0) / totalProjects)
+      ? Math.round(userProjects.reduce((acc, p) => acc + calculateProjectProgress(p), 0) / totalProjects)
       : 0;
 
     const recentActivity = userProjects
@@ -428,7 +496,7 @@ export default function Dashboard() {
       proyectos: filteredAndSortedProjects.map(p => ({
         nombre: p.name,
         estado: getProjectStatus(p),
-        progreso: getProjectProgress(p),
+        progreso: calculateProjectProgress(p),
         fechaCreacion: p.created_at || p.createdAt
       }))
     };
@@ -467,8 +535,8 @@ export default function Dashboard() {
     <>
       <style>{customStyles}</style>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full overflow-y-auto">
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full overflow-y-auto">
           
 
 
@@ -477,105 +545,187 @@ export default function Dashboard() {
             
             {/* Card Proyectos Totales */}
             <motion.div 
-              className="relative group cursor-pointer"
+              className="relative group cursor-pointer card-hover-effect"
               whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-blue-50 via-blue-25 to-indigo-50">
-                <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-                  <Users size={24} className="sm:w-7 sm:h-7" />
+              <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-100 relative">
+                {/* Efecto de brillo sutil */}
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                {/* Icono mejorado con animación flotante */}
+                <div className="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl mb-4 shadow-2xl group-hover:scale-110 transition-all duration-500 bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-white animate-float relative overflow-hidden">
+                  <Target size={28} className="sm:w-8 sm:h-8 relative z-10" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
                 </div>
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
+                
+                {/* Valor con animación mejorada */}
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800 mb-3 group-hover:scale-105 transition-transform duration-300 metric-value-animation bg-gradient-to-r from-sky-600 to-indigo-700 bg-clip-text text-transparent">
                   {dashboardStats.totalProjects}
                 </div>
-                <div className="text-base sm:text-lg font-semibold text-slate-600 mb-1">
+                
+                {/* Título con mejor tipografía */}
+                <div className="text-lg sm:text-xl font-bold text-slate-700 mb-2">
                   Proyectos Activos
                 </div>
-                <div className="text-xs sm:text-sm text-slate-500 flex items-center space-x-1">
-                  <span className="text-green-600 font-semibold">
+                
+                {/* Subtítulo con icono */}
+                <div className="text-sm text-slate-600 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full animate-pulse"></div>
+                  <span className="text-emerald-600 font-semibold">
                     {dashboardStats.inProgressProjects}
                   </span>
                   <span>en progreso</span>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+                
+                {/* Efecto de partículas flotantes */}
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                  <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce mt-1" style={{ animationDelay: '0.2s' }}></div>
+                </div>
               </div>
             </motion.div>
 
             {/* Card En Progreso */}
             <motion.div 
-              className="relative group cursor-pointer"
+              className="relative group cursor-pointer card-hover-effect"
               whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-emerald-50 via-emerald-25 to-teal-50">
-                <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
-                  <FileText size={24} className="sm:w-7 sm:h-7" />
+              <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100 relative">
+                {/* Efecto de brillo sutil */}
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                {/* Icono mejorado con animación de progreso */}
+                <div className="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl mb-4 shadow-2xl group-hover:scale-110 transition-all duration-500 bg-gradient-to-br from-emerald-500 via-green-600 to-teal-700 text-white animate-pulse-glow relative overflow-hidden">
+                  <Activity size={28} className="sm:w-8 sm:h-8 relative z-10" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
                 </div>
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
+                
+                {/* Valor con animación mejorada */}
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800 mb-3 group-hover:scale-105 transition-transform duration-300 metric-value-animation bg-gradient-to-r from-emerald-600 to-teal-700 bg-clip-text text-transparent">
                   {dashboardStats.inProgressProjects}
                 </div>
-                <div className="text-base sm:text-lg font-semibold text-slate-600 mb-1">
+                
+                {/* Título con mejor tipografía */}
+                <div className="text-lg sm:text-xl font-bold text-slate-700 mb-2">
                   En Progreso
                 </div>
-                <div className="text-xs sm:text-sm text-slate-500 flex items-center space-x-1">
+                
+                {/* Subtítulo con icono */}
+                <div className="text-sm text-slate-600 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full animate-pulse"></div>
                   <span className="text-blue-600 font-semibold">
                     {dashboardStats.pendingProjects}
                   </span>
                   <span>pendientes</span>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+                
+                {/* Indicador de progreso animado */}
+                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                  <div className="w-8 h-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full overflow-hidden">
+                    <div className="h-full bg-white/30 animate-pulse" style={{ width: '60%' }}></div>
+                  </div>
+                </div>
               </div>
             </motion.div>
 
             {/* Card Comentarios */}
             <motion.div 
-              className="relative group cursor-pointer"
+              className="relative group cursor-pointer card-hover-effect"
               whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-amber-50 via-amber-25 to-orange-50">
-                <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-amber-500 to-amber-600 text-white">
-                  <MessageSquare size={24} className="sm:w-7 sm:h-7" />
+              <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-100 relative">
+                {/* Efecto de brillo sutil */}
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                {/* Icono mejorado con animación de chat */}
+                <div className="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl mb-4 shadow-2xl group-hover:scale-110 transition-all duration-500 bg-gradient-to-br from-amber-500 via-yellow-600 to-orange-700 text-white animate-float relative overflow-hidden">
+                  <MessageSquare size={28} className="sm:w-8 sm:h-8 relative z-10" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                  
+                  {/* Indicador de mensaje animado */}
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
                 </div>
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
+                
+                {/* Valor con animación mejorada */}
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800 mb-3 group-hover:scale-105 transition-transform duration-300 metric-value-animation bg-gradient-to-r from-amber-600 to-orange-700 bg-clip-text text-transparent">
                   {dashboardStats.totalComments}
                 </div>
-                <div className="text-base sm:text-lg font-semibold text-slate-600 mb-1">
+                
+                {/* Título con mejor tipografía */}
+                <div className="text-lg sm:text-xl font-bold text-slate-700 mb-2">
                   Comentarios
                 </div>
-                <div className="text-xs sm:text-sm text-slate-500 flex items-center space-x-1">
+                
+                {/* Subtítulo con icono */}
+                <div className="text-sm text-slate-600 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full animate-pulse"></div>
                   <span className="text-green-600 font-semibold">
                     {dashboardStats.completedProjects}
                   </span>
                   <span>completados</span>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+                
+                {/* Burbujas de chat flotantes */}
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500 space-y-1">
+                  <div className="w-3 h-3 bg-amber-300 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                  <div className="w-2 h-2 bg-orange-300 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2.5 h-2.5 bg-yellow-300 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
               </div>
             </motion.div>
 
             {/* Card Progreso General */}
             <motion.div 
-              className="relative group cursor-pointer"
+              className="relative group cursor-pointer card-hover-effect"
               whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-violet-50 via-violet-25 to-purple-50">
-                <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-violet-500 to-violet-600 text-white">
-                  <TrendingUp size={24} className="sm:w-7 sm:h-7" />
+              <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-100 relative">
+                {/* Efecto de brillo sutil */}
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                {/* Icono mejorado con animación de crecimiento */}
+                <div className="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl mb-4 shadow-2xl group-hover:scale-110 transition-all duration-500 bg-gradient-to-br from-violet-500 via-purple-600 to-fuchsia-700 text-white animate-pulse-glow relative overflow-hidden">
+                  <TrendingUp size={28} className="sm:w-8 sm:h-8 relative z-10" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                  
+                  {/* Líneas de tendencia animadas */}
+                  <div className="absolute inset-0 flex items-end justify-center space-x-1 opacity-20">
+                    <div className="w-1 h-3 bg-white rounded-full animate-pulse" style={{ animationDelay: '0s' }}></div>
+                    <div className="w-1 h-5 bg-white rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-1 h-7 bg-white rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                    <div className="w-1 h-4 bg-white rounded-full animate-pulse" style={{ animationDelay: '0.6s' }}></div>
+                  </div>
                 </div>
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 mb-2 group-hover:scale-105 transition-transform duration-300">
+                
+                {/* Valor con animación mejorada */}
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800 mb-3 group-hover:scale-105 transition-transform duration-300 metric-value-animation bg-gradient-to-r from-violet-600 to-fuchsia-700 bg-clip-text text-transparent">
                   {dashboardStats.averageProgress}%
                 </div>
-                <div className="text-base sm:text-lg font-semibold text-slate-600 mb-1">
+                
+                {/* Título con mejor tipografía */}
+                <div className="text-lg sm:text-xl font-bold text-slate-700 mb-2">
                   Progreso General
                 </div>
-                <div className="text-xs sm:text-sm text-slate-500 flex items-center space-x-1">
+                
+                {/* Subtítulo con icono */}
+                <div className="text-sm text-slate-600 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full animate-pulse"></div>
                   <span className="text-green-600 font-semibold">
                     {dashboardStats.completedProjects}
                   </span>
                   <span>finalizados</span>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+                
+                {/* Barra de progreso circular */}
+                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                  <div className="w-8 h-8 rounded-full border-2 border-violet-300 relative">
+                    <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-violet-500 animate-spin" style={{ animationDuration: '2s' }}></div>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -584,44 +734,66 @@ export default function Dashboard() {
           <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
             
             {/* Filtros y Controles */}
-            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-slate-200/50">
-              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-                  <h2 className="text-lg sm:text-xl font-semibold text-slate-800">Filtros y Controles</h2>
+            <motion.div 
+              className="bg-white rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-200/50 relative overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              {/* Fondo con gradiente sutil */}
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/20"></div>
+              
+              <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <Filter className="h-5 w-5 text-white" />
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-800 bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
+                      Filtros y Controles
+                    </h2>
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={clearFilters}
-                    className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                    className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-blue-300 hover:text-blue-700 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md"
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Limpiar
                   </Button>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
                   {/* Filtro por estado */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-                    <Label className="text-sm font-medium text-slate-700">Estado:</Label>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+                    <Label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                      Estado:
+                    </Label>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-full sm:w-32 bg-white border-slate-200 text-slate-800">
+                      <SelectTrigger className="w-full sm:w-36 bg-white border-slate-200 text-slate-800 hover:border-emerald-400 hover:ring-emerald-400 transition-all duration-300 shadow-sm hover:shadow-md">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-white border-slate-200">
                         <SelectItem value="all">Todos</SelectItem>
-                        <SelectItem value="Pendiente">Pendiente</SelectItem>
-                        <SelectItem value="En Progreso">En Progreso</SelectItem>
+                        <SelectItem value="Sin iniciar">Sin iniciar</SelectItem>
+                        <SelectItem value="En progreso">En progreso</SelectItem>
+                        <SelectItem value="En progreso avanzado">En progreso avanzado</SelectItem>
                         <SelectItem value="Completado">Completado</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   {/* Ordenamiento */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-                    <Label className="text-sm font-medium text-slate-700">Ordenar por:</Label>
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+                    <Label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-violet-500 rounded-full"></div>
+                      Ordenar por:
+                    </Label>
+                    <div className="flex items-center gap-3">
                       <Select value={sortBy} onValueChange={setSortBy}>
-                        <SelectTrigger className="w-full sm:w-32 bg-white border-slate-200 text-slate-800">
+                        <SelectTrigger className="w-full sm:w-36 bg-white border-slate-200 text-slate-800 hover:border-violet-400 hover:ring-violet-400 transition-all duration-300 shadow-sm hover:shadow-md">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-slate-200">
@@ -636,7 +808,7 @@ export default function Dashboard() {
                         variant="outline"
                         size="sm"
                         onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                        className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                        className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-violet-400 hover:text-violet-700 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105"
                       >
                         {sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
                       </Button>
@@ -648,7 +820,7 @@ export default function Dashboard() {
                     variant="outline"
                     size="sm"
                     onClick={exportDashboardData}
-                    className="border-slate-300 text-slate-700 hover:bg-slate-50 w-full sm:w-auto"
+                    className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-orange-400 hover:text-orange-700 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 w-full sm:w-auto"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Exportar
@@ -657,418 +829,275 @@ export default function Dashboard() {
               </div>
               
               {/* Información de filtros aplicados */}
-              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-600">
-                <span>Mostrando {filteredAndSortedProjects.length} de {userProjects.length} proyectos</span>
+              <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+                <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg border border-slate-200">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="font-medium">Mostrando {filteredAndSortedProjects.length} de {userProjects.length} proyectos</span>
+                </div>
+                
                 {searchTerm && (
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  <Badge variant="outline" className="bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-300 px-3 py-1.5 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
+                    <Search className="h-3 w-3 mr-1" />
                     Búsqueda: "{searchTerm}"
                   </Badge>
                 )}
+                
                 {statusFilter !== 'all' && (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <Badge variant="outline" className="bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 border-emerald-300 px-3 py-1.5 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
+                    <Activity className="h-3 w-3 mr-1" />
                     Estado: {statusFilter}
                   </Badge>
                 )}
-                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                
+                <Badge variant="outline" className="bg-gradient-to-r from-violet-50 to-purple-50 text-violet-700 border-violet-300 px-3 py-1.5 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
+                  <SortAsc className="h-3 w-3 mr-1" />
                   Orden: {sortBy === 'recent' ? 'Más Recientes' : sortBy === 'name' ? 'Nombre' : sortBy === 'progress' ? 'Progreso' : 'Estado'}
                 </Badge>
               </div>
-            </div>
+            </motion.div>
 
-      {/* Vista de proyectos */}
-      {!hasValidProjects ? (
-              <div className="bg-white rounded-2xl p-12 text-center shadow-lg border border-slate-200/50">
-      <div className="space-y-4">
-              <div className="text-4xl sm:text-6xl">🚀</div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-slate-800">{t('No tienes proyectos aún')}</h3>
-                  <p className="text-slate-600 text-sm sm:text-base">
-                {t('Comienza creando tu primer proyecto web y verás el progreso en tiempo real.')}
-              </p>
-              <Button 
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-                onClick={() => navigate('/proyectos/nuevo')}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {t('Crear mi primer proyecto')}
-              </Button>
-            </div>
-              </div>
-        ) : (
-        <div className="space-y-6">
-          {filteredAndSortedProjects.filter(project => project && project.id).map(project => {
-            const progress = getProjectProgress(project);
-            const status = getProjectStatus(project);
-            
-            return (
-              <Card
-                key={project.id}
-                      className="relative bg-white border border-slate-200/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer hover:scale-[1.01]"
-                onClick={() => {
-                  if (project && project.id) {
-                    handleViewProject(project);
-                  } else {
-                    toast({ 
-                      title: 'Error', 
-                      description: 'Proyecto inválido', 
-                      variant: 'destructive' 
-                    });
-                  }
-                }}
-              >
-                {/* Barra superior de gradiente animado */}
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-gradient-x rounded-t-2xl" />
-                <CardHeader>
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                              <CardTitle className="text-xl sm:text-2xl font-bold text-slate-800">{project.name || 'Proyecto sin nombre'}</CardTitle>
-                        <div className="flex flex-wrap gap-2">
-                        <Badge className={getStatusColor(status)}>{status}</Badge>
-                                <Badge variant="outline" className="border-slate-300 text-slate-600">{project.type || 'Sin tipo'}</Badge>
-                        </div>
+            {/* Vista de proyectos */}
+            {!hasValidProjects ? (
+              <div className="bg-white rounded-2xl p-12 text-center shadow-xl border border-slate-200/50 relative overflow-hidden">
+                {/* Fondo con gradiente sutil */}
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30"></div>
+                
+                {/* Elementos decorativos flotantes */}
+                <div className="absolute top-8 left-8 w-16 h-16 bg-gradient-to-br from-blue-200 to-indigo-300 rounded-full opacity-20 animate-float"></div>
+                <div className="absolute top-16 right-12 w-12 h-12 bg-gradient-to-br from-emerald-200 to-teal-300 rounded-full opacity-20 animate-float" style={{ animationDelay: '1s' }}></div>
+                <div className="absolute bottom-16 left-16 w-20 h-20 bg-gradient-to-br from-violet-200 to-purple-300 rounded-full opacity-20 animate-float" style={{ animationDelay: '2s' }}></div>
+                
+                {/* Contenido principal */}
+                <div className="relative z-10 space-y-6">
+                  {/* Ilustración personalizada */}
+                  <div className="relative">
+                    <div className="w-32 h-32 mx-auto mb-6 relative">
+                      {/* Cohete principal */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 rounded-full flex items-center justify-center shadow-2xl animate-float">
+                        <div className="text-white text-4xl">🚀</div>
                       </div>
-                            <p className="text-slate-600 text-sm sm:text-base">{project.description || 'Sin descripción'}</p>
-                            
-                            {/* Información del creador del proyecto - Solo visible para admin */}
-                            {user?.role === 'admin' && (
-                              <div className="flex items-center gap-2 mt-3 p-2 bg-slate-50 rounded-lg border border-slate-200/50">
-                                <User className="h-4 w-4 text-slate-500" />
-                                <div className="flex flex-col">
-                                  <span className="text-xs font-medium text-slate-700">
-                                    Creado por: {projectCreators[project.created_by]?.full_name || 'Usuario no encontrado'}
-                                  </span>
-                                  <span className="text-xs text-slate-500">
-                                    {projectCreators[project.created_by]?.email || 'sin-email@example.com'}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
+                      
+                      {/* Estela del cohete */}
+                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1 h-8 bg-gradient-to-t from-orange-400 via-yellow-400 to-transparent animate-pulse"></div>
+                      <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-0.5 h-6 bg-gradient-to-t from-red-400 via-orange-400 to-transparent animate-pulse" style={{ animationDelay: '0.3s' }}></div>
+                      
+                      {/* Partículas espaciales */}
+                      <div className="absolute top-4 -right-2 w-2 h-2 bg-yellow-300 rounded-full animate-bounce"></div>
+                      <div className="absolute top-8 -left-3 w-1.5 h-1.5 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }}></div>
+                      <div className="absolute bottom-8 -right-4 w-1 h-1 bg-purple-300 rounded-full animate-bounce" style={{ animationDelay: '1s' }}></div>
                     </div>
-                    {/* Botones para clientes */}
-                    {user?.role !== 'admin' && (
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={e => { 
-                            e.preventDefault();
-                            e.stopPropagation(); 
-                            if (project && project.id) {
-                              const url = `/proyectos/${project.id}/colaboracion-cliente`;
+                  </div>
+                  
+                  {/* Texto principal */}
+                  <div className="space-y-4">
+                    <h3 className="text-2xl sm:text-3xl font-bold text-slate-800 bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
+                      {t('No tienes proyectos aún')}
+                    </h3>
+                    <p className="text-slate-600 text-base sm:text-lg max-w-md mx-auto leading-relaxed">
+                      {t('Comienza creando tu primer proyecto web y verás el progreso en tiempo real.')}
+                    </p>
+                  </div>
+                  
+                  {/* Botón mejorado */}
+                  <div className="pt-4">
+                    <Button 
+                      className="px-8 py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-800 text-white rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 hover:scale-105 border-0 relative overflow-hidden group"
+                      onClick={() => navigate('/proyectos/nuevo')}
+                    >
+                      {/* Efecto de brillo */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+                      
+                      <Plus className="h-5 w-5 mr-3 relative z-10" />
+                      <span className="relative z-10">{t('Crear mi primer proyecto')}</span>
+                    </Button>
+                  </div>
+                  
+                  {/* Información adicional */}
+                  <div className="pt-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto">
+                      <div className="flex flex-col items-center space-y-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                          <Target className="h-4 w-4 text-white" />
+                        </div>
+                        <span className="text-xs font-medium text-blue-700">Planifica</span>
+                      </div>
+                      <div className="flex flex-col items-center space-y-2 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                        <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
+                          <Activity className="h-4 w-4 text-white" />
+                        </div>
+                        <span className="text-xs font-medium text-emerald-700">Desarrolla</span>
+                      </div>
+                      <div className="flex flex-col items-center space-y-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                        <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                          <Award className="h-4 w-4 text-white" />
+                        </div>
+                        <span className="text-xs font-medium text-purple-700">Lanza</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+                          <div className="flex flex-wrap gap-6">
+                {filteredAndSortedProjects.filter(project => project && project.id).map((project, index) => (
+                  <ProjectCard
+                key={project.id}
+                    project={project}
+                    user={user}
+                    projectCreators={projectCreators}
+                    onViewProject={handleViewProject}
+                    onNavigateToCollaboration={(projectId) => {
+                      const url = `/proyectos/${projectId}/colaboracion-cliente`;
                               try {
                                 navigate(url);
                               } catch (error) {
                                 toast({ 
                                   title: 'Error de navegación', 
                                   description: 'No se pudo navegar a la página de colaboración', 
-                                  variant: 'destructive' 
-                                });
-                              }
-                            } else {
-                              // Proyecto inválido
-                              toast({ 
-                                title: 'Error', 
-                                description: 'Proyecto inválido', 
                                 variant: 'destructive' 
                               });
                             }
                           }}
-                          onMouseDown={e => e.stopPropagation()}
-                          onMouseUp={e => e.stopPropagation()}
-                          className="border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-200 hover:scale-105"
-                        >
-                          <Users className="h-4 w-4 mr-1" />
-                          Colaborar
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Barra de progreso */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600">{t('Progreso general')}</span>
-                      <span className="text-slate-700 font-medium">{Math.round(progress)}%</span>
-                    </div>
-                    <Progress value={progress} className="h-2" />
-                  </div>
-                </CardHeader>
-                
-                <CardContent>
-                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                     {(project.fases || []).filter(fase => fase && fase.key).map((fase: ProjectPhase) => {
-                       const faseConfig = FASES.find(f => f.key === fase.key);
-                      return (
-                        <Card
-                          key={fase.key}
-                                className="relative bg-white border border-slate-200/50 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
-                        >
-                          {/* Barra superior de gradiente animado según estado */}
-                          <div className={`absolute top-0 left-0 w-full h-1.5 rounded-t-2xl animate-gradient-x ${
-                            fase.estado === 'Terminado'
-                              ? 'bg-gradient-to-r from-green-400 via-blue-500 to-blue-700'
-                              : fase.estado === 'En Progreso'
-                              ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500'
-                              : 'bg-gradient-to-r from-gray-500 via-blue-500 to-blue-700'
-                          }`} />
-                          <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                                    <CardTitle className="text-base font-semibold flex items-center gap-2 text-slate-800">
-                                {/* Icono animado según estado */}
-                                {fase.estado === 'Terminado' && (
-                                  <svg className="w-6 h-6 text-green-400 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                )}
-                                {fase.estado === 'En Progreso' && (
-                                  <svg className="w-6 h-6 text-blue-400 animate-spin-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" className="opacity-75" /></svg>
-                                )}
-                                {fase.estado === 'Pendiente' && (
-                                  <svg className="w-6 h-6 text-gray-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" /></svg>
-                                )}
-                                <span>{faseConfig?.icon || '📋'}</span>
-                                {faseConfig?.label || fase.descripcion || 'Fase'}
-                              </CardTitle>
-                              <Badge 
-                                variant="outline" 
-                                className={
-                                        fase.estado === 'Terminado' ? 'bg-green-100 text-green-800 border-green-200' :
-                                        fase.estado === 'En Progreso' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                                        'bg-gray-100 text-gray-800 border-gray-200'
-                                }
-                              >
-                                {fase.estado || 'Pendiente'}
-                              </Badge>
-                            </div>
-                                                          {fase.descripcion && (
-                                    <p className="text-xs text-slate-500">{fase.descripcion}</p>
-                              )}
-                                                          {fase.fechaEntrega && (
-                                    <div className="flex items-center gap-1 text-xs text-slate-500">
-                                  <Calendar className="h-3 w-3" />
-                                  {t('Entrega:')} {formatDateSafe(fase.fechaEntrega)}
-                                </div>
-                              )}
-                          </CardHeader>
-
-                          <CardContent className="space-y-3">
-                            {/* Archivos */}
-                            {fase.archivos && fase.archivos.length > 0 && (
-                              <div className="space-y-2">
-                                      <Label className="text-xs font-medium text-slate-700">{t('Archivos')}</Label>
-                                <div className="flex flex-wrap gap-2">
-                                  {fase.archivos.filter(file => file && file.url && file.name).map((file, idx: number) => (
-                                          <div key={idx} className="flex items-center gap-1 p-2 bg-slate-50 rounded text-xs border border-slate-200">
-                                            <FileText className="h-3 w-3 text-slate-500" />
-                                      <a 
-                                        href={file.url} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                              className="text-blue-600 hover:underline"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        {file.name || 'Archivo sin nombre'}
-                                      </a>
-                                    </div>
-                                  ))}
-                                </div>
-            </div>
-                            )}
-
-                                                          {/* Comentarios */}
-                              <div className="space-y-2">
-                                                              <div className="flex items-center justify-between">
-                                      <Label className="text-xs font-medium text-slate-700">
-                                    {t('Comentarios')} ({(fase.comentarios || []).filter(c => c && c.id).length})
-                                  </Label>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setComentarioInput(prev => ({ ...prev, [`${project.id}-${fase.key}`]: '' }))}
-                                        className="border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-200 hover:scale-105"
-                                >
-                                  <MessageSquare className="h-3 w-3 mr-1" />
-                                  {t('Comentar')}
-                                </Button>
-            </div>
-
-                              {/* Formulario de comentario */}
-                              {comentarioInput[`${project.id}-${fase.key}`] !== undefined && (
-                                <div className="space-y-2">
-                                  <Textarea
-                                    value={comentarioInput[`${project.id}-${fase.key}`] || ''}
-                                    onChange={e => handleComentarioChange(project.id, fase.key, e.target.value)}
-                                    placeholder={t('Escribe tu comentario...')}
-                                          className="min-h-[60px] text-xs border-slate-200 text-slate-700 placeholder-slate-400"
-                                  />
-                                  <div className="flex gap-2">
-                                    <Button
-                                      size="sm"
-                                      onClick={() => handleComentarioSubmit(project.id, fase.key)}
-                                      disabled={!comentarioInput[`${project.id}-${fase.key}`]?.trim()}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                                    >
-                                      {t('Enviar')}
-                                    </Button>
-              <Button 
-                variant="outline" 
-                                      size="sm"
-                                      onClick={() => setComentarioInput(prev => ({ ...prev, [`${project.id}-${fase.key}`]: undefined }))}
-                                            className="border-slate-300 text-slate-700 hover:bg-slate-50"
-              >
-                {t('Cancelar')}
-              </Button>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Lista de comentarios */}
-                              <div className="space-y-2 max-h-32 overflow-y-auto">
-                                {(fase.comentarios || []).filter(comentario => comentario && comentario.id).map((comentario) => (
-                                  <div
-                                    key={comentario.id}
-                                    className={`p-2 rounded text-xs ${
-                                      comentario.tipo === 'admin' 
-                                              ? 'bg-blue-50 border border-blue-200' 
-                                              : 'bg-slate-50 border border-slate-200'
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-between mb-1">
-                                            <span className="font-medium text-slate-800">
-                                        {comentario.autor || 'Usuario anónimo'}
-                                      </span>
-                                            <span className="text-slate-500">
-                                        {formatDateSafe(comentario.fecha)}
-                                      </span>
-                                    </div>
-                                          <p className="text-slate-700">{comentario.texto || 'Comentario sin texto'}</p>
-                                  </div>
-                                ))}
-            </div>
-          </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                    index={index}
+                  />
+                ))}
         </div>
       )}
 
       {/* Actividad Reciente */}
       {hasValidProjects && dashboardStats.recentActivity.length > 0 && (
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200/50">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-slate-800">Actividad Reciente</h2>
-            <Button variant="outline" size="sm" className="border-slate-300 text-slate-700 hover:bg-slate-50">
-              <Activity className="h-4 w-4 mr-2" />
-              Ver Todo
-            </Button>
-          </div>
+        <motion.div 
+          className="bg-white rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-200/50 relative overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Fondo con gradiente sutil */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-amber-50/20 to-orange-50/20"></div>
           
-          <div className="space-y-4">
-            {dashboardStats.recentActivity.map((project, index) => {
-              const recentComments = project.fases
-                ?.flatMap(f => f.comentarios || [])
-                .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
-                .slice(0, 3) || [];
+          <div className="relative z-10">
+            {/* Header mejorado */}
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Activity className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800 bg-gradient-to-r from-amber-600 to-orange-700 bg-clip-text text-transparent">
+                    Actividad Reciente
+                  </h2>
+                  <p className="text-slate-600 text-sm">Últimos comentarios y actualizaciones</p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-amber-300 text-amber-700 hover:bg-amber-50 hover:border-amber-400 hover:text-amber-800 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105"
+              >
+                <Activity className="h-4 w-4 mr-2" />
+                Ver Todo
+              </Button>
+            </div>
+            
+            {/* Lista de actividad */}
+            <div className="space-y-6">
+              {dashboardStats.recentActivity.map((project, index) => {
+                const recentComments = project.fases
+                  ?.flatMap(f => f.comentarios || [])
+                  .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+                  .slice(0, 3) || [];
 
-              return (
-                <div key={project.id} className="p-4 border border-slate-200 rounded-lg bg-slate-50">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-medium text-slate-800">{project.name}</h3>
-                    <Badge className={getStatusColor(getProjectStatus(project))}>
-                      {getProjectStatus(project)}
-                    </Badge>
-                  </div>
-                  
-                  {recentComments.length > 0 ? (
-                    <div className="space-y-2">
-                      {recentComments.map((comment, commentIndex) => (
-                        <div key={commentIndex} className="flex items-start gap-3 p-3 bg-white rounded border border-slate-200">
-                          <Avatar className="h-6 w-6">
-                            <AvatarFallback className="text-xs bg-slate-100 text-slate-600">
-                              {comment.autor?.charAt(0) || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm font-medium text-slate-800">{comment.autor}</span>
-                                                          <Badge variant="outline" className="text-xs">
-                              {comment.tipo === 'admin' ? 'Admin' : 'Cliente'}
-                            </Badge>
-                            </div>
-                            <p className="text-sm text-slate-600">{comment.texto}</p>
-                            <p className="text-xs text-slate-500 mt-1">
-                              {formatDateSafe(comment.fecha)}
-                            </p>
+                return (
+                  <motion.div 
+                    key={project.id} 
+                    className="group cursor-pointer"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    whileHover={{ x: 5 }}
+                  >
+                    <div className="p-6 border border-slate-200/50 rounded-xl bg-white/80 backdrop-blur-sm hover:bg-white hover:shadow-lg hover:border-amber-200 transition-all duration-300 group-hover:scale-[1.02]">
+                      {/* Header del proyecto */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
+                            <span className="text-white font-bold text-sm">
+                              {project.name?.charAt(0) || 'P'}
+                            </span>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-slate-800 text-lg group-hover:text-amber-700 transition-colors duration-300">
+                              {project.name}
+                            </h3>
+                            <p className="text-sm text-slate-500">Proyecto activo</p>
                           </div>
                         </div>
-                      ))}
+                        <Badge className={`${getStatusColor(getProjectStatus(project))} shadow-sm group-hover:scale-105 transition-transform duration-300`}>
+                          {getProjectStatus(project)}
+                        </Badge>
+                      </div>
+                      
+                      {/* Comentarios recientes */}
+                      {recentComments.length > 0 ? (
+                        <div className="space-y-3">
+                          {recentComments.map((comment, commentIndex) => (
+                            <motion.div 
+                              key={commentIndex} 
+                              className="flex items-start gap-4 p-4 bg-gradient-to-r from-slate-50 to-amber-50/30 rounded-lg border border-slate-200/50 hover:border-amber-200 transition-all duration-300 hover:shadow-md"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3, delay: commentIndex * 0.1 }}
+                            >
+                              <Avatar className="h-8 w-8 shadow-sm">
+                                <AvatarFallback className="text-xs bg-gradient-to-br from-amber-500 to-orange-600 text-white font-semibold">
+                                  {comment.autor?.charAt(0) || 'U'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <span className="font-semibold text-slate-800 text-sm">
+                                    {comment.autor}
+                                  </span>
+                                  <Badge 
+                                    variant="outline" 
+                                    className={`text-xs ${
+                                      comment.tipo === 'admin' 
+                                        ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                                        : 'bg-slate-50 text-slate-700 border-slate-200'
+                                    }`}
+                                  >
+                                    {comment.tipo === 'admin' ? 'Admin' : 'Cliente'}
+                                  </Badge>
+                                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                                    <Clock className="h-3 w-3" />
+                                    {formatDateSafe(comment.fecha)}
+                                  </div>
+                                </div>
+                                <p className="text-slate-700 text-sm leading-relaxed group-hover:text-slate-800 transition-colors duration-300">
+                                  {comment.texto}
+                                </p>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <MessageSquare className="h-8 w-8 text-slate-400" />
+                          </div>
+                          <p className="text-slate-500 italic">No hay comentarios recientes en este proyecto</p>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-sm text-slate-500 italic">No hay comentarios recientes</p>
-                  )}
-                </div>
-              );
-            })}
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {/* Resumen del Dashboard */}
-      {hasValidProjects && (
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200/50">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-slate-800">Resumen del Dashboard</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-600">Última actualización:</span>
-              <span className="text-sm font-medium text-slate-800">{lastUpdate.toLocaleString()}</span>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-center gap-2 mb-2">
-                <Target className="h-5 w-5 text-blue-600" />
-                <span className="font-medium text-blue-800">Objetivo</span>
-              </div>
-              <p className="text-2xl font-bold text-blue-800">{dashboardStats.averageProgress}%</p>
-              <p className="text-sm text-blue-600">Progreso promedio</p>
-            </div>
-            
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="flex items-center gap-2 mb-2">
-                <Award className="h-5 w-5 text-green-600" />
-                <span className="font-medium text-green-800">Éxito</span>
-              </div>
-              <p className="text-2xl font-bold text-green-800">{dashboardStats.completedProjects}</p>
-              <p className="text-sm text-green-600">Proyectos completados</p>
-            </div>
-            
-            <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="h-5 w-5 text-amber-600" />
-                <span className="font-medium text-amber-800">Actividad</span>
-              </div>
-              <p className="text-2xl font-bold text-amber-800">{dashboardStats.totalComments}</p>
-              <p className="text-sm text-amber-600">Comentarios totales</p>
-            </div>
-            
-            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <div className="flex items-center gap-2 mb-2">
-                <Star className="h-5 w-5 text-purple-600" />
-                <span className="font-medium text-purple-800">Calidad</span>
-              </div>
-              <p className="text-2xl font-bold text-purple-800">
-                {dashboardStats.totalProjects > 0 ? Math.round((dashboardStats.completedProjects / dashboardStats.totalProjects) * 100) : 0}%
-              </p>
-              <p className="text-sm text-purple-600">Tasa de finalización</p>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Modal de detalle del proyecto */}
       {isModalOpen && modalInitialized && selectedProject && selectedProject.id && hasValidProjects && (
@@ -1088,11 +1117,10 @@ export default function Dashboard() {
           }}
         />
       )}
-
                                            </div>
           </div>
         </div>
       </div>
-      </>
-    );
-  }
+    </>
+  );
+}
