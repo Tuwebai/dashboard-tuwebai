@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from '@/components/OptimizedMotion';
-import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,29 +25,143 @@ import {
 import { cn } from '@/lib/utils';
 
 // =====================================================
+// COMPONENTE DE PROGRESO CIRCULAR
+// =====================================================
+
+interface CircularProgressProps {
+  progress: number;
+  size?: number;
+  strokeWidth?: number;
+  className?: string;
+}
+
+const CircularProgress: React.FC<CircularProgressProps> = ({ 
+  progress, 
+  size = 60, 
+  strokeWidth = 4,
+  className 
+}) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div className={cn("circular-progress", className)}>
+      <svg width={size} height={size}>
+        <defs>
+          <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#00CCFF" />
+            <stop offset="100%" stopColor="#9933FF" />
+          </linearGradient>
+        </defs>
+        {/* Círculo de fondo */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          className="circular-progress-bg"
+        />
+        {/* Círculo de progreso */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          className="circular-progress-fill"
+          style={{
+            strokeDasharray: circumference,
+            strokeDashoffset: strokeDashoffset,
+            '--progress': progress
+          } as React.CSSProperties}
+        />
+      </svg>
+      {/* Texto del progreso */}
+      <div className="circular-progress-text">
+        <span className="text-sm font-bold">{Math.round(progress)}%</span>
+      </div>
+    </div>
+  );
+};
+
+// =====================================================
+// COMPONENTE DE TIEMPO RESTANTE
+// =====================================================
+
+interface TimeRemainingProps {
+  minutes: number;
+  className?: string;
+}
+
+const TimeRemaining: React.FC<TimeRemainingProps> = ({ minutes, className }) => {
+  return (
+    <motion.div 
+      className={cn(
+        "flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/20",
+        className
+      )}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ 
+        type: "spring",
+        stiffness: 400,
+        damping: 20,
+        delay: 0.8
+      }}
+    >
+      <Clock className="w-3 h-3 text-white/80" />
+      <span className="text-xs font-medium text-white/90">
+        {minutes} min
+      </span>
+    </motion.div>
+  );
+};
+
+// =====================================================
 // HOOK PARA RESPONSIVIDAD
 // =====================================================
 
 const useResponsiveTutorial = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [isLargeDesktop, setIsLargeDesktop] = useState(false);
   const [screenSize, setScreenSize] = useState({ width: 0, height: 0 });
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('landscape');
   
   useEffect(() => {
     const checkScreenSize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      setIsMobile(width < 768);
-      setIsTablet(width >= 768 && width < 1024);
+      
+      // Breakpoints avanzados
+      setIsMobile(width < 640); // sm
+      setIsTablet(width >= 640 && width < 1024); // md-lg
+      setIsDesktop(width >= 1024 && width < 1536); // xl
+      setIsLargeDesktop(width >= 1536); // 2xl
+      
+      // Orientación
+      setOrientation(width > height ? 'landscape' : 'portrait');
+      
       setScreenSize({ width, height });
     };
     
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
+    window.addEventListener('orientationchange', checkScreenSize);
+    
+    return () => {
+      window.removeEventListener('resize', checkScreenSize);
+      window.removeEventListener('orientationchange', checkScreenSize);
+    };
   }, []);
   
-  return { isMobile, isTablet, screenSize };
+  return { 
+    isMobile, 
+    isTablet, 
+    isDesktop, 
+    isLargeDesktop, 
+    screenSize, 
+    orientation 
+  };
 };
 
 // =====================================================
@@ -56,7 +170,15 @@ const useResponsiveTutorial = () => {
 
 export default function TutorialOverlay() {
   const navigate = useNavigate();
-  const { isMobile, isTablet, screenSize } = useResponsiveTutorial();
+  const location = useLocation();
+  const { 
+    isMobile, 
+    isTablet, 
+    isDesktop, 
+    isLargeDesktop, 
+    screenSize, 
+    orientation 
+  } = useResponsiveTutorial();
   const {
     isActive,
     currentFlow,
@@ -243,112 +365,177 @@ export default function TutorialOverlay() {
 
   // Función para calcular posición responsive del tooltip
   const getTooltipPosition = () => {
-    const tooltipWidth = isMobile ? 320 : isTablet ? 360 : 400;
-    const tooltipHeight = isMobile ? 300 : isTablet ? 350 : 400;
+    // Tamaños adaptativos simplificados
+    const getTooltipSize = () => {
+      if (isMobile) {
+        return {
+          width: Math.min(320, screenSize.width - 20),
+          height: Math.min(400, screenSize.height - 20)
+        };
+      }
+      if (isTablet) {
+        return {
+          width: Math.min(400, screenSize.width - 40),
+          height: Math.min(500, screenSize.height - 40)
+        };
+      }
+      // Desktop y Large desktop
+      return {
+        width: Math.min(480, screenSize.width - 60),
+        height: Math.min(600, screenSize.height - 60)
+      };
+    };
+
+    const { width: tooltipWidth, height: tooltipHeight } = getTooltipSize();
     
-    // Siempre usar posición central en móviles para mejor UX
-    if (isMobile) {
+    // Estrategia de posicionamiento inteligente
+    if (isMobile || isTablet) {
+      // En dispositivos móviles y tablets, siempre centrado
       return {
         left: '50%',
         top: '50%',
         transform: 'translate(-50%, -50%)',
         width: `${tooltipWidth}px`,
-        maxWidth: '90vw',
-        maxHeight: '90vh'
+        maxWidth: `${Math.min(tooltipWidth, screenSize.width - 40)}px`,
+        maxHeight: `${Math.min(tooltipHeight, screenSize.height - 40)}px`
       };
     }
-    
-    // En tablet, usar posición central también para mejor experiencia
-    if (isTablet) {
+
+    // En la página de perfil, posicionar a un costado
+    if (location.pathname === '/perfil' || location.pathname.includes('perfil')) {
       return {
-        left: '50%',
+        right: '20px',
         top: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: `${tooltipWidth}px`,
-        maxWidth: '80vw',
-        maxHeight: '80vh'
+        transform: 'translateY(-50%)',
+        width: `${Math.min(400, screenSize.width * 0.35)}px`,
+        maxHeight: `${Math.min(tooltipHeight, screenSize.height - 40)}px`
       };
     }
     
-    // En desktop, calcular posición basada en el elemento objetivo
+    // En desktop, posicionamiento inteligente
     if (currentStep.position === 'center' || !targetElement) {
       return {
         left: '50%',
         top: '50%',
         transform: 'translate(-50%, -50%)',
-        width: `${tooltipWidth}px`
+        width: `${tooltipWidth}px`,
+        maxHeight: `${tooltipHeight}px`
       };
     }
     
     // Calcular posición relativa al elemento objetivo
     const rect = targetElement.getBoundingClientRect();
-    const padding = 20;
+    const padding = 30;
+    const viewportPadding = 20;
     
+    // Determinar posición inicial basada en la configuración del paso
     let left = rect.right + padding;
     let top = rect.top;
     
-    // Ajustar si se sale por la derecha
-    if (left + tooltipWidth > screenSize.width - 20) {
-      left = rect.left - tooltipWidth - padding;
+    // Ajustar según la posición configurada
+    switch (currentStep.position) {
+      case 'top':
+        left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+        top = rect.top - tooltipHeight - padding;
+        break;
+      case 'bottom':
+        left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+        top = rect.bottom + padding;
+        break;
+      case 'left':
+        left = rect.left - tooltipWidth - padding;
+        top = rect.top + (rect.height / 2) - (tooltipHeight / 2);
+        break;
+      case 'right':
+        left = rect.right + padding;
+        top = rect.top + (rect.height / 2) - (tooltipHeight / 2);
+        break;
     }
     
-    // Ajustar si se sale por abajo
-    if (top + tooltipHeight > screenSize.height - 20) {
-      top = screenSize.height - tooltipHeight - 20;
+    // Ajustes inteligentes para evitar que se salga del viewport
+    // Ajustar horizontalmente
+    if (left < viewportPadding) {
+      left = viewportPadding;
+    } else if (left + tooltipWidth > screenSize.width - viewportPadding) {
+      left = screenSize.width - tooltipWidth - viewportPadding;
     }
     
-    // Ajustar si se sale por arriba
-    if (top < 20) {
-      top = 20;
+    // Ajustar verticalmente
+    if (top < viewportPadding) {
+      top = viewportPadding;
+    } else if (top + tooltipHeight > screenSize.height - viewportPadding) {
+      top = screenSize.height - tooltipHeight - viewportPadding;
+    }
+    
+    // Si aún no cabe, usar posición central como fallback
+    if (left < viewportPadding || top < viewportPadding || 
+        left + tooltipWidth > screenSize.width - viewportPadding || 
+        top + tooltipHeight > screenSize.height - viewportPadding) {
+      return {
+        left: '50%',
+        top: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: `${tooltipWidth}px`,
+        maxHeight: `${tooltipHeight}px`
+      };
     }
     
     return {
-      left: `${Math.max(20, left)}px`,
-      top: `${Math.max(20, top)}px`,
-      width: `${tooltipWidth}px`
+      left: `${left}px`,
+      top: `${top}px`,
+      width: `${tooltipWidth}px`,
+      maxHeight: `${tooltipHeight}px`
     };
   };
 
   return (
     <AnimatePresence>
       <motion.div
-        initial="hidden"
-        animate="visible"
-        exit="hidden"
-        className="fixed inset-0 z-[9999] pointer-events-none"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        className="fixed inset-0 z-[9999]"
       >
-        {/* Overlay de fondo - Solo en desktop y tablet */}
-        {!isMobile && (
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-          />
-        )}
+        {/* Overlay de fondo - Bloquea interacciones */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="absolute inset-0 bg-black/30 backdrop-blur-sm pointer-events-auto"
+          onClick={(e) => {
+            // Prevenir interacción con el fondo
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        />
 
 
 
-        {/* Tooltip del tutorial */}
+        {/* Tooltip del tutorial con Glassmorphism */}
         <motion.div
           ref={overlayRef}
-          initial="hidden"
-          animate="visible"
-          exit="hidden"
-          transition={{ duration: 0.3 }}
-                          className={cn(
-                  "absolute pointer-events-auto",
-                  "bg-white rounded-2xl shadow-2xl border-2 border-slate-300",
-                  // Mejoras de contraste
-                  "ring-2 ring-blue-100 ring-opacity-50",
-                  // Responsive classes mejoradas
-                  isMobile ? "w-[90vw] max-w-[90vw]" : isTablet ? "w-[80vw] max-w-[80vw]" : "w-auto",
-                  isMobile ? "text-sm" : isTablet ? "text-sm" : "text-base",
-                  isMobile ? "mx-4" : "mx-0",
-                  // Mejoras para touch
-                  "touch-manipulation",
-                  "select-none"
-                )}
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          transition={{ 
+            duration: 0.4,
+            ease: "easeOut"
+          }}
+          className={cn(
+            "absolute pointer-events-auto",
+            // Glassmorphism Effect
+            "glassmorphism",
+            "rounded-3xl",
+            // Responsive classes simplificadas
+            isMobile ? "text-sm" : "text-base",
+            // Mejoras para touch
+            "touch-manipulation",
+            "select-none",
+            // Animaciones profesionales
+            "spring-animation",
+            // Overflow handling
+            "overflow-hidden"
+          )}
           style={{
             ...getTooltipPosition(),
             zIndex: 10001
@@ -356,73 +543,94 @@ export default function TutorialOverlay() {
         >
           {/* Header del tutorial */}
           <div className="relative">
-            {/* Progreso */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-slate-100 rounded-t-2xl overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-to-r from-blue-500 to-purple-600"
-                initial="hidden"
-                animate="visible"
-                transition={{ duration: 0.5 }}
-                style={{ width: `${getProgressPercentage()}%` }}
-              />
-            </div>
+
+
+
 
             {/* Contenido del header */}
             <CardHeader className={cn(
-              "pb-3 pt-4",
-              isMobile ? "px-4" : "px-6"
+              "pb-4 pt-6",
+              isMobile ? "px-5" : "px-7"
             )}>
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className={cn(
-                    "flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700 rounded-xl text-white flex-shrink-0 shadow-lg",
-                    "ring-2 ring-blue-200 ring-opacity-50",
-                    isMobile ? "w-8 h-8 text-sm" : isTablet ? "w-9 h-9 text-base" : "w-10 h-10 text-lg"
-                  )}>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <motion.div 
+                    className={cn(
+                      "flex items-center justify-center btn-gradient-primary rounded-2xl text-white flex-shrink-0",
+                      "animate-pulse-glow",
+                      isMobile ? "w-10 h-10 text-lg" : "w-12 h-12 text-xl"
+                    )}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ 
+                      duration: 0.6,
+                      delay: 0.2,
+                      ease: "easeOut"
+                    }}
+                  >
                     {currentFlow.icon}
-                  </div>
+                  </motion.div>
                   <div className="min-w-0 flex-1">
-                                                              <CardTitle className={cn(
-                    "text-slate-900 leading-tight font-bold",
-                    "tracking-tight",
-                    isMobile ? "text-base" : isTablet ? "text-lg" : "text-xl"
-                  )}>
-                    {currentStep.title}
-                  </CardTitle>
-                    <div className={cn(
-                      "flex items-center gap-2 mt-1",
-                      isMobile ? "flex-col" : "flex-row"
-                    )}>
-                      <Badge variant="secondary" className="text-xs w-fit bg-blue-100 text-blue-800 border border-blue-200">
-                        Paso {stepIndex + 1} de {currentFlow.steps.length}
-                      </Badge>
-                      <div className="flex items-center gap-1 text-xs text-slate-500">
-                        <Clock className="w-3 h-3" />
-                        {getEstimatedTimeRemaining()} min restantes
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3, duration: 0.5 }}
+                    >
+                      <CardTitle className={cn(
+                        "text-white leading-tight font-bold",
+                        "tracking-tight",
+                        isMobile ? "text-lg" : isTablet ? "text-xl" : "text-2xl"
+                      )}>
+                        {currentStep.title}
+                      </CardTitle>
+                      <div className={cn(
+                        "flex items-center gap-3 mt-2",
+                        isMobile ? "flex-col items-start" : "flex-row"
+                      )}>
+                        <motion.div
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ 
+                            duration: 0.6,
+                            delay: 0.4,
+                            ease: "easeOut"
+                          }}
+                        >
+                          <Badge className="text-xs w-fit bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-white border border-white/30 backdrop-blur-sm px-3 py-1">
+                            <span className="font-bold">Paso {stepIndex + 1}</span>
+                            <span className="text-white/70 ml-1">de {currentFlow.steps.length}</span>
+                          </Badge>
+                        </motion.div>
                       </div>
-                    </div>
+                    </motion.div>
                   </div>
                 </div>
 
                 {/* Controles del header */}
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <motion.div 
+                  className="flex items-center gap-2 flex-shrink-0"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
+                >
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setEnableSounds(!enableSounds)}
                     className={cn(
-                      "p-0 text-slate-500 hover:text-slate-700",
-                      isMobile ? "h-8 w-8" : isTablet ? "h-9 w-9" : "h-8 w-8"
+                      "p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-xl",
+                      "spring-animation spring-hover",
+                      isMobile ? "h-10 w-10" : "h-11 w-11"
                     )}
                     title={enableSounds ? "Silenciar sonidos" : "Activar sonidos"}
                   >
                     {enableSounds ? (
                       <Volume2 className={cn(
-                        isMobile ? "w-4 h-4" : "w-4 h-4"
+                        isMobile ? "w-5 h-5" : "w-5 h-5"
                       )} />
                     ) : (
                       <VolumeX className={cn(
-                        isMobile ? "w-4 h-4" : "w-4 h-4"
+                        isMobile ? "w-5 h-5" : "w-5 h-5"
                       )} />
                     )}
                   </Button>
@@ -431,141 +639,116 @@ export default function TutorialOverlay() {
                     size="sm"
                     onClick={exitTutorial}
                     className={cn(
-                      "p-0 text-slate-500 hover:text-red-600",
-                      isMobile ? "h-8 w-8" : isTablet ? "h-9 w-9" : "h-8 w-8"
+                      "p-2 text-white/80 hover:text-white hover:bg-red-500/20 rounded-xl",
+                      "spring-animation spring-hover",
+                      isMobile ? "h-10 w-10" : "h-11 w-11"
                     )}
                     title="Cerrar tutorial"
                   >
                     <X className={cn(
-                      isMobile ? "w-4 h-4" : "w-4 h-4"
+                                              isMobile ? "w-5 h-5" : "w-5 h-5"
                     )} />
                   </Button>
-                </div>
+                </motion.div>
               </div>
             </CardHeader>
 
             {/* Contenido principal */}
             <CardContent className={cn(
-              "space-y-3",
-              isMobile ? "px-4" : "px-6"
+              "space-y-4",
+              isMobile ? "px-5" : "px-7"
             )}>
               {/* Descripción */}
-                                              <p className={cn(
-                "text-slate-700 leading-relaxed font-medium",
-                "tracking-wide",
-                isMobile ? "text-sm" : isTablet ? "text-base" : "text-lg"
-              )}>
-                {currentStep.description}
-              </p>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+              >
+                <p className={cn(
+                  "text-white/90 leading-relaxed font-medium",
+                  "tracking-wide content-long",
+                  isMobile ? "text-sm" : "text-base"
+                )}>
+                  {currentStep.description}
+                </p>
+              </motion.div>
 
               {/* Tips */}
               {currentStep.tips && currentStep.tips.length > 0 && (
-                <div className={cn(
-                  "bg-blue-50 border border-blue-200 rounded-lg",
-                  isMobile ? "p-2" : "p-3"
-                )}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Lightbulb className={cn(
-                      "text-blue-600",
-                      isMobile ? "w-3 h-3" : "w-4 h-4"
-                    )} />
+                <motion.div 
+                                     className={cn(
+                     "bg-white/20 border border-white/30 rounded-2xl backdrop-blur-sm",
+                     isMobile ? "p-3" : "p-4"
+                   )}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6, duration: 0.6 }}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 bg-yellow-500/20 rounded-xl">
+                      <Lightbulb className={cn(
+                        "text-yellow-400",
+                        isMobile ? "w-4 h-4" : "w-5 h-5"
+                      )} />
+                    </div>
                     <span className={cn(
-                      "font-medium text-blue-800",
-                      isMobile ? "text-xs" : "text-sm"
+                      "font-semibold text-white",
+                      isMobile ? "text-sm" : "text-base"
                     )}>Consejos útiles</span>
                   </div>
-                  <ul className="space-y-1">
+                  <ul className="space-y-2">
                     {currentStep.tips.map((tip, index) => (
-                      <li key={index} className={cn(
-                        "text-blue-700 flex items-start gap-2",
-                        isMobile ? "text-xs" : "text-sm"
-                      )}>
-                        <span className="text-blue-500 mt-1 flex-shrink-0">•</span>
+                      <motion.li 
+                        key={index} 
+                        className={cn(
+                          "text-white/80 flex items-start gap-3",
+                          isMobile ? "text-sm" : "text-base"
+                        )}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.7 + (index * 0.1), duration: 0.4 }}
+                      >
+                        <span className="text-yellow-400 mt-1 flex-shrink-0 font-bold">•</span>
                         <span className="leading-relaxed">{tip}</span>
-                      </li>
+                      </motion.li>
                     ))}
                   </ul>
-                </div>
+                </motion.div>
               )}
 
-              {/* Acción requerida - Solo mostrar si no es navegación automática */}
-              {currentStep.action && currentStep.action !== 'navigate' && (
-                <div className={cn(
-                  "bg-slate-50 border border-slate-200 rounded-lg",
-                  isMobile ? "p-2" : "p-3"
-                )}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className={cn(
-                      "text-slate-600",
-                      isMobile ? "w-3 h-3" : "w-4 h-4"
-                    )} />
-                    <span className={cn(
-                      "font-medium text-slate-800",
-                      isMobile ? "text-xs" : "text-sm"
-                    )}>Acción requerida</span>
-                  </div>
-                  <p className={cn(
-                    "text-slate-600 mb-3 leading-relaxed",
-                    isMobile ? "text-xs" : "text-sm"
-                  )}>
-                    {currentStep.actionText}
-                  </p>
-                  <Button
-                    onClick={handleAction}
-                    size="sm"
-                    className={cn(
-                      "bg-slate-800 hover:bg-slate-900 text-white",
-                      isMobile ? "w-full text-sm h-10" : "w-auto text-sm h-9"
-                    )}
-                  >
-                    {currentStep.action === 'click' && <CheckCircle className={cn(
-                      "mr-2",
-                      isMobile ? "w-4 h-4" : "w-4 h-4"
-                    )} />}
-                    {currentStep.action === 'hover' && <HelpCircle className={cn(
-                      "mr-2",
-                      isMobile ? "w-4 h-4" : "w-4 h-4"
-                    )} />}
-                    {currentStep.action === 'scroll' && <ChevronRight className={cn(
-                      "mr-2",
-                      isMobile ? "w-4 h-4" : "w-4 h-4"
-                    )} />}
-                    {currentStep.action === 'wait' && <Clock className={cn(
-                      "mr-2",
-                      isMobile ? "w-4 h-4" : "w-4 h-4"
-                    )} />}
-                    Ejecutar Acción
-                  </Button>
-                </div>
-              )}
+              
 
 
 
               {/* Controles de navegación */}
-              <div className={cn(
-                "flex items-stretch justify-between gap-3 pt-3 border-t border-slate-200",
-                isMobile ? "flex-col" : "flex-row items-center gap-2"
-              )}>
+              <motion.div 
+                className={cn(
+                  "flex items-stretch justify-between gap-4 pt-4 border-t border-white/20",
+                  isMobile ? "flex-col" : "flex-row items-center"
+                )}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.9, duration: 0.6 }}
+              >
                 <div className={cn(
-                  "flex items-center gap-2",
+                  "flex items-center gap-3",
                   isMobile ? "order-2" : "order-1"
                 )}>
-                                      <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={prevStep}
-                      disabled={stepIndex === 0}
-                      className={cn(
-                        "text-sm border-2 border-slate-300 hover:border-slate-400",
-                        "focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
-                        "transition-all duration-200 active:scale-95",
-                        "hover:bg-slate-50",
-                        isMobile ? "h-10 flex-1" : "h-9 flex-none"
-                      )}
-                    >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={prevStep}
+                    disabled={stepIndex === 0}
+                    className={cn(
+                      "text-sm border-2 border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20 text-white",
+                      "spring-animation spring-hover",
+                      "disabled:opacity-50 disabled:cursor-not-allowed",
+                      isMobile ? "h-12 flex-1" : "h-12 flex-none"
+                    )}
+                  >
                     <ChevronLeft className={cn(
-                      "mr-1",
-                      isMobile ? "w-4 h-4" : "w-4 h-4"
+                      "mr-2",
+                                              isMobile ? "w-5 h-5" : "w-5 h-5"
                     )} />
                     <span className={isMobile ? "inline" : "inline"}>Anterior</span>
                   </Button>
@@ -576,13 +759,13 @@ export default function TutorialOverlay() {
                       size="sm"
                       onClick={skipStep}
                       className={cn(
-                        "text-slate-500 hover:text-slate-700 text-sm",
-                        isMobile ? "h-10" : "h-9"
+                        "text-white/70 hover:text-white hover:bg-white/10 text-sm spring-animation spring-hover",
+                        isMobile ? "h-10" : isTablet ? "h-11" : "h-12"
                       )}
                     >
                       <SkipForward className={cn(
-                        "mr-1",
-                        isMobile ? "w-4 h-4" : "w-4 h-4"
+                        "mr-2",
+                        isMobile ? "w-5 h-5" : "w-5 h-5"
                       )} />
                       <span className={isMobile ? "inline" : "inline"}>Omitir</span>
                     </Button>
@@ -590,64 +773,62 @@ export default function TutorialOverlay() {
                 </div>
 
                 <div className={cn(
-                  "flex items-center gap-2",
+                  "flex items-center gap-3",
                   isMobile ? "order-1" : "order-2"
                 )}>
                   {stepIndex === currentFlow.steps.length - 1 ? (
                     <Button
                       onClick={nextStep}
                       className={cn(
-                        "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm",
-                        "shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95",
-                        "ring-2 ring-green-200 ring-opacity-50 hover:ring-opacity-75",
-                        isMobile ? "h-10 flex-1" : "h-9 flex-none"
+                        "btn-gradient-accent text-white text-sm spring-animation spring-hover ripple-effect",
+                        isMobile ? "h-12 flex-1" : "h-12 flex-none"
                       )}
                     >
                       <Star className={cn(
                         "mr-2",
-                        isMobile ? "w-4 h-4" : "w-4 h-4"
+                        isMobile ? "w-5 h-5" : "w-5 h-5"
                       )} />
                       <span className={isMobile ? "inline" : "inline"}>Completar</span>
                     </Button>
                   ) : (
-                                          <Button
-                        onClick={async () => {
-                          // Manejar navegación si es necesario
-                          if (currentStep?.action === 'navigate' && currentStep.navigateTo) {
-                            try {
-                              // Navegar inmediatamente
-                              navigate(currentStep.navigateTo);
-                              // Avanzar al siguiente paso inmediatamente
-                              nextStep();
-                              return;
-                            } catch (error) {
-                              console.error('Error during navigation:', error);
-                              // Si hay error, avanzar de todas formas
-                              nextStep();
-                            }
-                          } else {
-                            // Si no es navegación, avanzar normalmente
+                    <Button
+                      onClick={async () => {
+                        // Manejar navegación si es necesario
+                        if (currentStep?.action === 'navigate' && currentStep.navigateTo) {
+                          try {
+                            // Navegar inmediatamente
+                            navigate(currentStep.navigateTo);
+                            // Avanzar al siguiente paso inmediatamente
+                            nextStep();
+                            return;
+                          } catch (error) {
+                            console.error('Error during navigation:', error);
+                            // Si hay error, avanzar de todas formas
                             nextStep();
                           }
-                        }}
-                        className={cn(
-                          "bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white text-sm",
-                          "shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95",
-                          "ring-2 ring-blue-200 ring-opacity-50 hover:ring-opacity-75",
-                          isMobile ? "h-10 flex-1" : "h-9 flex-none"
-                        )}
-                      >
+                        } else {
+                          // Si no es navegación, avanzar normalmente
+                          nextStep();
+                        }
+                      }}
+                      className={cn(
+                        "btn-gradient-primary text-white text-sm spring-animation spring-hover ripple-effect",
+                        isMobile ? "h-12 flex-1" : "h-12 flex-none"
+                      )}
+                    >
                       <span className={isMobile ? "inline" : "inline"}>Siguiente</span>
                       <ChevronRight className={cn(
-                        "ml-1",
-                        isMobile ? "w-4 h-4" : "w-4 h-4"
+                        "ml-2",
+                        isMobile ? "w-5 h-5" : "w-5 h-5"
                       )} />
                     </Button>
                   )}
                 </div>
-              </div>
+              </motion.div>
             </CardContent>
           </div>
+
+
         </motion.div>
       </motion.div>
     </AnimatePresence>
