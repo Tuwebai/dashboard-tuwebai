@@ -4,6 +4,9 @@ import { Draggable } from 'react-beautiful-dnd';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import ProjectTimeline from './ProjectTimeline';
+import ActivityIndicator, { StatusIndicator } from './ActivityIndicator';
+import AccessibleTooltip from './AccessibleTooltip';
 import { 
   MessageSquare, 
   Calendar, 
@@ -353,7 +356,29 @@ export default function ProjectCard({
                     <GripVertical className="h-3 w-3" />
                   </div>
                 )}
-                <h3 className="text-lg font-bold text-slate-900 truncate leading-tight tracking-tight">{project.name}</h3>
+                <AccessibleTooltip 
+                  content={`Proyecto: ${project.name}. Estado: ${getProjectStatus(project)}. Progreso: ${progress}%`}
+                  position="top"
+                >
+                  <h3 
+                    className="text-lg font-bold text-accessible truncate leading-tight tracking-tight cursor-help"
+                    tabIndex={0}
+                    role="heading"
+                    aria-level={3}
+                  >
+                    {project.name}
+                  </h3>
+                </AccessibleTooltip>
+                {/* Indicador de estado granular */}
+                <StatusIndicator 
+                  status={
+                    isPendingApproval ? 'pending' :
+                    isRejected ? 'error' :
+                    progress === 100 ? 'completed' :
+                    progress > 0 ? 'active' : 'inactive'
+                  }
+                  size="sm"
+                />
                 {isUrgent && (
                   <Badge variant="destructive" className="text-xs px-2 py-0.5 animate-pulse shadow-sm">
                     <AlertCircle className="h-3 w-3 mr-1" />
@@ -367,34 +392,51 @@ export default function ProjectCard({
             </div>
             
             {/* Quick Actions Menu */}
-            <div className="flex items-center gap-1 opacity-30 group-hover:opacity-100 transition-all duration-300 ml-2">
+            <div 
+              className="flex items-center gap-1 opacity-30 group-hover:opacity-100 transition-all duration-300 ml-2"
+              role="toolbar"
+              aria-label="Acciones del proyecto"
+            >
               {onToggleFavorite && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleFavorite(project.id);
-                  }}
-                  className="h-8 w-8 p-0 text-slate-400 hover:text-yellow-500 hover:bg-yellow-50 hover:shadow-md hover:scale-110 transition-all duration-300 ease-out rounded-full"
+                <AccessibleTooltip 
+                  content={project.isFavorite ? "Quitar de favoritos" : "Marcar como favorito"}
+                  position="top"
                 >
-                  <Star className="h-4 w-4" />
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleFavorite(project.id);
+                    }}
+                    className="h-8 w-8 p-0 text-slate-400 hover:text-yellow-500 hover:bg-yellow-50 hover:shadow-md hover:scale-110 transition-all duration-300 ease-out rounded-full focus-visible"
+                    aria-label={project.isFavorite ? "Quitar de favoritos" : "Marcar como favorito"}
+                    aria-pressed={project.isFavorite}
+                  >
+                    <Star className={`h-4 w-4 ${project.isFavorite ? 'fill-current' : ''}`} />
+                  </Button>
+                </AccessibleTooltip>
               )}
               
               {/* Botón de eliminar - AL LADO DEL BOTÓN DE FAVORITOS */}
               {onDeleteProject && isRejected && user?.role !== 'admin' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowDeleteDialog(true);
-                  }}
-                  className="h-8 w-8 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50 hover:shadow-md hover:scale-110 transition-all duration-300 ease-out rounded-full"
+                <AccessibleTooltip 
+                  content="Eliminar proyecto rechazado"
+                  position="top"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDeleteDialog(true);
+                    }}
+                    className="h-8 w-8 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50 hover:shadow-md hover:scale-110 transition-all duration-300 ease-out rounded-full focus-visible"
+                    aria-label="Eliminar proyecto rechazado"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AccessibleTooltip>
               )}
               
               {user?.role === 'admin' && (
@@ -487,30 +529,84 @@ export default function ProjectCard({
             )}
           </div>
           
-          {/* Barra de progreso mejorada */}
-          {!isPendingApproval && !isRejected && (
-            <div className="mb-3">
-              <div className="relative">
-                <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
-                  <div 
-                    className={`h-full rounded-full transition-all duration-500 ease-out ${
-                      progress === 100 
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
-                        : progress >= 75 
-                        ? 'bg-gradient-to-r from-blue-500 to-indigo-500'
-                        : progress >= 50
-                        ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
-                        : 'bg-gradient-to-r from-slate-400 to-slate-500'
-                    }`}
-                    style={{ width: `${progress}%` }}
-                  />
+                        {/* Barra de progreso animada avanzada */}
+              {!isPendingApproval && !isRejected && (
+                <div className="mb-3">
+                  <div className="relative">
+                    {/* Fondo de la barra con efecto de brillo */}
+                    <div 
+                      className="w-full bg-slate-200/50 rounded-full h-3 overflow-hidden relative"
+                      role="progressbar"
+                      aria-valuenow={progress}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`Progreso del proyecto: ${progress}% completado`}
+                      tabIndex={0}
+                    >
+                      {/* Efecto de brillo animado */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                      
+                      {/* Barra de progreso principal */}
+                      <div 
+                        className={`h-full rounded-full transition-all duration-700 ease-out relative overflow-hidden ${
+                          progress === 100 
+                            ? 'bg-gradient-to-r from-green-500 via-emerald-400 to-green-600' 
+                            : progress >= 75 
+                            ? 'bg-gradient-to-r from-blue-500 via-indigo-400 to-blue-600'
+                            : progress >= 50
+                            ? 'bg-gradient-to-r from-yellow-500 via-orange-400 to-yellow-600'
+                            : 'bg-gradient-to-r from-slate-400 via-slate-300 to-slate-500'
+                        }`}
+                        style={{ width: `${progress}%` }}
+                        aria-hidden="true"
+                      >
+                        {/* Efecto de ondas en la barra */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+                        
+                        {/* Punto de progreso animado */}
+                        {progress > 0 && (
+                          <div className="absolute top-0 right-0 w-2 h-3 bg-white rounded-full shadow-lg animate-pulse-glow"></div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Indicador de porcentaje flotante */}
+                    <AccessibleTooltip 
+                      content={`${progress}% completado`}
+                      position="top"
+                    >
+                      <div className="absolute -top-8 right-0 bg-slate-800 text-white text-xs px-2 py-1 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        {progress}%
+                      </div>
+                    </AccessibleTooltip>
+                    
+                    {/* Indicador de actividad */}
+                    {progress > 0 && progress < 100 && (
+                      <div className="absolute -right-1 top-1/2 transform -translate-y-1/2">
+                        <AccessibleTooltip 
+                          content="Proyecto en progreso activo"
+                          position="left"
+                        >
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse">
+                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-ping absolute"></div>
+                          </div>
+                        </AccessibleTooltip>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Timeline de fases mini mejorada */}
+                  {project.fases && project.fases.length > 0 && (
+                    <div className="mt-2">
+                      <ProjectTimeline 
+                        fases={project.fases} 
+                        compact={true}
+                        className="justify-center"
+                      />
+                    </div>
+                  )}
                 </div>
-                {progress > 0 && (
-                  <div className="absolute top-0 right-0 w-1 h-2.5 bg-white rounded-full shadow-sm"></div>
-                )}
-              </div>
-            </div>
-          )}
+              )}
 
           {/* Metadatos del proyecto compactos */}
           {!isPendingApproval && !isRejected ? (

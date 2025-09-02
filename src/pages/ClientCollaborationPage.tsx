@@ -376,7 +376,7 @@ export default function ClientCollaborationPage() {
 
              // Enviar notificación al admin
        try {
-
+         await supabase.from('notifications').insert({
            user_id: project.created_by,
            sender_id: user.id,
            sender_name: user.full_name || user.email,

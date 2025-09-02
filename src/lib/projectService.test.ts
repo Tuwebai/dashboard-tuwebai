@@ -9,29 +9,29 @@ import { projectService } from './projectService';
 // Función para probar el servicio
 export async function testProjectService() {
   try {
-    console.log('🧪 Probando Project Service...');
+    // console.log('🧪 Probando Project Service...');
 
     // 1. Obtener estadísticas
-    console.log('📊 Obteniendo estadísticas...');
+    // console.log('📊 Obteniendo estadísticas...');
     const stats = await projectService.getProjectStats();
-    console.log('✅ Estadísticas obtenidas:', stats);
+    // console.log('✅ Estadísticas obtenidas:', stats);
 
     // 2. Obtener tecnologías únicas
-    console.log('🔧 Obteniendo tecnologías...');
+    // console.log('🔧 Obteniendo tecnologías...');
     const technologies = await projectService.getUniqueTechnologies();
-    console.log('✅ Tecnologías obtenidas:', technologies);
+    // console.log('✅ Tecnologías obtenidas:', technologies);
 
     // 3. Obtener proyectos
-    console.log('📁 Obteniendo proyectos...');
+    // console.log('📁 Obteniendo proyectos...');
     const projects = await projectService.getProjects();
-    console.log('✅ Proyectos obtenidos:', projects.projects.length);
+    // console.log('✅ Proyectos obtenidos:', projects.projects.length);
 
     // 4. Obtener tendencias
-    console.log('📈 Obteniendo tendencias...');
+    // console.log('📈 Obteniendo tendencias...');
     const trends = await projectService.getProjectTrends(6);
-    console.log('✅ Tendencias obtenidas:', Object.keys(trends).length, 'meses');
+    // console.log('✅ Tendencias obtenidas:', Object.keys(trends).length, 'meses');
 
-    console.log('🎉 Todas las pruebas del Project Service pasaron exitosamente!');
+    // console.log('🎉 Todas las pruebas del Project Service pasaron exitosamente!');
     return true;
 
   } catch (error) {
@@ -43,7 +43,7 @@ export async function testProjectService() {
 // Función para probar operaciones CRUD
 export async function testProjectCRUD() {
   try {
-    console.log('🧪 Probando operaciones CRUD...');
+    // console.log('🧪 Probando operaciones CRUD...');
 
     // 1. Crear proyecto de prueba
     const testProject = {
@@ -54,38 +54,38 @@ export async function testProjectCRUD() {
       github_repository_url: 'https://github.com/test/test-project'
     };
 
-    console.log('➕ Creando proyecto de prueba...');
+    // console.log('➕ Creando proyecto de prueba...');
     const createdProject = await projectService.createProject(testProject);
-    console.log('✅ Proyecto creado:', createdProject.id);
+    // console.log('✅ Proyecto creado:', createdProject.id);
 
     // 2. Obtener proyecto por ID
-    console.log('🔍 Obteniendo proyecto por ID...');
+    // console.log('🔍 Obteniendo proyecto por ID...');
     const retrievedProject = await projectService.getProjectById(createdProject.id);
-    console.log('✅ Proyecto obtenido:', retrievedProject.name);
+    // console.log('✅ Proyecto obtenido:', retrievedProject.name);
 
     // 3. Actualizar proyecto
-    console.log('✏️ Actualizando proyecto...');
+    // console.log('✏️ Actualizando proyecto...');
     const updatedProject = await projectService.updateProject(createdProject.id, {
       description: 'Descripción actualizada del proyecto de prueba'
     });
-    console.log('✅ Proyecto actualizado:', updatedProject.description);
+    // console.log('✅ Proyecto actualizado:', updatedProject.description);
 
     // 4. Verificar que existe
-    console.log('✅ Verificando existencia...');
+    // console.log('✅ Verificando existencia...');
     const exists = await projectService.projectExists(createdProject.id);
-    console.log('✅ Proyecto existe:', exists);
+    // console.log('✅ Proyecto existe:', exists);
 
     // 5. Obtener proyectos similares
-    console.log('🔍 Obteniendo proyectos similares...');
+    // console.log('🔍 Obteniendo proyectos similares...');
     const similarProjects = await projectService.getSimilarProjects(createdProject.id);
-    console.log('✅ Proyectos similares encontrados:', similarProjects.length);
+    // console.log('✅ Proyectos similares encontrados:', similarProjects.length);
 
     // 6. Eliminar proyecto de prueba
-    console.log('🗑️ Eliminando proyecto de prueba...');
+    // console.log('🗑️ Eliminando proyecto de prueba...');
     await projectService.deleteProject(createdProject.id);
-    console.log('✅ Proyecto eliminado');
+    // console.log('✅ Proyecto eliminado');
 
-    console.log('🎉 Todas las operaciones CRUD del Project Service pasaron exitosamente!');
+    // console.log('🎉 Todas las operaciones CRUD del Project Service pasaron exitosamente!');
     return true;
 
   } catch (error) {
@@ -97,24 +97,24 @@ export async function testProjectCRUD() {
 // Función para probar búsquedas y filtros
 export async function testProjectSearchAndFilters() {
   try {
-    console.log('🧪 Probando búsquedas y filtros...');
+    // console.log('🧪 Probando búsquedas y filtros...');
 
     // 1. Búsqueda por texto
-    console.log('🔍 Probando búsqueda por texto...');
+    // console.log('🔍 Probando búsqueda por texto...');
     const searchResults = await projectService.searchProjects('test');
-    console.log('✅ Resultados de búsqueda:', searchResults.length);
+    // console.log('✅ Resultados de búsqueda:', searchResults.length);
 
     // 2. Filtros por estado
-    console.log('🔍 Probando filtros por estado...');
+    // console.log('🔍 Probando filtros por estado...');
     const developmentProjects = await projectService.getProjectsByStatus('development');
-    console.log('✅ Proyectos en desarrollo:', developmentProjects.length);
+    // console.log('✅ Proyectos en desarrollo:', developmentProjects.length);
 
     // 3. Filtros por tecnologías
-    console.log('🔍 Probando filtros por tecnologías...');
+    // console.log('🔍 Probando filtros por tecnologías...');
     const reactProjects = await projectService.getProjectsByTechnologies(['React']);
-    console.log('✅ Proyectos con React:', reactProjects.length);
+    // console.log('✅ Proyectos con React:', reactProjects.length);
 
-    console.log('🎉 Todas las pruebas de búsqueda y filtros pasaron exitosamente!');
+    // console.log('🎉 Todas las pruebas de búsqueda y filtros pasaron exitosamente!');
     return true;
 
   } catch (error) {
@@ -125,7 +125,7 @@ export async function testProjectSearchAndFilters() {
 
 // Función principal para ejecutar todas las pruebas
 export async function runAllProjectServiceTests() {
-  console.log('🚀 Iniciando pruebas completas del Project Service...\n');
+  // console.log('🚀 Iniciando pruebas completas del Project Service...\n');
 
   const results = {
     basic: await testProjectService(),
@@ -133,17 +133,17 @@ export async function runAllProjectServiceTests() {
     search: await testProjectSearchAndFilters()
   };
 
-  console.log('\n📋 Resumen de resultados:');
-  console.log('✅ Pruebas básicas:', results.basic ? 'PASARON' : 'FALLARON');
-  console.log('✅ Pruebas CRUD:', results.crud ? 'PASARON' : 'FALLARON');
-  console.log('✅ Pruebas de búsqueda:', results.search ? 'PASARON' : 'FALLARON');
+  // console.log('\n📋 Resumen de resultados:');
+  // console.log('✅ Pruebas básicas:', results.basic ? 'PASARON' : 'FALLARON');
+  // console.log('✅ Pruebas CRUD:', results.crud ? 'PASARON' : 'FALLARON');
+  // console.log('✅ Pruebas de búsqueda:', results.search ? 'PASARON' : 'FALLARON');
 
   const allPassed = Object.values(results).every(result => result);
   
   if (allPassed) {
-    console.log('\n🎉 ¡Todas las pruebas del Project Service pasaron exitosamente!');
+    // console.log('\n🎉 ¡Todas las pruebas del Project Service pasaron exitosamente!');
   } else {
-    console.log('\n❌ Algunas pruebas del Project Service fallaron');
+    // console.log('\n❌ Algunas pruebas del Project Service fallaron');
   }
 
   return allPassed;

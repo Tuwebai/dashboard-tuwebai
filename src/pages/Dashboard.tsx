@@ -54,11 +54,16 @@ import { useTranslation } from 'react-i18next';
 import { formatDateSafe } from '@/utils/formatDateSafe';
 import VerDetallesProyecto from '@/components/VerDetallesProyecto';
 import ProjectCard from '@/components/ProjectCard';
+import LazyProjectCard from '@/components/LazyProjectCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { userService } from '@/lib/supabaseService';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useRealtimeProjects } from '@/hooks/useRealtimeProjects';
+import { useLazyLoading } from '@/hooks/useLazyLoading';
+import { useIntelligentCache } from '@/hooks/useIntelligentCache';
+import VirtualScrollList from '@/components/VirtualScrollList';
+import OptimizedImage from '@/components/OptimizedImage';
 
 // Estilos CSS personalizados para animaciones
 const customStyles = `
@@ -187,6 +192,13 @@ export default function Dashboard() {
   const [projectOrder, setProjectOrder] = useState<string[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation();
+
+  // Cache inteligente para datos del dashboard
+  const cache = useIntelligentCache({
+    ttl: 5 * 60 * 1000, // 5 minutos
+    maxSize: 50,
+    enableLRU: true
+  });
 
   // Función para calcular progreso del proyecto
   const calculateProjectProgress = (project: Project) => {
@@ -615,14 +627,14 @@ export default function Dashboard() {
     toast({ title: 'Duplicado', description: `Proyecto "${project.name}" duplicado correctamente.` });
   }, []);
 
-  const handleToggleFavorite = useCallback((projectId: string) => {
+  const handleToggleFavorite = useCallback((project: Project) => {
     // Aquí implementarías la lógica de favoritos
-    toast({ title: 'Favorito', description: 'Proyecto marcado como favorito.' });
+    toast({ title: 'Favorito', description: `Proyecto "${project.name}" marcado como favorito.` });
   }, []);
 
-  const handleArchiveProject = useCallback((projectId: string) => {
+  const handleArchiveProject = useCallback((project: Project) => {
     // Aquí implementarías la lógica de archivado
-    toast({ title: 'Archivado', description: 'Proyecto archivado correctamente.' });
+    toast({ title: 'Archivado', description: `Proyecto "${project.name}" archivado correctamente.` });
   }, []);
 
   // Funciones para drag & drop
@@ -891,6 +903,7 @@ export default function Dashboard() {
               </div>
             </motion.div>
           </div>
+
 
           {/* Contenido Principal */}
           <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
@@ -1239,21 +1252,33 @@ export default function Dashboard() {
                           }`}
                         >
                           {filteredAndSortedProjects.filter(project => project && project.id).map((project, index) => (
-                            <ProjectCard
+                            <LazyProjectCard
                               key={project.id}
                               project={project}
                               user={user}
                               projectCreators={projectCreators}
                               onViewProject={handleViewProject}
                               onDeleteProject={handleDeleteProject}
-                              onNavigateToCollaboration={(projectId) => {
-                                const url = `/proyectos/${projectId}/colaboracion-cliente`;
+                              onNavigateToCollaboration={(project) => {
+                                const url = `/proyectos/${project.id}/colaboracion-cliente`;
                                 try {
                                   navigate(url);
                                 } catch (error) {
                                   toast({ 
                                     title: 'Error de navegación', 
                                     description: 'No se pudo navegar a la página de colaboración', 
+                                    variant: 'destructive' 
+                                  });
+                                }
+                              }}
+                              onNavigateToEdit={(project) => {
+                                const url = `/proyectos/${project.id}/editar`;
+                                try {
+                                  navigate(url);
+                                } catch (error) {
+                                  toast({ 
+                                    title: 'Error de navegación', 
+                                    description: 'No se pudo navegar a la página de edición.',
                                     variant: 'destructive' 
                                   });
                                 }
@@ -1274,21 +1299,33 @@ export default function Dashboard() {
                 ) : (
                   <div className="flex flex-wrap gap-6">
                     {filteredAndSortedProjects.filter(project => project && project.id).map((project, index) => (
-                      <ProjectCard
+                      <LazyProjectCard
                         key={project.id}
                         project={project}
                         user={user}
                         projectCreators={projectCreators}
                         onViewProject={handleViewProject}
                         onDeleteProject={handleDeleteProject}
-                        onNavigateToCollaboration={(projectId) => {
-                          const url = `/proyectos/${projectId}/colaboracion-cliente`;
+                        onNavigateToCollaboration={(project) => {
+                          const url = `/proyectos/${project.id}/colaboracion-cliente`;
                           try {
                             navigate(url);
                           } catch (error) {
                             toast({ 
                               title: 'Error de navegación', 
                               description: 'No se pudo navegar a la página de colaboración', 
+                              variant: 'destructive' 
+                            });
+                          }
+                        }}
+                        onNavigateToEdit={(project) => {
+                          const url = `/proyectos/${project.id}/editar`;
+                          try {
+                            navigate(url);
+                          } catch (error) {
+                            toast({ 
+                              title: 'Error de navegación', 
+                              description: 'No se pudo navegar a la página de edición.',
                               variant: 'destructive' 
                             });
                           }

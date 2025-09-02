@@ -336,7 +336,7 @@ export class StorageService {
     try {
       // Nota: La creación de buckets requiere permisos de administrador
       // En producción, los buckets deben crearse manualmente en el dashboard de Supabase
-      console.log(`Bucket ${bucketName} debe existir en Supabase. Verificando acceso...`);
+      // console.log(`Bucket ${bucketName} debe existir en Supabase. Verificando acceso...`);
       
       const { data, error } = await supabase.storage
         .from(bucketName)

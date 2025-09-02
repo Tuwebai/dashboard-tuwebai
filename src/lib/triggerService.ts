@@ -220,17 +220,17 @@ export class TriggerService {
    */
   async fireTrigger(eventType: SystemTrigger['event_type'], eventData: any): Promise<void> {
     try {
-      console.log(`🔥 Disparando triggers para evento: ${eventType}`);
+      // console.log(`🔥 Disparando triggers para evento: ${eventType}`);
       
       // Obtener triggers activos para este tipo de evento
       const triggers = await this.getTriggersByEventType(eventType);
       
       if (triggers.length === 0) {
-        console.log(`ℹ️ No hay triggers activos para el evento: ${eventType}`);
+        // console.log(`ℹ️ No hay triggers activos para el evento: ${eventType}`);
         return;
       }
 
-      console.log(`📋 Encontrados ${triggers.length} triggers para ejecutar`);
+      // console.log(`📋 Encontrados ${triggers.length} triggers para ejecutar`);
 
       // Ejecutar cada trigger
       for (const trigger of triggers) {
@@ -253,11 +253,11 @@ export class TriggerService {
   async executeTrigger(trigger: SystemTrigger, eventData: any): Promise<void> {
     try {
       const startTime = Date.now();
-      console.log(`⚡ Ejecutando trigger: ${trigger.name}`);
+      // console.log(`⚡ Ejecutando trigger: ${trigger.name}`);
 
       // Verificar si el trigger debe ejecutarse según el schedule
       if (trigger.schedule && !this.shouldExecuteBySchedule(trigger.schedule)) {
-        console.log(`⏰ Trigger ${trigger.name} no debe ejecutarse según su schedule`);
+        // console.log(`⏰ Trigger ${trigger.name} no debe ejecutarse según su schedule`);
         return;
       }
 
@@ -265,7 +265,7 @@ export class TriggerService {
       if (trigger.conditions && Object.keys(trigger.conditions).length > 0) {
         const conditionsMet = await this.evaluateTriggerConditions(trigger.conditions, eventData);
         if (!conditionsMet) {
-          console.log(`❌ Condiciones no cumplidas para trigger ${trigger.name}`);
+          // console.log(`❌ Condiciones no cumplidas para trigger ${trigger.name}`);
           await this.logTriggerAction('trigger', trigger.id, 'execute', 'warning', 'Condiciones no cumplidas');
           return;
         }
@@ -280,7 +280,7 @@ export class TriggerService {
       await this.updateTriggerStats(trigger.id);
 
       const executionTime = Date.now() - startTime;
-      console.log(`✅ Trigger ${trigger.name} ejecutado exitosamente en ${executionTime}ms`);
+      // console.log(`✅ Trigger ${trigger.name} ejecutado exitosamente en ${executionTime}ms`);
       
       await this.logTriggerAction('trigger', trigger.id, 'execute', 'success', 'Trigger ejecutado exitosamente', {
         execution_time_ms: executionTime,
@@ -414,7 +414,7 @@ export class TriggerService {
    */
   private async executeNotificationAction(actionData: any, eventData: any): Promise<void> {
     try {
-      console.log('📢 Ejecutando acción de notificación:', actionData);
+      // console.log('📢 Ejecutando acción de notificación:', actionData);
       
       // Crear notificación en la base de datos
       const { error } = await supabase
@@ -435,7 +435,7 @@ export class TriggerService {
 
       if (error) throw error;
       
-      console.log('✅ Notificación creada exitosamente');
+      // console.log('✅ Notificación creada exitosamente');
     } catch (error) {
       console.error('Error executing notification action:', error);
       throw error;
@@ -447,7 +447,7 @@ export class TriggerService {
    */
   private async executeEmailAction(actionData: any, eventData: any): Promise<void> {
     try {
-      console.log('📧 Ejecutando acción de email:', actionData);
+      // console.log('📧 Ejecutando acción de email:', actionData);
       
       // Aquí integrarías con tu servicio de email
       const emailData = {
@@ -457,7 +457,7 @@ export class TriggerService {
         template: actionData.template
       };
 
-      console.log('📧 Datos de email preparados:', emailData);
+      // console.log('📧 Datos de email preparados:', emailData);
       
       // Por ahora solo log, pero aquí enviarías el email
       await this.logTriggerAction('trigger', 'email', 'send', 'info', `Email preparado para: ${emailData.to.join(', ')}`);
@@ -473,7 +473,7 @@ export class TriggerService {
    */
   private async executeStatusUpdateAction(actionData: any, eventData: any): Promise<void> {
     try {
-      console.log('🔄 Ejecutando acción de actualización de estado:', actionData);
+      // console.log('🔄 Ejecutando acción de actualización de estado:', actionData);
       
       const table = actionData.table;
       const recordId = eventData[actionData.id_field];
@@ -490,7 +490,7 @@ export class TriggerService {
 
       if (error) throw error;
       
-      console.log(`✅ Estado actualizado en ${table} para ID ${recordId}`);
+      // console.log(`✅ Estado actualizado en ${table} para ID ${recordId}`);
     } catch (error) {
       console.error('Error executing status update action:', error);
       throw error;
@@ -502,7 +502,7 @@ export class TriggerService {
    */
   private async executeCreateTicketAction(actionData: any, eventData: any): Promise<void> {
     try {
-      console.log('🎫 Ejecutando acción de crear ticket:', actionData);
+      // console.log('🎫 Ejecutando acción de crear ticket:', actionData);
       
       const ticketData = {
         title: this.interpolateMessage(actionData.title, eventData),
@@ -520,7 +520,7 @@ export class TriggerService {
 
       if (error) throw error;
       
-      console.log('✅ Ticket creado exitosamente');
+      // console.log('✅ Ticket creado exitosamente');
     } catch (error) {
       console.error('Error executing create ticket action:', error);
       throw error;
@@ -532,7 +532,7 @@ export class TriggerService {
    */
   private async executeAssignmentAction(actionData: any, eventData: any): Promise<void> {
     try {
-      console.log('👤 Ejecutando acción de asignación:', actionData);
+      // console.log('👤 Ejecutando acción de asignación:', actionData);
       
       const table = actionData.table;
       const recordId = eventData[actionData.id_field];
@@ -549,7 +549,7 @@ export class TriggerService {
 
       if (error) throw error;
       
-      console.log(`✅ Usuario ${userId} asignado a ${table} ID ${recordId}`);
+      // console.log(`✅ Usuario ${userId} asignado a ${table} ID ${recordId}`);
     } catch (error) {
       console.error('Error executing assignment action:', error);
       throw error;
@@ -561,7 +561,7 @@ export class TriggerService {
    */
   private async executeWebhookAction(actionData: any, eventData: any): Promise<void> {
     try {
-      console.log('🌐 Ejecutando acción de webhook:', actionData);
+      // console.log('🌐 Ejecutando acción de webhook:', actionData);
       
       const url = actionData.url;
       const method = actionData.method || 'POST';
@@ -585,7 +585,7 @@ export class TriggerService {
         throw new Error(`Webhook falló con status: ${response.status}`);
       }
       
-      console.log('✅ Webhook ejecutado exitosamente');
+      // console.log('✅ Webhook ejecutado exitosamente');
     } catch (error) {
       console.error('Error executing webhook action:', error);
       throw error;
@@ -597,13 +597,13 @@ export class TriggerService {
    */
   private async executeSlackAction(actionData: any, eventData: any): Promise<void> {
     try {
-      console.log('💬 Ejecutando acción de Slack:', actionData);
+      // console.log('💬 Ejecutando acción de Slack:', actionData);
       
       // Aquí integrarías con la API de Slack
       const message = this.interpolateMessage(actionData.message, eventData);
       const channel = actionData.channel || '#general';
       
-      console.log(`💬 Mensaje de Slack preparado para ${channel}: ${message}`);
+      // console.log(`💬 Mensaje de Slack preparado para ${channel}: ${message}`);
       
       // Por ahora solo log
       await this.logTriggerAction('trigger', 'slack', 'send', 'info', `Mensaje de Slack preparado para: ${channel}`);

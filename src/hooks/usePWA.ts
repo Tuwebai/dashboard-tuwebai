@@ -75,7 +75,7 @@ export const usePWA = () => {
           }
         });
 
-        console.log('Service Worker registrado:', registration);
+        // console.log('Service Worker registrado:', registration);
       } catch (error) {
         console.error('Error registrando Service Worker:', error);
       }
@@ -179,7 +179,7 @@ export const usePWA = () => {
           });
           
           // Aquí se enviaría la subscription al servidor
-          console.log('Push subscription:', subscription);
+          // console.log('Push subscription:', subscription);
           
           toast({
             title: 'Notificaciones activadas',

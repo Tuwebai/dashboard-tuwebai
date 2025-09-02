@@ -170,7 +170,35 @@ export default function AdminCollaborationPage() {
         .eq('id', projectId)
         .single();
 
-      if (projectError) throw projectError;
+      if (projectError) {
+        // Manejar específicamente el error de proyecto no encontrado
+        if (projectError.code === 'PGRST116') {
+          toast({
+            title: 'Proyecto no encontrado',
+            description: 'El proyecto que buscas no existe o no tienes permisos para acceder a él.',
+            variant: 'destructive'
+          });
+          // Redirigir al dashboard después de un breve delay
+          setTimeout(() => {
+            window.location.href = '/admin';
+          }, 3000);
+          return;
+        }
+        throw projectError;
+      }
+
+      if (!projectData) {
+        toast({
+          title: 'Proyecto no disponible',
+          description: 'No se pudo encontrar la información del proyecto.',
+          variant: 'destructive'
+        });
+        setTimeout(() => {
+          window.location.href = '/admin';
+        }, 3000);
+        return;
+      }
+
       setProject(projectData);
 
       // Cargar información del cliente creador
@@ -185,11 +213,16 @@ export default function AdminCollaborationPage() {
           setClientInfo(clientData);
         }
       }
-    } catch (error) {
-      console.error('Error cargando proyecto:', error);
+    } catch (error: any) {
+      // Solo mostrar errores críticos en consola, no errores de "proyecto no encontrado"
+      if (error?.code !== 'PGRST116') {
+        console.error('Error crítico cargando proyecto:', error);
+      }
+      
+      // Mostrar notificación amigable
       toast({
-        title: 'Error',
-        description: 'No se pudo cargar la información del proyecto',
+        title: 'Error al cargar el proyecto',
+        description: 'Hubo un problema al cargar la información. Por favor, intenta nuevamente.',
         variant: 'destructive'
       });
     } finally {

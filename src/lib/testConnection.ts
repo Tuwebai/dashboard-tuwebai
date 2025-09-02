@@ -16,15 +16,14 @@ export async function testSupabaseConnection() {
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     
 
-    console.log('- VITE_SUPABASE_URL:', supabaseUrl ? '✅ Configurada' : '❌ No configurada');
-    console.log('- VITE_SUPABASE_ANON_KEY:', supabaseKey ? '✅ Configurada' : '❌ No configurada');
+
     
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Variables de entorno de Supabase no configuradas');
     }
 
     // 2. Probar conexión básica
-    console.log('🔍 Probando conexión básica...');
+    // console.log('🔍 Probando conexión básica...');
     const { data: testData, error: testError } = await supabase
       .from('projects')
       .select('count')
@@ -35,30 +34,30 @@ export async function testSupabaseConnection() {
       throw testError;
     }
     
-    console.log('✅ Conexión básica exitosa');
+    // console.log('✅ Conexión básica exitosa');
 
     // 3. Probar obtener proyectos
-    console.log('📁 Probando obtención de proyectos...');
+    // console.log('📁 Probando obtención de proyectos...');
     const projects = await projectService.getProjects();
-    console.log('✅ Proyectos obtenidos:', projects.projects.length);
-    console.log('📊 Total de proyectos:', projects.total);
+    // console.log('✅ Proyectos obtenidos:', projects.projects.length);
+    // console.log('📊 Total de proyectos:', projects.total);
 
     // 4. Probar estadísticas
-    console.log('📊 Probando estadísticas...');
+    // console.log('📊 Probando estadísticas...');
     const stats = await projectService.getProjectStats();
-    console.log('✅ Estadísticas obtenidas:', stats);
+    // console.log('✅ Estadísticas obtenidas:', stats);
 
     // 5. Probar tecnologías
-    console.log('🔧 Probando tecnologías...');
+    // console.log('🔧 Probando tecnologías...');
     const technologies = await projectService.getUniqueTechnologies();
-    console.log('✅ Tecnologías obtenidas:', technologies.length);
+    // console.log('✅ Tecnologías obtenidas:', technologies.length);
 
-    console.log('🎉 ¡Todas las pruebas de conexión pasaron exitosamente!');
-    console.log('📋 Resumen:');
-    console.log('- Conexión a Supabase: ✅ FUNCIONANDO');
-    console.log('- Tabla projects: ✅ ACCESIBLE');
-    console.log('- Project Service: ✅ FUNCIONANDO');
-    console.log('- Datos reales: ✅ OBTENIDOS');
+    // console.log('🎉 ¡Todas las pruebas de conexión pasaron exitosamente!');
+    // console.log('📋 Resumen:');
+    // console.log('- Conexión a Supabase: ✅ FUNCIONANDO');
+    // console.log('- Tabla projects: ✅ ACCESIBLE');
+    // console.log('- Project Service: ✅ FUNCIONANDO');
+    // console.log('- Datos reales: ✅ OBTENIDOS');
     
     return {
       success: true,
@@ -90,7 +89,7 @@ export async function testSupabaseConnection() {
 // Función para verificar el estado de la base de datos
 export async function checkDatabaseStatus() {
   try {
-    console.log('🔍 Verificando estado de la base de datos...');
+    // console.log('🔍 Verificando estado de la base de datos...');
     
     // Verificar si la tabla projects existe
     const { data: tableInfo, error: tableError } = await supabase
@@ -121,8 +120,8 @@ export async function checkDatabaseStatus() {
       };
     }
     
-    console.log('✅ Tabla projects existe y es accesible');
-    console.log('✅ Estructura de la tabla es válida');
+    // console.log('✅ Tabla projects existe y es accesible');
+    // console.log('✅ Estructura de la tabla es válida');
     
     return {
       tableExists: true,
@@ -141,22 +140,22 @@ export async function checkDatabaseStatus() {
 
 // Función principal para ejecutar todas las verificaciones
 export async function runFullDatabaseCheck() {
-  console.log('🚀 Iniciando verificación completa de la base de datos...\n');
+  // console.log('🚀 Iniciando verificación completa de la base de datos...\n');
   
   const dbStatus = await checkDatabaseStatus();
   const connectionTest = await testSupabaseConnection();
   
-  console.log('\n📋 Resumen completo:');
-  console.log('🔌 Base de datos:', dbStatus.tableExists ? '✅ ACCESIBLE' : '❌ NO ACCESIBLE');
-  console.log('📊 Estructura:', dbStatus.structureValid ? '✅ VÁLIDA' : '❌ INVÁLIDA');
-  console.log('🔗 Conexión:', connectionTest.success ? '✅ FUNCIONANDO' : '❌ FALLANDO');
+  // console.log('\n📋 Resumen completo:');
+  // console.log('🔌 Base de datos:', dbStatus.tableExists ? '✅ ACCESIBLE' : '❌ NO ACCESIBLE');
+  // console.log('📊 Estructura:', dbStatus.structureValid ? '✅ VÁLIDA' : '❌ INVÁLIDA');
+  // console.log('🔗 Conexión:', connectionTest.success ? '✅ FUNCIONANDO' : '❌ FALLANDO');
   
   if (dbStatus.tableExists && dbStatus.structureValid && connectionTest.success) {
-    console.log('\n🎉 ¡La base de datos está completamente funcional!');
-    console.log('📈 Proyectos en la base de datos:', connectionTest.projectsCount);
-    console.log('🔧 Tecnologías disponibles:', connectionTest.technologiesCount);
+    // console.log('\n🎉 ¡La base de datos está completamente funcional!');
+    // console.log('📈 Proyectos en la base de datos:', connectionTest.projectsCount);
+    // console.log('🔧 Tecnologías disponibles:', connectionTest.technologiesCount);
   } else {
-    console.log('\n⚠️ Hay problemas con la base de datos que necesitan atención');
+    // console.log('\n⚠️ Hay problemas con la base de datos que necesitan atención');
   }
   
   return {

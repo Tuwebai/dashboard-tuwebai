@@ -41,7 +41,8 @@ import {
   Activity,
   Save,
   Send,
-  MoreHorizontal
+  MoreHorizontal,
+  CheckSquare
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/lib/supabase';
@@ -73,6 +74,19 @@ const ESTADOS_TAREA = [
 ];
 
 export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: VerDetallesProyectoProps) {
+  
+  // Función para obtener descripciones por defecto de las fases
+  const getPhaseDescription = (key: string) => {
+    const descriptions: Record<string, string> = {
+      'ui': 'Diseño de interfaz de usuario y experiencia visual del proyecto',
+      'maquetado': 'Estructuración y maquetado de las páginas web',
+      'contenido': 'Creación y optimización del contenido textual y multimedia',
+      'funcionalidades': 'Desarrollo de funcionalidades y características interactivas',
+      'seo': 'Optimización para motores de búsqueda y posicionamiento web',
+      'deploy': 'Despliegue y puesta en producción del proyecto finalizado'
+    };
+    return descriptions[key] || 'Fase de desarrollo del proyecto';
+  };
   const { user } = useApp();
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedFases, setExpandedFases] = useState<Set<string>>(new Set());
@@ -95,21 +109,9 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
     fechaEntrega: proyecto?.fechaEntrega || ''
   });
   
-  // Estados para gestión de fases
+  // Estados para gestión de fases (solo lectura para clientes)
   const [proyectoLocal, setProyectoLocal] = useState(proyecto);
-  const [editandoFase, setEditandoFase] = useState<string | null>(null);
-  const [nuevaFase, setNuevaFase] = useState({
-    descripcion: '',
-    fechaInicio: '',
-    fechaFin: '',
-    estado: 'Pendiente'
-  });
-  const [faseEditando, setFaseEditando] = useState({
-    descripcion: '',
-    fechaInicio: '',
-    fechaFin: '',
-    estado: 'Pendiente'
-  });
+
 
   // Validar que el proyecto existe
   if (!proyecto || !proyecto.id) {
@@ -134,6 +136,43 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
   useEffect(() => {
     setProyectoLocal(proyecto);
   }, [proyecto]);
+
+  // Suscripción a cambios en tiempo real del proyecto
+  useEffect(() => {
+    if (!proyecto?.id) return;
+
+    const channel = supabase
+      .channel(`project-client-${proyecto.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'projects',
+          filter: `id=eq.${proyecto.id}`
+        },
+        (payload) => {
+          const updatedProject = payload.new as any;
+          setProyectoLocal(updatedProject);
+          
+          // Actualizar el proyecto padre si existe la función onUpdate
+          onUpdate?.(updatedProject);
+          
+          // Mostrar notificación de actualización
+          toast({
+            title: "Proyecto actualizado",
+            description: "El proyecto se ha actualizado en tiempo real",
+          });
+        }
+      )
+      .subscribe((status) => {
+        setIsRealtimeConnected(status === 'SUBSCRIBED');
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [proyecto?.id, onUpdate]);
 
   // Actualizar datos del proyecto cuando cambie proyectoLocal
   useEffect(() => {
@@ -172,52 +211,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
     setExpandedTareas(newExpanded);
   };
 
-  const handleEstadoFase = async (faseKey: string, nuevoEstado: string) => {
-    if (!user || user.role !== 'admin' || !proyecto?.id) return;
 
-    try {
-      setLoading(true);
-      const nuevasFases = (proyectoLocal.fases || []).map((f: any) =>
-        f.key === faseKey
-          ? {
-              ...f,
-              estado: nuevoEstado,
-              ultimoCambio: { 
-                usuario: user.email, 
-                fecha: new Date().toISOString() 
-              }
-            }
-          : f
-      );
-
-      // Actualizar en Supabase
-      const { error } = await supabase
-        .from('projects')
-        .update({ fases: nuevasFases })
-        .eq('id', proyecto.id);
-      
-      if (error) throw error;
-      
-      // Actualizar estado local inmediatamente
-      const proyectoActualizado = { ...proyectoLocal, fases: nuevasFases };
-      setProyectoLocal(proyectoActualizado);
-      onUpdate?.(proyectoActualizado);
-      
-      toast({
-        title: "Estado actualizado",
-        description: `Fase ${faseKey} actualizada a ${nuevoEstado}`,
-      });
-    } catch (error) {
-      console.error('Error actualizando estado:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el estado de la fase",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAgregarComentario = async (faseKey: string) => {
     if (!nuevoComentario.trim() || !user || !proyecto?.id) return;
@@ -244,244 +238,9 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
     }
   };
 
-  const handleAgregarTarea = async (faseKey: string) => {
-    if (!nuevaTarea.titulo.trim() || !user || !proyecto?.id) return;
 
-    try {
-      setLoading(true);
-      // Implementar agregar tareas con Supabase cuando sea necesario
-      // Por ahora solo se actualiza el estado local
 
-      setNuevaTarea({
-        titulo: '',
-        descripcion: '',
-        responsable: '',
-        fechaLimite: '',
-        prioridad: 'media'
-      });
 
-      toast({
-        title: "Tarea agregada",
-        description: "La tarea se agregó correctamente",
-      });
-    } catch (error) {
-      console.error('Error agregando tarea:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo agregar la tarea",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleActualizarTarea = async (tareaId: string, updates: any) => {
-    if (!proyecto?.id) return;
-
-    try {
-      setLoading(true);
-      // Implementar actualizar tareas con Supabase cuando sea necesario
-      toast({
-        title: "Tarea actualizada",
-        description: "La tarea se actualizó correctamente",
-      });
-    } catch (error) {
-      console.error('Error actualizando tarea:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la tarea",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEliminarTarea = async (tareaId: string) => {
-    if (!proyecto?.id) return;
-
-    try {
-      setLoading(true);
-      // Implementar eliminar tareas con Supabase cuando sea necesario
-      toast({
-        title: "Tarea eliminada",
-        description: "La tarea se eliminó correctamente",
-      });
-    } catch (error) {
-      console.error('Error eliminando tarea:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la tarea",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Funciones para gestión de fases
-  const handleAgregarFase = async () => {
-    if (!nuevaFase.descripcion.trim() || !user || user.role !== 'admin' || !proyecto?.id) return;
-
-    try {
-      setLoading(true);
-      const faseKey = `fase_${Date.now()}`;
-      const nuevaFaseCompleta = {
-        key: faseKey,
-        descripcion: nuevaFase.descripcion,
-        fechaInicio: nuevaFase.fechaInicio,
-        fechaFin: nuevaFase.fechaFin,
-        estado: nuevaFase.estado,
-        tareas: [],
-        comentarios: [],
-        creadoPor: user.email,
-        fechaCreacion: new Date().toISOString()
-      };
-
-      const fasesActualizadas = [...(proyectoLocal.fases || []), nuevaFaseCompleta];
-      
-      // Actualizar en Supabase
-      const { error } = await supabase
-        .from('projects')
-        .update({ fases: fasesActualizadas })
-        .eq('id', proyecto.id);
-      
-      if (error) throw error;
-      
-      // Actualizar estado local
-      const proyectoActualizado = { ...proyectoLocal, fases: fasesActualizadas };
-      setProyectoLocal(proyectoActualizado);
-      onUpdate?.(proyectoActualizado);
-      
-      // Limpiar formulario
-      setNuevaFase({
-        descripcion: '',
-        fechaInicio: '',
-        fechaFin: '',
-        estado: 'Pendiente'
-      });
-
-      toast({
-        title: "Fase agregada",
-        description: "La fase se agregó correctamente",
-      });
-    } catch (error) {
-      console.error('Error agregando fase:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo agregar la fase",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEditarFase = async (faseKey: string) => {
-    if (!user || user.role !== 'admin' || !proyecto?.id) return;
-
-    try {
-      setLoading(true);
-      const fasesActualizadas = (proyectoLocal.fases || []).map((f: any) =>
-        f.key === faseKey
-          ? {
-              ...f,
-              descripcion: faseEditando.descripcion,
-              fechaInicio: faseEditando.fechaInicio,
-              fechaFin: faseEditando.fechaFin,
-              estado: faseEditando.estado,
-              ultimaModificacion: {
-                usuario: user.email,
-                fecha: new Date().toISOString()
-              }
-            }
-          : f
-      );
-
-      // Actualizar en Supabase
-      const { error } = await supabase
-        .from('projects')
-        .update({ fases: fasesActualizadas })
-        .eq('id', proyecto.id);
-      
-      if (error) throw error;
-      
-      // Actualizar estado local
-      const proyectoActualizado = { ...proyectoLocal, fases: fasesActualizadas };
-      setProyectoLocal(proyectoActualizado);
-      onUpdate?.(proyectoActualizado);
-      
-      // Salir del modo edición
-      setEditandoFase(null);
-      setFaseEditando({
-        descripcion: '',
-        fechaInicio: '',
-        fechaFin: '',
-        estado: 'Pendiente'
-      });
-
-      toast({
-        title: "Fase actualizada",
-        description: "La fase se actualizó correctamente",
-      });
-    } catch (error) {
-      console.error('Error actualizando fase:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la fase",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEliminarFase = async (faseKey: string) => {
-    if (!user || user.role !== 'admin' || !proyecto?.id) return;
-
-    try {
-      setLoading(true);
-      const fasesActualizadas = (proyectoLocal.fases || []).filter((f: any) => f.key !== faseKey);
-
-      // Actualizar en Supabase
-      const { error } = await supabase
-        .from('projects')
-        .update({ fases: fasesActualizadas })
-        .eq('id', proyecto.id);
-      
-      if (error) throw error;
-      
-      // Actualizar estado local
-      const proyectoActualizado = { ...proyectoLocal, fases: fasesActualizadas };
-      setProyectoLocal(proyectoActualizado);
-      onUpdate?.(proyectoActualizado);
-
-      toast({
-        title: "Fase eliminada",
-        description: "La fase se eliminó correctamente",
-      });
-    } catch (error) {
-      console.error('Error eliminando fase:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la fase",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const iniciarEdicionFase = (fase: any) => {
-    setEditandoFase(fase.key);
-    setFaseEditando({
-      descripcion: fase.descripcion || '',
-      fechaInicio: fase.fechaInicio || '',
-      fechaFin: fase.fechaFin || '',
-      estado: fase.estado || 'Pendiente'
-    });
-  };
 
   const handleGuardarProyecto = async () => {
     if (!proyecto?.id) return;
@@ -550,77 +309,56 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
     return estadoObj ? estadoObj.color : 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
-  const getTareaStatusColor = (status: string) => {
-    const statusObj = ESTADOS_TAREA.find(s => s.value === status);
-    return statusObj ? statusObj.color : 'bg-gray-100 text-gray-800 border-gray-200';
-  };
-
      const renderFases = () => {
      const fases = proyectoLocal.fases || [];
      
      return (
        <div className="space-y-6">
-         {/* Formulario para agregar nueva fase */}
-         {user?.role === 'admin' && (
-           <Card className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-slate-200/50 backdrop-blur-sm overflow-hidden bg-gradient-to-br from-blue-50 via-blue-25 to-indigo-50">
-             <CardHeader>
-               <CardTitle className="flex items-center gap-2 text-slate-800">
-                 <Plus className="h-5 w-5 text-blue-600" />
-                 Agregar Nueva Fase
-               </CardTitle>
-             </CardHeader>
-             <CardContent>
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Input
-                    placeholder="Descripción de la fase"
-                    value={nuevaFase.descripcion}
-                    onChange={(e) => setNuevaFase({...nuevaFase, descripcion: e.target.value})}
-                    className="border-slate-200 text-slate-700 placeholder-slate-400"
-                  />
-                  <Select 
-                    value={nuevaFase.estado} 
-                    onValueChange={(value) => setNuevaFase({...nuevaFase, estado: value})}
-                  >
-                    <SelectTrigger className="border-slate-200">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ESTADOS_FASE.map((estado) => (
-                        <SelectItem key={estado.value} value={estado.value}>
-                          {estado.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="date"
-                    placeholder="Fecha de inicio"
-                    value={nuevaFase.fechaInicio}
-                    onChange={(e) => setNuevaFase({...nuevaFase, fechaInicio: e.target.value})}
-                    className="border-slate-200 text-slate-700 placeholder-slate-400"
-                  />
-                  <Input
-                    type="date"
-                    placeholder="Fecha de fin"
-                    value={nuevaFase.fechaFin}
-                    onChange={(e) => setNuevaFase({...nuevaFase, fechaFin: e.target.value})}
-                    className="border-slate-200 text-slate-700 placeholder-slate-400"
-                  />
-                </div>
-                                 <Button 
-                   onClick={handleAgregarFase}
-                   disabled={!nuevaFase.descripcion.trim() || loading}
-                   className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-all duration-300 transform hover:scale-105"
-                 >
-                   <Plus className="h-4 w-4 mr-2" />
-                   Agregar Fase
-                 </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+         {/* Mensaje cuando no hay fases - Solo para clientes */}
+         {fases.length === 0 && (
+           <div className="text-center py-16 px-6">
+             <div className="w-20 h-20 mx-auto mb-6 bg-violet-100 rounded-full flex items-center justify-center">
+               <Activity className="w-10 h-10 text-violet-600" />
+             </div>
+             <h3 className="text-2xl font-bold text-slate-800 mb-4">
+               Fases del Proyecto
+             </h3>
+             <p className="text-slate-600 mb-6 max-w-lg mx-auto text-lg">
+               Las fases del proyecto se definirán próximamente. Nuestro equipo está trabajando en la planificación detallada de cada etapa de desarrollo para garantizar el mejor resultado.
+             </p>
+             <div className="bg-violet-50 border border-violet-200 rounded-xl p-6 max-w-2xl mx-auto mb-6">
+               <h4 className="font-semibold text-violet-800 mb-3">Fases que se implementarán:</h4>
+               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                 <div className="flex items-center gap-2 text-violet-700">
+                   <span className="text-lg">🎨</span>
+                   <span>UI Design</span>
+                 </div>
+                 <div className="flex items-center gap-2 text-violet-700">
+                   <span className="text-lg">📱</span>
+                   <span>Maquetado</span>
+                 </div>
+                 <div className="flex items-center gap-2 text-violet-700">
+                   <span className="text-lg">📝</span>
+                   <span>Contenido</span>
+                 </div>
+                 <div className="flex items-center gap-2 text-violet-700">
+                   <span className="text-lg">⚙️</span>
+                   <span>Funcionalidades</span>
+                 </div>
+                 <div className="flex items-center gap-2 text-violet-700">
+                   <span className="text-lg">🔍</span>
+                   <span>SEO</span>
+                 </div>
+                 <div className="flex items-center gap-2 text-violet-700">
+                   <span className="text-lg">🚀</span>
+                   <span>Deploy</span>
+                 </div>
+               </div>
+             </div>
+           </div>
+         )}
         
+        {/* Lista de fases existentes - Solo lectura para clientes */}
         {fases.map((fase: any) => {
           const progreso = calcularProgresoFase(fase.key);
           const isExpanded = expandedFases.has(fase.key);
@@ -645,45 +383,9 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    {user?.role === 'admin' && (
-                      <Select 
-                        value={fase.estado} 
-                        onValueChange={(value) => handleEstadoFase(fase.key, value)}
-                        disabled={loading}
-                      >
-                        <SelectTrigger className="w-32 border-slate-200">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ESTADOS_FASE.map((estado) => (
-                            <SelectItem key={estado.value} value={estado.value}>
-                              {estado.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                    
-                    {user?.role === 'admin' && (
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => iniciarEdicionFase(fase)}
-                          className="p-1 text-slate-600 hover:text-slate-800"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEliminarFase(fase.key)}
-                          className="p-1 text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
+                   <Badge className={getStatusColor(fase.estado)}>
+                     {fase.estado}
+                   </Badge>
                     
                     <div className="text-right">
                       <div className="text-sm font-medium text-slate-700">{progreso}%</div>
@@ -695,71 +397,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
               
               {isExpanded && (
                 <CardContent className="space-y-4">
-                  {/* Formulario de edición de fase */}
-                                     {editandoFase === fase.key && user?.role === 'admin' && (
-                     <Card className="p-4 border border-blue-200 bg-gradient-to-br from-blue-50 via-blue-25 to-indigo-50 rounded-xl shadow-md">
-                       <div className="space-y-3">
-                         <h4 className="font-medium text-slate-800">Editar Fase</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <Input
-                            placeholder="Descripción de la fase"
-                            value={faseEditando.descripcion}
-                            onChange={(e) => setFaseEditando({...faseEditando, descripcion: e.target.value})}
-                            className="border-slate-200 text-slate-700 placeholder-slate-400"
-                          />
-                          <Select 
-                            value={faseEditando.estado} 
-                            onValueChange={(value) => setFaseEditando({...faseEditando, estado: value})}
-                          >
-                            <SelectTrigger className="border-slate-200">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ESTADOS_FASE.map((estado) => (
-                                <SelectItem key={estado.value} value={estado.value}>
-                                  {estado.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            type="date"
-                            placeholder="Fecha de inicio"
-                            value={faseEditando.fechaInicio}
-                            onChange={(e) => setFaseEditando({...faseEditando, fechaInicio: e.target.value})}
-                            className="border-slate-200 text-slate-700 placeholder-slate-400"
-                          />
-                          <Input
-                            type="date"
-                            placeholder="Fecha de fin"
-                            value={faseEditando.fechaFin}
-                            onChange={(e) => setFaseEditando({...faseEditando, fechaFin: e.target.value})}
-                            className="border-slate-200 text-slate-700 placeholder-slate-400"
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                                                     <Button 
-                             onClick={() => handleEditarFase(fase.key)}
-                             disabled={!faseEditando.descripcion.trim() || loading}
-                             size="sm"
-                             className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-all duration-300 transform hover:scale-105"
-                           >
-                             Guardar
-                           </Button>
-                           <Button 
-                             variant="outline"
-                             onClick={() => setEditandoFase(null)}
-                             size="sm"
-                             className="border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-300 transform hover:scale-105"
-                           >
-                             Cancelar
-                           </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  )}
-                  
-                  {/* Comentarios */}
+                 {/* Comentarios - Solo lectura */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h4 className="font-medium text-slate-800">Comentarios</h4>
@@ -794,66 +432,15 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                     </div>
                   </div>
 
-                  {/* Tareas */}
+                 {/* Tareas - Solo lectura */}
                   {tareasExpanded && (
                     <div className="space-y-3">
                       <h4 className="font-medium text-slate-800">Tareas</h4>
-                      
-                                             {/* Agregar nueva tarea */}
-                       <Card className="p-4 border border-slate-200 bg-gradient-to-br from-emerald-50 via-emerald-25 to-teal-50 rounded-xl shadow-md">
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <Input
-                            placeholder="Título de la tarea"
-                            value={nuevaTarea.titulo}
-                            onChange={(e) => setNuevaTarea({...nuevaTarea, titulo: e.target.value})}
-                            className="border-slate-200 text-slate-700 placeholder-slate-400"
-                          />
-                          <Input
-                            placeholder="Responsable"
-                            value={nuevaTarea.responsable}
-                            onChange={(e) => setNuevaTarea({...nuevaTarea, responsable: e.target.value})}
-                            className="border-slate-200 text-slate-700 placeholder-slate-400"
-                          />
-                          <Input
-                            type="date"
-                            value={nuevaTarea.fechaLimite}
-                            onChange={(e) => setNuevaTarea({...nuevaTarea, fechaLimite: e.target.value})}
-                            className="border-slate-200 text-slate-700 placeholder-slate-400"
-                          />
-                          <Select 
-                            value={nuevaTarea.prioridad} 
-                            onValueChange={(value) => setNuevaTarea({...nuevaTarea, prioridad: value})}
-                          >
-                            <SelectTrigger className="border-slate-200">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="baja">Baja</SelectItem>
-                              <SelectItem value="media">Media</SelectItem>
-                              <SelectItem value="alta">Alta</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <Textarea
-                          placeholder="Descripción de la tarea"
-                          value={nuevaTarea.descripcion}
-                          onChange={(e) => setNuevaTarea({...nuevaTarea, descripcion: e.target.value})}
-                          className="mt-3 border-slate-200 text-slate-700 placeholder-slate-400"
-                        />
-                                                 <Button 
-                           onClick={() => handleAgregarTarea(fase.key)}
-                           disabled={!nuevaTarea.titulo.trim() || loading}
-                           className="mt-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white transition-all duration-300 transform hover:scale-105"
-                           size="sm"
-                         >
-                           <Plus className="h-4 w-4 mr-2" />
-                           Agregar Tarea
-                         </Button>
-                      </Card>
 
                       {/* Lista de tareas */}
                       <div className="space-y-2">
-                                                 {(fase.tareas || []).map((tarea: any) => (
+                        {fase.tareas && fase.tareas.length > 0 ? (
+                          fase.tareas.map((tarea: any) => (
                            <Card key={tarea.id} className="p-3 border border-slate-200 bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
                              <div className="flex items-center justify-between">
                               <div className="flex-1">
@@ -862,22 +449,32 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                                 <div className="flex items-center gap-2 mt-1">
                                   <Badge variant="outline" className="text-xs border-slate-300 text-slate-600">{tarea.responsable}</Badge>
                                   <Badge variant="outline" className="text-xs border-slate-300 text-slate-600">{tarea.prioridad}</Badge>
-                                  <Badge className={`text-xs ${getTareaStatusColor(tarea.status)}`}>
+                                  <Badge className={`text-xs ${ESTADOS_TAREA.find(s => s.value === tarea.status)?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
                                     {ESTADOS_TAREA.find(s => s.value === tarea.status)?.label}
                                   </Badge>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-800">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
                             </div>
                           </Card>
-                        ))}
+                        ))
+                        ) : (
+                          <div className="text-center py-8 px-6">
+                            <div className="w-12 h-12 mx-auto mb-4 bg-emerald-100 rounded-full flex items-center justify-center">
+                              <CheckSquare className="w-6 h-6 text-emerald-600" />
+                            </div>
+                            <h4 className="text-lg font-semibold text-slate-800 mb-2">
+                              Sin tareas asignadas
+                            </h4>
+                            <p className="text-slate-600 mb-4 max-w-sm mx-auto">
+                              Esta fase aún no tiene tareas específicas asignadas. Las tareas se definirán según el progreso del proyecto.
+                            </p>
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 max-w-sm mx-auto">
+                              <p className="text-sm text-emerald-700">
+                                <strong>Próximamente:</strong> Se agregarán tareas detalladas para esta fase
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1243,21 +840,42 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
-                                             {(proyecto.fases || []).map((fase: any) => (
-                         <div key={fase.key} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-slate-200 rounded-2xl bg-white shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 gap-3">
-                           <div className="flex-1">
-                             <div className="font-medium text-slate-800">{fase.descripcion}</div>
-                             <div className="text-sm text-slate-500">Clave: {fase.key}</div>
-                           </div>
-                           <div className="flex items-center gap-3">
-                             <Badge className={getStatusColor(fase.estado)}>{fase.estado}</Badge>
-                             <div className="text-right">
-                               <div className="text-sm font-medium text-slate-700">{calcularProgresoFase(fase.key)}%</div>
-                               <Progress value={calcularProgresoFase(fase.key)} className="w-20 h-2" />
-                             </div>
-                           </div>
-                         </div>
-                       ))}
+                      {proyecto.fases && proyecto.fases.length > 0 ? (
+                        proyecto.fases.map((fase: any) => (
+                          <div key={fase.key} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-slate-200 rounded-2xl bg-white shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 gap-3">
+                            <div className="flex-1">
+                              <div className="font-medium text-slate-800">
+                                {fase.descripcion || getPhaseDescription(fase.key)}
+                              </div>
+                              <div className="text-sm text-slate-500">Clave: {fase.key}</div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Badge className={getStatusColor(fase.estado)}>{fase.estado}</Badge>
+                              <div className="text-right">
+                                <div className="text-sm font-medium text-slate-700">{calcularProgresoFase(fase.key)}%</div>
+                                <Progress value={calcularProgresoFase(fase.key)} className="w-20 h-2" />
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-12 px-6">
+                          <div className="w-16 h-16 mx-auto mb-4 bg-violet-100 rounded-full flex items-center justify-center">
+                            <Activity className="w-8 h-8 text-violet-600" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                            Fases del Proyecto
+                          </h3>
+                          <p className="text-slate-600 mb-4 max-w-md mx-auto">
+                            Las fases del proyecto se definirán próximamente. Nuestro equipo está trabajando en la planificación detallada de cada etapa de desarrollo.
+                          </p>
+                          <div className="bg-violet-50 border border-violet-200 rounded-lg p-4 max-w-md mx-auto">
+                            <p className="text-sm text-violet-700">
+                              <strong>Próximamente:</strong> UI Design, Maquetado, Contenido, Funcionalidades, SEO y Deploy
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
