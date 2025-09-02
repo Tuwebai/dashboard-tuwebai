@@ -81,18 +81,13 @@ export default function TutorialOverlay() {
 
     // Navegación automática si está configurada
     if (currentStep.autoNavigate && currentStep.action === 'navigate' && currentStep.navigateTo) {
-      const autoNavigateTimeout = setTimeout(async () => {
+      const autoNavigateTimeout = setTimeout(() => {
         try {
           navigate(currentStep.navigateTo);
-          
-          if (currentStep.waitForNavigation) {
-            const delay = currentStep.navigationDelay || 1000;
-            await new Promise(resolve => setTimeout(resolve, delay));
-          }
         } catch (error) {
           console.error('❌ Error en navegación automática:', error);
         }
-      }, 500); // Pequeño delay para que se muestre el modal primero
+      }, 100); // Delay mínimo para que se muestre el modal
 
       return () => {
         clearTimeout(timeoutId);
@@ -185,12 +180,6 @@ export default function TutorialOverlay() {
         if (currentStep.navigateTo) {
           try {
             navigate(currentStep.navigateTo);
-            
-            // Esperar a que se complete la navegación
-            if (currentStep.waitForNavigation) {
-              const delay = currentStep.navigationDelay || 1000;
-              await new Promise(resolve => setTimeout(resolve, delay));
-            }
           } catch (error) {
             console.error('Error during navigation:', error);
           }
@@ -496,12 +485,7 @@ export default function TutorialOverlay() {
                           try {
                             // Navegar inmediatamente
                             navigate(currentStep.navigateTo);
-                            
-                            // Esperar un poco para que se complete la navegación
-                            const delay = currentStep.navigationDelay || 2000;
-                            await new Promise(resolve => setTimeout(resolve, delay));
-                            
-                            // Avanzar al siguiente paso después de la navegación
+                            // Avanzar al siguiente paso inmediatamente
                             nextStep();
                             return;
                           } catch (error) {

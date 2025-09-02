@@ -735,8 +735,8 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
         action: 'navigate',
         actionText: 'Navegar a la sección de proyectos',
         navigateTo: '/proyectos',
-        waitForNavigation: true,
-        navigationDelay: 1000,
+        waitForNavigation: false,
+        navigationDelay: 0,
         skipable: true,
         autoNavigate: true,
         tips: [
@@ -769,8 +769,8 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
         action: 'navigate',
         actionText: 'Navegar a tu perfil',
         navigateTo: '/perfil',
-        waitForNavigation: true,
-        navigationDelay: 1000,
+        waitForNavigation: false,
+        navigationDelay: 0,
         skipable: true,
         tips: [
           'Puedes cambiar tu avatar y información personal',
@@ -802,8 +802,8 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
         action: 'navigate',
         actionText: 'Volver al dashboard',
         navigateTo: '/dashboard',
-        waitForNavigation: true,
-        navigationDelay: 1000,
+        waitForNavigation: false,
+        navigationDelay: 0,
         skipable: true
       },
       {
