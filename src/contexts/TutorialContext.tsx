@@ -24,6 +24,7 @@ export interface TutorialStep {
   navigateTo?: string; // Ruta a la que navegar
   waitForNavigation?: boolean; // Esperar a que se complete la navegación
   navigationDelay?: number; // Delay después de la navegación
+  autoNavigate?: boolean; // Navegación automática cuando se muestra el paso
 }
 
 export interface TutorialFlow {
@@ -735,11 +736,12 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
         target: '.projects-section',
         position: 'bottom',
         action: 'navigate',
-        actionText: 'Navegar a tus proyectos',
+        actionText: 'Navegando a tus proyectos...',
         navigateTo: '/proyectos',
         waitForNavigation: true,
-        navigationDelay: 2000,
+        navigationDelay: 1000,
         skipable: true,
+        autoNavigate: true, // Nueva propiedad para navegación automática
         tips: [
           'Cada proyecto tiene su propio espacio',
           'Puedes ver el progreso en tiempo real',

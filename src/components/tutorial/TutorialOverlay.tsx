@@ -79,6 +79,31 @@ export default function TutorialOverlay() {
     // Buscar el elemento con un pequeño delay para asegurar que esté renderizado
     const timeoutId = setTimeout(findTargetElement, 100);
 
+    // Navegación automática si está configurada
+    if (currentStep.autoNavigate && currentStep.action === 'navigate' && currentStep.navigateTo) {
+      const autoNavigateTimeout = setTimeout(async () => {
+        try {
+          console.log('🚀 Navegación automática iniciada:', currentStep.navigateTo);
+          navigate(currentStep.navigateTo);
+          
+          if (currentStep.waitForNavigation) {
+            const delay = currentStep.navigationDelay || 1000;
+            console.log('⏳ Esperando navegación automática:', delay + 'ms');
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+          
+          console.log('✅ Navegación automática completada');
+        } catch (error) {
+          console.error('❌ Error en navegación automática:', error);
+        }
+      }, 500); // Pequeño delay para que se muestre el modal primero
+
+      return () => {
+        clearTimeout(timeoutId);
+        clearTimeout(autoNavigateTimeout);
+      };
+    }
+
     // Actualizar posición en scroll y resize
     const updatePosition = () => {
       if (targetElement) {
@@ -94,7 +119,7 @@ export default function TutorialOverlay() {
       window.removeEventListener('scroll', updatePosition);
       window.removeEventListener('resize', updatePosition);
     };
-  }, [isActive, currentStep, targetElement]);
+  }, [isActive, currentStep, targetElement, navigate]);
 
   // =====================================================
   // FUNCIONES AUXILIARES
