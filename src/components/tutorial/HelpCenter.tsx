@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { 
   Search, 
   BookOpen, 
@@ -146,6 +146,12 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl h-[80vh] sm:h-[85vh] p-0 overflow-hidden">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Centro de Ayuda</DialogTitle>
+          <DialogDescription>
+            Encuentra respuestas rápidas, tutoriales y documentación para usar la plataforma
+          </DialogDescription>
+        </DialogHeader>
         <div className="flex flex-col sm:flex-row h-full">
           {/* Sidebar */}
           <div className="w-full sm:w-80 bg-slate-50 border-b sm:border-b-0 sm:border-r border-slate-200 flex flex-col max-h-[40vh] sm:max-h-none">

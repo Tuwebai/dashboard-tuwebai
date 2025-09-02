@@ -25,11 +25,38 @@ import {
 import { cn } from '@/lib/utils';
 
 // =====================================================
+// HOOK PARA RESPONSIVIDAD
+// =====================================================
+
+const useResponsiveTutorial = () => {
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  const [screenSize, setScreenSize] = useState({ width: 0, height: 0 });
+  
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      setIsMobile(width < 768);
+      setIsTablet(width >= 768 && width < 1024);
+      setScreenSize({ width, height });
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+  
+  return { isMobile, isTablet, screenSize };
+};
+
+// =====================================================
 // COMPONENTE PRINCIPAL
 // =====================================================
 
 export default function TutorialOverlay() {
   const navigate = useNavigate();
+  const { isMobile, isTablet, screenSize } = useResponsiveTutorial();
   const {
     isActive,
     currentFlow,
@@ -118,8 +145,7 @@ export default function TutorialOverlay() {
 
   const updateOverlayPosition = (element: HTMLElement) => {
     const rect = element.getBoundingClientRect();
-    const padding = 20;
-    const isMobile = window.innerWidth < 768;
+    const padding = isMobile ? 10 : 20;
     
     let x = rect.left - padding;
     let y = rect.top - padding;
@@ -129,28 +155,30 @@ export default function TutorialOverlay() {
     // Ajustar posición según la posición del tooltip y dispositivo
     switch (currentStep?.position) {
       case 'top':
-        y = rect.top - (isMobile ? 150 : 200) - padding;
+        y = rect.top - (isMobile ? 200 : 250) - padding;
         break;
       case 'bottom':
         y = rect.bottom + padding;
         break;
       case 'left':
-        x = rect.left - (isMobile ? 200 : 300) - padding;
+        x = rect.left - (isMobile ? 280 : 350) - padding;
         break;
       case 'right':
         x = rect.right + padding;
         break;
       case 'center':
-        x = window.innerWidth / 2 - (isMobile ? 150 : 200);
-        y = window.innerHeight / 2 - (isMobile ? 100 : 150);
-        width = isMobile ? 300 : 400;
-        height = isMobile ? 200 : 300;
+        x = screenSize.width / 2 - (isMobile ? 160 : 200);
+        y = screenSize.height / 2 - (isMobile ? 120 : 150);
+        width = isMobile ? 320 : 400;
+        height = isMobile ? 240 : 300;
         break;
     }
 
     // Asegurar que el overlay no se salga de la pantalla
-    x = Math.max(10, Math.min(x, window.innerWidth - (isMobile ? 320 : 420)));
-    y = Math.max(10, Math.min(y, window.innerHeight - (isMobile ? 220 : 320)));
+    const maxWidth = isMobile ? 340 : 420;
+    const maxHeight = isMobile ? 260 : 320;
+    x = Math.max(10, Math.min(x, screenSize.width - maxWidth));
+    y = Math.max(10, Math.min(y, screenSize.height - maxHeight));
 
     setOverlayPosition({ x, y, width, height });
   };
@@ -215,9 +243,8 @@ export default function TutorialOverlay() {
 
   // Función para calcular posición responsive del tooltip
   const getTooltipPosition = () => {
-    const isMobile = window.innerWidth < 768;
-    const tooltipWidth = isMobile ? 320 : 400;
-    const tooltipHeight = isMobile ? 300 : 400;
+    const tooltipWidth = isMobile ? 320 : isTablet ? 360 : 400;
+    const tooltipHeight = isMobile ? 300 : isTablet ? 350 : 400;
     
     // Siempre usar posición central en móviles para mejor UX
     if (isMobile) {
@@ -226,7 +253,20 @@ export default function TutorialOverlay() {
         top: '50%',
         transform: 'translate(-50%, -50%)',
         width: `${tooltipWidth}px`,
-        maxWidth: '90vw'
+        maxWidth: '90vw',
+        maxHeight: '90vh'
+      };
+    }
+    
+    // En tablet, usar posición central también para mejor experiencia
+    if (isTablet) {
+      return {
+        left: '50%',
+        top: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: `${tooltipWidth}px`,
+        maxWidth: '80vw',
+        maxHeight: '80vh'
       };
     }
     
@@ -248,13 +288,13 @@ export default function TutorialOverlay() {
     let top = rect.top;
     
     // Ajustar si se sale por la derecha
-    if (left + tooltipWidth > window.innerWidth - 20) {
+    if (left + tooltipWidth > screenSize.width - 20) {
       left = rect.left - tooltipWidth - padding;
     }
     
     // Ajustar si se sale por abajo
-    if (top + tooltipHeight > window.innerHeight - 20) {
-      top = window.innerHeight - tooltipHeight - 20;
+    if (top + tooltipHeight > screenSize.height - 20) {
+      top = screenSize.height - tooltipHeight - 20;
     }
     
     // Ajustar si se sale por arriba
@@ -277,8 +317,8 @@ export default function TutorialOverlay() {
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[9999] pointer-events-none"
       >
-        {/* Overlay de fondo - Solo en desktop */}
-        {window.innerWidth >= 768 && (
+        {/* Overlay de fondo - Solo en desktop y tablet */}
+        {!isMobile && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.3 }}
@@ -287,22 +327,7 @@ export default function TutorialOverlay() {
           />
         )}
 
-        {/* Highlight del elemento objetivo - Solo para elementos específicos */}
-        {targetElement && currentStep.position !== 'center' && currentStep.target !== '.main-navigation' && (
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            className="absolute border-2 border-blue-400 rounded-lg"
-            style={{
-              left: overlayPosition.x,
-              top: overlayPosition.y,
-              width: overlayPosition.width,
-              height: overlayPosition.height,
-              boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.3), 0 0 10px rgba(59, 130, 246, 0.2)'
-            }}
-          />
-        )}
+
 
         {/* Tooltip del tutorial */}
         <motion.div
@@ -314,10 +339,13 @@ export default function TutorialOverlay() {
           className={cn(
             "absolute pointer-events-auto",
             "bg-white rounded-2xl shadow-2xl border border-slate-200",
-            // Responsive classes
-            "w-full max-w-[90vw] sm:max-w-md md:max-w-lg",
-            "text-sm sm:text-base",
-            "mx-2 sm:mx-4"
+            // Responsive classes mejoradas
+            isMobile ? "w-[90vw] max-w-[90vw]" : isTablet ? "w-[80vw] max-w-[80vw]" : "w-auto",
+            isMobile ? "text-sm" : isTablet ? "text-sm" : "text-base",
+            isMobile ? "mx-4" : "mx-0",
+            // Mejoras para touch
+            "touch-manipulation",
+            "select-none"
           )}
           style={{
             ...getTooltipPosition(),
@@ -337,17 +365,29 @@ export default function TutorialOverlay() {
             </div>
 
             {/* Contenido del header */}
-            <CardHeader className="pb-3 pt-4 sm:pb-4 sm:pt-6">
+            <CardHeader className={cn(
+              "pb-3 pt-4",
+              isMobile ? "px-4" : "px-6"
+            )}>
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                  <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl text-white text-sm sm:text-lg flex-shrink-0">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className={cn(
+                    "flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl text-white flex-shrink-0",
+                    isMobile ? "w-8 h-8 text-sm" : isTablet ? "w-9 h-9 text-base" : "w-10 h-10 text-lg"
+                  )}>
                     {currentFlow.icon}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <CardTitle className="text-base sm:text-lg text-slate-800 leading-tight">
+                    <CardTitle className={cn(
+                      "text-slate-800 leading-tight",
+                      isMobile ? "text-sm" : isTablet ? "text-base" : "text-lg"
+                    )}>
                       {currentStep.title}
                     </CardTitle>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
+                    <div className={cn(
+                      "flex items-center gap-2 mt-1",
+                      isMobile ? "flex-col" : "flex-row"
+                    )}>
                       <Badge variant="secondary" className="text-xs w-fit">
                         Paso {stepIndex + 1} de {currentFlow.steps.length}
                       </Badge>
@@ -360,50 +400,80 @@ export default function TutorialOverlay() {
                 </div>
 
                 {/* Controles del header */}
-                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1 flex-shrink-0">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setEnableSounds(!enableSounds)}
-                    className="h-6 w-6 sm:h-8 sm:w-8 p-0 text-slate-500 hover:text-slate-700"
+                    className={cn(
+                      "p-0 text-slate-500 hover:text-slate-700",
+                      isMobile ? "h-8 w-8" : isTablet ? "h-9 w-9" : "h-8 w-8"
+                    )}
                     title={enableSounds ? "Silenciar sonidos" : "Activar sonidos"}
                   >
                     {enableSounds ? (
-                      <Volume2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <Volume2 className={cn(
+                        isMobile ? "w-4 h-4" : "w-4 h-4"
+                      )} />
                     ) : (
-                      <VolumeX className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <VolumeX className={cn(
+                        isMobile ? "w-4 h-4" : "w-4 h-4"
+                      )} />
                     )}
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={exitTutorial}
-                    className="h-6 w-6 sm:h-8 sm:w-8 p-0 text-slate-500 hover:text-red-600"
+                    className={cn(
+                      "p-0 text-slate-500 hover:text-red-600",
+                      isMobile ? "h-8 w-8" : isTablet ? "h-9 w-9" : "h-8 w-8"
+                    )}
                     title="Cerrar tutorial"
                   >
-                    <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <X className={cn(
+                      isMobile ? "w-4 h-4" : "w-4 h-4"
+                    )} />
                   </Button>
                 </div>
               </div>
             </CardHeader>
 
             {/* Contenido principal */}
-            <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
+            <CardContent className={cn(
+              "space-y-3",
+              isMobile ? "px-4" : "px-6"
+            )}>
               {/* Descripción */}
-              <p className="text-slate-600 leading-relaxed text-sm sm:text-base">
+              <p className={cn(
+                "text-slate-600 leading-relaxed",
+                isMobile ? "text-sm" : isTablet ? "text-sm" : "text-base"
+              )}>
                 {currentStep.description}
               </p>
 
               {/* Tips */}
               {currentStep.tips && currentStep.tips.length > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3">
+                <div className={cn(
+                  "bg-blue-50 border border-blue-200 rounded-lg",
+                  isMobile ? "p-2" : "p-3"
+                )}>
                   <div className="flex items-center gap-2 mb-2">
-                    <Lightbulb className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
-                    <span className="text-xs sm:text-sm font-medium text-blue-800">Consejos útiles</span>
+                    <Lightbulb className={cn(
+                      "text-blue-600",
+                      isMobile ? "w-3 h-3" : "w-4 h-4"
+                    )} />
+                    <span className={cn(
+                      "font-medium text-blue-800",
+                      isMobile ? "text-xs" : "text-sm"
+                    )}>Consejos útiles</span>
                   </div>
                   <ul className="space-y-1">
                     {currentStep.tips.map((tip, index) => (
-                      <li key={index} className="text-xs sm:text-sm text-blue-700 flex items-start gap-2">
+                      <li key={index} className={cn(
+                        "text-blue-700 flex items-start gap-2",
+                        isMobile ? "text-xs" : "text-sm"
+                      )}>
                         <span className="text-blue-500 mt-1 flex-shrink-0">•</span>
                         <span className="leading-relaxed">{tip}</span>
                       </li>
@@ -414,23 +484,50 @@ export default function TutorialOverlay() {
 
               {/* Acción requerida - Solo mostrar si no es navegación automática */}
               {currentStep.action && currentStep.action !== 'navigate' && (
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 sm:p-3">
+                <div className={cn(
+                  "bg-slate-50 border border-slate-200 rounded-lg",
+                  isMobile ? "p-2" : "p-3"
+                )}>
                   <div className="flex items-center gap-2 mb-2">
-                    <Target className="w-3 h-3 sm:w-4 sm:h-4 text-slate-600" />
-                    <span className="text-xs sm:text-sm font-medium text-slate-800">Acción requerida</span>
+                    <Target className={cn(
+                      "text-slate-600",
+                      isMobile ? "w-3 h-3" : "w-4 h-4"
+                    )} />
+                    <span className={cn(
+                      "font-medium text-slate-800",
+                      isMobile ? "text-xs" : "text-sm"
+                    )}>Acción requerida</span>
                   </div>
-                  <p className="text-xs sm:text-sm text-slate-600 mb-3 leading-relaxed">
+                  <p className={cn(
+                    "text-slate-600 mb-3 leading-relaxed",
+                    isMobile ? "text-xs" : "text-sm"
+                  )}>
                     {currentStep.actionText}
                   </p>
                   <Button
                     onClick={handleAction}
                     size="sm"
-                    className="bg-slate-800 hover:bg-slate-900 text-white w-full sm:w-auto text-xs sm:text-sm"
+                    className={cn(
+                      "bg-slate-800 hover:bg-slate-900 text-white",
+                      isMobile ? "w-full text-sm h-10" : "w-auto text-sm h-9"
+                    )}
                   >
-                    {currentStep.action === 'click' && <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />}
-                    {currentStep.action === 'hover' && <HelpCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />}
-                    {currentStep.action === 'scroll' && <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />}
-                    {currentStep.action === 'wait' && <Clock className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />}
+                    {currentStep.action === 'click' && <CheckCircle className={cn(
+                      "mr-2",
+                      isMobile ? "w-4 h-4" : "w-4 h-4"
+                    )} />}
+                    {currentStep.action === 'hover' && <HelpCircle className={cn(
+                      "mr-2",
+                      isMobile ? "w-4 h-4" : "w-4 h-4"
+                    )} />}
+                    {currentStep.action === 'scroll' && <ChevronRight className={cn(
+                      "mr-2",
+                      isMobile ? "w-4 h-4" : "w-4 h-4"
+                    )} />}
+                    {currentStep.action === 'wait' && <Clock className={cn(
+                      "mr-2",
+                      isMobile ? "w-4 h-4" : "w-4 h-4"
+                    )} />}
                     Ejecutar Acción
                   </Button>
                 </div>
@@ -439,18 +536,29 @@ export default function TutorialOverlay() {
 
 
               {/* Controles de navegación */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-2 pt-3 sm:pt-4 border-t border-slate-200">
-                <div className="flex items-center gap-2 order-2 sm:order-1">
+              <div className={cn(
+                "flex items-stretch justify-between gap-3 pt-3 border-t border-slate-200",
+                isMobile ? "flex-col" : "flex-row items-center gap-2"
+              )}>
+                <div className={cn(
+                  "flex items-center gap-2",
+                  isMobile ? "order-2" : "order-1"
+                )}>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={prevStep}
                     disabled={stepIndex === 0}
-                    className="h-8 sm:h-9 flex-1 sm:flex-none text-xs sm:text-sm"
+                    className={cn(
+                      "text-sm",
+                      isMobile ? "h-10 flex-1" : "h-9 flex-none"
+                    )}
                   >
-                    <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                    <span className="hidden sm:inline">Anterior</span>
-                    <span className="sm:hidden">Ant.</span>
+                    <ChevronLeft className={cn(
+                      "mr-1",
+                      isMobile ? "w-4 h-4" : "w-4 h-4"
+                    )} />
+                    <span className={isMobile ? "inline" : "inline"}>Anterior</span>
                   </Button>
                   
                   {currentStep.skipable && (
@@ -458,24 +566,37 @@ export default function TutorialOverlay() {
                       variant="ghost"
                       size="sm"
                       onClick={skipStep}
-                      className="h-8 sm:h-9 text-slate-500 hover:text-slate-700 text-xs sm:text-sm"
+                      className={cn(
+                        "text-slate-500 hover:text-slate-700 text-sm",
+                        isMobile ? "h-10" : "h-9"
+                      )}
                     >
-                      <SkipForward className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                      <span className="hidden sm:inline">Omitir</span>
-                      <span className="sm:hidden">Skip</span>
+                      <SkipForward className={cn(
+                        "mr-1",
+                        isMobile ? "w-4 h-4" : "w-4 h-4"
+                      )} />
+                      <span className={isMobile ? "inline" : "inline"}>Omitir</span>
                     </Button>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 order-1 sm:order-2">
+                <div className={cn(
+                  "flex items-center gap-2",
+                  isMobile ? "order-1" : "order-2"
+                )}>
                   {stepIndex === currentFlow.steps.length - 1 ? (
                     <Button
                       onClick={nextStep}
-                      className="h-8 sm:h-9 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white flex-1 sm:flex-none text-xs sm:text-sm"
+                      className={cn(
+                        "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm",
+                        isMobile ? "h-10 flex-1" : "h-9 flex-none"
+                      )}
                     >
-                      <Star className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                      <span className="hidden sm:inline">Completar</span>
-                      <span className="sm:hidden">Finalizar</span>
+                      <Star className={cn(
+                        "mr-2",
+                        isMobile ? "w-4 h-4" : "w-4 h-4"
+                      )} />
+                      <span className={isMobile ? "inline" : "inline"}>Completar</span>
                     </Button>
                   ) : (
                     <Button
@@ -498,11 +619,16 @@ export default function TutorialOverlay() {
                           nextStep();
                         }
                       }}
-                      className="h-8 sm:h-9 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white flex-1 sm:flex-none text-xs sm:text-sm"
+                      className={cn(
+                        "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white text-sm",
+                        isMobile ? "h-10 flex-1" : "h-9 flex-none"
+                      )}
                     >
-                      <span className="hidden sm:inline">Siguiente</span>
-                      <span className="sm:hidden">Sig.</span>
-                      <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
+                      <span className={isMobile ? "inline" : "inline"}>Siguiente</span>
+                      <ChevronRight className={cn(
+                        "ml-1",
+                        isMobile ? "w-4 h-4" : "w-4 h-4"
+                      )} />
                     </Button>
                   )}
                 </div>

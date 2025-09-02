@@ -1154,17 +1154,15 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // =====================================================
 
   const startTutorial = useCallback((flowId: string) => {
-    console.log('Iniciando tutorial:', flowId);
-    console.log('Flujos disponibles:', availableFlows.map(f => f.id));
+
     
     const flow = availableFlows.find(f => f.id === flowId);
     if (!flow) {
-      console.log('Flujo no encontrado:', flowId);
-      console.log('Flujos disponibles:', availableFlows.map(f => f.id));
+
       return;
     }
 
-    console.log('Flujo encontrado:', flow);
+
     setCurrentFlow(flow);
     setCurrentStep(flow.steps[0]);
     setStepIndex(0);
@@ -1179,7 +1177,7 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       timeSpent: 0
     };
     setProgress(newProgress);
-    console.log('Tutorial iniciado correctamente');
+
 
     // Reproducir sonido si está habilitado
     if (enableSounds) {
@@ -1280,7 +1278,7 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const markArticleHelpful = useCallback((articleId: string, helpful: boolean) => {
     // En una implementación real, esto se enviaría al servidor
-    console.log(`Article ${articleId} marked as ${helpful ? 'helpful' : 'not helpful'}`);
+
   }, []);
 
   const getContextualHelp = useCallback((context: string): HelpArticle[] => {

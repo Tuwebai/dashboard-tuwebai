@@ -220,25 +220,7 @@ export const projectService = {
     }
   },
 
-  /**
-   * Eliminar un proyecto
-   */
-  async deleteProject(id: string): Promise<void> {
-    try {
-      // Verificar que el proyecto existe
-      await this.getProjectById(id);
 
-      const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error deleting project:', error);
-      throw new Error(`Error al eliminar el proyecto: ${error.message}`);
-    }
-  },
 
   // =====================================================
   // OPERACIONES AVANZADAS

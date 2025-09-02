@@ -65,7 +65,6 @@ Transformar el dashboard actual en una interfaz de clase mundial que refleje la 
 
 ### 2. **Personalización Avanzada**
 - **Drag & Drop**: Reorganización de widgets por el usuario
-- **Temas Personalizables**: Modo claro/oscuro con transiciones suaves
 - **Vistas Guardadas**: Diferentes configuraciones para diferentes roles
 - **Filtros Persistentes**: Recordar preferencias del usuario
 
