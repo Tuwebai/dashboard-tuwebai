@@ -83,16 +83,12 @@ export default function TutorialOverlay() {
     if (currentStep.autoNavigate && currentStep.action === 'navigate' && currentStep.navigateTo) {
       const autoNavigateTimeout = setTimeout(async () => {
         try {
-          console.log('🚀 Navegación automática iniciada:', currentStep.navigateTo);
           navigate(currentStep.navigateTo);
           
           if (currentStep.waitForNavigation) {
             const delay = currentStep.navigationDelay || 1000;
-            console.log('⏳ Esperando navegación automática:', delay + 'ms');
             await new Promise(resolve => setTimeout(resolve, delay));
           }
-          
-          console.log('✅ Navegación automática completada');
         } catch (error) {
           console.error('❌ Error en navegación automática:', error);
         }
@@ -167,8 +163,6 @@ export default function TutorialOverlay() {
   const handleAction = async () => {
     if (!currentStep) return;
 
-    console.log('Ejecutando acción:', currentStep.action);
-
     switch (currentStep.action) {
       case 'click':
         if (targetElement) {
@@ -190,13 +184,11 @@ export default function TutorialOverlay() {
         // Manejar navegación directamente
         if (currentStep.navigateTo) {
           try {
-            console.log('Ejecutando acción de navegación a:', currentStep.navigateTo);
             navigate(currentStep.navigateTo);
             
             // Esperar a que se complete la navegación
             if (currentStep.waitForNavigation) {
               const delay = currentStep.navigationDelay || 1000;
-              console.log('Esperando navegación en acción:', delay + 'ms');
               await new Promise(resolve => setTimeout(resolve, delay));
             }
           } catch (error) {
@@ -206,7 +198,6 @@ export default function TutorialOverlay() {
         break;
       case 'wait':
         // Para acciones de espera, avanzar al siguiente paso
-        console.log('Acción de espera completada, avanzando al siguiente paso');
         nextStep();
         break;
     }
@@ -231,18 +222,7 @@ export default function TutorialOverlay() {
     return null;
   }
 
-  // Debug logs
-  console.log('TutorialOverlay render:', {
-    isActive,
-    currentFlow: currentFlow?.id,
-    currentStep: currentStep?.id,
-    currentStepTitle: currentStep?.title,
-    currentStepAction: currentStep?.action,
-    currentStepNavigateTo: currentStep?.navigateTo,
-    stepIndex,
-    targetElement: !!targetElement,
-    overlayPosition
-  });
+
 
   // Función para calcular posición responsive del tooltip
   const getTooltipPosition = () => {
@@ -514,18 +494,14 @@ export default function TutorialOverlay() {
                         // Manejar navegación si es necesario
                         if (currentStep?.action === 'navigate' && currentStep.navigateTo) {
                           try {
-                            console.log('Navegando a:', currentStep.navigateTo);
-                            
                             // Navegar inmediatamente
                             navigate(currentStep.navigateTo);
                             
                             // Esperar un poco para que se complete la navegación
                             const delay = currentStep.navigationDelay || 2000;
-                            console.log('Esperando navegación:', delay + 'ms');
                             await new Promise(resolve => setTimeout(resolve, delay));
                             
                             // Avanzar al siguiente paso después de la navegación
-                            console.log('Navegación completada, avanzando al siguiente paso');
                             nextStep();
                             return;
                           } catch (error) {
