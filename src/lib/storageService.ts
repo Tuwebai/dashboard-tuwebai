@@ -79,22 +79,40 @@ export class StorageService {
       const timestamp = Date.now();
       const fileName = `${userId}/avatar_${timestamp}.${file.name.split('.').pop()}`;
       
-      const { data, error } = await supabase.storage
+      // Intentar subir al bucket avatars, si no existe usar project-files
+      let bucketName = this.AVATARS_BUCKET;
+      let uploadError = null;
+      
+      const { error: avatarsError } = await supabase.storage
         .from(this.AVATARS_BUCKET)
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: true
         });
 
-      if (error) throw error;
+      if (avatarsError && avatarsError.message.includes('Bucket not found')) {
+        // Si el bucket avatars no existe, usar project-files
+        bucketName = this.DEFAULT_BUCKET;
+        const { error: projectError } = await supabase.storage
+          .from(this.DEFAULT_BUCKET)
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: true
+          });
+        uploadError = projectError;
+      } else {
+        uploadError = avatarsError;
+      }
+
+      if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
-        .from(this.AVATARS_BUCKET)
+        .from(bucketName)
         .getPublicUrl(fileName);
 
       return urlData.publicUrl;
     } catch (error) {
-      console.error('Error uploading avatar:', error);
+      // console.error('Error uploading avatar:', error);
       throw new Error('Error al subir el avatar');
     }
   }

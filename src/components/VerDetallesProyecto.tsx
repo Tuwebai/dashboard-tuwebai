@@ -165,9 +165,7 @@ export default function VerDetallesProyecto({ proyecto, onClose, onUpdate }: Ver
           });
         }
       )
-      .subscribe((status) => {
-        setIsRealtimeConnected(status === 'SUBSCRIBED');
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);

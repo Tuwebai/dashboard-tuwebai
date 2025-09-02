@@ -259,10 +259,24 @@ export default function Perfil() {
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
-      // Subir archivo a Supabase Storage
-      const { error: uploadError } = await supabase.storage
+      // Intentar subir al bucket avatars, si no existe usar project-files
+      let bucketName = 'avatars';
+      let uploadError = null;
+      
+      const { error: avatarsError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file);
+
+      if (avatarsError && avatarsError.message.includes('Bucket not found')) {
+        // Si el bucket avatars no existe, usar project-files
+        bucketName = 'project-files';
+        const { error: projectError } = await supabase.storage
+          .from('project-files')
+          .upload(filePath, file);
+        uploadError = projectError;
+      } else {
+        uploadError = avatarsError;
+      }
 
       if (uploadError) {
         throw uploadError;
@@ -270,7 +284,7 @@ export default function Perfil() {
 
       // Obtener URL pública del archivo
       const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
+        .from(bucketName)
         .getPublicUrl(filePath);
 
       // Actualizar URL del avatar en la base de datos
