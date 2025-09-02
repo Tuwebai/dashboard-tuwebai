@@ -34,9 +34,39 @@ import {
   Share2,
   Bookmark,
   BookmarkCheck,
-  CheckCircle
+  CheckCircle,
+  Menu,
+  ChevronLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// =====================================================
+// HOOK PARA RESPONSIVIDAD
+// =====================================================
+
+const useResponsiveHelpCenter = () => {
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
+  
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
+      setIsTablet(width >= 768 && width < 1024);
+      // En desktop, siempre mostrar sidebar
+      if (width >= 1024) {
+        setShowSidebar(true);
+      }
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+  
+  return { isMobile, isTablet, showSidebar, setShowSidebar };
+};
 
 // =====================================================
 // INTERFACES
@@ -53,6 +83,7 @@ interface HelpCenterProps {
 
 export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
   const navigate = useNavigate();
+  const { isMobile, isTablet, showSidebar, setShowSidebar } = useResponsiveHelpCenter();
   const {
     availableFlows,
     completedFlows,
@@ -145,115 +176,205 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl h-[80vh] sm:h-[85vh] p-0 overflow-hidden">
+      <DialogContent className={cn(
+        "h-[80vh] sm:h-[85vh] p-0 overflow-hidden",
+        isMobile ? "max-w-[95vw] w-[95vw]" : isTablet ? "max-w-[90vw] w-[90vw]" : "max-w-6xl"
+      )}>
         <DialogHeader className="sr-only">
           <DialogTitle>Centro de Ayuda</DialogTitle>
           <DialogDescription>
             Encuentra respuestas rápidas, tutoriales y documentación para usar la plataforma
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col sm:flex-row h-full">
+        <div className={cn(
+          "flex h-full",
+          isMobile ? "flex-col" : "flex-row"
+        )}>
           {/* Sidebar */}
-          <div className="w-full sm:w-80 bg-slate-50 border-b sm:border-b-0 sm:border-r border-slate-200 flex flex-col max-h-[40vh] sm:max-h-none">
-            {/* Header */}
-            <div className="p-4 sm:p-6 border-b border-slate-200">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl text-white">
-                  <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                </div>
-                <div>
-                  <h2 className="text-base sm:text-lg font-semibold text-slate-800">Centro de Ayuda</h2>
-                  <p className="text-xs sm:text-sm text-slate-500">Encuentra respuestas rápidas</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Navigation */}
-            <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-3 sm:mb-4">
-                  <TabsTrigger value="search" className="text-xs sm:text-sm">
-                    <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">Buscar</span>
-                    <span className="sm:hidden">Buscar</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="tutorials" className="text-xs sm:text-sm">
-                    <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">Tutoriales</span>
-                    <span className="sm:hidden">Tutoriales</span>
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="search" className="space-y-3 sm:space-y-4">
-                  {/* Search */}
-                  <div className="relative">
-                    <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-3 h-3 sm:w-4 sm:h-4" />
-                    <Input
-                      placeholder="Buscar en la ayuda..."
-                      value={searchInput}
-                      onChange={(e) => handleSearch(e.target.value)}
-                      className="pl-8 sm:pl-10 text-sm"
-                    />
+          <AnimatePresence>
+            {(showSidebar || !isMobile) && (
+              <motion.div
+                initial={isMobile ? { x: -320, opacity: 0 } : { opacity: 1 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={isMobile ? { x: -320, opacity: 0 } : { opacity: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className={cn(
+                  "bg-slate-50 border-b border-slate-200 flex flex-col",
+                  isMobile ? "w-full h-[50vh] border-b" : "w-80 border-r",
+                  isTablet ? "w-72" : ""
+                )}
+              >
+                {/* Header */}
+                <div className={cn(
+                  "border-b border-slate-200 flex items-center justify-between",
+                  isMobile ? "p-4" : "p-6"
+                )}>
+                  <div className="flex items-center gap-2">
+                    <div className={cn(
+                      "flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl text-white",
+                      isMobile ? "w-8 h-8" : "w-10 h-10"
+                    )}>
+                      <HelpCircle className={cn(
+                        isMobile ? "w-4 h-4" : "w-5 h-5"
+                      )} />
+                    </div>
+                    <div>
+                      <h2 className={cn(
+                        "font-semibold text-slate-800",
+                        isMobile ? "text-base" : "text-lg"
+                      )}>Centro de Ayuda</h2>
+                      <p className={cn(
+                        "text-slate-500",
+                        isMobile ? "text-xs" : "text-sm"
+                      )}>Encuentra respuestas rápidas</p>
+                    </div>
                   </div>
+                  
+                  {/* Botón para cerrar sidebar en móviles */}
+                  {isMobile && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowSidebar(false)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
 
-                  {/* Categories */}
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-medium text-slate-700 mb-2">Categorías</h3>
-                    <div className="space-y-1">
-                      {['all', 'onboarding', 'project-management', 'troubleshooting', 'advanced'].map((category) => (
-                        <button
-                          key={category}
-                          onClick={() => setSelectedCategory(category)}
+                {/* Navigation */}
+                <div className={cn(
+                  "flex-1 overflow-y-auto",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className={cn(
+                      "grid w-full grid-cols-2",
+                      isMobile ? "mb-3" : "mb-4"
+                    )}>
+                      <TabsTrigger value="search" className={cn(
+                        isMobile ? "text-xs" : "text-sm"
+                      )}>
+                        <Search className={cn(
+                          "mr-1",
+                          isMobile ? "w-3 h-3" : "w-4 h-4"
+                        )} />
+                        <span>Buscar</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="tutorials" className={cn(
+                        isMobile ? "text-xs" : "text-sm"
+                      )}>
+                        <PlayCircle className={cn(
+                          "mr-1",
+                          isMobile ? "w-3 h-3" : "w-4 h-4"
+                        )} />
+                        <span>Tutoriales</span>
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="search" className={cn(
+                      isMobile ? "space-y-3" : "space-y-4"
+                    )}>
+                      {/* Search */}
+                      <div className="relative">
+                        <Search className={cn(
+                          "absolute top-1/2 transform -translate-y-1/2 text-slate-400",
+                          isMobile ? "left-2 w-3 h-3" : "left-3 w-4 h-4"
+                        )} />
+                        <Input
+                          placeholder="Buscar en la ayuda..."
+                          value={searchInput}
+                          onChange={(e) => handleSearch(e.target.value)}
                           className={cn(
-                            "w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm transition-colors",
-                            selectedCategory === category
-                              ? "bg-blue-100 text-blue-800"
-                              : "text-slate-600 hover:bg-slate-100"
+                            "text-sm",
+                            isMobile ? "pl-8" : "pl-10"
                           )}
-                        >
-                          <div className="flex items-center gap-1 sm:gap-2">
-                            <div className="w-3 h-3 sm:w-4 sm:h-4">
-                              {getCategoryIcon(category)}
-                            </div>
-                            <span className="truncate">
-                              {category === 'all' ? 'Todas' : 
-                               category === 'onboarding' ? 'Primeros Pasos' :
-                               category === 'project-management' ? 'Gestión' :
-                               category === 'troubleshooting' ? 'Solución' :
-                               'Avanzado'}
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                        />
+                      </div>
 
-                  {/* Quick Actions */}
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-medium text-slate-700 mb-2">Acciones Rápidas</h3>
-                    <div className="space-y-1.5 sm:space-y-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-start text-xs sm:text-sm h-8 sm:h-9"
-                        onClick={() => startTutorial('welcome-tour')}
-                      >
-                        <Target className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                        <span className="hidden sm:inline">Tour de Bienvenida</span>
-                        <span className="sm:hidden">Tour</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-start text-xs sm:text-sm h-8 sm:h-9"
-                        onClick={() => setActiveTab('tutorials')}
-                      >
-                        <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                        <span className="hidden sm:inline">Ver Tutoriales</span>
-                        <span className="sm:hidden">Tutoriales</span>
-                      </Button>
-                    </div>
-                  </div>
+                      {/* Categories */}
+                      <div>
+                        <h3 className={cn(
+                          "font-medium text-slate-700 mb-2",
+                          isMobile ? "text-xs" : "text-sm"
+                        )}>Categorías</h3>
+                        <div className="space-y-1">
+                          {['all', 'onboarding', 'project-management', 'troubleshooting', 'advanced'].map((category) => (
+                            <button
+                              key={category}
+                              onClick={() => setSelectedCategory(category)}
+                              className={cn(
+                                "w-full text-left rounded-lg transition-colors",
+                                isMobile ? "px-2 py-1.5 text-xs" : "px-3 py-2 text-sm",
+                                selectedCategory === category
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "text-slate-600 hover:bg-slate-100"
+                              )}
+                            >
+                              <div className={cn(
+                                "flex items-center",
+                                isMobile ? "gap-1" : "gap-2"
+                              )}>
+                                <div className={cn(
+                                  isMobile ? "w-3 h-3" : "w-4 h-4"
+                                )}>
+                                  {getCategoryIcon(category)}
+                                </div>
+                                <span className="truncate">
+                                  {category === 'all' ? 'Todas' : 
+                                   category === 'onboarding' ? 'Primeros Pasos' :
+                                   category === 'project-management' ? 'Gestión' :
+                                   category === 'troubleshooting' ? 'Solución' :
+                                   'Avanzado'}
+                                </span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Quick Actions */}
+                      <div>
+                        <h3 className={cn(
+                          "font-medium text-slate-700 mb-2",
+                          isMobile ? "text-xs" : "text-sm"
+                        )}>Acciones Rápidas</h3>
+                        <div className={cn(
+                          isMobile ? "space-y-1.5" : "space-y-2"
+                        )}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "w-full justify-start",
+                              isMobile ? "text-xs h-8" : "text-sm h-9"
+                            )}
+                            onClick={() => startTutorial('welcome-tour')}
+                          >
+                            <Target className={cn(
+                              "mr-1.5",
+                              isMobile ? "w-3 h-3" : "w-4 h-4"
+                            )} />
+                            <span>Tour de Bienvenida</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "w-full justify-start",
+                              isMobile ? "text-xs h-8" : "text-sm h-9"
+                            )}
+                            onClick={() => setActiveTab('tutorials')}
+                          >
+                            <PlayCircle className={cn(
+                              "mr-1.5",
+                              isMobile ? "w-3 h-3" : "w-4 h-4"
+                            )} />
+                            <span>Ver Tutoriales</span>
+                          </Button>
+                        </div>
+                      </div>
 
                   {/* Direct Links */}
                   <div>
@@ -383,37 +504,75 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
                     ))}
                   </div>
                 </TabsContent>
-              </Tabs>
-            </div>
-          </div>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Main Content */}
           <div className="flex-1 flex flex-col min-h-0">
             {/* Header */}
-            <div className="p-4 sm:p-6 border-b border-slate-200">
-              <div className="flex items-center justify-between">
+            <div className={cn(
+              "border-b border-slate-200 flex items-center justify-between",
+              isMobile ? "p-4" : "p-6"
+            )}>
+              <div className="min-w-0 flex-1 flex items-center gap-3">
+                {/* Botón para mostrar sidebar en móviles */}
+                {isMobile && !showSidebar && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowSidebar(true)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Menu className="w-4 h-4" />
+                  </Button>
+                )}
+                
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-base sm:text-lg font-semibold text-slate-800 truncate">
+                  <h3 className={cn(
+                    "font-semibold text-slate-800 truncate",
+                    isMobile ? "text-base" : "text-lg"
+                  )}>
                     {activeTab === 'search' ? 'Artículos de Ayuda' : 'Tutoriales Disponibles'}
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-500">
+                  <p className={cn(
+                    "text-slate-500",
+                    isMobile ? "text-xs" : "text-sm"
+                  )}>
                     {activeTab === 'search' 
                       ? `${filteredHelpArticles.length} artículos encontrados`
                       : `${filteredTutorials.length} tutoriales disponibles`
                     }
                   </p>
                 </div>
-                <Button variant="outline" size="sm" onClick={onClose} className="ml-2 flex-shrink-0">
-                  <X className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Cerrar</span>
-                </Button>
               </div>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onClose} 
+                className="flex-shrink-0"
+              >
+                <X className={cn(
+                  "mr-1",
+                  isMobile ? "w-3 h-3" : "w-4 h-4"
+                )} />
+                <span className={isMobile ? "hidden" : "inline"}>Cerrar</span>
+              </Button>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div className={cn(
+              "flex-1 overflow-y-auto",
+              isMobile ? "p-4" : "p-6"
+            )}>
               {activeTab === 'search' ? (
-                <div className="space-y-3 sm:space-y-4">
+                <div className={cn(
+                  isMobile ? "space-y-3" : "space-y-4"
+                )}>
                   {filteredHelpArticles.length === 0 ? (
                     <div className="text-center py-8 sm:py-12">
                       <Search className="w-8 h-8 sm:w-12 sm:h-12 text-slate-300 mx-auto mb-3 sm:mb-4" />

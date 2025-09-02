@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { Button } from '@/components/ui/button';
@@ -13,10 +13,34 @@ import {
   Settings,
   Star,
   Target,
-  Zap
+  Zap,
+  X
 } from 'lucide-react';
 import HelpCenter from './HelpCenter';
 import { cn } from '@/lib/utils';
+
+// =====================================================
+// HOOK PARA RESPONSIVIDAD
+// =====================================================
+
+const useResponsiveHelpButton = () => {
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
+      setIsTablet(width >= 768 && width < 1024);
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+  
+  return { isMobile, isTablet };
+};
 
 // =====================================================
 // INTERFACES
@@ -37,6 +61,7 @@ export default function HelpButton({
   showBadge = true,
   className 
 }: HelpButtonProps) {
+  const { isMobile, isTablet } = useResponsiveHelpButton();
   const {
     availableFlows,
     completedFlows,
@@ -132,25 +157,37 @@ export default function HelpButton({
 
   if (variant === 'floating') {
     return (
-      <div className={cn("fixed bottom-6 right-6 z-50", className)}>
+      <div className={cn(
+        "fixed z-50",
+        isMobile ? "bottom-4 right-4" : "bottom-6 right-6",
+        className
+      )}>
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: isMobile ? 1 : 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
           <div className="relative">
             <Button
               onClick={() => setShowQuickMenu(!showQuickMenu)}
-              className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-2xl"
+              className={cn(
+                "rounded-full bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-2xl",
+                isMobile ? "h-12 w-12" : "h-14 w-14"
+              )}
             >
-              <HelpCircle className="w-6 h-6" />
+              <HelpCircle className={cn(
+                isMobile ? "w-5 h-5" : "w-6 h-6"
+              )} />
             </Button>
             
             {showBadge && getAvailableTutorialsCount() > 0 && (
               <Badge 
                 variant="destructive" 
-                className="absolute -top-2 -right-2 h-6 w-6 p-0 flex items-center justify-center text-xs font-bold"
+                className={cn(
+                  "absolute p-0 flex items-center justify-center text-xs font-bold",
+                  isMobile ? "-top-1 -right-1 h-5 w-5" : "-top-2 -right-2 h-6 w-6"
+                )}
               >
                 {getAvailableTutorialsCount()}
               </Badge>
@@ -162,17 +199,48 @@ export default function HelpButton({
                 initial={{ opacity: 0, scale: 0.8, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.8, y: 20 }}
-                className="absolute bottom-16 right-0 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4"
+                className={cn(
+                  "absolute bg-white rounded-2xl shadow-2xl border border-slate-200",
+                  isMobile ? "bottom-14 right-0 w-[90vw] max-w-[320px] p-3" : "bottom-16 right-0 w-80 p-4"
+                )}
               >
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg text-white">
-                      <HelpCircle className="w-4 h-4" />
+                <div className={cn(
+                  isMobile ? "space-y-2" : "space-y-3"
+                )}>
+                  {/* Header con botón de cerrar en móviles */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg text-white",
+                        isMobile ? "w-7 h-7" : "w-8 h-8"
+                      )}>
+                        <HelpCircle className={cn(
+                          isMobile ? "w-3 h-3" : "w-4 h-4"
+                        )} />
+                      </div>
+                      <div>
+                        <h3 className={cn(
+                          "font-semibold text-slate-800",
+                          isMobile ? "text-sm" : "text-base"
+                        )}>Centro de Ayuda</h3>
+                        <p className={cn(
+                          "text-slate-500",
+                          isMobile ? "text-xs" : "text-xs"
+                        )}>Acceso rápido a la ayuda</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-800">Centro de Ayuda</h3>
-                      <p className="text-xs text-slate-500">Acceso rápido a la ayuda</p>
-                    </div>
+                    
+                    {/* Botón de cerrar en móviles */}
+                    {isMobile && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowQuickMenu(false)}
+                        className="h-7 w-7 p-0"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    )}
                   </div>
 
                   {getQuickActions().map((action) => (
@@ -184,22 +252,37 @@ export default function HelpButton({
                         setShowQuickMenu(false);
                       }}
                       disabled={!action.available}
-                      className="w-full justify-start h-auto p-3 hover:bg-slate-50"
+                      className={cn(
+                        "w-full justify-start hover:bg-slate-50",
+                        isMobile ? "h-auto p-2" : "h-auto p-3"
+                      )}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "flex items-center",
+                        isMobile ? "gap-2" : "gap-3"
+                      )}>
                         <div className={cn(
-                          "flex items-center justify-center w-8 h-8 rounded-lg",
+                          "flex items-center justify-center rounded-lg",
+                          isMobile ? "w-7 h-7" : "w-8 h-8",
                           action.available 
                             ? "bg-blue-100 text-blue-600" 
                             : "bg-slate-100 text-slate-400"
                         )}>
-                          <action.icon className="w-4 h-4" />
+                          <action.icon className={cn(
+                            isMobile ? "w-3 h-3" : "w-4 h-4"
+                          )} />
                         </div>
-                        <div className="text-left">
-                          <div className="font-medium text-slate-800">
+                        <div className="text-left min-w-0 flex-1">
+                          <div className={cn(
+                            "font-medium text-slate-800 truncate",
+                            isMobile ? "text-sm" : "text-base"
+                          )}>
                             {action.label}
                           </div>
-                          <div className="text-xs text-slate-500">
+                          <div className={cn(
+                            "text-slate-500",
+                            isMobile ? "text-xs" : "text-xs"
+                          )}>
                             {action.description}
                           </div>
                         </div>
@@ -215,9 +298,15 @@ export default function HelpButton({
                         setIsHelpCenterOpen(true);
                         setShowQuickMenu(false);
                       }}
-                      className="w-full"
+                      className={cn(
+                        "w-full",
+                        isMobile ? "h-9 text-sm" : "h-10"
+                      )}
                     >
-                      <BookOpen className="w-4 h-4 mr-2" />
+                      <BookOpen className={cn(
+                        "mr-2",
+                        isMobile ? "w-3 h-3" : "w-4 h-4"
+                      )} />
                       Ver Todo
                     </Button>
                   </div>
@@ -241,14 +330,23 @@ export default function HelpButton({
       <Button
         variant="outline"
         onClick={() => setIsHelpCenterOpen(true)}
-        className="relative h-10 px-4 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400"
+        className={cn(
+          "relative bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400",
+          isMobile ? "h-9 px-3 text-sm" : "h-10 px-4"
+        )}
       >
-        <HelpCircle className="w-4 h-4 mr-2" />
-        Ayuda
+        <HelpCircle className={cn(
+          "mr-2",
+          isMobile ? "w-3 h-3" : "w-4 h-4"
+        )} />
+        <span className={isMobile ? "hidden sm:inline" : "inline"}>Ayuda</span>
         {showBadge && getAvailableTutorialsCount() > 0 && (
           <Badge 
             variant="destructive" 
-            className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
+            className={cn(
+              "absolute p-0 flex items-center justify-center text-xs",
+              isMobile ? "-top-1 -right-1 h-4 w-4" : "-top-2 -right-2 h-5 w-5"
+            )}
           >
             {getAvailableTutorialsCount()}
           </Badge>
