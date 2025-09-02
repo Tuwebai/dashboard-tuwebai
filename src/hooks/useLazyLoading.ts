@@ -1,123 +1,248 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-interface UseLazyLoadingOptions {
+// =====================================================
+// HOOK PARA LAZY LOADING OPTIMIZADO
+// =====================================================
+
+interface LazyLoadingOptions {
   threshold?: number;
   rootMargin?: string;
   triggerOnce?: boolean;
+  fallback?: React.ReactNode;
 }
 
-export function useLazyLoading<T extends HTMLElement = HTMLDivElement>(
-  options: UseLazyLoadingOptions = {}
-) {
+interface UseLazyLoadingReturn {
+  isVisible: boolean;
+  isLoaded: boolean;
+  ref: React.RefObject<HTMLElement>;
+  load: () => void;
+}
+
+export const useLazyLoading = (options: LazyLoadingOptions = {}): UseLazyLoadingReturn => {
   const {
     threshold = 0.1,
     rootMargin = '50px',
-    triggerOnce = true
+    triggerOnce = true,
+    fallback = null
   } = options;
 
   const [isVisible, setIsVisible] = useState(false);
-  const [hasTriggered, setHasTriggered] = useState(false);
-  const elementRef = useRef<T>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const ref = useRef<HTMLElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
-  const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
-    const [entry] = entries;
-    
-    if (entry.isIntersecting) {
-      setIsVisible(true);
-      if (triggerOnce) {
-        setHasTriggered(true);
-      }
-    } else if (!triggerOnce) {
-      setIsVisible(false);
-    }
-  }, [triggerOnce]);
+  const load = useCallback(() => {
+    setIsLoaded(true);
+  }, []);
 
   useEffect(() => {
-    const element = elementRef.current;
-    if (!element || (triggerOnce && hasTriggered)) return;
+    const element = ref.current;
+    if (!element) return;
 
-    const observer = new IntersectionObserver(handleIntersection, {
-      threshold,
-      rootMargin
-    });
+    // Crear observer si no existe
+    if (!observerRef.current) {
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              setIsVisible(true);
+              load();
+              
+              // Desconectar si solo debe activarse una vez
+              if (triggerOnce) {
+                observerRef.current?.unobserve(entry.target);
+              }
+            } else if (!triggerOnce) {
+              setIsVisible(false);
+            }
+          });
+        },
+        {
+          threshold,
+          rootMargin,
+        }
+      );
+    }
 
-    observer.observe(element);
+    // Observar el elemento
+    observerRef.current.observe(element);
 
+    // Cleanup
     return () => {
-      observer.unobserve(element);
+      if (observerRef.current) {
+        observerRef.current.unobserve(element);
+      }
     };
-  }, [handleIntersection, threshold, rootMargin, triggerOnce, hasTriggered]);
+  }, [threshold, rootMargin, triggerOnce, load]);
+
+  // Cleanup del observer
+  useEffect(() => {
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
 
   return {
-    elementRef,
-    isVisible: triggerOnce ? (isVisible || hasTriggered) : isVisible
+    isVisible,
+    isLoaded,
+    ref,
+    load,
   };
-}
+};
 
 // Hook para lazy loading de imágenes
-export function useLazyImage(src: string, placeholder?: string) {
-  const [imageSrc, setImageSrc] = useState(placeholder || '');
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isError, setIsError] = useState(false);
+export const useLazyImage = (src: string, options: LazyLoadingOptions = {}) => {
+  const { isVisible, isLoaded, ref } = useLazyLoading(options);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (!src) return;
+    if (isVisible && !imageSrc && !isLoading) {
+      setIsLoading(true);
+      setHasError(false);
 
-    const img = new Image();
-    
-    img.onload = () => {
-      setImageSrc(src);
-      setIsLoaded(true);
-      setIsError(false);
-    };
-    
-    img.onerror = () => {
-      setIsError(true);
-      setIsLoaded(false);
-    };
-    
-    img.src = src;
-  }, [src]);
+      const img = new Image();
+      img.onload = () => {
+        setImageSrc(src);
+        setIsLoading(false);
+      };
+      img.onerror = () => {
+        setHasError(true);
+        setIsLoading(false);
+      };
+      img.src = src;
+    }
+  }, [isVisible, src, imageSrc, isLoading]);
 
   return {
-    imageSrc,
+    isVisible,
     isLoaded,
-    isError
+    ref,
+    imageSrc,
+    isLoading,
+    hasError,
   };
-}
+};
 
 // Hook para lazy loading de componentes
-export function useLazyComponent<T = any>(
-  importFunction: () => Promise<{ default: React.ComponentType<T> }>,
-  fallback?: React.ComponentType
-) {
-  const [Component, setComponent] = useState<React.ComponentType<T> | null>(
-    fallback || null
-  );
+export const useLazyComponent = <T extends React.ComponentType<any>>(
+  importFunc: () => Promise<{ default: T }>,
+  options: LazyLoadingOptions = {}
+) => {
+  const { isVisible, isLoaded, ref } = useLazyLoading(options);
+  const [Component, setComponent] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [hasError, setHasError] = useState(false);
 
-  const loadComponent = useCallback(async () => {
-    if (Component && Component !== fallback) return;
+  useEffect(() => {
+    if (isVisible && !Component && !isLoading) {
+      setIsLoading(true);
+      setHasError(false);
 
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const module = await importFunction();
-      setComponent(() => module.default);
-    } catch (err) {
-      setError(err as Error);
-      console.error('Error loading component:', err);
-    } finally {
-      setIsLoading(false);
+      importFunc()
+        .then((module) => {
+          setComponent(() => module.default);
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error('Error loading component:', error);
+          setHasError(true);
+          setIsLoading(false);
+        });
     }
-  }, [importFunction, Component, fallback]);
+  }, [isVisible, Component, isLoading, importFunc]);
 
   return {
+    isVisible,
+    isLoaded,
+    ref,
     Component,
     isLoading,
-    error,
-    loadComponent
+    hasError,
   };
-}
+};
+
+// Hook para lazy loading de datos
+export const useLazyData = <T>(
+  fetchFunc: () => Promise<T>,
+  options: LazyLoadingOptions = {}
+) => {
+  const { isVisible, isLoaded, ref } = useLazyLoading(options);
+  const [data, setData] = useState<T | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    if (isVisible && !data && !isLoading) {
+      setIsLoading(true);
+      setHasError(false);
+
+      fetchFunc()
+        .then((result) => {
+          setData(result);
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error('Error fetching data:', error);
+          setHasError(true);
+          setIsLoading(false);
+        });
+    }
+  }, [isVisible, data, isLoading, fetchFunc]);
+
+  return {
+    isVisible,
+    isLoaded,
+    ref,
+    data,
+    isLoading,
+    hasError,
+  };
+};
+
+// Hook para lazy loading de scripts
+export const useLazyScript = (src: string, options: LazyLoadingOptions = {}) => {
+  const { isVisible, isLoaded, ref } = useLazyLoading(options);
+  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    if (isVisible && !isScriptLoaded && !isLoading) {
+      setIsLoading(true);
+      setHasError(false);
+
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      
+      script.onload = () => {
+        setIsScriptLoaded(true);
+        setIsLoading(false);
+      };
+      
+      script.onerror = () => {
+        setHasError(true);
+        setIsLoading(false);
+      };
+
+      document.head.appendChild(script);
+
+      return () => {
+        document.head.removeChild(script);
+      };
+    }
+  }, [isVisible, src, isScriptLoaded, isLoading]);
+
+  return {
+    isVisible,
+    isLoaded,
+    ref,
+    isScriptLoaded,
+    isLoading,
+    hasError,
+  };
+};
