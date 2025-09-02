@@ -827,12 +827,12 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
   
   {
     id: 'client-projects-tour',
-    title: 'Gestiona tus Proyectos',
+    name: 'Gestiona tus Proyectos',
     description: 'Aprende a gestionar y seguir tus proyectos web',
     icon: '📁',
     estimatedTime: 6,
     difficulty: 'beginner',
-    category: 'projects',
+    category: 'feature',
     steps: [
       {
         id: 'client-projects-1',
