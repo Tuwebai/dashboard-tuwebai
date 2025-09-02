@@ -142,6 +142,8 @@ export default function TutorialOverlay() {
   const handleAction = async () => {
     if (!currentStep) return;
 
+    console.log('Ejecutando acción:', currentStep.action);
+
     switch (currentStep.action) {
       case 'click':
         if (targetElement) {
@@ -178,7 +180,9 @@ export default function TutorialOverlay() {
         }
         break;
       case 'wait':
-        // No hacer nada, solo esperar
+        // Para acciones de espera, avanzar al siguiente paso
+        console.log('Acción de espera completada, avanzando al siguiente paso');
+        nextStep();
         break;
     }
   };
@@ -487,11 +491,12 @@ export default function TutorialOverlay() {
                             navigate(currentStep.navigateTo);
                             
                             // Esperar un poco para que se complete la navegación
-                            const delay = currentStep.navigationDelay || 1500;
+                            const delay = currentStep.navigationDelay || 2000;
                             console.log('Esperando navegación:', delay + 'ms');
                             await new Promise(resolve => setTimeout(resolve, delay));
                             
-                            // Avanzar al siguiente paso
+                            // Avanzar al siguiente paso después de la navegación
+                            console.log('Navegación completada, avanzando al siguiente paso');
                             nextStep();
                             return;
                           } catch (error) {
