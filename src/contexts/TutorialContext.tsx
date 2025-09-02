@@ -692,78 +692,134 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
   
   {
     id: 'client-welcome-tour',
-    title: 'Bienvenido a TuWebAI',
-    description: 'Tour de bienvenida específico para clientes',
-    icon: '👋',
+    name: 'Tour de Bienvenida Cliente',
+    description: 'Conoce las funcionalidades principales del dashboard para clientes',
+    icon: '🎯',
+    category: 'onboarding',
     estimatedTime: 8,
     difficulty: 'beginner',
-    category: 'onboarding',
+    completionReward: '¡Bienvenido a TuWebAI!',
     steps: [
       {
         id: 'client-welcome-1',
-        title: 'Bienvenido a TuWebAI',
-        description: 'Te damos la bienvenida a TuWebAI, tu plataforma profesional para gestionar proyectos web.',
-        target: '.main-navigation',
-        position: 'center',
+        title: '¡Bienvenido a TuWebAI!',
+        description: 'Te guiaremos por las funcionalidades principales del dashboard para que puedas aprovechar al máximo la plataforma y seguir el progreso de tus proyectos.',
+        target: '.dashboard-header',
+        position: 'bottom',
         action: 'wait',
-        actionText: 'Explora la interfaz',
+        actionText: 'Continúa para comenzar',
         skipable: false,
-        tips: [
-          'TuWebAI es tu centro de control para proyectos web',
-          'Aquí podrás ver el progreso de tus proyectos',
-          'Tu equipo trabajará contigo en cada fase'
-        ]
+        required: true
       },
       {
         id: 'client-welcome-2',
-        title: 'Tu Dashboard Personal',
-        description: 'Desde aquí puedes ver el estado de todos tus proyectos y comunicarte con tu equipo.',
-        target: '.dashboard-stats',
-        position: 'bottom',
-        action: 'wait',
-        actionText: 'Explora tu dashboard',
+        title: 'Panel de Tus Proyectos',
+        description: 'Aquí puedes ver todos tus proyectos web, su estado actual y el progreso de cada uno. Tu equipo actualiza constantemente esta información.',
+        target: '.projects-section',
+        position: 'right',
+        action: 'hover',
+        actionText: 'Pasa el mouse sobre un proyecto',
         skipable: true,
         tips: [
-          'Ve el progreso general de tus proyectos',
-          'Revisa las estadísticas importantes',
-          'Mantente informado del avance'
+          'Los proyectos se organizan por estado de desarrollo',
+          'Puedes ver el progreso en tiempo real',
+          'Cada proyecto muestra las próximas entregas'
         ]
       },
       {
         id: 'client-welcome-3',
-        title: 'Tus Proyectos',
-        description: 'Aquí encontrarás todos tus proyectos web con su estado actual y próximos pasos.',
-        target: '.projects-section',
+        title: 'Explorar la Sección de Proyectos',
+        description: 'Ahora vamos a navegar a la sección de proyectos para ver todos los detalles de tus proyectos web.',
+        target: '.main-navigation',
         position: 'bottom',
         action: 'navigate',
-        actionText: 'Navegando a tus proyectos...',
+        actionText: 'Navegar a la sección de proyectos',
         navigateTo: '/proyectos',
         waitForNavigation: true,
         navigationDelay: 1000,
         skipable: true,
-        autoNavigate: true, // Nueva propiedad para navegación automática
+        autoNavigate: true,
         tips: [
-          'Cada proyecto tiene su propio espacio',
-          'Puedes ver el progreso en tiempo real',
-          'Comunícate directamente con tu equipo'
+          'La sección de proyectos es donde ves todo el detalle',
+          'Puedes ver el progreso de cada fase',
+          'Comunícate directamente con tu equipo de desarrollo'
         ]
       },
       {
         id: 'client-welcome-4',
-        title: 'Tu Perfil',
-        description: 'Configura tu información personal y preferencias de comunicación.',
-        target: '.profile-section',
-        position: 'bottom',
+        title: 'Gestión de Tus Proyectos',
+        description: 'En esta página puedes ver todos tus proyectos web, su estado actual y comunicarte con tu equipo. Observa las diferentes opciones disponibles.',
+        target: '.projects-grid',
+        position: 'right',
+        action: 'wait',
+        actionText: 'Observa las opciones disponibles',
+        skipable: true,
+        tips: [
+          'Cada proyecto muestra su estado actual',
+          'Puedes ver las entregas programadas',
+          'Comunícate con tu equipo en cada proyecto'
+        ]
+      },
+      {
+        id: 'client-welcome-5',
+        title: 'Explorar tu Perfil',
+        description: 'Ahora vamos a ver tu perfil personal donde puedes configurar tu información y preferencias de comunicación.',
+        target: '.user-profile',
+        position: 'left',
         action: 'navigate',
         actionText: 'Navegar a tu perfil',
         navigateTo: '/perfil',
         waitForNavigation: true,
-        navigationDelay: 2000,
+        navigationDelay: 1000,
+        skipable: true,
+        tips: [
+          'Puedes cambiar tu avatar y información personal',
+          'Configura cómo quieres recibir las notificaciones',
+          'Personaliza tu experiencia de usuario'
+        ]
+      },
+      {
+        id: 'client-welcome-6',
+        title: 'Configuración Personal',
+        description: 'En tu perfil puedes personalizar tu experiencia, cambiar tu avatar, y configurar las notificaciones según tus preferencias.',
+        target: '.profile-settings',
+        position: 'right',
+        action: 'wait',
+        actionText: 'Explora las opciones de configuración',
         skipable: true,
         tips: [
           'Mantén tu información actualizada',
-          'Configura cómo quieres recibir notificaciones',
-          'Personaliza tu experiencia'
+          'Configura las notificaciones que necesites',
+          'Personaliza tu experiencia de usuario'
+        ]
+      },
+      {
+        id: 'client-welcome-7',
+        title: 'Volver al Dashboard',
+        description: 'Ahora regresemos al dashboard principal para completar el tour.',
+        target: '.dashboard-link',
+        position: 'bottom',
+        action: 'navigate',
+        actionText: 'Volver al dashboard',
+        navigateTo: '/dashboard',
+        waitForNavigation: true,
+        navigationDelay: 1000,
+        skipable: true
+      },
+      {
+        id: 'client-welcome-8',
+        title: '¡Listo para comenzar!',
+        description: 'Ya conoces lo básico del dashboard. Puedes acceder a más tutoriales desde el menú de ayuda en cualquier momento.',
+        target: '.help-button',
+        position: 'top',
+        action: 'click',
+        actionText: 'Accede a la ayuda',
+        skipable: false,
+        required: true,
+        tips: [
+          'El botón de ayuda está siempre disponible',
+          'Puedes buscar artículos específicos',
+          'Los tutoriales se adaptan a tu nivel de experiencia'
         ]
       }
     ]
