@@ -155,8 +155,8 @@ function Table<T extends Record<string, any>>({
                   value={filters[String(col.key)] || ''}
                   onChange={(e) => handleFilter(String(col.key), e.target.value)}
                   className="h-8 px-3 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
+    />
+  </div>
             ))}
         </div>
       )}
@@ -204,7 +204,7 @@ function Table<T extends Record<string, any>>({
                             <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                           </svg>
                           <svg
-                            className={cn(
+    className={cn(
                               "h-3 w-3 -mt-1 transition-colors",
                               sortBy === col.key && sortOrder === 'desc' ? "text-primary" : "text-muted-foreground/50"
                             )}
@@ -240,7 +240,7 @@ function Table<T extends Record<string, any>>({
                 paginatedData.map((row, index) => (
                   <tr
                     key={index}
-                    className={cn(
+    className={cn(
                       "border-b border-border hover:bg-muted/50 transition-colors",
                       onRowClick && "cursor-pointer",
                       rowClassName?.(row, index)

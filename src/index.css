@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,32 +9,12 @@ All colors MUST be HSL.
 */
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 16px;
-  line-height: 1.4;
-  font-weight: 400;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
-/* Escala Tipográfica Profesional */
-.text-xs { font-size: 12px; line-height: 1.4; }
-.text-sm { font-size: 14px; line-height: 1.4; }
-.text-base { font-size: 16px; line-height: 1.4; }
-.text-lg { font-size: 18px; line-height: 1.4; }
-.text-xl { font-size: 24px; line-height: 1.2; }
-.text-2xl { font-size: 32px; line-height: 1.2; }
-.text-3xl { font-size: 48px; line-height: 1.2; }
-
-/* Pesos de Fuente Profesionales */
-.font-normal { font-weight: 400; }
-.font-medium { font-weight: 500; }
-.font-semibold { font-weight: 600; }
-.font-bold { font-weight: 700; }
-
-/* Títulos con Line Height 1.2 */
-h1, h2, h3, h4, h5, h6,
-.text-xl, .text-2xl, .text-3xl, .text-4xl, .text-5xl, .text-6xl {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.2;
+h1, .text-3xl, .text-2xl, .font-bold, .font-semibold {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 
