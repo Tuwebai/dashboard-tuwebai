@@ -925,9 +925,14 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // =====================================================
 
   const startTutorial = useCallback((flowId: string) => {
+    console.log('Iniciando tutorial:', flowId);
     const flow = availableFlows.find(f => f.id === flowId);
-    if (!flow) return;
+    if (!flow) {
+      console.log('Flujo no encontrado:', flowId);
+      return;
+    }
 
+    console.log('Flujo encontrado:', flow);
     setCurrentFlow(flow);
     setCurrentStep(flow.steps[0]);
     setStepIndex(0);
@@ -942,6 +947,7 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       timeSpent: 0
     };
     setProgress(newProgress);
+    console.log('Tutorial iniciado correctamente');
 
     // Reproducir sonido si está habilitado
     if (enableSounds) {

@@ -163,11 +163,13 @@ export default function TutorialOverlay() {
         // Manejar navegación directamente
         if (currentStep.navigateTo) {
           try {
+            console.log('Ejecutando acción de navegación a:', currentStep.navigateTo);
             navigate(currentStep.navigateTo);
             
             // Esperar a que se complete la navegación
             if (currentStep.waitForNavigation) {
               const delay = currentStep.navigationDelay || 1000;
+              console.log('Esperando navegación en acción:', delay + 'ms');
               await new Promise(resolve => setTimeout(resolve, delay));
             }
           } catch (error) {
@@ -415,13 +417,21 @@ export default function TutorialOverlay() {
                         // Manejar navegación si es necesario
                         if (currentStep?.action === 'navigate' && currentStep.navigateTo) {
                           try {
+                            console.log('Navegando a:', currentStep.navigateTo);
                             navigate(currentStep.navigateTo);
                             
                             // Esperar a que se complete la navegación
                             if (currentStep.waitForNavigation) {
                               const delay = currentStep.navigationDelay || 1000;
+                              console.log('Esperando navegación:', delay + 'ms');
                               await new Promise(resolve => setTimeout(resolve, delay));
                             }
+                            
+                            // Avanzar al siguiente paso después de la navegación
+                            setTimeout(() => {
+                              nextStep();
+                            }, 500);
+                            return;
                           } catch (error) {
                             console.error('Error during navigation:', error);
                           }
