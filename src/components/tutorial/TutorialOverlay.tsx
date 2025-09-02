@@ -202,6 +202,37 @@ export default function TutorialOverlay() {
     return null;
   }
 
+  // Debug logs
+  console.log('TutorialOverlay render:', {
+    isActive,
+    currentFlow: currentFlow?.id,
+    currentStep: currentStep?.id,
+    targetElement: !!targetElement,
+    overlayPosition
+  });
+
+  // Fallback para posicionamiento central si hay problemas
+  const getTooltipPosition = () => {
+    if (currentStep.position === 'center') {
+      return {
+        left: '50%',
+        top: '50%',
+        transform: 'translate(-50%, -50%)'
+      };
+    }
+    
+    // Si no hay targetElement, usar posición central
+    if (!targetElement) {
+      return {
+        left: '50%',
+        top: '50%',
+        transform: 'translate(-50%, -50%)'
+      };
+    }
+    
+    return {};
+  };
+
   return (
     <AnimatePresence>
       <motion.div
@@ -251,14 +282,17 @@ export default function TutorialOverlay() {
             "text-sm sm:text-base"
           )}
           style={{
-            left: currentStep.position === 'left' ? overlayPosition.x - (window.innerWidth < 768 ? 250 : 320) : 
-                  currentStep.position === 'right' ? overlayPosition.x + overlayPosition.width + 20 :
-                  currentStep.position === 'center' ? overlayPosition.x : 
-                  Math.min(overlayPosition.x, window.innerWidth - (window.innerWidth < 768 ? 320 : 400)),
-            top: currentStep.position === 'top' ? overlayPosition.y - (window.innerWidth < 768 ? 200 : 250) :
-                 currentStep.position === 'bottom' ? overlayPosition.y + overlayPosition.height + 20 :
-                 currentStep.position === 'center' ? overlayPosition.y :
-                 Math.min(overlayPosition.y, window.innerHeight - (window.innerWidth < 768 ? 250 : 300))
+            ...getTooltipPosition(),
+            left: currentStep.position === 'center' ? '50%' : 
+                  currentStep.position === 'left' ? `${Math.max(20, overlayPosition.x - 320)}px` :
+                  currentStep.position === 'right' ? `${Math.min(window.innerWidth - 400, overlayPosition.x + overlayPosition.width + 20)}px` :
+                  `${Math.max(20, Math.min(overlayPosition.x, window.innerWidth - 400))}px`,
+            top: currentStep.position === 'center' ? '50%' :
+                 currentStep.position === 'top' ? `${Math.max(20, overlayPosition.y - 250)}px` :
+                 currentStep.position === 'bottom' ? `${Math.min(window.innerHeight - 300, overlayPosition.y + overlayPosition.height + 20)}px` :
+                 `${Math.max(20, Math.min(overlayPosition.y, window.innerHeight - 300))}px`,
+            transform: currentStep.position === 'center' ? 'translate(-50%, -50%)' : 'none',
+            zIndex: 10001
           }}
         >
           {/* Header del tutorial */}
