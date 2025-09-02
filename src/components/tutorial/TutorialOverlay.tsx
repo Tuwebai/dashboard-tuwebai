@@ -211,26 +211,60 @@ export default function TutorialOverlay() {
     overlayPosition
   });
 
-  // Fallback para posicionamiento central si hay problemas
+  // Función para calcular posición responsive del tooltip
   const getTooltipPosition = () => {
-    if (currentStep.position === 'center') {
+    const isMobile = window.innerWidth < 768;
+    const tooltipWidth = isMobile ? 320 : 400;
+    const tooltipHeight = isMobile ? 300 : 400;
+    
+    // Siempre usar posición central en móviles para mejor UX
+    if (isMobile) {
       return {
         left: '50%',
         top: '50%',
-        transform: 'translate(-50%, -50%)'
+        transform: 'translate(-50%, -50%)',
+        width: `${tooltipWidth}px`,
+        maxWidth: '90vw'
       };
     }
     
-    // Si no hay targetElement, usar posición central
-    if (!targetElement) {
+    // En desktop, calcular posición basada en el elemento objetivo
+    if (currentStep.position === 'center' || !targetElement) {
       return {
         left: '50%',
         top: '50%',
-        transform: 'translate(-50%, -50%)'
+        transform: 'translate(-50%, -50%)',
+        width: `${tooltipWidth}px`
       };
     }
     
-    return {};
+    // Calcular posición relativa al elemento objetivo
+    const rect = targetElement.getBoundingClientRect();
+    const padding = 20;
+    
+    let left = rect.right + padding;
+    let top = rect.top;
+    
+    // Ajustar si se sale por la derecha
+    if (left + tooltipWidth > window.innerWidth - 20) {
+      left = rect.left - tooltipWidth - padding;
+    }
+    
+    // Ajustar si se sale por abajo
+    if (top + tooltipHeight > window.innerHeight - 20) {
+      top = window.innerHeight - tooltipHeight - 20;
+    }
+    
+    // Ajustar si se sale por arriba
+    if (top < 20) {
+      top = 20;
+    }
+    
+    return {
+      left: `${Math.max(20, left)}px`,
+      top: `${Math.max(20, top)}px`,
+      width: `${tooltipWidth}px`
+    };
   };
 
   return (
@@ -241,27 +275,29 @@ export default function TutorialOverlay() {
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[9999] pointer-events-none"
       >
-        {/* Overlay de fondo */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.8 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        />
+        {/* Overlay de fondo - Solo en desktop */}
+        {window.innerWidth >= 768 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.3 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+          />
+        )}
 
-        {/* Highlight del elemento objetivo */}
-        {targetElement && currentStep.position !== 'center' && (
+        {/* Highlight del elemento objetivo - Solo para elementos específicos */}
+        {targetElement && currentStep.position !== 'center' && currentStep.target !== '.main-navigation' && (
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
-            className="absolute border-4 border-blue-500 rounded-lg shadow-2xl"
+            className="absolute border-2 border-blue-400 rounded-lg"
             style={{
               left: overlayPosition.x,
               top: overlayPosition.y,
               width: overlayPosition.width,
               height: overlayPosition.height,
-              boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)'
+              boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.3), 0 0 10px rgba(59, 130, 246, 0.2)'
             }}
           />
         )}
@@ -276,22 +312,13 @@ export default function TutorialOverlay() {
           className={cn(
             "absolute pointer-events-auto",
             "bg-white rounded-2xl shadow-2xl border border-slate-200",
-            "max-w-md w-full mx-4",
             // Responsive classes
-            "sm:max-w-lg md:max-w-md lg:max-w-lg",
-            "text-sm sm:text-base"
+            "w-full max-w-[90vw] sm:max-w-md md:max-w-lg",
+            "text-sm sm:text-base",
+            "mx-2 sm:mx-4"
           )}
           style={{
             ...getTooltipPosition(),
-            left: currentStep.position === 'center' ? '50%' : 
-                  currentStep.position === 'left' ? `${Math.max(20, overlayPosition.x - 320)}px` :
-                  currentStep.position === 'right' ? `${Math.min(window.innerWidth - 400, overlayPosition.x + overlayPosition.width + 20)}px` :
-                  `${Math.max(20, Math.min(overlayPosition.x, window.innerWidth - 400))}px`,
-            top: currentStep.position === 'center' ? '50%' :
-                 currentStep.position === 'top' ? `${Math.max(20, overlayPosition.y - 250)}px` :
-                 currentStep.position === 'bottom' ? `${Math.min(window.innerHeight - 300, overlayPosition.y + overlayPosition.height + 20)}px` :
-                 `${Math.max(20, Math.min(overlayPosition.y, window.innerHeight - 300))}px`,
-            transform: currentStep.position === 'center' ? 'translate(-50%, -50%)' : 'none',
             zIndex: 10001
           }}
         >
@@ -336,7 +363,8 @@ export default function TutorialOverlay() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setEnableSounds(!enableSounds)}
-                    className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                    className="h-6 w-6 sm:h-8 sm:w-8 p-0 text-slate-500 hover:text-slate-700"
+                    title={enableSounds ? "Silenciar sonidos" : "Activar sonidos"}
                   >
                     {enableSounds ? (
                       <Volume2 className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -348,7 +376,8 @@ export default function TutorialOverlay() {
                     variant="ghost"
                     size="sm"
                     onClick={exitTutorial}
-                    className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-slate-400 hover:text-slate-600"
+                    className="h-6 w-6 sm:h-8 sm:w-8 p-0 text-slate-500 hover:text-red-600"
+                    title="Cerrar tutorial"
                   >
                     <X className="w-3 h-3 sm:w-4 sm:h-4" />
                   </Button>
