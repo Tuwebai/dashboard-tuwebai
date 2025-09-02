@@ -11,6 +11,8 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { StorageService } from '@/lib/storageService';
+import { getDefaultAvatar, isDefaultAvatar } from '@/constants/avatars';
 
 import { 
   User, 
@@ -29,7 +31,8 @@ import {
   EyeOff,
   Building,
   Globe,
-  FileText
+  FileText,
+  Trash2
 } from 'lucide-react';
 
 export default function Perfil() {
@@ -322,6 +325,63 @@ export default function Perfil() {
       toast({
         title: 'Error',
         description: 'No se pudo subir la foto. Inténtalo de nuevo.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    if (!user) return;
+
+    // Verificar si ya tiene avatar por defecto
+    if (isDefaultAvatar(user.avatar_url)) {
+      toast({
+        title: 'Información',
+        description: 'Ya tienes el avatar por defecto.',
+        variant: 'default'
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Eliminar avatar actual del storage si existe
+      if (user.avatar_url && !isDefaultAvatar(user.avatar_url)) {
+        await StorageService.deleteAvatar(user.id, user.avatar_url);
+      }
+
+      // Actualizar avatar a por defecto en la base de datos
+      const defaultAvatarUrl = getDefaultAvatar();
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          avatar_url: defaultAvatarUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Actualizar el usuario en el contexto global
+      await updateUserSettings({
+        avatar_url: defaultAvatarUrl,
+        avatar: defaultAvatarUrl
+      });
+
+      toast({
+        title: 'Avatar eliminado',
+        description: 'Tu foto de perfil ha sido eliminada y se ha establecido el avatar por defecto.'
+      });
+
+    } catch (error) {
+      console.error('Error eliminando avatar:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo eliminar la foto. Inténtalo de nuevo.',
         variant: 'destructive'
       });
     } finally {
@@ -686,6 +746,23 @@ export default function Perfil() {
                   )}
                   {loading ? 'Subiendo...' : 'Cambiar foto'}
                 </Button>
+
+                {/* Botón de eliminar foto */}
+                {!isDefaultAvatar(user?.avatar_url) && (
+                  <Button
+                    variant="outline"
+                    onClick={handleDeleteAvatar}
+                    disabled={loading}
+                    className="w-full border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400"
+                  >
+                    {loading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500 mr-2"></div>
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
+                    {loading ? 'Eliminando...' : 'Eliminar foto'}
+                  </Button>
+                )}
                 
                 {/* Input de archivo oculto */}
                 <input

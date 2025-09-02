@@ -119,6 +119,39 @@ export class StorageService {
     }
   }
 
+  // Eliminar avatar de usuario
+  static async deleteAvatar(userId: string, avatarUrl: string): Promise<void> {
+    try {
+      // Extraer el path del archivo de la URL
+      const url = new URL(avatarUrl);
+      const pathParts = url.pathname.split('/');
+      const fileName = pathParts[pathParts.length - 1];
+      const filePath = `${userId}/${fileName}`;
+
+      // Determinar el bucket basado en la URL
+      let bucketName = this.AVATARS_BUCKET;
+      if (avatarUrl.includes('project-files')) {
+        bucketName = this.DEFAULT_BUCKET;
+      }
+
+      // Eliminar archivo del storage
+      const { error } = await supabase.storage
+        .from(bucketName)
+        .remove([filePath]);
+
+      if (error) {
+        // console.error('Error deleting avatar:', error);
+        // No lanzar error si el archivo no existe
+        if (!error.message.includes('Object not found')) {
+          throw error;
+        }
+      }
+    } catch (error) {
+      // console.error('Error deleting avatar:', error);
+      // No lanzar error para no interrumpir el flujo
+    }
+  }
+
   // Subir archivo temporal
   static async uploadTempFile(file: File, userId: string): Promise<string> {
     try {
@@ -386,4 +419,4 @@ export class StorageService {
 export const storageService = new StorageService();
 
 // Inicializar buckets al importar
-storageService.initializeBuckets();
+StorageService.initializeBuckets();
