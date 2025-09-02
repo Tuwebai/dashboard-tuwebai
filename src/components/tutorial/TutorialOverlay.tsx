@@ -434,18 +434,7 @@ export default function TutorialOverlay() {
                 </div>
               )}
 
-              {/* Información de navegación automática */}
-              {currentStep.action === 'navigate' && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
-                    <span className="text-xs sm:text-sm font-medium text-blue-800">Navegación automática</span>
-                  </div>
-                  <p className="text-xs sm:text-sm text-blue-700 leading-relaxed">
-                    {currentStep.actionText}
-                  </p>
-                </div>
-              )}
+
 
               {/* Controles de navegación */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-2 pt-3 sm:pt-4 border-t border-slate-200">
@@ -493,25 +482,27 @@ export default function TutorialOverlay() {
                         if (currentStep?.action === 'navigate' && currentStep.navigateTo) {
                           try {
                             console.log('Navegando a:', currentStep.navigateTo);
+                            
+                            // Navegar inmediatamente
                             navigate(currentStep.navigateTo);
                             
-                            // Esperar a que se complete la navegación
-                            if (currentStep.waitForNavigation) {
-                              const delay = currentStep.navigationDelay || 1000;
-                              console.log('Esperando navegación:', delay + 'ms');
-                              await new Promise(resolve => setTimeout(resolve, delay));
-                            }
+                            // Esperar un poco para que se complete la navegación
+                            const delay = currentStep.navigationDelay || 1500;
+                            console.log('Esperando navegación:', delay + 'ms');
+                            await new Promise(resolve => setTimeout(resolve, delay));
                             
-                            // Avanzar al siguiente paso después de la navegación
-                            setTimeout(() => {
-                              nextStep();
-                            }, 500);
+                            // Avanzar al siguiente paso
+                            nextStep();
                             return;
                           } catch (error) {
                             console.error('Error during navigation:', error);
+                            // Si hay error, avanzar de todas formas
+                            nextStep();
                           }
+                        } else {
+                          // Si no es navegación, avanzar normalmente
+                          nextStep();
                         }
-                        nextStep();
                       }}
                       className="h-8 sm:h-9 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white flex-1 sm:flex-none text-xs sm:text-sm"
                     >

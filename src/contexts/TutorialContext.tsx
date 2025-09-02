@@ -741,7 +741,7 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
         actionText: 'Navegar a tus proyectos',
         navigateTo: '/proyectos',
         waitForNavigation: true,
-        navigationDelay: 1000,
+        navigationDelay: 2000,
         skipable: true,
         tips: [
           'Cada proyecto tiene su propio espacio',
@@ -759,7 +759,7 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
         actionText: 'Navegar a tu perfil',
         navigateTo: '/perfil',
         waitForNavigation: true,
-        navigationDelay: 1000,
+        navigationDelay: 2000,
         skipable: true,
         tips: [
           'Mantén tu información actualizada',
