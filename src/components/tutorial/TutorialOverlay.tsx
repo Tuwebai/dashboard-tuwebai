@@ -381,12 +381,13 @@ export default function TutorialOverlay() {
                     {currentFlow.icon}
                   </div>
                   <div className="min-w-0 flex-1">
-                                            <CardTitle className={cn(
-                          "text-slate-900 leading-tight font-bold",
-                          isMobile ? "text-base" : isTablet ? "text-lg" : "text-xl"
-                        )}>
-                          {currentStep.title}
-                        </CardTitle>
+                                                              <CardTitle className={cn(
+                    "text-slate-900 leading-tight font-bold",
+                    "tracking-tight",
+                    isMobile ? "text-base" : isTablet ? "text-lg" : "text-xl"
+                  )}>
+                    {currentStep.title}
+                  </CardTitle>
                     <div className={cn(
                       "flex items-center gap-2 mt-1",
                       isMobile ? "flex-col" : "flex-row"
@@ -448,12 +449,13 @@ export default function TutorialOverlay() {
               isMobile ? "px-4" : "px-6"
             )}>
               {/* Descripción */}
-                                <p className={cn(
-                    "text-slate-700 leading-relaxed font-medium",
-                    isMobile ? "text-sm" : isTablet ? "text-base" : "text-lg"
-                  )}>
-                    {currentStep.description}
-                  </p>
+                                              <p className={cn(
+                "text-slate-700 leading-relaxed font-medium",
+                "tracking-wide",
+                isMobile ? "text-sm" : isTablet ? "text-base" : "text-lg"
+              )}>
+                {currentStep.description}
+              </p>
 
               {/* Tips */}
               {currentStep.tips && currentStep.tips.length > 0 && (
@@ -555,7 +557,8 @@ export default function TutorialOverlay() {
                       className={cn(
                         "text-sm border-2 border-slate-300 hover:border-slate-400",
                         "focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
-                        "transition-all duration-200",
+                        "transition-all duration-200 active:scale-95",
+                        "hover:bg-slate-50",
                         isMobile ? "h-10 flex-1" : "h-9 flex-none"
                       )}
                     >
@@ -594,6 +597,8 @@ export default function TutorialOverlay() {
                       onClick={nextStep}
                       className={cn(
                         "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm",
+                        "shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95",
+                        "ring-2 ring-green-200 ring-opacity-50 hover:ring-opacity-75",
                         isMobile ? "h-10 flex-1" : "h-9 flex-none"
                       )}
                     >
@@ -626,7 +631,7 @@ export default function TutorialOverlay() {
                         }}
                         className={cn(
                           "bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white text-sm",
-                          "shadow-lg hover:shadow-xl transition-all duration-200",
+                          "shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95",
                           "ring-2 ring-blue-200 ring-opacity-50 hover:ring-opacity-75",
                           isMobile ? "h-10 flex-1" : "h-9 flex-none"
                         )}
