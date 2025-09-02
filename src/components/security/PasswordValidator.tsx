@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from '@/components/OptimizedMotion';
 import { CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react';
 
 interface PasswordValidatorProps {
@@ -107,11 +106,7 @@ export default function PasswordValidator({
 
       {/* Indicador de fortaleza */}
       {password && (
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          className="space-y-2"
-        >
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Fortaleza de la contraseña:</span>
             <span className={`text-sm font-semibold ${getStrengthTextColor()}`}>
@@ -119,32 +114,24 @@ export default function PasswordValidator({
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <motion.div
-              className={`h-2 rounded-full ${getStrengthColor()}`}
-              initial={{ width: 0 }}
-              animate={{ width: `${strength}%` }}
-              transition={{ duration: 0.3 }}
+            <div
+              className={`h-2 rounded-full ${getStrengthColor()} transition-all duration-300`}
+              style={{ width: `${strength}%` }}
             />
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Lista de requisitos */}
       {(focused || password) && (
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          className="space-y-2"
-        >
+        <div className="space-y-2">
           <p className="text-sm font-medium text-gray-700">Requisitos de seguridad:</p>
           <div className="space-y-1">
             {requirements.map((requirement) => {
               const isValid = requirement.test(password);
               return (
-                <motion.div
+                <div
                   key={requirement.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
                   className="flex items-center gap-2 text-sm"
                 >
                   {isValid ? (
@@ -155,27 +142,23 @@ export default function PasswordValidator({
                   <span className={isValid ? 'text-green-700' : 'text-gray-500'}>
                     {requirement.text}
                   </span>
-                </motion.div>
+                </div>
               );
             })}
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Información de seguridad */}
       {password && strength >= 100 && (
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          className="p-3 bg-green-50 border border-green-200 rounded-md"
-        >
+        <div className="p-3 bg-green-50 border border-green-200 rounded-md">
           <div className="flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-green-600" />
             <span className="text-sm font-medium text-green-800">
               ¡Excelente! Tu contraseña cumple con todos los requisitos de seguridad.
             </span>
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   );
