@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from '@/components/OptimizedMotion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { Button } from '@/components/ui/button';
@@ -98,13 +98,12 @@ const TimeRemaining: React.FC<TimeRemainingProps> = ({ minutes, className }) => 
         "flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/20",
         className
       )}
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial="hidden"
+      animate="visible"
       transition={{ 
-        type: "spring",
-        stiffness: 400,
-        damping: 20,
-        delay: 0.8
+        duration: 0.6,
+        delay: 0.8,
+        ease: "easeOut"
       }}
     >
       <Clock className="w-3 h-3 text-white/80" />
@@ -491,16 +490,13 @@ export default function TutorialOverlay() {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.8 }}
+        initial="hidden"
+        animate="visible"
+        exit="hidden"
         className="fixed inset-0 z-[9999]"
       >
         {/* Overlay de fondo - Bloquea interacciones */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <div
           className="absolute inset-0 bg-black/30 backdrop-blur-sm pointer-events-auto"
           onClick={(e) => {
             // Prevenir interacción con el fondo
@@ -514,9 +510,9 @@ export default function TutorialOverlay() {
         {/* Tooltip del tutorial con Glassmorphism */}
         <motion.div
           ref={overlayRef}
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          initial="hidden"
+          animate="visible"
+          exit="hidden"
           transition={{ 
             duration: 0.4,
             ease: "easeOut"
@@ -560,8 +556,8 @@ export default function TutorialOverlay() {
                       "animate-pulse-glow",
                       isMobile ? "w-10 h-10 text-lg" : "w-12 h-12 text-xl"
                     )}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
+                    initial="hidden"
+                    animate="visible"
                     transition={{ 
                       duration: 0.6,
                       delay: 0.2,
@@ -572,8 +568,8 @@ export default function TutorialOverlay() {
                   </motion.div>
                   <div className="min-w-0 flex-1">
                     <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                                          initial="hidden"
+                    animate="visible"
                       transition={{ delay: 0.3, duration: 0.5 }}
                     >
                       <CardTitle className={cn(
@@ -588,8 +584,8 @@ export default function TutorialOverlay() {
                         isMobile ? "flex-col items-start" : "flex-row"
                       )}>
                         <motion.div
-                          initial={{ scale: 0, rotate: -180 }}
-                          animate={{ scale: 1, rotate: 0 }}
+                          initial="hidden"
+                          animate="visible"
                           transition={{ 
                             duration: 0.6,
                             delay: 0.4,
@@ -609,8 +605,8 @@ export default function TutorialOverlay() {
                 {/* Controles del header */}
                 <motion.div 
                   className="flex items-center gap-2 flex-shrink-0"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
+                                      initial="hidden"
+                    animate="visible"
                   transition={{ delay: 0.4, duration: 0.5 }}
                 >
                   <Button
@@ -660,8 +656,8 @@ export default function TutorialOverlay() {
             )}>
               {/* Descripción */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial="hidden"
+                animate="visible"
                 transition={{ delay: 0.5, duration: 0.6 }}
               >
                 <p className={cn(
@@ -680,8 +676,8 @@ export default function TutorialOverlay() {
                      "bg-white/20 border border-white/30 rounded-2xl backdrop-blur-sm",
                      isMobile ? "p-3" : "p-4"
                    )}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                                     initial="hidden"
+                   animate="visible"
                   transition={{ delay: 0.6, duration: 0.6 }}
                 >
                   <div className="flex items-center gap-3 mb-3">
@@ -704,8 +700,8 @@ export default function TutorialOverlay() {
                           "text-white/80 flex items-start gap-3",
                           isMobile ? "text-sm" : "text-base"
                         )}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
+                                            initial="hidden"
+                    animate="visible"
                         transition={{ delay: 0.7 + (index * 0.1), duration: 0.4 }}
                       >
                         <span className="text-yellow-400 mt-1 flex-shrink-0 font-bold">•</span>
@@ -726,8 +722,8 @@ export default function TutorialOverlay() {
                   "flex items-stretch justify-between gap-4 pt-4 border-t border-white/20",
                   isMobile ? "flex-col" : "flex-row items-center"
                 )}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial="hidden"
+                animate="visible"
                 transition={{ delay: 0.9, duration: 0.6 }}
               >
                 <div className={cn(
