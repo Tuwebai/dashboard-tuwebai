@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { environmentService, EnvironmentVariable as EnvVar } from '@/lib/environmentService';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from '@/components/OptimizedMotion';
 
 interface EnvironmentVariable {
   key: string;

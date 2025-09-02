@@ -1,87 +1,110 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useMemoryLeakPrevention } from './useMemoryLeakPrevention';
 
 // =====================================================
 // HOOK PARA LAZY LOADING OPTIMIZADO
 // =====================================================
 
 interface LazyLoadingOptions {
-  threshold?: number;
   rootMargin?: string;
+  threshold?: number | number[];
   triggerOnce?: boolean;
+  delay?: number;
   fallback?: React.ReactNode;
+  preload?: boolean;
 }
 
-interface UseLazyLoadingReturn {
+interface LazyLoadingReturn {
   isVisible: boolean;
   isLoaded: boolean;
   ref: React.RefObject<HTMLElement>;
   load: () => void;
+  unload: () => void;
 }
 
-export const useLazyLoading = (options: LazyLoadingOptions = {}): UseLazyLoadingReturn => {
+export const useLazyLoading = (options: LazyLoadingOptions = {}): LazyLoadingReturn => {
   const {
-    threshold = 0.1,
     rootMargin = '50px',
+    threshold = 0.1,
     triggerOnce = true,
-    fallback = null
+    delay = 0,
+    preload = false,
   } = options;
 
   const [isVisible, setIsVisible] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const ref = useRef<HTMLElement>(null);
+  const { addTimeout, clearTimeout } = useMemoryLeakPrevention();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Intersection Observer
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  const load = useCallback(() => {
-    setIsLoaded(true);
-  }, []);
+  // Callback para el observer
+  const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
+    const [entry] = entries;
+    
+    if (entry.isIntersecting) {
+      setIsVisible(true);
+      
+      if (delay > 0) {
+        timeoutRef.current = addTimeout(() => {
+          setIsLoaded(true);
+        }, delay);
+      } else {
+        setIsLoaded(true);
+      }
+      
+      // Si triggerOnce es true, desconectar el observer
+      if (triggerOnce && observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    } else if (!triggerOnce) {
+      setIsVisible(false);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    }
+  }, [delay, triggerOnce, addTimeout, clearTimeout]);
 
+  // Configurar observer
   useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
+    if (!ref.current) return;
 
-    // Crear observer si no existe
-    if (!observerRef.current) {
-      observerRef.current = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              setIsVisible(true);
-              load();
-              
-              // Desconectar si solo debe activarse una vez
-              if (triggerOnce) {
-                observerRef.current?.unobserve(entry.target);
-              }
-            } else if (!triggerOnce) {
-              setIsVisible(false);
-            }
-          });
-        },
-        {
-          threshold,
-          rootMargin,
-        }
-      );
+    // Crear observer
+    observerRef.current = new IntersectionObserver(handleIntersection, {
+      rootMargin,
+      threshold,
+    });
+
+    // Observar elemento
+    observerRef.current.observe(ref.current);
+
+    // Preload si está habilitado
+    if (preload) {
+      setIsLoaded(true);
     }
 
-    // Observar el elemento
-    observerRef.current.observe(element);
-
-    // Cleanup
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.unobserve(element);
-      }
-    };
-  }, [threshold, rootMargin, triggerOnce, load]);
-
-  // Cleanup del observer
-  useEffect(() => {
     return () => {
       if (observerRef.current) {
         observerRef.current.disconnect();
       }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
+  }, [handleIntersection, rootMargin, threshold, preload]);
+
+  // Funciones de control manual
+  const load = useCallback(() => {
+    setIsVisible(true);
+    setIsLoaded(true);
+  }, []);
+
+  const unload = useCallback(() => {
+    setIsVisible(false);
+    setIsLoaded(false);
   }, []);
 
   return {
@@ -89,6 +112,7 @@ export const useLazyLoading = (options: LazyLoadingOptions = {}): UseLazyLoading
     isLoaded,
     ref,
     load,
+    unload,
   };
 };
 
@@ -100,10 +124,10 @@ export const useLazyImage = (src: string, options: LazyLoadingOptions = {}) => {
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (isVisible && !imageSrc && !isLoading) {
+    if (isLoaded && src) {
       setIsLoading(true);
       setHasError(false);
-
+      
       const img = new Image();
       img.onload = () => {
         setImageSrc(src);
@@ -115,21 +139,21 @@ export const useLazyImage = (src: string, options: LazyLoadingOptions = {}) => {
       };
       img.src = src;
     }
-  }, [isVisible, src, imageSrc, isLoading]);
+  }, [isLoaded, src]);
 
   return {
     isVisible,
     isLoaded,
-    ref,
-    imageSrc,
     isLoading,
     hasError,
+    imageSrc,
+    ref,
   };
 };
 
 // Hook para lazy loading de componentes
 export const useLazyComponent = <T extends React.ComponentType<any>>(
-  importFunc: () => Promise<{ default: T }>,
+  importFn: () => Promise<{ default: T }>,
   options: LazyLoadingOptions = {}
 ) => {
   const { isVisible, isLoaded, ref } = useLazyLoading(options);
@@ -138,11 +162,11 @@ export const useLazyComponent = <T extends React.ComponentType<any>>(
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (isVisible && !Component && !isLoading) {
+    if (isLoaded && !Component && !isLoading) {
       setIsLoading(true);
       setHasError(false);
-
-      importFunc()
+      
+      importFn()
         .then((module) => {
           setComponent(() => module.default);
           setIsLoading(false);
@@ -153,21 +177,21 @@ export const useLazyComponent = <T extends React.ComponentType<any>>(
           setIsLoading(false);
         });
     }
-  }, [isVisible, Component, isLoading, importFunc]);
+  }, [isLoaded, Component, isLoading, importFn]);
 
   return {
     isVisible,
     isLoaded,
-    ref,
-    Component,
     isLoading,
     hasError,
+    Component,
+    ref,
   };
 };
 
 // Hook para lazy loading de datos
 export const useLazyData = <T>(
-  fetchFunc: () => Promise<T>,
+  fetchFn: () => Promise<T>,
   options: LazyLoadingOptions = {}
 ) => {
   const { isVisible, isLoaded, ref } = useLazyLoading(options);
@@ -176,73 +200,139 @@ export const useLazyData = <T>(
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (isVisible && !data && !isLoading) {
+    if (isLoaded && !data && !isLoading) {
       setIsLoading(true);
       setHasError(false);
-
-      fetchFunc()
+      
+      fetchFn()
         .then((result) => {
           setData(result);
           setIsLoading(false);
         })
         .catch((error) => {
-          console.error('Error fetching data:', error);
+          console.error('Error loading data:', error);
           setHasError(true);
           setIsLoading(false);
         });
     }
-  }, [isVisible, data, isLoading, fetchFunc]);
+  }, [isLoaded, data, isLoading, fetchFn]);
 
   return {
     isVisible,
     isLoaded,
-    ref,
-    data,
     isLoading,
     hasError,
+    data,
+    ref,
   };
 };
 
-// Hook para lazy loading de scripts
-export const useLazyScript = (src: string, options: LazyLoadingOptions = {}) => {
+// Hook para lazy loading de listas
+export const useLazyList = <T>(
+  items: T[],
+  itemHeight: number,
+  containerHeight: number,
+  options: LazyLoadingOptions = {}
+) => {
+  const [visibleItems, setVisibleItems] = useState<T[]>([]);
+  const [startIndex, setStartIndex] = useState(0);
+  const [endIndex, setEndIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { addEventListener, removeEventListener } = useMemoryLeakPrevention();
+
+  // Calcular elementos visibles
+  const calculateVisibleItems = useCallback(() => {
+    if (!containerRef.current) return;
+
+    const scrollTop = containerRef.current.scrollTop;
+    const newStartIndex = Math.floor(scrollTop / itemHeight);
+    const newEndIndex = Math.min(
+      newStartIndex + Math.ceil(containerHeight / itemHeight) + 1,
+      items.length
+    );
+
+    setStartIndex(newStartIndex);
+    setEndIndex(newEndIndex);
+    setVisibleItems(items.slice(newStartIndex, newEndIndex));
+  }, [items, itemHeight, containerHeight]);
+
+  // Configurar scroll listener
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const handleScroll = () => {
+      calculateVisibleItems();
+    };
+
+    addEventListener({
+      event: 'scroll',
+      handler: handleScroll,
+      element: containerRef.current,
+      options: { passive: true },
+    });
+
+    // Calcular inicialmente
+    calculateVisibleItems();
+
+    return () => {
+      removeEventListener({
+        event: 'scroll',
+        handler: handleScroll,
+        element: containerRef.current!,
+        options: { passive: true },
+      });
+    };
+  }, [calculateVisibleItems, addEventListener, removeEventListener]);
+
+  // Recalcular cuando cambien los items
+  useEffect(() => {
+    calculateVisibleItems();
+  }, [items, calculateVisibleItems]);
+
+  return {
+    visibleItems,
+    startIndex,
+    endIndex,
+    containerRef,
+    totalHeight: items.length * itemHeight,
+    offsetY: startIndex * itemHeight,
+  };
+};
+
+// Hook para lazy loading de rutas
+export const useLazyRoute = (routePath: string, options: LazyLoadingOptions = {}) => {
   const { isVisible, isLoaded, ref } = useLazyLoading(options);
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [RouteComponent, setRouteComponent] = useState<React.ComponentType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (isVisible && !isScriptLoaded && !isLoading) {
+    if (isLoaded && !RouteComponent && !isLoading) {
       setIsLoading(true);
       setHasError(false);
-
-      const script = document.createElement('script');
-      script.src = src;
-      script.async = true;
       
-      script.onload = () => {
-        setIsScriptLoaded(true);
-        setIsLoading(false);
-      };
-      
-      script.onerror = () => {
-        setHasError(true);
-        setIsLoading(false);
-      };
-
-      document.head.appendChild(script);
-
-      return () => {
-        document.head.removeChild(script);
-      };
+      // Importar componente de ruta
+      import(`../pages/${routePath}`)
+        .then((module) => {
+          setRouteComponent(() => module.default);
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error(`Error loading route ${routePath}:`, error);
+          setHasError(true);
+          setIsLoading(false);
+        });
     }
-  }, [isVisible, src, isScriptLoaded, isLoading]);
+  }, [isLoaded, RouteComponent, isLoading, routePath]);
 
   return {
     isVisible,
     isLoaded,
-    ref,
-    isScriptLoaded,
     isLoading,
     hasError,
+    RouteComponent,
+    ref,
   };
 };
+
+export default useLazyLoading;

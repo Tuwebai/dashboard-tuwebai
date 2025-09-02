@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { cn } from '@/lib/utils';
+// =====================================================
+// COMPONENTE DE IMAGEN OPTIMIZADO CON LAZY LOADING
+// =====================================================
 
-// =====================================================
-// COMPONENTE DE IMAGEN OPTIMIZADA
-// =====================================================
+import React, { useState, useRef, useEffect } from 'react';
+import { useLazyLoading } from '../hooks/useLazyLoading';
 
 interface OptimizedImageProps {
   src: string;
@@ -12,394 +12,145 @@ interface OptimizedImageProps {
   height?: number;
   className?: string;
   placeholder?: string;
+  blurDataURL?: string;
   priority?: boolean;
   quality?: number;
   sizes?: string;
-  loading?: 'lazy' | 'eager';
   onLoad?: () => void;
   onError?: () => void;
-  fallback?: string;
-  blurDataURL?: string;
-  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
-  objectPosition?: string;
 }
 
-export default function OptimizedImage({
+export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   src,
   alt,
   width,
   height,
   className = '',
-  placeholder,
-  priority = false,
-  quality = 80,
-  sizes = '100vw',
-  loading = 'lazy',
-  onLoad,
-  onError,
-  fallback = '/placeholder.svg',
+  placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+',
   blurDataURL,
-  objectFit = 'cover',
-  objectPosition = 'center'
-}: OptimizedImageProps) {
+  priority = false,
+  quality = 75,
+  sizes = '100vw',
+  onLoad,
+  onError
+}) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setIsError] = useState(false);
-  const [isInView, setIsInView] = useState(priority);
-  const [currentSrc, setCurrentSrc] = useState<string>(src);
+  const [hasError, setHasError] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState(priority ? src : placeholder);
   const imgRef = useRef<HTMLImageElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Generar URL optimizada con WebP
-  const getOptimizedSrc = useCallback((originalSrc: string) => {
-    // Si es una imagen externa o ya tiene parámetros de optimización
-    if (originalSrc.startsWith('http') || originalSrc.includes('?')) {
+  // Hook de lazy loading
+  const { isVisible, ref } = useLazyLoading({
+    threshold: 0.1,
+    rootMargin: '50px'
+  });
+
+  // Cargar imagen cuando sea visible
+  useEffect(() => {
+    if (isVisible && !isLoaded && !hasError) {
+      setCurrentSrc(src);
+    }
+  }, [isVisible, src, isLoaded, hasError]);
+
+  // Manejar carga de imagen
+  const handleLoad = () => {
+    setIsLoaded(true);
+    onLoad?.();
+  };
+
+  // Manejar error de imagen
+  const handleError = () => {
+    setHasError(true);
+    onError?.();
+  };
+
+  // Generar src optimizado con parámetros de calidad
+  const getOptimizedSrc = (originalSrc: string) => {
+    if (originalSrc.startsWith('data:') || originalSrc.startsWith('blob:')) {
       return originalSrc;
     }
 
-    // Para imágenes locales, generar URL optimizada
-    const url = new URL(originalSrc, window.location.origin);
+    // Si es una URL externa, agregar parámetros de optimización
+    const url = new URL(originalSrc);
     
-    // Agregar parámetros de optimización
-    url.searchParams.set('format', 'webp');
-    url.searchParams.set('quality', quality.toString());
+    if (width) url.searchParams.set('w', width.toString());
+    if (height) url.searchParams.set('h', height.toString());
+    if (quality) url.searchParams.set('q', quality.toString());
     
-    if (width) {
-      url.searchParams.set('width', width.toString());
-    }
-    
-    if (height) {
-      url.searchParams.set('height', height.toString());
-    }
-
     return url.toString();
-  }, [quality, width, height]);
-
-  // Generar srcset para responsive images
-  const generateSrcSet = useCallback((originalSrc: string) => {
-    if (originalSrc.startsWith('http') || originalSrc.includes('?')) {
-      return undefined;
-    }
-
-    const baseUrl = new URL(originalSrc, window.location.origin);
-    const srcSet: string[] = [];
-
-    // Generar diferentes tamaños para responsive
-    const sizes = [320, 640, 768, 1024, 1280, 1536];
-    
-    sizes.forEach(size => {
-      const url = new URL(baseUrl);
-      url.searchParams.set('format', 'webp');
-      url.searchParams.set('quality', quality.toString());
-      url.searchParams.set('width', size.toString());
-      
-      srcSet.push(`${url.toString()} ${size}w`);
-    });
-
-    return srcSet.join(', ');
-  }, [quality]);
-
-  // Intersection Observer para lazy loading
-  useEffect(() => {
-    if (priority || isInView) return;
-
-    const img = imgRef.current;
-    if (!img) return;
-
-    observerRef.current = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsInView(true);
-          observerRef.current?.disconnect();
-        }
-      },
-      {
-        rootMargin: '50px',
-        threshold: 0.1
-      }
-    );
-
-    observerRef.current.observe(img);
-
-    return () => {
-      observerRef.current?.disconnect();
-    };
-  }, [priority, isInView]);
-
-  // Manejar carga de imagen
-  const handleLoad = useCallback(() => {
-    setIsLoaded(true);
-    setIsError(false);
-    onLoad?.();
-  }, [onLoad]);
-
-  const handleError = useCallback(() => {
-    setIsError(true);
-    setCurrentSrc(fallback);
-    onError?.();
-  }, [fallback, onError]);
-
-  // Preload de imagen crítica
-  useEffect(() => {
-    if (priority && src) {
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = getOptimizedSrc(src);
-      document.head.appendChild(link);
-
-      return () => {
-        document.head.removeChild(link);
-      };
-    }
-  }, [priority, src, getOptimizedSrc]);
-
-  const optimizedSrc = getOptimizedSrc(currentSrc);
-  const srcSet = generateSrcSet(currentSrc);
+  };
 
   return (
-    <div className={cn('relative overflow-hidden', className)}>
+    <div
+      ref={ref}
+      className={`relative overflow-hidden ${className}`}
+      style={{ width, height }}
+    >
+      {/* Imagen principal */}
+      <img
+        ref={imgRef}
+        src={getOptimizedSrc(currentSrc)}
+        alt={alt}
+        width={width}
+        height={height}
+        sizes={sizes}
+        loading={priority ? 'eager' : 'lazy'}
+        decoding="async"
+        className={`transition-opacity duration-300 ${
+          isLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
+        onLoad={handleLoad}
+        onError={handleError}
+        style={{
+          objectFit: 'cover',
+          width: '100%',
+          height: '100%'
+        }}
+      />
+
       {/* Placeholder/Blur */}
       {!isLoaded && !hasError && (
-        <div 
+        <div
           className="absolute inset-0 bg-gray-200 animate-pulse"
-          style={{ width, height }}
-        >
-          {blurDataURL && (
-            <img
-              src={blurDataURL}
-              alt=""
-              className="w-full h-full object-cover opacity-50"
-              style={{ filter: 'blur(20px)' }}
-            />
-          )}
-        </div>
-      )}
-
-      {/* Imagen principal */}
-      {isInView && (
-        <img
-          ref={imgRef}
-          src={optimizedSrc}
-          srcSet={srcSet}
-          sizes={sizes}
-          alt={alt}
-          width={width}
-          height={height}
-          loading={loading}
-          className={cn(
-            'transition-opacity duration-300',
-            isLoaded ? 'opacity-100' : 'opacity-0',
-            'w-full h-full',
-            objectFit === 'cover' && 'object-cover',
-            objectFit === 'contain' && 'object-contain',
-            objectFit === 'fill' && 'object-fill',
-            objectFit === 'none' && 'object-none',
-            objectFit === 'scale-down' && 'object-scale-down'
-          )}
           style={{
-            objectPosition,
-            width,
-            height
+            backgroundImage: blurDataURL ? `url(${blurDataURL})` : undefined,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: blurDataURL ? 'blur(10px)' : undefined
           }}
-          onLoad={handleLoad}
-          onError={handleError}
         />
       )}
 
-      {/* Fallback para errores */}
+      {/* Error state */}
       {hasError && (
-        <div 
-          className="flex items-center justify-center bg-gray-100 text-gray-400"
-          style={{ width, height }}
-        >
-          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+          <div className="text-center text-gray-500">
+            <svg
+              className="w-8 h-8 mx-auto mb-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            <p className="text-sm">Error al cargar imagen</p>
+          </div>
+        </div>
+      )}
+
+      {/* Loading indicator */}
+      {!isLoaded && !hasError && isVisible && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
         </div>
       )}
     </div>
   );
-}
-
-// =====================================================
-// HOOK PARA OPTIMIZACIÓN DE IMÁGENES
-// =====================================================
-
-export const useImageOptimization = () => {
-  const [isWebPSupported, setIsWebPSupported] = useState(false);
-
-  useEffect(() => {
-    // Verificar soporte de WebP
-    const checkWebPSupport = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 1;
-      canvas.height = 1;
-      
-      return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
-    };
-
-    setIsWebPSupported(checkWebPSupport());
-  }, []);
-
-  const getOptimizedImageUrl = useCallback((
-    src: string,
-    options: {
-      width?: number;
-      height?: number;
-      quality?: number;
-      format?: 'webp' | 'jpeg' | 'png';
-    } = {}
-  ) => {
-    const { width, height, quality = 80, format = 'webp' } = options;
-
-    // Si no es una imagen local, devolver original
-    if (src.startsWith('http') || src.includes('?')) {
-      return src;
-    }
-
-    const url = new URL(src, window.location.origin);
-    
-    if (isWebPSupported && format === 'webp') {
-      url.searchParams.set('format', 'webp');
-    }
-    
-    url.searchParams.set('quality', quality.toString());
-    
-    if (width) {
-      url.searchParams.set('width', width.toString());
-    }
-    
-    if (height) {
-      url.searchParams.set('height', height.toString());
-    }
-
-    return url.toString();
-  }, [isWebPSupported]);
-
-  const preloadImage = useCallback((src: string, options?: { width?: number; height?: number; quality?: number }) => {
-    const optimizedSrc = getOptimizedImageUrl(src, options);
-    
-    return new Promise<HTMLImageElement>((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = reject;
-      img.src = optimizedSrc;
-    });
-  }, [getOptimizedImageUrl]);
-
-  return {
-    isWebPSupported,
-    getOptimizedImageUrl,
-    preloadImage
-  };
 };
 
-// =====================================================
-// COMPONENTE DE GALERÍA OPTIMIZADA
-// =====================================================
-
-interface OptimizedGalleryProps {
-  images: Array<{
-    src: string;
-    alt: string;
-    width?: number;
-    height?: number;
-  }>;
-  className?: string;
-  columns?: number;
-  gap?: number;
-  onImageClick?: (index: number) => void;
-}
-
-export function OptimizedGallery({
-  images,
-  className = '',
-  columns = 3,
-  gap = 16,
-  onImageClick
-}: OptimizedGalleryProps) {
-  const { preloadImage } = useImageOptimization();
-
-  // Preload de imágenes críticas
-  useEffect(() => {
-    const preloadCriticalImages = async () => {
-      const criticalImages = images.slice(0, 6); // Preload primeras 6 imágenes
-      
-      try {
-        await Promise.all(
-          criticalImages.map(img => preloadImage(img.src, { width: 400, quality: 75 }))
-        );
-      } catch (error) {
-        console.warn('Error preloading images:', error);
-      }
-    };
-
-    preloadCriticalImages();
-  }, [images, preloadImage]);
-
-  return (
-    <div 
-      className={cn('grid', className)}
-      style={{
-        gridTemplateColumns: `repeat(${columns}, 1fr)`,
-        gap: `${gap}px`
-      }}
-    >
-      {images.map((image, index) => (
-        <div
-          key={index}
-          className="relative cursor-pointer group"
-          onClick={() => onImageClick?.(index)}
-        >
-          <OptimizedImage
-            src={image.src}
-            alt={image.alt}
-            width={image.width}
-            height={image.height}
-            className="rounded-lg overflow-hidden"
-            loading={index < 6 ? 'eager' : 'lazy'}
-            quality={75}
-            sizes={`(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw`}
-          />
-          
-          {/* Overlay en hover */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 rounded-lg" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// =====================================================
-// COMPONENTE DE AVATAR OPTIMIZADO
-// =====================================================
-
-interface OptimizedAvatarProps {
-  src?: string;
-  alt: string;
-  size?: number;
-  className?: string;
-  fallback?: string;
-}
-
-export function OptimizedAvatar({
-  src,
-  alt,
-  size = 40,
-  className = '',
-  fallback
-}: OptimizedAvatarProps) {
-  return (
-    <OptimizedImage
-      src={src || fallback || '/default-avatar.png'}
-      alt={alt}
-      width={size}
-      height={size}
-      className={cn('rounded-full', className)}
-      quality={90}
-      loading="eager"
-      objectFit="cover"
-      fallback="/default-avatar.png"
-    />
-  );
-}
+export default OptimizedImage;

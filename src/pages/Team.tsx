@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { UserManagementService, UserInvitation } from '@/lib/userManagement';
 import { supabase } from '@/lib/supabase';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from '@/components/OptimizedMotion';
 
 import { 
   Users, 

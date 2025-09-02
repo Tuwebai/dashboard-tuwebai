@@ -15,6 +15,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { serviceWorkerManager } from './utils/serviceWorker';
+import TouchGestureProvider from './components/TouchGestureProvider';
 
 // Lazy loading de todas las páginas
 const Index = lazy(() => import('./pages/Index'));
@@ -268,20 +269,22 @@ function App() {
             <TooltipProvider>
               <AppProvider>
                 <TutorialProvider>
-                  <Router 
-                   basename={import.meta.env.BASE_URL || '/'}
-                   future={{
-                     v7_startTransition: false,
-                     v7_relativeSplatPath: false
-                   }}
-                 >
+                                  <Router 
+                 basename={import.meta.env.BASE_URL || '/'}
+                 future={{
+                   v7_startTransition: false,
+                   v7_relativeSplatPath: false
+                 }}
+               >
+                <TouchGestureProvider enableNavigationGestures={true} enableGlobalGestures={true}>
                   <ServiceWorkerInitializer />
                   <Suspense fallback={<PageLoader />}>
                     <AppRoutes />
                   </Suspense>
                   <Toaster />
                   <Sonner />
-                </Router>
+                </TouchGestureProvider>
+              </Router>
                 </TutorialProvider>
               </AppProvider>
             </TooltipProvider>

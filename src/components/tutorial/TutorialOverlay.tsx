@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from '@/components/OptimizedMotion';
 import { useNavigate } from 'react-router-dom';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { Button } from '@/components/ui/button';
@@ -312,17 +312,17 @@ export default function TutorialOverlay() {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        initial="hidden"
+        animate="visible"
+        exit="hidden"
         className="fixed inset-0 z-[9999] pointer-events-none"
       >
         {/* Overlay de fondo - Solo en desktop y tablet */}
         {!isMobile && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.3 }}
-            exit={{ opacity: 0 }}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
             className="absolute inset-0 bg-black/30 backdrop-blur-sm"
           />
         )}
@@ -332,10 +332,10 @@ export default function TutorialOverlay() {
         {/* Tooltip del tutorial */}
         <motion.div
           ref={overlayRef}
-          initial={{ scale: 0.8, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.8, opacity: 0, y: 20 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          initial="hidden"
+          animate="visible"
+          exit="hidden"
+          transition={{ duration: 0.3 }}
                           className={cn(
                   "absolute pointer-events-auto",
                   "bg-white rounded-2xl shadow-2xl border-2 border-slate-300",
@@ -360,9 +360,10 @@ export default function TutorialOverlay() {
             <div className="absolute top-0 left-0 right-0 h-1 bg-slate-100 rounded-t-2xl overflow-hidden">
               <motion.div
                 className="h-full bg-gradient-to-r from-blue-500 to-purple-600"
-                initial={{ width: 0 }}
-                animate={{ width: `${getProgressPercentage()}%` }}
+                initial="hidden"
+                animate="visible"
                 transition={{ duration: 0.5 }}
+                style={{ width: `${getProgressPercentage()}%` }}
               />
             </div>
 

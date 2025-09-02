@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from '@/components/OptimizedMotion';
 import { useNavigate } from 'react-router-dom';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { Button } from '@/components/ui/button';
@@ -200,10 +200,10 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
           <AnimatePresence>
             {(showSidebar || !isMobile) && (
               <motion.div
-                initial={isMobile ? { x: -320, opacity: 0 } : { opacity: 1 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={isMobile ? { x: -320, opacity: 0 } : { opacity: 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                transition={{ duration: 0.3 }}
                 className={cn(
                   "bg-slate-100 border-b-2 border-slate-300 flex flex-col shadow-lg",
                   isMobile ? "w-full h-[50vh] border-b" : "w-80 border-r",

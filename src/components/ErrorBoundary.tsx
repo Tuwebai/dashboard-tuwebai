@@ -382,7 +382,7 @@ export const createErrorHandler = (context: string) => {
   };
 };
 
-export const handleAsyncError = async <T>(
+export const handleAsyncError = async <T,>(
   asyncFn: () => Promise<T>,
   context: string
 ): Promise<T | null> => {

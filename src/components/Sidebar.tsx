@@ -95,7 +95,7 @@ export default function Sidebar() {
       to={to}
       className={({ isActive }) =>
         `relative group cursor-pointer transition-all duration-300 ease-out hover:bg-gray-50 w-full
-        ${isActive ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500' : ''}`
+        ${isActive ? 'bg-gradient-to-r from-blue-50 to-indigo-50' : ''}`
       }
       aria-label={`Navegar a ${label}`}
       aria-describedby={count ? `count-${label.toLowerCase()}` : undefined}
@@ -109,6 +109,10 @@ export default function Sidebar() {
                 : 'bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600'
             }`}>
               {icon}
+              {/* Indicador azul al lado del icono */}
+              {isActive && (
+                <div className="absolute -left-2 top-1/2 transform -translate-y-1/2 w-1 h-6 bg-blue-500 rounded-r-full"></div>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <span className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
@@ -173,7 +177,7 @@ export default function Sidebar() {
           }
         }}
         className={`relative group cursor-pointer transition-all duration-300 ease-out hover:bg-gray-50 w-full
-        ${isActive ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500' : ''}`}
+        ${isActive ? 'bg-gradient-to-r from-blue-50 to-indigo-50' : ''}`}
       >
         <div className="flex items-center px-4 py-3.5 space-x-4">
           <div className={`relative p-2 rounded-xl transition-all duration-300 ${
@@ -181,12 +185,13 @@ export default function Sidebar() {
               ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25' 
               : 'bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600'
           }`}>
-            {isActive && (
-              <div className="absolute inset-0 bg-blue-400 rounded-xl animate-ping opacity-25"></div>
-            )}
             <div className="transition-transform duration-300 group-hover:scale-110">
               {icon}
             </div>
+            {/* Indicador azul al lado del icono */}
+            {isActive && (
+              <div className="absolute -left-2 top-1/2 transform -translate-y-1/2 w-1 h-6 bg-blue-500 rounded-r-full"></div>
+            )}
           </div>
           <span className={`font-medium text-sm flex-1 text-center ${
             isActive ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'

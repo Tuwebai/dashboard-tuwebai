@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion } from '@/components/OptimizedMotion';
 import { CheckCircle, Clock, Play, Pause, AlertCircle } from 'lucide-react';
 import AccessibleTooltip from './AccessibleTooltip';
 

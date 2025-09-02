@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from '@/components/OptimizedMotion';
 import { Bell, MessageSquare, Clock, CheckCircle, AlertCircle, Zap } from 'lucide-react';
 import AccessibleTooltip from './AccessibleTooltip';
 

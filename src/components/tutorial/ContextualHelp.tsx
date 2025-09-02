@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from '@/components/OptimizedMotion';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -147,10 +147,10 @@ export default function ContextualHelp({
         {isVisible && (
           <motion.div
             ref={tooltipRef}
-            initial={{ opacity: 0, scale: 0.8, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 10 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            transition={{ duration: 0.3 }}
             className={cn(
               "absolute z-50 w-80",
               getPositionClasses()
@@ -309,9 +309,9 @@ export function FloatingHelpButton() {
 
   return (
     <motion.div
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0, opacity: 0 }}
+      initial="hidden"
+      animate="visible"
+      exit="hidden"
       className="fixed bottom-6 right-6 z-50"
     >
       <Card className="shadow-2xl border-slate-200 bg-white max-w-sm">
@@ -396,9 +396,9 @@ export function ContextualHint({
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.8, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.8, y: 10 }}
+          initial="hidden"
+          animate="visible"
+          exit="hidden"
           className={cn("absolute z-40", getPositionClasses(), className)}
         >
           <div className="bg-slate-800 text-white text-sm px-3 py-2 rounded-lg shadow-lg max-w-xs">

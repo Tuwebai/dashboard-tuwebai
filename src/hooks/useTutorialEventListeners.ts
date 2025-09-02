@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { useMemoryLeakPrevention } from './useMemoryLeakPrevention';
 
 // =====================================================
 // HOOK PARA MANEJO DE EVENT LISTENERS SIN MEMORY LEAKS
@@ -12,59 +13,7 @@ interface EventListenerConfig {
 }
 
 export const useTutorialEventListeners = () => {
-  const listenersRef = useRef<EventListenerConfig[]>([]);
-  const isMountedRef = useRef(true);
-
-  // Agregar event listener
-  const addEventListener = useCallback((config: EventListenerConfig) => {
-    if (!isMountedRef.current) return;
-
-    const { event, handler, element = window, options } = config;
-    
-    element.addEventListener(event, handler, options);
-    
-    // Guardar referencia para limpieza
-    listenersRef.current.push({
-      event,
-      handler,
-      element,
-      options,
-    });
-  }, []);
-
-  // Remover event listener específico
-  const removeEventListener = useCallback((config: EventListenerConfig) => {
-    const { event, handler, element = window, options } = config;
-    
-    element.removeEventListener(event, handler, options);
-    
-    // Remover de la lista
-    listenersRef.current = listenersRef.current.filter(
-      listener => !(
-        listener.event === event &&
-        listener.handler === handler &&
-        listener.element === element
-      )
-    );
-  }, []);
-
-  // Limpiar todos los event listeners
-  const cleanup = useCallback(() => {
-    listenersRef.current.forEach(({ event, handler, element, options }) => {
-      element.removeEventListener(event, handler, options);
-    });
-    listenersRef.current = [];
-  }, []);
-
-  // Limpiar al desmontar
-  useEffect(() => {
-    isMountedRef.current = true;
-    
-    return () => {
-      isMountedRef.current = false;
-      cleanup();
-    };
-  }, [cleanup]);
+  const { addEventListener, removeEventListener, cleanup } = useMemoryLeakPrevention();
 
   // Hook para manejar clicks fuera del tutorial
   const useClickOutside = useCallback((

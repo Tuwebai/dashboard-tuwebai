@@ -48,7 +48,7 @@ import {
   Keyboard,
   HelpCircle
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from '@/components/OptimizedMotion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTranslation } from 'react-i18next';
 import { formatDateSafe } from '@/utils/formatDateSafe';

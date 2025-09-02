@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { projectService } from '@/lib/projectService';
 import { supabase } from '@/lib/supabase';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from '@/components/OptimizedMotion';
 
 interface ApprovalRequest {
   id: string;

@@ -8,7 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from '@/components/OptimizedMotion';
 import { CheckCircle, FileText, Calendar, UploadCloud, AlertCircle, Info, Star, Trash2 } from 'lucide-react';
 import { useRef } from 'react';
 import ProjectTypeSelector from '@/components/ProjectTypeSelector';

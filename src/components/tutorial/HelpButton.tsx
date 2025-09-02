@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from '@/components/OptimizedMotion';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -169,8 +169,8 @@ export default function HelpButton({
         className
       )}>
         <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
+          initial="hidden"
+          animate="visible"
           whileHover={{ scale: isMobile ? 1 : 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -204,9 +204,9 @@ export default function HelpButton({
             {/* Quick Menu */}
             {showQuickMenu && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
                 className={cn(
                   "absolute bg-white rounded-2xl shadow-2xl border-2 border-slate-300",
                   "ring-2 ring-blue-100 ring-opacity-50",

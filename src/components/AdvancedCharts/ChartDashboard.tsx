@@ -28,7 +28,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { motion, AnimatePresence, OptimizedReorder as Reorder } from '@/components/OptimizedMotion';
 import AdvancedChart, { ChartConfig } from './AdvancedChart';
 import { chartDataService, ChartData } from '@/lib/chartDataService';
 

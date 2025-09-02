@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion } from '@/components/OptimizedMotion';
 import { Draggable } from 'react-beautiful-dnd';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -309,13 +309,12 @@ export default function ProjectCard({
   const cardContent = (
     <motion.div
       key={project.id}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial="hidden"
+      animate="visible"
       transition={{ duration: 0.5, delay: index * 0.1 }}
       whileHover={{ 
         y: -12,
-        scale: 1.03,
-        transition: { duration: 0.3, ease: "easeOut" }
+        scale: 1.03
       }}
       whileTap={{ scale: 0.97 }}
       className="w-full max-w-xs"

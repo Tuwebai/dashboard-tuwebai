@@ -35,17 +35,71 @@ export default defineConfig({
           return `assets/[name]-[hash][extname]`
         },
         // Code splitting manual para optimizar carga
-        manualChunks: {
-          // Vendor chunks separados
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-tooltip', '@radix-ui/react-dropdown-menu'],
-          'utils-vendor': ['lucide-react', 'clsx', 'tailwind-merge'],
-          'charts-vendor': ['echarts', 'echarts-for-react', 'recharts'],
-          'editor-vendor': ['@monaco-editor/react', 'monaco-editor'],
-          'animation-vendor': ['framer-motion'],
-          'drag-vendor': ['react-beautiful-dnd'],
-          'query-vendor': ['@tanstack/react-query'],
-          'supabase-vendor': ['@supabase/supabase-js']
+        manualChunks: (id) => {
+          // React core
+          if (id.includes('react') || id.includes('react-dom')) {
+            return 'react-vendor';
+          }
+          
+          // React Router
+          if (id.includes('react-router')) {
+            return 'router-vendor';
+          }
+          
+          // Radix UI components
+          if (id.includes('@radix-ui')) {
+            return 'radix-vendor';
+          }
+          
+          // Charts libraries
+          if (id.includes('echarts') || id.includes('recharts') || id.includes('chart.js')) {
+            return 'charts-vendor';
+          }
+          
+          // Monaco Editor
+          if (id.includes('monaco-editor')) {
+            return 'editor-vendor';
+          }
+          
+          // Drag and drop
+          if (id.includes('react-beautiful-dnd')) {
+            return 'drag-vendor';
+          }
+          
+          // Query management
+          if (id.includes('@tanstack/react-query')) {
+            return 'query-vendor';
+          }
+          
+          // Supabase
+          if (id.includes('@supabase')) {
+            return 'supabase-vendor';
+          }
+          
+          // Utilities
+          if (id.includes('lucide-react') || id.includes('clsx') || id.includes('tailwind-merge')) {
+            return 'utils-vendor';
+          }
+          
+          // Date utilities
+          if (id.includes('date-fns')) {
+            return 'date-vendor';
+          }
+          
+          // PDF and file processing
+          if (id.includes('jspdf') || id.includes('html2canvas') || id.includes('file-saver')) {
+            return 'file-vendor';
+          }
+          
+          // Internationalization
+          if (id.includes('i18next')) {
+            return 'i18n-vendor';
+          }
+          
+          // Large node_modules
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
         }
       }
     },
@@ -56,10 +110,30 @@ export default defineConfig({
         drop_console: true,
         drop_debugger: true,
         pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
-        passes: 2
+        passes: 3,
+        unsafe: true,
+        unsafe_comps: true,
+        unsafe_math: true,
+        unsafe_proto: true,
+        unsafe_regexp: true,
+        unsafe_undefined: true,
+        conditionals: true,
+        dead_code: true,
+        evaluate: true,
+        if_return: true,
+        join_vars: true,
+        reduce_vars: true,
+        sequences: true,
+        unused: true
       },
       mangle: {
-        safari10: true
+        safari10: true,
+        properties: {
+          regex: /^_/
+        }
+      },
+      format: {
+        comments: false
       }
     },
     
@@ -97,9 +171,22 @@ export default defineConfig({
       'recharts',
       'date-fns',
       'clsx',
-      'tailwind-merge'
+      'tailwind-merge',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-tooltip',
+      '@radix-ui/react-dropdown-menu',
+      'echarts',
+      'echarts-for-react',
+      'chart.js',
+      'react-chartjs-2',
+      'i18next',
+      'react-i18next',
+      'zustand',
+      'zod',
+      'react-hook-form',
+      '@hookform/resolvers'
     ],
-    exclude: ['@vite/client', '@vite/env']
+    exclude: ['@vite/client', '@vite/env', 'monaco-editor']
   },
   
   // Configuración de assets
