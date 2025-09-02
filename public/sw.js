@@ -1,175 +1,316 @@
-// Service Worker para Push Notifications
-const CACHE_NAME = 'tuwebai-v1';
-const urlsToCache = [
+// =====================================================
+// SERVICE WORKER PARA CACHE OFFLINE
+// =====================================================
+
+const CACHE_NAME = 'tuwebai-dashboard-v1.0.0';
+const STATIC_CACHE_NAME = 'tuwebai-static-v1.0.0';
+const DYNAMIC_CACHE_NAME = 'tuwebai-dynamic-v1.0.0';
+
+// Recursos estáticos para cache inmediato
+const STATIC_ASSETS = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
-  '/favicon.ico'
+  '/index.html',
+  '/manifest.json',
+  '/favicon.ico',
+  '/favicon.svg',
+  '/logoweb.jpg',
+  '/notification-sound.mp3',
+  '/placeholder.svg',
+  '/robots.txt'
 ];
 
-// Instalar Service Worker
+// Recursos dinámicos para cache bajo demanda
+const DYNAMIC_PATTERNS = [
+  /^https:\/\/.*\.supabase\.co\/.*$/,
+  /^https:\/\/fonts\.googleapis\.com\/.*$/,
+  /^https:\/\/fonts\.gstatic\.com\/.*$/
+];
+
+// =====================================================
+// INSTALACIÓN DEL SERVICE WORKER
+// =====================================================
+
 self.addEventListener('install', (event) => {
+  console.log('🔧 Service Worker: Instalando...');
+  
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches.open(STATIC_CACHE_NAME)
       .then((cache) => {
-        return cache.addAll(urlsToCache);
+        console.log('📦 Service Worker: Cacheando recursos estáticos...');
+        return cache.addAll(STATIC_ASSETS);
+      })
+      .then(() => {
+        console.log('✅ Service Worker: Instalación completada');
+        return self.skipWaiting();
+      })
+      .catch((error) => {
+        console.error('❌ Service Worker: Error en instalación:', error);
       })
   );
 });
 
-// Activar Service Worker
+// =====================================================
+// ACTIVACIÓN DEL SERVICE WORKER
+// =====================================================
+
 self.addEventListener('activate', (event) => {
+  console.log('🚀 Service Worker: Activando...');
+  
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys()
+      .then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+            // Eliminar caches antiguos
+            if (cacheName !== STATIC_CACHE_NAME && 
+                cacheName !== DYNAMIC_CACHE_NAME && 
+                cacheName !== CACHE_NAME) {
+              console.log('🗑️ Service Worker: Eliminando cache antiguo:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     })
+      .then(() => {
+        console.log('✅ Service Worker: Activación completada');
+        return self.clients.claim();
+      })
   );
 });
 
-// Interceptar fetch requests
+// =====================================================
+// INTERCEPTACIÓN DE REQUESTS
+// =====================================================
+
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Devolver desde caché si está disponible
-        if (response) {
-          return response;
-        }
-        
-        // Si no está en caché, hacer fetch
-        return fetch(event.request);
-      }
-    )
-  );
+  const { request } = event;
+  const url = new URL(request.url);
+  
+  // Solo interceptar requests HTTP/HTTPS
+  if (!request.url.startsWith('http')) {
+    return;
+  }
+  
+  // Estrategia: Cache First para recursos estáticos
+  if (isStaticAsset(request)) {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
+  
+  // Estrategia: Network First para API calls
+  if (isApiRequest(request)) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+  
+  // Estrategia: Stale While Revalidate para otros recursos
+  event.respondWith(staleWhileRevalidate(request));
 });
 
-// Manejar push notifications
-self.addEventListener('push', (event) => {
-  let notificationData = {
-    title: 'TuWebAI',
-    body: 'Nueva notificación',
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
-    data: {}
-  };
+// =====================================================
+// ESTRATEGIAS DE CACHE
+// =====================================================
 
-  if (event.data) {
-    try {
-      const payload = event.data.json();
-      notificationData = { ...notificationData, ...payload };
-    } catch (error) {
-      console.error('Error parsing push data:', error);
+// Cache First: Para recursos estáticos que raramente cambian
+async function cacheFirst(request) {
+  try {
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
     }
-  }
-
-  const options = {
-    body: notificationData.body,
-    icon: notificationData.icon,
-    badge: notificationData.badge,
-    data: notificationData.data,
-    requireInteraction: notificationData.requireInteraction || false,
-    silent: notificationData.silent || false,
-    tag: notificationData.tag,
-    timestamp: notificationData.timestamp || Date.now(),
-    actions: notificationData.actions || []
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(notificationData.title, options)
-  );
-});
-
-// Manejar clic en notificación
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-
-  const notificationData = event.notification.data;
-  const url = notificationData?.url || '/';
-
-  event.waitUntil(
-    clients.matchAll({ type: 'window' }).then((clientList) => {
-      // Si ya hay una ventana abierta, enfocarla
-      for (const client of clientList) {
-        if (client.url === url && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      
-      // Si no hay ventana abierta, abrir una nueva
-      if (clients.openWindow) {
-        return clients.openWindow(url);
-      }
-    })
-  );
-});
-
-// Manejar acción de notificación
-self.addEventListener('notificationclick', (event) => {
-  if (event.action) {
-    const action = event.action;
-    const notificationData = event.notification.data;
     
-    // Manejar diferentes acciones
-    switch (action) {
-      case 'view':
-        // Abrir la URL específica
-        event.waitUntil(
-          clients.openWindow(notificationData?.url || '/')
-        );
-        break;
-      case 'dismiss':
-        // Solo cerrar la notificación
-        event.notification.close();
-        break;
-      default:
-        // Acción por defecto
-        break;
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+      const cache = await caches.open(STATIC_CACHE_NAME);
+      cache.put(request, networkResponse.clone());
     }
-  }
-});
-
-// Manejar cierre de notificación
-self.addEventListener('notificationclose', (event) => {
-  // Registrar que la notificación fue cerrada
-
-});
-
-// Manejar mensajes del cliente
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
-
-// Manejar errores
-self.addEventListener('error', (event) => {
-  console.error('Service Worker error:', event.error);
-});
-
-// Manejar promesas rechazadas
-self.addEventListener('unhandledrejection', (event) => {
-  console.error('Service Worker unhandled rejection:', event.reason);
-});
-
-// Función para limpiar notificaciones antiguas
-function cleanupOldNotifications() {
-  self.registration.getNotifications().then((notifications) => {
-    const now = Date.now();
-    const maxAge = 24 * 60 * 60 * 1000; // 24 horas
     
-    notifications.forEach((notification) => {
-      if (notification.timestamp && (now - notification.timestamp) > maxAge) {
-        notification.close();
-      }
-    });
-  });
+    return networkResponse;
+  } catch (error) {
+    console.error('❌ Cache First Error:', error);
+    return new Response('Recurso no disponible offline', { status: 503 });
+  }
 }
 
-// Limpiar notificaciones antiguas cada hora
-setInterval(cleanupOldNotifications, 60 * 60 * 1000);
+// Network First: Para API calls que necesitan datos frescos
+async function networkFirst(request) {
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+      const cache = await caches.open(DYNAMIC_CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (error) {
+    console.log('🌐 Network First: Fallback a cache');
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    return new Response('Datos no disponibles offline', { status: 503 });
+  }
+}
+
+// Stale While Revalidate: Para recursos que pueden usar versión cacheada
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(DYNAMIC_CACHE_NAME);
+  const cachedResponse = await cache.match(request);
+  
+  const fetchPromise = fetch(request).then((networkResponse) => {
+    if (networkResponse.ok) {
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  }).catch(() => {
+    // Si falla la red, devolver cache si existe
+    return cachedResponse || new Response('Recurso no disponible', { status: 503 });
+  });
+  
+  // Devolver cache inmediatamente si existe, luego actualizar en background
+  return cachedResponse || fetchPromise;
+}
+
+// =====================================================
+// FUNCIONES AUXILIARES
+// =====================================================
+
+function isStaticAsset(request) {
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+  
+  // Recursos estáticos
+  return pathname.endsWith('.js') ||
+         pathname.endsWith('.css') ||
+         pathname.endsWith('.png') ||
+         pathname.endsWith('.jpg') ||
+         pathname.endsWith('.jpeg') ||
+         pathname.endsWith('.svg') ||
+         pathname.endsWith('.ico') ||
+         pathname.endsWith('.woff') ||
+         pathname.endsWith('.woff2') ||
+         pathname.endsWith('.ttf') ||
+         pathname.endsWith('.eot') ||
+         pathname === '/' ||
+         pathname === '/index.html';
+}
+
+function isApiRequest(request) {
+  const url = new URL(request.url);
+  
+  // Supabase API
+  if (url.hostname.includes('supabase.co')) {
+    return true;
+  }
+  
+  // Otras APIs
+  return url.pathname.startsWith('/api/') ||
+         url.pathname.startsWith('/auth/') ||
+         request.method !== 'GET';
+}
+
+// =====================================================
+// MANEJO DE MENSAJES
+// =====================================================
+
+self.addEventListener('message', (event) => {
+  const { type, payload } = event.data;
+  
+  switch (type) {
+    case 'SKIP_WAITING':
+    self.skipWaiting();
+      break;
+      
+    case 'CLEAR_CACHE':
+      clearAllCaches();
+      break;
+      
+    case 'GET_CACHE_SIZE':
+      getCacheSize().then((size) => {
+        event.ports[0].postMessage({ type: 'CACHE_SIZE', size });
+      });
+      break;
+      
+    default:
+      console.log('📨 Service Worker: Mensaje desconocido:', type);
+  }
+});
+
+// =====================================================
+// FUNCIONES DE UTILIDAD
+// =====================================================
+
+async function clearAllCaches() {
+  const cacheNames = await caches.keys();
+  await Promise.all(
+    cacheNames.map(cacheName => caches.delete(cacheName))
+  );
+  console.log('🗑️ Service Worker: Todos los caches eliminados');
+}
+
+async function getCacheSize() {
+  const cacheNames = await caches.keys();
+  let totalSize = 0;
+  
+  for (const cacheName of cacheNames) {
+    const cache = await caches.open(cacheName);
+    const keys = await cache.keys();
+    
+    for (const request of keys) {
+      const response = await cache.match(request);
+      if (response) {
+        const blob = await response.blob();
+        totalSize += blob.size;
+      }
+    }
+  }
+  
+  return totalSize;
+}
+
+// =====================================================
+// NOTIFICACIONES PUSH (FUTURO)
+// =====================================================
+
+self.addEventListener('push', (event) => {
+  if (event.data) {
+    const data = event.data.json();
+    const options = {
+      body: data.body,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      vibrate: [100, 50, 100],
+      data: {
+        dateOfArrival: Date.now(),
+        primaryKey: data.primaryKey
+      },
+      actions: [
+        {
+          action: 'explore',
+          title: 'Ver detalles',
+          icon: '/favicon.ico'
+        },
+        {
+          action: 'close',
+          title: 'Cerrar',
+          icon: '/favicon.ico'
+        }
+      ]
+    };
+    
+    event.waitUntil(
+      self.registration.showNotification(data.title, options)
+    );
+  }
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  
+  if (event.action === 'explore') {
+    event.waitUntil(
+      clients.openWindow('/')
+    );
+  }
+});
+
+console.log('🎯 Service Worker: Cargado y listo');
