@@ -683,6 +683,151 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
         ]
       }
     ]
+  },
+  
+  // =====================================================
+  // TUTORIALES ESPECÍFICOS PARA CLIENTES
+  // =====================================================
+  
+  {
+    id: 'client-welcome-tour',
+    title: 'Bienvenido a TuWebAI',
+    description: 'Tour de bienvenida específico para clientes',
+    icon: '👋',
+    estimatedTime: 8,
+    difficulty: 'beginner',
+    category: 'onboarding',
+    steps: [
+      {
+        id: 'client-welcome-1',
+        title: 'Bienvenido a TuWebAI',
+        description: 'Te damos la bienvenida a TuWebAI, tu plataforma profesional para gestionar proyectos web.',
+        target: '.main-navigation',
+        position: 'center',
+        action: 'wait',
+        actionText: 'Explora la interfaz',
+        skipable: false,
+        tips: [
+          'TuWebAI es tu centro de control para proyectos web',
+          'Aquí podrás ver el progreso de tus proyectos',
+          'Tu equipo trabajará contigo en cada fase'
+        ]
+      },
+      {
+        id: 'client-welcome-2',
+        title: 'Tu Dashboard Personal',
+        description: 'Desde aquí puedes ver el estado de todos tus proyectos y comunicarte con tu equipo.',
+        target: '.dashboard-stats',
+        position: 'bottom',
+        action: 'navigate',
+        actionText: 'Navegar a tu dashboard',
+        navigateTo: '/dashboard',
+        waitForNavigation: true,
+        navigationDelay: 1000,
+        skipable: true,
+        tips: [
+          'Ve el progreso general de tus proyectos',
+          'Revisa las estadísticas importantes',
+          'Mantente informado del avance'
+        ]
+      },
+      {
+        id: 'client-welcome-3',
+        title: 'Tus Proyectos',
+        description: 'Aquí encontrarás todos tus proyectos web con su estado actual y próximos pasos.',
+        target: '.projects-section',
+        position: 'bottom',
+        action: 'navigate',
+        actionText: 'Navegar a tus proyectos',
+        navigateTo: '/proyectos',
+        waitForNavigation: true,
+        navigationDelay: 1000,
+        skipable: true,
+        tips: [
+          'Cada proyecto tiene su propio espacio',
+          'Puedes ver el progreso en tiempo real',
+          'Comunícate directamente con tu equipo'
+        ]
+      },
+      {
+        id: 'client-welcome-4',
+        title: 'Tu Perfil',
+        description: 'Configura tu información personal y preferencias de comunicación.',
+        target: '.profile-section',
+        position: 'bottom',
+        action: 'navigate',
+        actionText: 'Navegar a tu perfil',
+        navigateTo: '/perfil',
+        waitForNavigation: true,
+        navigationDelay: 1000,
+        skipable: true,
+        tips: [
+          'Mantén tu información actualizada',
+          'Configura cómo quieres recibir notificaciones',
+          'Personaliza tu experiencia'
+        ]
+      }
+    ]
+  },
+  
+  {
+    id: 'client-projects-tour',
+    title: 'Gestiona tus Proyectos',
+    description: 'Aprende a gestionar y seguir tus proyectos web',
+    icon: '📁',
+    estimatedTime: 6,
+    difficulty: 'beginner',
+    category: 'projects',
+    steps: [
+      {
+        id: 'client-projects-1',
+        title: 'Vista General de Proyectos',
+        description: 'Aquí puedes ver todos tus proyectos con su estado actual y progreso.',
+        target: '.projects-list',
+        position: 'center',
+        action: 'navigate',
+        actionText: 'Navegar a proyectos',
+        navigateTo: '/proyectos',
+        waitForNavigation: true,
+        navigationDelay: 1000,
+        skipable: false,
+        tips: [
+          'Cada proyecto muestra su estado actual',
+          'El progreso se actualiza en tiempo real',
+          'Puedes filtrar y buscar proyectos'
+        ]
+      },
+      {
+        id: 'client-projects-2',
+        title: 'Detalles del Proyecto',
+        description: 'Haz clic en cualquier proyecto para ver detalles completos y comunicarte con tu equipo.',
+        target: '.project-card',
+        position: 'right',
+        action: 'click',
+        actionText: 'Haz clic en un proyecto',
+        skipable: true,
+        tips: [
+          'Ve todas las fases del proyecto',
+          'Revisa comentarios y actualizaciones',
+          'Comunícate directamente con tu equipo'
+        ]
+      },
+      {
+        id: 'client-projects-3',
+        title: 'Colaboración en Tiempo Real',
+        description: 'Utiliza el sistema de comentarios para comunicarte con tu equipo de desarrollo.',
+        target: '.collaboration-section',
+        position: 'left',
+        action: 'wait',
+        actionText: 'Explora la colaboración',
+        skipable: true,
+        tips: [
+          'Añade comentarios en cada fase',
+          'Recibe notificaciones de actualizaciones',
+          'Mantén una comunicación fluida'
+        ]
+      }
+    ]
   }
 ];
 
@@ -876,8 +1021,26 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [stepIndex, setStepIndex] = useState(0);
   const [progress, setProgress] = useState<TutorialProgress | null>(null);
   
-  // Flujos y progreso
-  const [availableFlows] = useState<TutorialFlow[]>(TUTORIAL_FLOWS);
+  // Flujos y progreso - Filtrar por rol del usuario
+  const getAvailableFlows = useCallback(() => {
+    if (!user) return [];
+    
+    // Filtrar flujos según el rol del usuario
+    return TUTORIAL_FLOWS.filter(flow => {
+      if (user.role === 'admin') {
+        // Los admins ven todos los flujos
+        return true;
+      } else {
+        // Los usuarios normales solo ven flujos específicos para clientes
+        return flow.id.includes('client') || 
+               flow.id === 'welcome-tour' || 
+               flow.id === 'support-help' ||
+               flow.id === 'profile-page-tour';
+      }
+    });
+  }, [user]);
+  
+  const [availableFlows] = useState<TutorialFlow[]>(getAvailableFlows());
   const [completedFlows, setCompletedFlows] = useState<string[]>([]);
   
   // Artículos de ayuda
@@ -897,10 +1060,14 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Auto-iniciar tutorial para nuevos usuarios
   useEffect(() => {
     if (isAuthenticated && user && autoStart) {
-      const hasCompletedWelcome = localStorage.getItem('tutorial-welcome-completed');
+      // Determinar qué tutorial iniciar según el rol
+      const tutorialId = user.role === 'admin' ? 'welcome-tour' : 'client-welcome-tour';
+      const storageKey = `tutorial-${tutorialId}-completed`;
+      
+      const hasCompletedWelcome = localStorage.getItem(storageKey);
       if (!hasCompletedWelcome) {
         setTimeout(() => {
-          startTutorial('welcome-tour');
+          startTutorial(tutorialId);
         }, 2000); // Esperar 2 segundos después del login
       }
     }

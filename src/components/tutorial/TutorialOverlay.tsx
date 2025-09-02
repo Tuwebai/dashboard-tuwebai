@@ -410,8 +410,8 @@ export default function TutorialOverlay() {
                 </div>
               )}
 
-              {/* Acción requerida */}
-              {currentStep.action && (
+              {/* Acción requerida - Solo mostrar si no es navegación automática */}
+              {currentStep.action && currentStep.action !== 'navigate' && (
                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 sm:p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <Target className="w-3 h-3 sm:w-4 sm:h-4 text-slate-600" />
@@ -429,9 +429,21 @@ export default function TutorialOverlay() {
                     {currentStep.action === 'hover' && <HelpCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />}
                     {currentStep.action === 'scroll' && <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />}
                     {currentStep.action === 'wait' && <Clock className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />}
-                    {currentStep.action === 'navigate' && <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />}
-                    {currentStep.action === 'navigate' ? 'Navegar' : 'Ejecutar Acción'}
+                    Ejecutar Acción
                   </Button>
+                </div>
+              )}
+
+              {/* Información de navegación automática */}
+              {currentStep.action === 'navigate' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                    <span className="text-xs sm:text-sm font-medium text-blue-800">Navegación automática</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-blue-700 leading-relaxed">
+                    {currentStep.actionText}
+                  </p>
                 </div>
               )}
 

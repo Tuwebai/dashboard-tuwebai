@@ -33,7 +33,8 @@ import {
   Download,
   Share2,
   Bookmark,
-  BookmarkCheck
+  BookmarkCheck,
+  CheckCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
