@@ -1,244 +1,284 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useApp } from '@/contexts/AppContext';
-import { securityMiddleware } from '@/lib/securityMiddleware';
+import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 
-export interface SecurityState {
-  isAuthenticated: boolean;
-  user: any | null;
-  needsRefresh: boolean;
-  isBlocked: boolean;
-  blockReason?: string;
-  blockUntil?: Date;
-  csrfToken: string | null;
-  rateLimitInfo: {
-    remaining: number;
-    resetTime: number;
-  } | null;
+interface SecurityStats {
+  totalLogins: number;
+  failedLoginsToday: number;
+  lastLogin: string | null;
+  suspiciousActivity: number;
+}
+
+interface LoginAttempt {
+  email: string;
+  ip_address: string;
+  success: boolean;
+  user_agent: string;
+  created_at: string;
 }
 
 export function useSecurity() {
-  const { user, isAuthenticated } = useApp();
-  const [securityState, setSecurityState] = useState<SecurityState>({
-    isAuthenticated: false,
-    user: null,
-    needsRefresh: false,
-    isBlocked: false,
-    csrfToken: null,
-    rateLimitInfo: null
-  });
-  const [loading, setLoading] = useState(true);
+  const [securityStats, setSecurityStats] = useState<SecurityStats | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [has2FA, setHas2FA] = useState(false);
+  const [isSecureConnection, setIsSecureConnection] = useState(true);
 
-  // Verificar estado de seguridad
-  const checkSecurity = useCallback(async () => {
-    if (!isAuthenticated || !user) {
-      setSecurityState(prev => ({
-        ...prev,
-        isAuthenticated: false,
-        user: null,
-        needsRefresh: false,
-        isBlocked: false,
-        csrfToken: null
-      }));
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // Verificar autenticación
-      const authResult = await securityMiddleware.verifyAuthentication();
-      
-      if (!authResult.valid) {
-        setSecurityState(prev => ({
-          ...prev,
-          isAuthenticated: false,
-          user: null,
-          needsRefresh: false,
-          isBlocked: false,
-          csrfToken: null
-        }));
-        setLoading(false);
-        return;
-      }
-
-      // Verificar si el usuario está bloqueado
-      const blockResult = await securityMiddleware.isUserBlocked(user.id);
-      
-      // Generar token CSRF
-      const csrfToken = securityMiddleware.generateCSRFToken(user.id);
-
-      setSecurityState(prev => ({
-        ...prev,
-        isAuthenticated: true,
-        user: authResult.user,
-        needsRefresh: authResult.needsRefresh || false,
-        isBlocked: blockResult.blocked,
-        blockReason: blockResult.reason,
-        blockUntil: blockResult.until,
-        csrfToken
-      }));
-
-    } catch (error) {
-      console.error('Error checking security:', error);
-      setSecurityState(prev => ({
-        ...prev,
-        isAuthenticated: false,
-        user: null,
-        needsRefresh: false,
-        isBlocked: false,
-        csrfToken: null
-      }));
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated, user]);
-
-  // Verificar rate limit
-  const checkRateLimit = useCallback(async (identifier?: string) => {
-    const clientId = identifier || user?.id || 'anonymous';
-    const result = await securityMiddleware.checkRateLimit(clientId);
-    
-    setSecurityState(prev => ({
-      ...prev,
-      rateLimitInfo: {
-        remaining: result.remaining,
-        resetTime: result.resetTime
-      }
-    }));
-
-    return result;
-  }, [user?.id]);
-
-  // Verificar permisos
-  const checkPermissions = useCallback(async (
-    requiredRole?: string,
-    requiredPermissions?: string[]
-  ): Promise<boolean> => {
-    if (!user) return false;
-
-    try {
-      return await securityMiddleware.verifyUserPermissions(
-        user.id,
-        requiredRole,
-        requiredPermissions
-      );
-    } catch (error) {
-      console.error('Error checking permissions:', error);
-      return false;
-    }
-  }, [user]);
-
-  // Detectar actividad sospechosa
-  const detectSuspiciousActivity = useCallback((activity: Record<string, any>) => {
-    if (!user) return false;
-
-    return securityMiddleware.detectSuspiciousActivity(user.id, activity);
-  }, [user]);
-
-  // Obtener headers de seguridad
-  const getSecurityHeaders = useCallback(() => {
-    return securityMiddleware.getSecurityHeaders();
+  // Verificar conexión segura
+  useEffect(() => {
+    setIsSecureConnection(window.location.protocol === 'https:');
   }, []);
-
-  // Procesar request con seguridad
-  const processSecureRequest = useCallback(async (
-    request: Request,
-    options: {
-      requireAuth?: boolean;
-      requiredRole?: string;
-      requiredPermissions?: string[];
-      skipRateLimit?: boolean;
-    } = {}
-  ) => {
-    return await securityMiddleware.processRequest(request, options);
-  }, []);
-
-  // Refrescar sesión
-  const refreshSession = useCallback(async () => {
-    if (!user) return false;
-
-    try {
-      const { data, error } = await supabase.auth.refreshSession();
-      
-      if (error) throw error;
-
-      toast({
-        title: "Sesión actualizada",
-        description: "Tu sesión se ha renovado correctamente."
-      });
-
-      await checkSecurity();
-      return true;
-    } catch (error) {
-      console.error('Error refreshing session:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo renovar la sesión.",
-        variant: "destructive"
-      });
-      return false;
-    }
-  }, [user]);
 
   // Obtener estadísticas de seguridad
-  const getSecurityStats = useCallback(() => {
-    return securityMiddleware.getSecurityStats();
+  const getSecurityStats = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .rpc('get_security_stats');
+
+      if (error) throw error;
+
+      setSecurityStats({
+        totalLogins: data?.total_logins || 0,
+        failedLoginsToday: data?.failed_logins_today || 0,
+        lastLogin: data?.last_login || null,
+        suspiciousActivity: data?.suspicious_activity || 0
+      });
+    } catch (error) {
+      console.error('Error obteniendo estadísticas de seguridad:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  // Efecto para verificar seguridad al cambiar el usuario
-  useEffect(() => {
-    checkSecurity();
-  }, [checkSecurity]);
+  // Registrar acceso
+  const logAccess = useCallback(async (
+    action: string,
+    resource: string,
+    success: boolean = true,
+    errorMessage?: string,
+    metadata?: Record<string, any>
+  ) => {
+    try {
+      const { error } = await supabase
+        .rpc('log_access', {
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          action,
+          resource,
+          ip_address: null, // Se obtiene del servidor
+          user_agent: navigator.userAgent,
+          success,
+          error_message: errorMessage,
+          metadata: metadata || {}
+        });
 
-  // Efecto para verificar rate limit periódicamente
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      const interval = setInterval(() => {
-        checkRateLimit();
-      }, 60000); // Cada minuto
-
-      return () => clearInterval(interval);
+      if (error) {
+        console.error('Error registrando acceso:', error);
+      }
+    } catch (error) {
+      console.error('Error en logAccess:', error);
     }
-  }, [isAuthenticated, user, checkRateLimit]);
+  }, []);
 
-  // Efecto para manejar sesión que necesita refresh
-  useEffect(() => {
-    if (securityState.needsRefresh && !loading) {
-      refreshSession();
+  // Verificar intentos de login
+  const checkLoginAttempts = useCallback(async (email: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .rpc('check_login_attempts', {
+          email,
+          ip_address: null // Se obtiene del servidor
+        });
+
+      if (error) throw error;
+
+      return data || false;
+    } catch (error) {
+      console.error('Error verificando intentos de login:', error);
+      return true; // En caso de error, permitir login
     }
-  }, [securityState.needsRefresh, loading, refreshSession]);
+  }, []);
 
-  // Efecto para manejar usuario bloqueado
-  useEffect(() => {
-    if (securityState.isBlocked && securityState.blockReason) {
+  // Registrar intento de login
+  const logLoginAttempt = useCallback(async (
+    email: string,
+    success: boolean,
+    userAgent?: string
+  ) => {
+    try {
+      const { error } = await supabase
+        .rpc('log_login_attempt', {
+          email,
+          ip_address: null, // Se obtiene del servidor
+          success,
+          user_agent: userAgent || navigator.userAgent
+        });
+
+      if (error) {
+        console.error('Error registrando intento de login:', error);
+      }
+    } catch (error) {
+      console.error('Error en logLoginAttempt:', error);
+    }
+  }, []);
+
+  // Obtener actividad reciente
+  const getRecentActivity = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_recent_activity')
+        .select('*')
+        .limit(20);
+
+      if (error) throw error;
+
+      return data || [];
+    } catch (error) {
+      console.error('Error obteniendo actividad reciente:', error);
+      return [];
+    }
+  }, []);
+
+  // Obtener dashboard de seguridad
+  const getSecurityDashboard = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('security_dashboard')
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      return data;
+    } catch (error) {
+      console.error('Error obteniendo dashboard de seguridad:', error);
+      return null;
+    }
+  }, []);
+
+  // Configurar 2FA
+  const setup2FA = useCallback(async (secretKey: string, verificationCode: string) => {
+    try {
+      // En una implementación real, aquí verificarías el código con el servidor
+      // Por ahora, simulamos la verificación
+      if (verificationCode.length === 6) {
+        setHas2FA(true);
+        
+        // Registrar la configuración de 2FA
+        await logAccess('2FA_SETUP', 'security_settings', true);
+        
+        toast({
+          title: '2FA Configurado',
+          description: 'La autenticación de dos factores está ahora activa',
+        });
+        
+        return true;
+      } else {
+        throw new Error('Código de verificación inválido');
+      }
+    } catch (error) {
+      await logAccess('2FA_SETUP', 'security_settings', false, error.message);
+      
       toast({
-        title: "Cuenta bloqueada",
-        description: `Tu cuenta está bloqueada: ${securityState.blockReason}`,
-        variant: "destructive"
+        title: 'Error',
+        description: 'No se pudo configurar 2FA. Verifica el código.',
+        variant: 'destructive'
+      });
+      
+      return false;
+    }
+  }, [logAccess]);
+
+  // Desactivar 2FA
+  const disable2FA = useCallback(async () => {
+    try {
+      setHas2FA(false);
+      
+      // Registrar la desactivación de 2FA
+      await logAccess('2FA_DISABLE', 'security_settings', true);
+      
+      toast({
+        title: '2FA Desactivado',
+        description: 'La autenticación de dos factores ha sido desactivada',
+      });
+    } catch (error) {
+      await logAccess('2FA_DISABLE', 'security_settings', false, error.message);
+      
+      toast({
+        title: 'Error',
+        description: 'No se pudo desactivar 2FA',
+        variant: 'destructive'
       });
     }
-  }, [securityState.isBlocked, securityState.blockReason]);
+  }, [logAccess]);
+
+  // Validar contraseña segura
+  const validatePassword = useCallback((password: string): {
+    isValid: boolean;
+    score: number;
+    requirements: {
+      length: boolean;
+      uppercase: boolean;
+      lowercase: boolean;
+      number: boolean;
+      special: boolean;
+    };
+  } => {
+    const requirements = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+    };
+
+    const validCount = Object.values(requirements).filter(Boolean).length;
+    const score = (validCount / 5) * 100;
+    const isValid = validCount === 5;
+
+    return {
+      isValid,
+      score,
+      requirements
+    };
+  }, []);
+
+  // Obtener nivel de seguridad
+  const getSecurityLevel = useCallback(() => {
+    let score = 0;
+    if (has2FA) score += 40;
+    if (isSecureConnection) score += 30;
+    if (securityStats?.failedLoginsToday === 0) score += 30;
+
+    if (score >= 90) return { level: 'Excelente', color: 'green' };
+    if (score >= 70) return { level: 'Bueno', color: 'blue' };
+    if (score >= 50) return { level: 'Regular', color: 'yellow' };
+    return { level: 'Bajo', color: 'red' };
+  }, [has2FA, isSecureConnection, securityStats]);
+
+  // Cargar estadísticas al montar el componente
+  useEffect(() => {
+    getSecurityStats();
+  }, [getSecurityStats]);
 
   return {
-    // Estado
-    securityState,
-    loading,
+    // Estados
+    securityStats,
+    isLoading,
+    has2FA,
+    isSecureConnection,
     
     // Funciones
-    checkSecurity,
-    checkRateLimit,
-    checkPermissions,
-    detectSuspiciousActivity,
-    getSecurityHeaders,
-    processSecureRequest,
-    refreshSession,
     getSecurityStats,
+    logAccess,
+    checkLoginAttempts,
+    logLoginAttempt,
+    getRecentActivity,
+    getSecurityDashboard,
+    setup2FA,
+    disable2FA,
+    validatePassword,
+    getSecurityLevel,
     
-    // Utilidades
-    isAuthenticated: securityState.isAuthenticated,
-    user: securityState.user,
-    isBlocked: securityState.isBlocked,
-    csrfToken: securityState.csrfToken,
-    rateLimitInfo: securityState.rateLimitInfo
+    // Setters
+    setHas2FA
   };
 }

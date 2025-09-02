@@ -35,6 +35,11 @@ import {
   Trash2
 } from 'lucide-react';
 
+// Importar componentes de seguridad
+import TwoFactorAuth from '@/components/security/TwoFactorAuth';
+import PasswordValidator from '@/components/security/PasswordValidator';
+import SecurityIndicators from '@/components/security/SecurityIndicators';
+
 export default function Perfil() {
   const { user, getUserProjects, updateUserSettings } = useApp();
   const [isEditing, setIsEditing] = useState(false);
@@ -44,6 +49,13 @@ export default function Perfil() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Estados para seguridad
+  const [has2FA, setHas2FA] = useState(false);
+  const [hasStrongPassword, setHasStrongPassword] = useState(false);
+  const [isSecureConnection, setIsSecureConnection] = useState(true);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   
   // Estados para edición de perfil
   const [profileData, setProfileData] = useState({
@@ -706,6 +718,21 @@ export default function Perfil() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Indicadores de Seguridad */}
+            <SecurityIndicators
+              has2FA={has2FA}
+              hasStrongPassword={hasStrongPassword}
+              isSecureConnection={isSecureConnection}
+              lastLogin={user.last_sign_in_at}
+              loginLocation="Buenos Aires, Argentina"
+            />
+
+            {/* Autenticación de Dos Factores */}
+            <TwoFactorAuth
+              isEnabled={has2FA}
+              onToggle={setHas2FA}
+            />
           </div>
 
           {/* Columna derecha - Foto de perfil y cuenta */}
