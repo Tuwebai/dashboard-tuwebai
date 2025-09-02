@@ -309,19 +309,4 @@
   }
 }
 
-/* Mejoras para dark mode en móvil */
-@media (max-width: 768px) and (prefers-color-scheme: dark) {
-  .card-mobile {
-    background: #1f2937;
-    border-color: #374151;
-  }
-
-  .nav-mobile {
-    background: #111827;
-    border-color: #374151;
-  }
-
-  .dropdown-mobile-content {
-    background: #1f2937;
-  }
-}
+/* Forzar modo claro en móvil - eliminado dark mode del sistema */

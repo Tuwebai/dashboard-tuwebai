@@ -290,26 +290,10 @@
 }
 
 /* =====================================================
-   ESTILOS DE TEMA OSCURO (OPCIONAL)
+   ESTILOS FORZADOS A MODO CLARO
    ===================================================== */
 
-@media (prefers-color-scheme: dark) {
-  .notification-item {
-    @apply border-slate-700 bg-slate-800/50;
-  }
-  
-  .notification-item:hover {
-    @apply bg-slate-700 border-slate-600;
-  }
-  
-  .group-header {
-    @apply bg-slate-800 hover:bg-slate-700;
-  }
-  
-  .filters-panel {
-    @apply bg-slate-800;
-  }
-}
+/* Eliminado dark mode del sistema - siempre modo claro */
 
 /* =====================================================
    ESTILOS DE TRANSICIONES SUAVES

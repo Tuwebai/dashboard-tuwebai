@@ -4,6 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TuWebAI - Dashboard Profesional de Desarrollo Web, IA y Automatización</title>
+    
+    <!-- FORZAR MODO CLARO DESDE EL INICIO -->
+    <script>
+      // Forzar modo claro antes de que se cargue cualquier CSS
+      document.documentElement.style.colorScheme = 'light';
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+      
+      // Prevenir detección del modo del sistema
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.style.colorScheme = 'light';
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+      }
+    </script>
     <meta name="description" content="TuWebAI: Plataforma premium para desarrollo web, dashboards, automatización y gestión de proyectos con IA. Herramientas avanzadas, colaboración, notificaciones y analítica profesional." />
     <meta name="keywords" content="dashboard, desarrollo web, IA, inteligencia artificial, automatización, proyectos, gestión, notificaciones, analítica, premium, profesional, TuWebAI" />
     <meta name="author" content="TuWebAI" />

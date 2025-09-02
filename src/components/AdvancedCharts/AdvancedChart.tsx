@@ -72,9 +72,8 @@ const CHART_TYPES = [
 ];
 
 const THEMES = [
-  { value: 'light', label: 'Claro' },
-  { value: 'dark', label: 'Oscuro' },
-  { value: 'auto', label: 'Automático' }
+  { value: 'light', label: 'Claro' }
+  // Eliminado dark y auto - solo modo claro
 ];
 
 const DEFAULT_COLORS = [

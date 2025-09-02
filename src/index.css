@@ -219,11 +219,22 @@ h1, .text-3xl, .text-2xl, .font-bold, .font-semibold {
     @apply border-border;
   }
 
+  /* FORZAR SIEMPRE MODO CLARO - SOBRESCRIBIR DETECCIÓN DEL SISTEMA */
+  html {
+    color-scheme: light !important;
+  }
+
   body {
-    background: linear-gradient(135deg, hsl(195 100% 98%), hsl(270 100% 99%));
+    background: linear-gradient(135deg, hsl(195 100% 98%), hsl(270 100% 99%)) !important;
     background-attachment: fixed;
     min-height: 100vh;
     @apply text-foreground;
+    color-scheme: light !important;
+  }
+
+  /* Forzar modo claro en todos los elementos */
+  * {
+    color-scheme: light !important;
   }
 }
 
