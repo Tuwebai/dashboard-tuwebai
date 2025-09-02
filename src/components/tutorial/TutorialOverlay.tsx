@@ -132,7 +132,7 @@ export default function TutorialOverlay() {
     setOverlayPosition({ x, y, width, height });
   };
 
-  const handleAction = () => {
+  const handleAction = async () => {
     if (!currentStep) return;
 
     switch (currentStep.action) {
@@ -151,6 +151,16 @@ export default function TutorialOverlay() {
         if (targetElement) {
           targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
+        break;
+      case 'navigate':
+        // La navegación se maneja en el contexto
+        if (currentStep.navigateTo) {
+          // Mostrar indicador de navegación
+          console.log(`Navegando a: ${currentStep.navigateTo}`);
+        }
+        break;
+      case 'wait':
+        // No hacer nada, solo esperar
         break;
     }
   };
@@ -335,7 +345,8 @@ export default function TutorialOverlay() {
                     {currentStep.action === 'hover' && <HelpCircle className="w-4 h-4 mr-2" />}
                     {currentStep.action === 'scroll' && <ChevronRight className="w-4 h-4 mr-2" />}
                     {currentStep.action === 'wait' && <Clock className="w-4 h-4 mr-2" />}
-                    Ejecutar Acción
+                    {currentStep.action === 'navigate' && <ChevronRight className="w-4 h-4 mr-2" />}
+                    {currentStep.action === 'navigate' ? 'Navegar' : 'Ejecutar Acción'}
                   </Button>
                 </div>
               )}

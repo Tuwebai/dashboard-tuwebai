@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,6 +51,7 @@ interface HelpCenterProps {
 // =====================================================
 
 export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
+  const navigate = useNavigate();
   const {
     availableFlows,
     completedFlows,
@@ -234,6 +236,73 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
                       >
                         <PlayCircle className="w-4 h-4 mr-2" />
                         Ver Tutoriales
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Direct Links */}
+                  <div>
+                    <h3 className="text-sm font-medium text-slate-700 mb-2">Ir Directamente a</h3>
+                    <div className="space-y-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-slate-600 hover:text-slate-800"
+                        onClick={() => {
+                          navigate('/dashboard');
+                          onClose();
+                        }}
+                      >
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        Dashboard Principal
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-slate-600 hover:text-slate-800"
+                        onClick={() => {
+                          navigate('/proyectos');
+                          onClose();
+                        }}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Gestión de Proyectos
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-slate-600 hover:text-slate-800"
+                        onClick={() => {
+                          navigate('/perfil');
+                          onClose();
+                        }}
+                      >
+                        <User className="w-4 h-4 mr-2" />
+                        Mi Perfil
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-slate-600 hover:text-slate-800"
+                        onClick={() => {
+                          navigate('/configuracion');
+                          onClose();
+                        }}
+                      >
+                        <Settings className="w-4 h-4 mr-2" />
+                        Configuración
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-slate-600 hover:text-slate-800"
+                        onClick={() => {
+                          navigate('/analytics');
+                          onClose();
+                        }}
+                      >
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        Analytics
                       </Button>
                     </div>
                   </div>

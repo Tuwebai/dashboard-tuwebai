@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from './AppContext';
 
 // =====================================================
@@ -11,7 +12,7 @@ export interface TutorialStep {
   description: string;
   target: string; // Selector CSS del elemento objetivo
   position: 'top' | 'bottom' | 'left' | 'right' | 'center';
-  action?: 'click' | 'hover' | 'scroll' | 'wait';
+  action?: 'click' | 'hover' | 'scroll' | 'wait' | 'navigate';
   actionText?: string;
   skipable?: boolean;
   required?: boolean;
@@ -20,6 +21,10 @@ export interface TutorialStep {
   tips?: string[];
   nextStep?: string;
   prevStep?: string;
+  // Navegación real
+  navigateTo?: string; // Ruta a la que navegar
+  waitForNavigation?: boolean; // Esperar a que se complete la navegación
+  navigationDelay?: number; // Delay después de la navegación
 }
 
 export interface TutorialFlow {
@@ -89,6 +94,7 @@ interface TutorialContextType {
   skipStep: () => void;
   completeTutorial: () => void;
   exitTutorial: () => void;
+  navigateToStep: (stepId: string) => void;
   searchHelp: (query: string) => void;
   markArticleHelpful: (articleId: string, helpful: boolean) => void;
   getContextualHelp: (context: string) => HelpArticle[];
@@ -115,7 +121,7 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
     description: 'Conoce las funcionalidades principales del dashboard',
     icon: '🎯',
     category: 'onboarding',
-    estimatedTime: 5,
+    estimatedTime: 8,
     difficulty: 'beginner',
     completionReward: '¡Bienvenido a TuWebAI!',
     steps: [
@@ -147,51 +153,85 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
       },
       {
         id: 'welcome-3',
-        title: 'Métricas en Tiempo Real',
-        description: 'Estas métricas se actualizan automáticamente y te muestran el estado general de tus proyectos y actividad.',
-        target: '.metrics-section',
-        position: 'left',
-        action: 'click',
-        actionText: 'Haz clic para ver detalles',
+        title: 'Explorar la Sección de Proyectos',
+        description: 'Ahora vamos a navegar a la sección de proyectos para ver todas las funcionalidades disponibles.',
+        target: '.main-navigation',
+        position: 'bottom',
+        action: 'navigate',
+        actionText: 'Navegar a la sección de proyectos',
+        navigateTo: '/proyectos',
+        waitForNavigation: true,
+        navigationDelay: 1000,
         skipable: true,
         tips: [
-          'Las métricas se actualizan cada 30 segundos',
-          'Puedes personalizar qué métricas ver',
-          'Haz clic para ver gráficos detallados'
+          'La sección de proyectos es donde gestionas todo',
+          'Puedes crear, editar y eliminar proyectos',
+          'Cada proyecto tiene su propio espacio de trabajo'
         ]
       },
       {
         id: 'welcome-4',
-        title: 'Navegación Principal',
-        description: 'Desde aquí puedes acceder a todas las secciones del dashboard: Proyectos, Colaboración, Analytics y más.',
-        target: '.main-navigation',
-        position: 'bottom',
-        action: 'click',
-        actionText: 'Explora las diferentes secciones',
+        title: 'Gestión de Proyectos',
+        description: 'En esta página puedes ver todos tus proyectos, crear nuevos y gestionar los existentes. Observa las diferentes opciones disponibles.',
+        target: '.projects-grid',
+        position: 'right',
+        action: 'wait',
+        actionText: 'Observa las opciones disponibles',
         skipable: true,
         tips: [
-          'Cada sección tiene funcionalidades específicas',
-          'El menú se adapta según tu rol',
-          'Usa los atajos de teclado para navegar más rápido'
+          'Usa el botón "Crear Proyecto" para nuevos proyectos',
+          'Filtra por estado, tipo o fecha',
+          'Cada proyecto muestra su progreso actual'
         ]
       },
       {
         id: 'welcome-5',
-        title: 'Perfil y Configuración',
-        description: 'Personaliza tu experiencia, gestiona tu perfil y configura las notificaciones según tus preferencias.',
+        title: 'Explorar tu Perfil',
+        description: 'Ahora vamos a ver tu perfil personal donde puedes configurar tu información y preferencias.',
         target: '.user-profile',
         position: 'left',
-        action: 'click',
-        actionText: 'Accede a tu perfil',
+        action: 'navigate',
+        actionText: 'Navegar a tu perfil',
+        navigateTo: '/perfil',
+        waitForNavigation: true,
+        navigationDelay: 1000,
         skipable: true,
         tips: [
-          'Puedes cambiar tu avatar y información',
+          'Puedes cambiar tu avatar y información personal',
           'Configura tus preferencias de notificación',
-          'Personaliza el tema y idioma'
+          'Personaliza el tema y idioma de la aplicación'
         ]
       },
       {
         id: 'welcome-6',
+        title: 'Configuración Personal',
+        description: 'En tu perfil puedes personalizar tu experiencia, cambiar tu avatar, y configurar las notificaciones según tus preferencias.',
+        target: '.profile-settings',
+        position: 'right',
+        action: 'wait',
+        actionText: 'Explora las opciones de configuración',
+        skipable: true,
+        tips: [
+          'Mantén tu información actualizada',
+          'Configura las notificaciones que necesites',
+          'Personaliza tu experiencia de usuario'
+        ]
+      },
+      {
+        id: 'welcome-7',
+        title: 'Volver al Dashboard',
+        description: 'Ahora regresemos al dashboard principal para completar el tour.',
+        target: '.dashboard-link',
+        position: 'bottom',
+        action: 'navigate',
+        actionText: 'Volver al dashboard',
+        navigateTo: '/dashboard',
+        waitForNavigation: true,
+        navigationDelay: 1000,
+        skipable: true
+      },
+      {
+        id: 'welcome-8',
         title: '¡Listo para comenzar!',
         description: 'Ya conoces lo básico del dashboard. Puedes acceder a más tutoriales desde el menú de ayuda en cualquier momento.',
         target: '.help-button',
@@ -214,18 +254,34 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
     description: 'Aprende a crear, gestionar y colaborar en proyectos',
     icon: '📁',
     category: 'feature',
-    estimatedTime: 8,
+    estimatedTime: 12,
     difficulty: 'intermediate',
     prerequisites: ['welcome-tour'],
     steps: [
       {
         id: 'project-1',
+        title: 'Navegar a la Sección de Proyectos',
+        description: 'Primero vamos a la sección de proyectos para comenzar con la gestión.',
+        target: '.main-navigation',
+        position: 'bottom',
+        action: 'navigate',
+        actionText: 'Navegar a proyectos',
+        navigateTo: '/proyectos',
+        waitForNavigation: true,
+        navigationDelay: 1000,
+        skipable: true
+      },
+      {
+        id: 'project-2',
         title: 'Crear un Nuevo Proyecto',
         description: 'Aprende a crear un proyecto desde cero con todas las configuraciones necesarias.',
         target: '.create-project-button',
         position: 'bottom',
-        action: 'click',
-        actionText: 'Haz clic para crear un proyecto',
+        action: 'navigate',
+        actionText: 'Crear un nuevo proyecto',
+        navigateTo: '/proyectos/nuevo',
+        waitForNavigation: true,
+        navigationDelay: 1000,
         skipable: true,
         tips: [
           'Selecciona el tipo de proyecto apropiado',
@@ -234,28 +290,74 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
         ]
       },
       {
-        id: 'project-2',
-        title: 'Configurar Fases del Proyecto',
-        description: 'Organiza tu proyecto en fases para un mejor seguimiento del progreso.',
-        target: '.project-phases',
+        id: 'project-3',
+        title: 'Formulario de Creación',
+        description: 'En este formulario puedes configurar todos los detalles de tu nuevo proyecto.',
+        target: '.project-form',
         position: 'right',
-        action: 'click',
-        actionText: 'Gestiona las fases',
+        action: 'wait',
+        actionText: 'Observa las opciones disponibles',
         skipable: true,
         tips: [
-          'Las fases ayudan a organizar el trabajo',
-          'Puedes crear fases personalizadas',
-          'Cada fase puede tener tareas específicas'
+          'Completa todos los campos obligatorios',
+          'Selecciona el tipo de proyecto correcto',
+          'Añade una descripción clara y detallada'
         ]
       },
       {
-        id: 'project-3',
-        title: 'Colaboración en Tiempo Real',
-        description: 'Invita a tu equipo y colabora en tiempo real con chat, comentarios y compartir archivos.',
-        target: '.collaboration-section',
+        id: 'project-4',
+        title: 'Volver a la Lista de Proyectos',
+        description: 'Ahora regresemos a la lista de proyectos para ver cómo gestionarlos.',
+        target: '.back-button',
+        position: 'bottom',
+        action: 'navigate',
+        actionText: 'Volver a proyectos',
+        navigateTo: '/proyectos',
+        waitForNavigation: true,
+        navigationDelay: 1000,
+        skipable: true
+      },
+      {
+        id: 'project-5',
+        title: 'Gestionar Proyectos Existentes',
+        description: 'Aquí puedes ver todos tus proyectos y acceder a las opciones de gestión.',
+        target: '.projects-grid',
+        position: 'right',
+        action: 'wait',
+        actionText: 'Observa las opciones de gestión',
+        skipable: true,
+        tips: [
+          'Haz clic en un proyecto para ver detalles',
+          'Usa los botones de acción para gestionar',
+          'Filtra y ordena según tus necesidades'
+        ]
+      },
+      {
+        id: 'project-6',
+        title: 'Explorar Colaboración',
+        description: 'Ahora vamos a ver cómo funciona la colaboración en tiempo real.',
+        target: '.collaboration-link',
         position: 'left',
-        action: 'click',
-        actionText: 'Accede a la colaboración',
+        action: 'navigate',
+        actionText: 'Acceder a colaboración',
+        navigateTo: '/proyectos/1/colaboracion',
+        waitForNavigation: true,
+        navigationDelay: 1000,
+        skipable: true,
+        tips: [
+          'La colaboración permite trabajar en equipo',
+          'Puedes chatear en tiempo real',
+          'Comparte archivos y comentarios'
+        ]
+      },
+      {
+        id: 'project-7',
+        title: 'Herramientas de Colaboración',
+        description: 'En esta página puedes colaborar con tu equipo usando chat, comentarios y compartir archivos.',
+        target: '.collaboration-tools',
+        position: 'right',
+        action: 'wait',
+        actionText: 'Explora las herramientas',
         skipable: true,
         tips: [
           'El chat se actualiza en tiempo real',
@@ -281,8 +383,11 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
         description: 'Utiliza las herramientas de análisis para obtener insights detallados sobre tus proyectos.',
         target: '.analytics-section',
         position: 'bottom',
-        action: 'click',
+        action: 'navigate',
         actionText: 'Explora los analytics',
+        navigateTo: '/analytics',
+        waitForNavigation: true,
+        navigationDelay: 1000,
         skipable: true,
         tips: [
           'Los gráficos son interactivos',
@@ -292,17 +397,290 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
       },
       {
         id: 'advanced-2',
-        title: 'Automatización y Workflows',
-        description: 'Configura automatizaciones para optimizar tu flujo de trabajo.',
-        target: '.automation-section',
+        title: 'Herramientas de Análisis',
+        description: 'En esta página puedes ver análisis detallados de tus proyectos y rendimiento.',
+        target: '.analytics-dashboard',
         position: 'right',
-        action: 'click',
-        actionText: 'Configura automatizaciones',
+        action: 'wait',
+        actionText: 'Explora las métricas',
         skipable: true,
         tips: [
-          'Las automatizaciones ahorran tiempo',
-          'Puedes crear workflows personalizados',
-          'Monitorea el rendimiento de las automatizaciones'
+          'Las métricas se actualizan en tiempo real',
+          'Puedes filtrar por período',
+          'Exporta reportes personalizados'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'support-help',
+    name: 'Centro de Ayuda y Soporte',
+    description: 'Aprende a usar el sistema de ayuda y soporte',
+    icon: '🆘',
+    category: 'onboarding',
+    estimatedTime: 6,
+    difficulty: 'beginner',
+    steps: [
+      {
+        id: 'support-1',
+        title: 'Acceder al Centro de Ayuda',
+        description: 'Vamos a explorar el centro de ayuda donde puedes encontrar tutoriales y soporte.',
+        target: '.help-button',
+        position: 'bottom',
+        action: 'navigate',
+        actionText: 'Acceder al centro de ayuda',
+        navigateTo: '/soporte',
+        waitForNavigation: true,
+        navigationDelay: 1000,
+        skipable: true,
+        tips: [
+          'El centro de ayuda tiene todos los recursos',
+          'Puedes buscar artículos específicos',
+          'Hay tutoriales paso a paso'
+        ]
+      },
+      {
+        id: 'support-2',
+        title: 'Explorar Artículos de Ayuda',
+        description: 'En esta página puedes encontrar artículos organizados por categorías para resolver tus dudas.',
+        target: '.help-articles',
+        position: 'right',
+        action: 'wait',
+        actionText: 'Explora los artículos disponibles',
+        skipable: true,
+        tips: [
+          'Los artículos están organizados por categorías',
+          'Usa la búsqueda para encontrar temas específicos',
+          'Puedes marcar artículos como útiles'
+        ]
+      },
+      {
+        id: 'support-3',
+        title: 'Buscar Ayuda Específica',
+        description: 'Aprende a usar la función de búsqueda para encontrar ayuda sobre temas específicos.',
+        target: '.help-search',
+        position: 'bottom',
+        action: 'wait',
+        actionText: 'Prueba la búsqueda',
+        skipable: true,
+        tips: [
+          'Escribe palabras clave relacionadas',
+          'Los resultados se filtran en tiempo real',
+          'Puedes buscar por categoría o etiqueta'
+        ]
+      },
+      {
+        id: 'support-4',
+        title: 'Contactar Soporte',
+        description: 'Si no encuentras la respuesta, puedes contactar directamente con nuestro equipo de soporte.',
+        target: '.contact-support',
+        position: 'left',
+        action: 'wait',
+        actionText: 'Explora las opciones de contacto',
+        skipable: true,
+        tips: [
+          'Puedes enviar un ticket de soporte',
+          'Hay chat en vivo disponible',
+          'El equipo responde rápidamente'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'projects-page-tour',
+    name: 'Tour de la Página de Proyectos',
+    description: 'Aprende a usar todas las funcionalidades de la página de proyectos',
+    icon: '📋',
+    category: 'feature',
+    estimatedTime: 10,
+    difficulty: 'beginner',
+    steps: [
+      {
+        id: 'projects-page-1',
+        title: 'Vista General de Proyectos',
+        description: 'En esta página puedes ver todos tus proyectos organizados de manera clara y accesible.',
+        target: '.projects-header',
+        position: 'bottom',
+        action: 'wait',
+        actionText: 'Observa la estructura de la página',
+        skipable: true,
+        tips: [
+          'Los proyectos se muestran en tarjetas organizadas',
+          'Puedes ver el estado y progreso de cada uno',
+          'Usa los filtros para encontrar proyectos específicos'
+        ]
+      },
+      {
+        id: 'projects-page-2',
+        title: 'Crear Nuevo Proyecto',
+        description: 'Aprende a crear un nuevo proyecto desde esta página.',
+        target: '.create-project-button',
+        position: 'bottom',
+        action: 'navigate',
+        actionText: 'Crear un nuevo proyecto',
+        navigateTo: '/proyectos/nuevo',
+        waitForNavigation: true,
+        navigationDelay: 1000,
+        skipable: true,
+        tips: [
+          'Haz clic en el botón "Crear Proyecto"',
+          'Completa todos los campos obligatorios',
+          'Selecciona el tipo de proyecto apropiado'
+        ]
+      },
+      {
+        id: 'projects-page-3',
+        title: 'Formulario de Creación',
+        description: 'En este formulario puedes configurar todos los detalles de tu nuevo proyecto.',
+        target: '.project-form',
+        position: 'right',
+        action: 'wait',
+        actionText: 'Explora las opciones del formulario',
+        skipable: true,
+        tips: [
+          'Añade un título descriptivo',
+          'Selecciona el tipo de proyecto',
+          'Describe las funcionalidades necesarias'
+        ]
+      },
+      {
+        id: 'projects-page-4',
+        title: 'Volver a la Lista',
+        description: 'Regresemos a la lista de proyectos para continuar explorando.',
+        target: '.back-button',
+        position: 'bottom',
+        action: 'navigate',
+        actionText: 'Volver a la lista de proyectos',
+        navigateTo: '/proyectos',
+        waitForNavigation: true,
+        navigationDelay: 1000,
+        skipable: true
+      },
+      {
+        id: 'projects-page-5',
+        title: 'Filtros y Búsqueda',
+        description: 'Aprende a usar los filtros y la búsqueda para encontrar proyectos específicos.',
+        target: '.projects-filters',
+        position: 'bottom',
+        action: 'wait',
+        actionText: 'Explora las opciones de filtrado',
+        skipable: true,
+        tips: [
+          'Filtra por estado del proyecto',
+          'Busca por nombre o descripción',
+          'Ordena por fecha o prioridad'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'profile-page-tour',
+    name: 'Tour del Perfil de Usuario',
+    description: 'Aprende a configurar y personalizar tu perfil',
+    icon: '👤',
+    category: 'feature',
+    estimatedTime: 8,
+    difficulty: 'beginner',
+    steps: [
+      {
+        id: 'profile-page-1',
+        title: 'Información Personal',
+        description: 'En esta sección puedes ver y editar tu información personal.',
+        target: '.profile-info',
+        position: 'right',
+        action: 'wait',
+        actionText: 'Observa tu información actual',
+        skipable: true,
+        tips: [
+          'Mantén tu información actualizada',
+          'Puedes cambiar tu avatar',
+          'La información se sincroniza automáticamente'
+        ]
+      },
+      {
+        id: 'profile-page-2',
+        title: 'Configuración de Notificaciones',
+        description: 'Personaliza cómo y cuándo recibir notificaciones.',
+        target: '.notification-settings',
+        position: 'left',
+        action: 'wait',
+        actionText: 'Explora las opciones de notificación',
+        skipable: true,
+        tips: [
+          'Configura qué notificaciones recibir',
+          'Establece horarios de silencio',
+          'Elige el canal de notificación preferido'
+        ]
+      },
+      {
+        id: 'profile-page-3',
+        title: 'Preferencias de la Aplicación',
+        description: 'Personaliza tu experiencia en la aplicación.',
+        target: '.app-preferences',
+        position: 'bottom',
+        action: 'wait',
+        actionText: 'Configura tus preferencias',
+        skipable: true,
+        tips: [
+          'Cambia el tema de la aplicación',
+          'Selecciona tu idioma preferido',
+          'Ajusta la configuración de privacidad'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'analytics-page-tour',
+    name: 'Tour de Analytics',
+    description: 'Aprende a usar las herramientas de análisis y reportes',
+    icon: '📊',
+    category: 'advanced',
+    estimatedTime: 12,
+    difficulty: 'intermediate',
+    steps: [
+      {
+        id: 'analytics-page-1',
+        title: 'Dashboard de Métricas',
+        description: 'Aquí puedes ver todas las métricas importantes de tus proyectos.',
+        target: '.metrics-dashboard',
+        position: 'bottom',
+        action: 'wait',
+        actionText: 'Explora las métricas disponibles',
+        skipable: true,
+        tips: [
+          'Las métricas se actualizan en tiempo real',
+          'Puedes personalizar qué métricas ver',
+          'Haz clic en las métricas para ver detalles'
+        ]
+      },
+      {
+        id: 'analytics-page-2',
+        title: 'Gráficos Interactivos',
+        description: 'Los gráficos te permiten visualizar tendencias y patrones.',
+        target: '.analytics-charts',
+        position: 'right',
+        action: 'wait',
+        actionText: 'Interactúa con los gráficos',
+        skipable: true,
+        tips: [
+          'Haz clic y arrastra para hacer zoom',
+          'Pasa el mouse para ver valores específicos',
+          'Usa los controles para cambiar el período'
+        ]
+      },
+      {
+        id: 'analytics-page-3',
+        title: 'Exportar Reportes',
+        description: 'Aprende a exportar tus datos y generar reportes.',
+        target: '.export-options',
+        position: 'left',
+        action: 'wait',
+        actionText: 'Explora las opciones de exportación',
+        skipable: true,
+        tips: [
+          'Exporta en diferentes formatos',
+          'Programa reportes automáticos',
+          'Comparte reportes con tu equipo'
         ]
       }
     ]
@@ -491,6 +869,7 @@ Si no encuentras la solución a tu problema:
 
 export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useApp();
+  const navigate = useNavigate();
   
   // Estado del tutorial
   const [isActive, setIsActive] = useState(false);
@@ -574,8 +953,23 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [availableFlows, enableSounds]);
 
-  const nextStep = useCallback(() => {
+  const nextStep = useCallback(async () => {
     if (!currentFlow || !currentStep || !progress) return;
+
+    // Manejar navegación si es necesario
+    if (currentStep.action === 'navigate' && currentStep.navigateTo) {
+      try {
+        navigate(currentStep.navigateTo);
+        
+        // Esperar a que se complete la navegación
+        if (currentStep.waitForNavigation) {
+          const delay = currentStep.navigationDelay || 1000;
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      } catch (error) {
+        console.error('Error during navigation:', error);
+      }
+    }
 
     const newProgress = {
       ...progress,
@@ -592,7 +986,7 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } else {
       completeTutorial();
     }
-  }, [currentFlow, currentStep, progress, stepIndex]);
+  }, [currentFlow, currentStep, progress, stepIndex, navigate]);
 
   const prevStep = useCallback(() => {
     if (!currentFlow || stepIndex <= 0) return;
@@ -645,6 +1039,16 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setProgress(null);
   }, []);
 
+  const navigateToStep = useCallback((stepId: string) => {
+    if (!currentFlow) return;
+    
+    const stepIndex = currentFlow.steps.findIndex(step => step.id === stepId);
+    if (stepIndex !== -1) {
+      setStepIndex(stepIndex);
+      setCurrentStep(currentFlow.steps[stepIndex]);
+    }
+  }, [currentFlow]);
+
   // =====================================================
   // FUNCIONES DE AYUDA
   // =====================================================
@@ -696,6 +1100,7 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     skipStep,
     completeTutorial,
     exitTutorial,
+    navigateToStep,
     
     // Acciones de ayuda
     searchHelp,
