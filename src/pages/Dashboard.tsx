@@ -60,6 +60,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { userService } from '@/lib/supabaseService';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useRealtimeProjects } from '@/hooks/useRealtimeProjects';
+import ContextualHelp from '@/components/tutorial/ContextualHelp';
 import { useLazyLoading } from '@/hooks/useLazyLoading';
 import { useIntelligentCache } from '@/hooks/useIntelligentCache';
 import VirtualScrollList from '@/components/VirtualScrollList';
@@ -715,7 +716,7 @@ export default function Dashboard() {
 
 
           {/* Cards de Estadísticas Principales */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="metrics-section grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             
             {/* Card Proyectos Totales */}
             <motion.div 
@@ -739,8 +740,13 @@ export default function Dashboard() {
                 </div>
                 
                 {/* Título con mejor tipografía */}
-                <div className="text-lg sm:text-xl font-bold text-slate-700 mb-2">
+                <div className="text-lg sm:text-xl font-bold text-slate-700 mb-2 flex items-center gap-2">
                   Proyectos Activos
+                  <ContextualHelp 
+                    context="proyectos" 
+                    position="top" 
+                    trigger="hover"
+                  />
                 </div>
                 
                 {/* Subtítulo con icono */}
@@ -1297,7 +1303,7 @@ export default function Dashboard() {
                     </Droppable>
                   </DragDropContext>
                 ) : (
-                  <div className="flex flex-wrap gap-6">
+                  <div className="projects-section flex flex-wrap gap-6">
                     {filteredAndSortedProjects.filter(project => project && project.id).map((project, index) => (
                       <LazyProjectCard
                         key={project.id}

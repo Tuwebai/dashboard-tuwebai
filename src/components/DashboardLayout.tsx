@@ -8,6 +8,9 @@ import SkipLink from './SkipLink';
 import LiveRegion from './LiveRegion';
 import { useAccessibility } from '@/hooks/useAccessibility';
 import { userPreferencesService } from '@/lib/userPreferencesService';
+import TutorialOverlay from './tutorial/TutorialOverlay';
+import HelpButton from './tutorial/HelpButton';
+import { FloatingHelpButton } from './tutorial/ContextualHelp';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -184,6 +187,10 @@ export default function DashboardLayout({ children, dashboardProps }: DashboardL
             {children}
           </main>
         </div>
+        
+        {/* Sistema de Tutorial y Ayuda */}
+        <TutorialOverlay />
+        <FloatingHelpButton />
       </div>
     </>
   );

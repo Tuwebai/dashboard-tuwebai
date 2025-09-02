@@ -18,6 +18,7 @@ import { LogOut, User as UserIcon } from 'lucide-react';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useTranslation } from 'react-i18next';
 import NotificationBell from '@/components/admin/NotificationBell';
+import HelpButton from './tutorial/HelpButton';
 
 interface TopbarProps {
   onMenuClick?: () => void;
@@ -154,6 +155,7 @@ export default function Topbar({
                 </Tooltip>
               </TooltipProvider>
               <NotificationBell />
+              <HelpButton variant="minimal" />
             </div>
           ) : isClientDashboardPage ? (
             /* Client Dashboard Actions */
@@ -171,6 +173,9 @@ export default function Topbar({
               
               {/* Notificación */}
               <NotificationBell />
+              
+              {/* Ayuda */}
+              <HelpButton variant="minimal" />
               
               {/* Botón actualizar */}
               {onClientRefresh && (
