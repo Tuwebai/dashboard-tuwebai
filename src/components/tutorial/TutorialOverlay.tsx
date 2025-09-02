@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +29,7 @@ import { cn } from '@/lib/utils';
 // =====================================================
 
 export default function TutorialOverlay() {
+  const navigate = useNavigate();
   const {
     isActive,
     currentFlow,
@@ -158,10 +160,19 @@ export default function TutorialOverlay() {
         }
         break;
       case 'navigate':
-        // La navegación se maneja en el contexto
+        // Manejar navegación directamente
         if (currentStep.navigateTo) {
-          // Mostrar indicador de navegación
-          console.log(`Navegando a: ${currentStep.navigateTo}`);
+          try {
+            navigate(currentStep.navigateTo);
+            
+            // Esperar a que se complete la navegación
+            if (currentStep.waitForNavigation) {
+              const delay = currentStep.navigationDelay || 1000;
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          } catch (error) {
+            console.error('Error during navigation:', error);
+          }
         }
         break;
       case 'wait':
@@ -400,7 +411,23 @@ export default function TutorialOverlay() {
                     </Button>
                   ) : (
                     <Button
-                      onClick={nextStep}
+                      onClick={async () => {
+                        // Manejar navegación si es necesario
+                        if (currentStep?.action === 'navigate' && currentStep.navigateTo) {
+                          try {
+                            navigate(currentStep.navigateTo);
+                            
+                            // Esperar a que se complete la navegación
+                            if (currentStep.waitForNavigation) {
+                              const delay = currentStep.navigationDelay || 1000;
+                              await new Promise(resolve => setTimeout(resolve, delay));
+                            }
+                          } catch (error) {
+                            console.error('Error during navigation:', error);
+                          }
+                        }
+                        nextStep();
+                      }}
                       className="h-8 sm:h-9 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white flex-1 sm:flex-none text-xs sm:text-sm"
                     >
                       <span className="hidden sm:inline">Siguiente</span>

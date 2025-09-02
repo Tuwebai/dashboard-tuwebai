@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useApp } from './AppContext';
 
 // =====================================================
@@ -869,7 +868,6 @@ Si no encuentras la solución a tu problema:
 
 export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useApp();
-  const navigate = useNavigate();
   
   // Estado del tutorial
   const [isActive, setIsActive] = useState(false);
@@ -953,23 +951,8 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [availableFlows, enableSounds]);
 
-  const nextStep = useCallback(async () => {
+  const nextStep = useCallback(() => {
     if (!currentFlow || !currentStep || !progress) return;
-
-    // Manejar navegación si es necesario
-    if (currentStep.action === 'navigate' && currentStep.navigateTo) {
-      try {
-        navigate(currentStep.navigateTo);
-        
-        // Esperar a que se complete la navegación
-        if (currentStep.waitForNavigation) {
-          const delay = currentStep.navigationDelay || 1000;
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      } catch (error) {
-        console.error('Error during navigation:', error);
-      }
-    }
 
     const newProgress = {
       ...progress,
@@ -986,7 +969,7 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } else {
       completeTutorial();
     }
-  }, [currentFlow, currentStep, progress, stepIndex, navigate]);
+  }, [currentFlow, currentStep, progress, stepIndex]);
 
   const prevStep = useCallback(() => {
     if (!currentFlow || stepIndex <= 0) return;
