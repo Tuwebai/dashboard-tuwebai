@@ -144,71 +144,77 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl h-[80vh] p-0 overflow-hidden">
-        <div className="flex h-full">
+      <DialogContent className="max-w-6xl h-[80vh] sm:h-[85vh] p-0 overflow-hidden">
+        <div className="flex flex-col sm:flex-row h-full">
           {/* Sidebar */}
-          <div className="w-80 bg-slate-50 border-r border-slate-200 flex flex-col">
+          <div className="w-full sm:w-80 bg-slate-50 border-b sm:border-b-0 sm:border-r border-slate-200 flex flex-col max-h-[40vh] sm:max-h-none">
             {/* Header */}
-            <div className="p-6 border-b border-slate-200">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl text-white">
-                  <HelpCircle className="w-5 h-5" />
+            <div className="p-4 sm:p-6 border-b border-slate-200">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl text-white">
+                  <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-800">Centro de Ayuda</h2>
-                  <p className="text-sm text-slate-500">Encuentra respuestas rápidas</p>
+                  <h2 className="text-base sm:text-lg font-semibold text-slate-800">Centro de Ayuda</h2>
+                  <p className="text-xs sm:text-sm text-slate-500">Encuentra respuestas rápidas</p>
                 </div>
               </div>
             </div>
 
             {/* Navigation */}
-            <div className="flex-1 p-4">
+            <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="search" className="text-xs">
-                    <Search className="w-4 h-4 mr-2" />
-                    Buscar
+                <TabsList className="grid w-full grid-cols-2 mb-3 sm:mb-4">
+                  <TabsTrigger value="search" className="text-xs sm:text-sm">
+                    <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Buscar</span>
+                    <span className="sm:hidden">Buscar</span>
                   </TabsTrigger>
-                  <TabsTrigger value="tutorials" className="text-xs">
-                    <PlayCircle className="w-4 h-4 mr-2" />
-                    Tutoriales
+                  <TabsTrigger value="tutorials" className="text-xs sm:text-sm">
+                    <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Tutoriales</span>
+                    <span className="sm:hidden">Tutoriales</span>
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="search" className="space-y-4">
+                <TabsContent value="search" className="space-y-3 sm:space-y-4">
                   {/* Search */}
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                    <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-3 h-3 sm:w-4 sm:h-4" />
                     <Input
                       placeholder="Buscar en la ayuda..."
                       value={searchInput}
                       onChange={(e) => handleSearch(e.target.value)}
-                      className="pl-10"
+                      className="pl-8 sm:pl-10 text-sm"
                     />
                   </div>
 
                   {/* Categories */}
                   <div>
-                    <h3 className="text-sm font-medium text-slate-700 mb-2">Categorías</h3>
+                    <h3 className="text-xs sm:text-sm font-medium text-slate-700 mb-2">Categorías</h3>
                     <div className="space-y-1">
                       {['all', 'onboarding', 'project-management', 'troubleshooting', 'advanced'].map((category) => (
                         <button
                           key={category}
                           onClick={() => setSelectedCategory(category)}
                           className={cn(
-                            "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
+                            "w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm transition-colors",
                             selectedCategory === category
                               ? "bg-blue-100 text-blue-800"
                               : "text-slate-600 hover:bg-slate-100"
                           )}
                         >
-                          <div className="flex items-center gap-2">
-                            {getCategoryIcon(category)}
-                            {category === 'all' ? 'Todas' : 
-                             category === 'onboarding' ? 'Primeros Pasos' :
-                             category === 'project-management' ? 'Gestión de Proyectos' :
-                             category === 'troubleshooting' ? 'Solución de Problemas' :
-                             'Funcionalidades Avanzadas'}
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            <div className="w-3 h-3 sm:w-4 sm:h-4">
+                              {getCategoryIcon(category)}
+                            </div>
+                            <span className="truncate">
+                              {category === 'all' ? 'Todas' : 
+                               category === 'onboarding' ? 'Primeros Pasos' :
+                               category === 'project-management' ? 'Gestión' :
+                               category === 'troubleshooting' ? 'Solución' :
+                               'Avanzado'}
+                            </span>
                           </div>
                         </button>
                       ))}
@@ -217,92 +223,99 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
 
                   {/* Quick Actions */}
                   <div>
-                    <h3 className="text-sm font-medium text-slate-700 mb-2">Acciones Rápidas</h3>
-                    <div className="space-y-2">
+                    <h3 className="text-xs sm:text-sm font-medium text-slate-700 mb-2">Acciones Rápidas</h3>
+                    <div className="space-y-1.5 sm:space-y-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="w-full justify-start"
+                        className="w-full justify-start text-xs sm:text-sm h-8 sm:h-9"
                         onClick={() => startTutorial('welcome-tour')}
                       >
-                        <Target className="w-4 h-4 mr-2" />
-                        Tour de Bienvenida
+                        <Target className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="hidden sm:inline">Tour de Bienvenida</span>
+                        <span className="sm:hidden">Tour</span>
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="w-full justify-start"
+                        className="w-full justify-start text-xs sm:text-sm h-8 sm:h-9"
                         onClick={() => setActiveTab('tutorials')}
                       >
-                        <PlayCircle className="w-4 h-4 mr-2" />
-                        Ver Tutoriales
+                        <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="hidden sm:inline">Ver Tutoriales</span>
+                        <span className="sm:hidden">Tutoriales</span>
                       </Button>
                     </div>
                   </div>
 
                   {/* Direct Links */}
                   <div>
-                    <h3 className="text-sm font-medium text-slate-700 mb-2">Ir Directamente a</h3>
-                    <div className="space-y-2">
+                    <h3 className="text-xs sm:text-sm font-medium text-slate-700 mb-2">Ir Directamente a</h3>
+                    <div className="space-y-1.5 sm:space-y-2">
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full justify-start text-slate-600 hover:text-slate-800"
+                        className="w-full justify-start text-slate-600 hover:text-slate-800 text-xs sm:text-sm h-8 sm:h-9"
                         onClick={() => {
                           navigate('/dashboard');
                           onClose();
                         }}
                       >
-                        <TrendingUp className="w-4 h-4 mr-2" />
-                        Dashboard Principal
+                        <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="hidden sm:inline">Dashboard Principal</span>
+                        <span className="sm:hidden">Dashboard</span>
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full justify-start text-slate-600 hover:text-slate-800"
+                        className="w-full justify-start text-slate-600 hover:text-slate-800 text-xs sm:text-sm h-8 sm:h-9"
                         onClick={() => {
                           navigate('/proyectos');
                           onClose();
                         }}
                       >
-                        <FileText className="w-4 h-4 mr-2" />
-                        Gestión de Proyectos
+                        <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="hidden sm:inline">Gestión de Proyectos</span>
+                        <span className="sm:hidden">Proyectos</span>
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full justify-start text-slate-600 hover:text-slate-800"
+                        className="w-full justify-start text-slate-600 hover:text-slate-800 text-xs sm:text-sm h-8 sm:h-9"
                         onClick={() => {
                           navigate('/perfil');
                           onClose();
                         }}
                       >
-                        <User className="w-4 h-4 mr-2" />
-                        Mi Perfil
+                        <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="hidden sm:inline">Mi Perfil</span>
+                        <span className="sm:hidden">Perfil</span>
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full justify-start text-slate-600 hover:text-slate-800"
+                        className="w-full justify-start text-slate-600 hover:text-slate-800 text-xs sm:text-sm h-8 sm:h-9"
                         onClick={() => {
                           navigate('/configuracion');
                           onClose();
                         }}
                       >
-                        <Settings className="w-4 h-4 mr-2" />
-                        Configuración
+                        <Settings className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="hidden sm:inline">Configuración</span>
+                        <span className="sm:hidden">Config</span>
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full justify-start text-slate-600 hover:text-slate-800"
+                        className="w-full justify-start text-slate-600 hover:text-slate-800 text-xs sm:text-sm h-8 sm:h-9"
                         onClick={() => {
                           navigate('/analytics');
                           onClose();
                         }}
                       >
-                        <TrendingUp className="w-4 h-4 mr-2" />
-                        Analytics
+                        <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="hidden sm:inline">Analytics</span>
+                        <span className="sm:hidden">Analytics</span>
                       </Button>
                     </div>
                   </div>
@@ -368,39 +381,39 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0">
             {/* Header */}
-            <div className="p-6 border-b border-slate-200">
+            <div className="p-4 sm:p-6 border-b border-slate-200">
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-800">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base sm:text-lg font-semibold text-slate-800 truncate">
                     {activeTab === 'search' ? 'Artículos de Ayuda' : 'Tutoriales Disponibles'}
                   </h3>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-xs sm:text-sm text-slate-500">
                     {activeTab === 'search' 
                       ? `${filteredHelpArticles.length} artículos encontrados`
                       : `${filteredTutorials.length} tutoriales disponibles`
                     }
                   </p>
                 </div>
-                <Button variant="outline" size="sm" onClick={onClose}>
-                  <X className="w-4 h-4 mr-2" />
-                  Cerrar
+                <Button variant="outline" size="sm" onClick={onClose} className="ml-2 flex-shrink-0">
+                  <X className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Cerrar</span>
                 </Button>
               </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               {activeTab === 'search' ? (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {filteredHelpArticles.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Search className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-slate-600 mb-2">
+                    <div className="text-center py-8 sm:py-12">
+                      <Search className="w-8 h-8 sm:w-12 sm:h-12 text-slate-300 mx-auto mb-3 sm:mb-4" />
+                      <h3 className="text-base sm:text-lg font-medium text-slate-600 mb-2">
                         No se encontraron artículos
                       </h3>
-                      <p className="text-slate-500">
+                      <p className="text-sm sm:text-base text-slate-500 px-4">
                         Intenta con otros términos de búsqueda o explora las categorías
                       </p>
                     </div>
@@ -411,32 +424,34 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
                         className="cursor-pointer hover:shadow-md transition-all duration-200"
                         onClick={() => handleArticleSelect(article.id)}
                       >
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <h4 className="font-semibold text-slate-800">
+                        <CardContent className="p-4 sm:p-6">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                                <h4 className="font-semibold text-slate-800 text-sm sm:text-base leading-tight">
                                   {article.title}
                                 </h4>
                                 <Badge 
                                   variant="outline" 
-                                  className={cn("text-xs", getCategoryColor(article.category))}
+                                  className={cn("text-xs w-fit", getCategoryColor(article.category))}
                                 >
-                                  {getCategoryIcon(article.category)}
-                                  <span className="ml-1">
+                                  <div className="w-3 h-3 sm:w-4 sm:h-4">
+                                    {getCategoryIcon(article.category)}
+                                  </div>
+                                  <span className="ml-1 hidden sm:inline">
                                     {article.category === 'onboarding' ? 'Primeros Pasos' :
                                      article.category === 'project-management' ? 'Gestión' :
                                      article.category === 'troubleshooting' ? 'Solución' : 'Avanzado'}
                                   </span>
                                 </Badge>
                               </div>
-                              <p className="text-slate-600 text-sm mb-3 line-clamp-2">
-                                {article.content.replace(/[#*`]/g, '').substring(0, 150)}...
+                              <p className="text-slate-600 text-xs sm:text-sm mb-3 line-clamp-2 leading-relaxed">
+                                {article.content.replace(/[#*`]/g, '').substring(0, 120)}...
                               </p>
-                              <div className="flex items-center gap-4 text-xs text-slate-500">
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-slate-500">
                                 <div className="flex items-center gap-1">
                                   <User className="w-3 h-3" />
-                                  {article.author}
+                                  <span className="hidden sm:inline">{article.author}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
@@ -444,15 +459,15 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Eye className="w-3 h-3" />
-                                  {article.views} vistas
+                                  {article.views}
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <ThumbsUp className="w-3 h-3" />
-                                  {article.helpful} útiles
+                                  {article.helpful}
                                 </div>
                               </div>
                             </div>
-                            <div className="flex flex-col items-center gap-2 ml-4">
+                            <div className="flex flex-col items-center gap-2 flex-shrink-0">
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -460,21 +475,21 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
                                   e.stopPropagation();
                                   handleBookmarkToggle(article.id);
                                 }}
-                                className="h-8 w-8 p-0"
+                                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                               >
                                 {bookmarkedArticles.includes(article.id) ? (
-                                  <BookmarkCheck className="w-4 h-4 text-blue-600" />
+                                  <BookmarkCheck className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
                                 ) : (
-                                  <Bookmark className="w-4 h-4 text-slate-400" />
+                                  <Bookmark className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400" />
                                 )}
                               </Button>
                               {article.videoTutorial && (
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 w-8 p-0"
+                                  className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                                 >
-                                  <Video className="w-4 h-4 text-slate-400" />
+                                  <Video className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400" />
                                 </Button>
                               )}
                             </div>
@@ -485,29 +500,31 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   {filteredTutorials.map((flow) => (
                     <Card key={flow.id} className="hover:shadow-lg transition-shadow">
-                      <CardHeader>
-                        <div className="flex items-center gap-3">
-                          <div className="text-3xl">{flow.icon}</div>
-                          <div>
-                            <CardTitle className="text-lg">{flow.name}</CardTitle>
-                            <p className="text-sm text-slate-500 mt-1">
+                      <CardHeader className="pb-3 sm:pb-4">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="text-2xl sm:text-3xl flex-shrink-0">{flow.icon}</div>
+                          <div className="min-w-0 flex-1">
+                            <CardTitle className="text-base sm:text-lg leading-tight">{flow.name}</CardTitle>
+                            <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
                               {flow.description}
                             </p>
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="pt-0">
                         <div className="space-y-3">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Badge 
                               variant="outline" 
                               className={cn("text-xs", getCategoryColor(flow.category))}
                             >
-                              {getCategoryIcon(flow.category)}
-                              <span className="ml-1">
+                              <div className="w-3 h-3 sm:w-4 sm:h-4">
+                                {getCategoryIcon(flow.category)}
+                              </div>
+                              <span className="ml-1 hidden sm:inline">
                                 {flow.category === 'onboarding' ? 'Primeros Pasos' :
                                  flow.category === 'feature' ? 'Funcionalidad' :
                                  flow.category === 'advanced' ? 'Avanzado' : 'Solución'}
@@ -522,42 +539,44 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
                             </Badge>
                           </div>
                           
-                          <div className="flex items-center gap-4 text-sm text-slate-500">
+                          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-500">
                             <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              {flow.estimatedTime} minutos
+                              <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                              {flow.estimatedTime} min
                             </div>
                             <div className="flex items-center gap-1">
-                              <Target className="w-4 h-4" />
+                              <Target className="w-3 h-3 sm:w-4 sm:h-4" />
                               {flow.steps.length} pasos
                             </div>
                           </div>
 
                           {flow.completionReward && (
-                            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-3">
+                            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-2 sm:p-3">
                               <div className="flex items-center gap-2">
-                                <Star className="w-4 h-4 text-yellow-600" />
-                                <span className="text-sm font-medium text-yellow-800">
-                                  Recompensa: {flow.completionReward}
+                                <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-600" />
+                                <span className="text-xs sm:text-sm font-medium text-yellow-800">
+                                  <span className="hidden sm:inline">Recompensa: </span>{flow.completionReward}
                                 </span>
                               </div>
                             </div>
                           )}
 
                           <Button
-                            className="w-full"
+                            className="w-full text-xs sm:text-sm h-8 sm:h-9"
                             onClick={() => startTutorial(flow.id)}
                             disabled={completedFlows.includes(flow.id)}
                           >
                             {completedFlows.includes(flow.id) ? (
                               <>
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Completado
+                                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                <span className="hidden sm:inline">Completado</span>
+                                <span className="sm:hidden">Listo</span>
                               </>
                             ) : (
                               <>
-                                <PlayCircle className="w-4 h-4 mr-2" />
-                                Iniciar Tutorial
+                                <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                <span className="hidden sm:inline">Iniciar Tutorial</span>
+                                <span className="sm:hidden">Iniciar</span>
                               </>
                             )}
                           </Button>

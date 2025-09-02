@@ -101,33 +101,38 @@ export default function TutorialOverlay() {
   const updateOverlayPosition = (element: HTMLElement) => {
     const rect = element.getBoundingClientRect();
     const padding = 20;
+    const isMobile = window.innerWidth < 768;
     
     let x = rect.left - padding;
     let y = rect.top - padding;
     let width = rect.width + (padding * 2);
     let height = rect.height + (padding * 2);
 
-    // Ajustar posición según la posición del tooltip
+    // Ajustar posición según la posición del tooltip y dispositivo
     switch (currentStep?.position) {
       case 'top':
-        y = rect.top - 200 - padding;
+        y = rect.top - (isMobile ? 150 : 200) - padding;
         break;
       case 'bottom':
         y = rect.bottom + padding;
         break;
       case 'left':
-        x = rect.left - 300 - padding;
+        x = rect.left - (isMobile ? 200 : 300) - padding;
         break;
       case 'right':
         x = rect.right + padding;
         break;
       case 'center':
-        x = window.innerWidth / 2 - 200;
-        y = window.innerHeight / 2 - 150;
-        width = 400;
-        height = 300;
+        x = window.innerWidth / 2 - (isMobile ? 150 : 200);
+        y = window.innerHeight / 2 - (isMobile ? 100 : 150);
+        width = isMobile ? 300 : 400;
+        height = isMobile ? 200 : 300;
         break;
     }
+
+    // Asegurar que el overlay no se salga de la pantalla
+    x = Math.max(10, Math.min(x, window.innerWidth - (isMobile ? 320 : 420)));
+    y = Math.max(10, Math.min(y, window.innerHeight - (isMobile ? 220 : 320)));
 
     setOverlayPosition({ x, y, width, height });
   };
@@ -227,17 +232,20 @@ export default function TutorialOverlay() {
           className={cn(
             "absolute pointer-events-auto",
             "bg-white rounded-2xl shadow-2xl border border-slate-200",
-            "max-w-md w-full mx-4"
+            "max-w-md w-full mx-4",
+            // Responsive classes
+            "sm:max-w-lg md:max-w-md lg:max-w-lg",
+            "text-sm sm:text-base"
           )}
           style={{
-            left: currentStep.position === 'left' ? overlayPosition.x - 320 : 
+            left: currentStep.position === 'left' ? overlayPosition.x - (window.innerWidth < 768 ? 250 : 320) : 
                   currentStep.position === 'right' ? overlayPosition.x + overlayPosition.width + 20 :
                   currentStep.position === 'center' ? overlayPosition.x : 
-                  Math.min(overlayPosition.x, window.innerWidth - 400),
-            top: currentStep.position === 'top' ? overlayPosition.y - 250 :
+                  Math.min(overlayPosition.x, window.innerWidth - (window.innerWidth < 768 ? 320 : 400)),
+            top: currentStep.position === 'top' ? overlayPosition.y - (window.innerWidth < 768 ? 200 : 250) :
                  currentStep.position === 'bottom' ? overlayPosition.y + overlayPosition.height + 20 :
                  currentStep.position === 'center' ? overlayPosition.y :
-                 Math.min(overlayPosition.y, window.innerHeight - 300)
+                 Math.min(overlayPosition.y, window.innerHeight - (window.innerWidth < 768 ? 250 : 300))
           }}
         >
           {/* Header del tutorial */}
@@ -253,18 +261,18 @@ export default function TutorialOverlay() {
             </div>
 
             {/* Contenido del header */}
-            <CardHeader className="pb-4 pt-6">
+            <CardHeader className="pb-3 pt-4 sm:pb-4 sm:pt-6">
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl text-white text-lg">
+                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                  <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl text-white text-sm sm:text-lg flex-shrink-0">
                     {currentFlow.icon}
                   </div>
-                  <div>
-                    <CardTitle className="text-lg text-slate-800">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-base sm:text-lg text-slate-800 leading-tight">
                       {currentStep.title}
                     </CardTitle>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary" className="text-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
+                      <Badge variant="secondary" className="text-xs w-fit">
                         Paso {stepIndex + 1} de {currentFlow.steps.length}
                       </Badge>
                       <div className="flex items-center gap-1 text-xs text-slate-500">
@@ -276,50 +284,50 @@ export default function TutorialOverlay() {
                 </div>
 
                 {/* Controles del header */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setEnableSounds(!enableSounds)}
-                    className="h-8 w-8 p-0"
+                    className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                   >
                     {enableSounds ? (
-                      <Volume2 className="w-4 h-4" />
+                      <Volume2 className="w-3 h-3 sm:w-4 sm:h-4" />
                     ) : (
-                      <VolumeX className="w-4 h-4" />
+                      <VolumeX className="w-3 h-3 sm:w-4 sm:h-4" />
                     )}
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={exitTutorial}
-                    className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
+                    className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-slate-400 hover:text-slate-600"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3 h-3 sm:w-4 sm:h-4" />
                   </Button>
                 </div>
               </div>
             </CardHeader>
 
             {/* Contenido principal */}
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
               {/* Descripción */}
-              <p className="text-slate-600 leading-relaxed">
+              <p className="text-slate-600 leading-relaxed text-sm sm:text-base">
                 {currentStep.description}
               </p>
 
               {/* Tips */}
               {currentStep.tips && currentStep.tips.length > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <Lightbulb className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-800">Consejos útiles</span>
+                    <Lightbulb className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                    <span className="text-xs sm:text-sm font-medium text-blue-800">Consejos útiles</span>
                   </div>
                   <ul className="space-y-1">
                     {currentStep.tips.map((tip, index) => (
-                      <li key={index} className="text-sm text-blue-700 flex items-start gap-2">
-                        <span className="text-blue-500 mt-1">•</span>
-                        {tip}
+                      <li key={index} className="text-xs sm:text-sm text-blue-700 flex items-start gap-2">
+                        <span className="text-blue-500 mt-1 flex-shrink-0">•</span>
+                        <span className="leading-relaxed">{tip}</span>
                       </li>
                     ))}
                   </ul>
@@ -328,41 +336,42 @@ export default function TutorialOverlay() {
 
               {/* Acción requerida */}
               {currentStep.action && (
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 sm:p-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <Target className="w-4 h-4 text-slate-600" />
-                    <span className="text-sm font-medium text-slate-800">Acción requerida</span>
+                    <Target className="w-3 h-3 sm:w-4 sm:h-4 text-slate-600" />
+                    <span className="text-xs sm:text-sm font-medium text-slate-800">Acción requerida</span>
                   </div>
-                  <p className="text-sm text-slate-600 mb-3">
+                  <p className="text-xs sm:text-sm text-slate-600 mb-3 leading-relaxed">
                     {currentStep.actionText}
                   </p>
                   <Button
                     onClick={handleAction}
                     size="sm"
-                    className="bg-slate-800 hover:bg-slate-900 text-white"
+                    className="bg-slate-800 hover:bg-slate-900 text-white w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    {currentStep.action === 'click' && <CheckCircle className="w-4 h-4 mr-2" />}
-                    {currentStep.action === 'hover' && <HelpCircle className="w-4 h-4 mr-2" />}
-                    {currentStep.action === 'scroll' && <ChevronRight className="w-4 h-4 mr-2" />}
-                    {currentStep.action === 'wait' && <Clock className="w-4 h-4 mr-2" />}
-                    {currentStep.action === 'navigate' && <ChevronRight className="w-4 h-4 mr-2" />}
+                    {currentStep.action === 'click' && <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />}
+                    {currentStep.action === 'hover' && <HelpCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />}
+                    {currentStep.action === 'scroll' && <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />}
+                    {currentStep.action === 'wait' && <Clock className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />}
+                    {currentStep.action === 'navigate' && <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />}
                     {currentStep.action === 'navigate' ? 'Navegar' : 'Ejecutar Acción'}
                   </Button>
                 </div>
               )}
 
               {/* Controles de navegación */}
-              <div className="flex items-center justify-between pt-4 border-t border-slate-200">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-2 pt-3 sm:pt-4 border-t border-slate-200">
+                <div className="flex items-center gap-2 order-2 sm:order-1">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={prevStep}
                     disabled={stepIndex === 0}
-                    className="h-9"
+                    className="h-8 sm:h-9 flex-1 sm:flex-none text-xs sm:text-sm"
                   >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Anterior
+                    <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden sm:inline">Anterior</span>
+                    <span className="sm:hidden">Ant.</span>
                   </Button>
                   
                   {currentStep.skipable && (
@@ -370,30 +379,33 @@ export default function TutorialOverlay() {
                       variant="ghost"
                       size="sm"
                       onClick={skipStep}
-                      className="h-9 text-slate-500 hover:text-slate-700"
+                      className="h-8 sm:h-9 text-slate-500 hover:text-slate-700 text-xs sm:text-sm"
                     >
-                      <SkipForward className="w-4 h-4 mr-1" />
-                      Omitir
+                      <SkipForward className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                      <span className="hidden sm:inline">Omitir</span>
+                      <span className="sm:hidden">Skip</span>
                     </Button>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 order-1 sm:order-2">
                   {stepIndex === currentFlow.steps.length - 1 ? (
                     <Button
                       onClick={nextStep}
-                      className="h-9 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                      className="h-8 sm:h-9 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white flex-1 sm:flex-none text-xs sm:text-sm"
                     >
-                      <Star className="w-4 h-4 mr-2" />
-                      Completar
+                      <Star className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">Completar</span>
+                      <span className="sm:hidden">Finalizar</span>
                     </Button>
                   ) : (
                     <Button
                       onClick={nextStep}
-                      className="h-9 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                      className="h-8 sm:h-9 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white flex-1 sm:flex-none text-xs sm:text-sm"
                     >
-                      Siguiente
-                      <ChevronRight className="w-4 h-4 ml-1" />
+                      <span className="hidden sm:inline">Siguiente</span>
+                      <span className="sm:hidden">Sig.</span>
+                      <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
                     </Button>
                   )}
                 </div>
