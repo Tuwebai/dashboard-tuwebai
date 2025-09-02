@@ -56,6 +56,7 @@ export default function Perfil() {
   const [isSecureConnection, setIsSecureConnection] = useState(true);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSecurityExpanded, setIsSecurityExpanded] = useState(false);
   
   // Estados para edición de perfil
   const [profileData, setProfileData] = useState({
@@ -592,7 +593,7 @@ export default function Perfil() {
               </CardContent>
             </Card>
 
-            {/* Seguridad */}
+            {/* Seguridad - Acordeón Completo */}
             <Card className="bg-white rounded-2xl shadow-lg border border-slate-200/50">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
@@ -603,136 +604,170 @@ export default function Perfil() {
                     <div>
                       <CardTitle className="text-xl text-slate-800">Seguridad</CardTitle>
                       <CardDescription className="text-slate-600">
-                        Cambia tu contraseña para mantener tu cuenta segura
+                        Gestiona la seguridad de tu cuenta
                       </CardDescription>
                     </div>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsChangingPassword(!isChangingPassword)}
+                    onClick={() => setIsSecurityExpanded(!isSecurityExpanded)}
                     className="border-slate-300 text-slate-700 hover:bg-slate-50"
                   >
-                    {isChangingPassword ? <X className="h-4 w-4 mr-2" /> : <Shield className="h-4 w-4 mr-2" />}
-                    {isChangingPassword ? 'Cancelar' : 'Cambiar contraseña'}
+                    {isSecurityExpanded ? <X className="h-4 w-4 mr-2" /> : <Shield className="h-4 w-4 mr-2" />}
+                    {isSecurityExpanded ? 'Cerrar' : 'Abrir'}
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent>
-                {!isChangingPassword ? (
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <Shield className="h-5 w-5 text-slate-500" />
-                      <span className="text-slate-600">Última actualización: Nunca</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="currentPassword" className="text-sm font-medium text-slate-700">
-                        Contraseña actual
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          id="currentPassword"
-                          type={showPassword ? 'text' : 'password'}
-                          value={passwordData.currentPassword}
-                          onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                          placeholder="Ingresa tu contraseña actual"
-                          className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4 text-slate-500" /> : <Eye className="h-4 w-4 text-slate-500" />}
-                        </Button>
+              
+              {isSecurityExpanded && (
+                <CardContent className="space-y-6">
+                  {/* Indicadores de Seguridad */}
+                  <SecurityIndicators
+                    has2FA={has2FA}
+                    hasStrongPassword={hasStrongPassword}
+                    isSecureConnection={isSecureConnection}
+                    lastLogin={user.last_sign_in_at}
+                    loginLocation="Buenos Aires, Argentina"
+                  />
+
+                  {/* Autenticación de Dos Factores */}
+                  <TwoFactorAuth
+                    isEnabled={has2FA}
+                    onToggle={setHas2FA}
+                  />
+
+                  {/* Cambio de Contraseña */}
+                  <div className="border-t border-slate-200 pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 rounded-xl">
+                          <Lock className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-800">Cambiar Contraseña</h3>
+                          <p className="text-sm text-slate-600">
+                            Actualiza tu contraseña para mantener tu cuenta segura
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="newPassword" className="text-sm font-medium text-slate-700">
-                        Nueva contraseña
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          id="newPassword"
-                          type={showNewPassword ? 'text' : 'password'}
-                          value={passwordData.newPassword}
-                          onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                          placeholder="Ingresa tu nueva contraseña"
-                          className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                        >
-                          {showNewPassword ? <EyeOff className="h-4 w-4 text-slate-500" /> : <Eye className="h-4 w-4 text-slate-500" />}
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">
-                        Confirmar nueva contraseña
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          id="confirmPassword"
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          value={passwordData.confirmPassword}
-                          onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                          placeholder="Confirma tu nueva contraseña"
-                          className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        >
-                          {showConfirmPassword ? <EyeOff className="h-4 w-4 text-slate-500" /> : <Eye className="h-4 w-4 text-slate-500" />}
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex justify-end pt-4">
                       <Button
-                        onClick={handlePasswordChange}
-                        disabled={loading}
-                        className="bg-gradient-to-r from-green-500 via-emerald-600 to-teal-600 hover:from-green-600 hover:to-teal-700 shadow-lg text-white font-medium"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsChangingPassword(!isChangingPassword)}
+                        className="border-slate-300 text-slate-700 hover:bg-slate-50"
                       >
-                        {loading ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        ) : (
-                          <Shield className="h-4 w-4 mr-2" />
-                        )}
-                        Cambiar contraseña
+                        {isChangingPassword ? <X className="h-4 w-4 mr-2" /> : <Lock className="h-4 w-4 mr-2" />}
+                        {isChangingPassword ? 'Cancelar' : 'Cambiar contraseña'}
                       </Button>
                     </div>
+
+                    {!isChangingPassword ? (
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <Lock className="h-5 w-5 text-slate-500" />
+                          <span className="text-slate-600">Última actualización: Nunca</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="currentPassword" className="text-sm font-medium text-slate-700">
+                            Contraseña actual
+                          </Label>
+                          <div className="relative">
+                            <Input
+                              id="currentPassword"
+                              type={showPassword ? 'text' : 'password'}
+                              value={passwordData.currentPassword}
+                              onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                              placeholder="Ingresa tu contraseña actual"
+                              className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              {showPassword ? <EyeOff className="h-4 w-4 text-slate-500" /> : <Eye className="h-4 w-4 text-slate-500" />}
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {/* Nueva contraseña con validador */}
+                        <div className="space-y-2">
+                          <Label htmlFor="newPassword" className="text-sm font-medium text-slate-700">
+                            Nueva contraseña
+                          </Label>
+                          <PasswordValidator
+                            password={passwordData.newPassword}
+                            onPasswordChange={(password) => {
+                              setPasswordData({...passwordData, newPassword: password});
+                              setHasStrongPassword(password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password) && /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password));
+                            }}
+                            showPassword={showNewPassword}
+                            onToggleShowPassword={() => setShowNewPassword(!showNewPassword)}
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">
+                            Confirmar nueva contraseña
+                          </Label>
+                          <div className="relative">
+                            <Input
+                              id="confirmPassword"
+                              type={showConfirmPassword ? 'text' : 'password'}
+                              value={passwordData.confirmPassword}
+                              onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                              placeholder="Confirma tu nueva contraseña"
+                              className="border-slate-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            >
+                              {showConfirmPassword ? <EyeOff className="h-4 w-4 text-slate-500" /> : <Eye className="h-4 w-4 text-slate-500" />}
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                          <Button
+                            onClick={handlePasswordChange}
+                            disabled={loading || !hasStrongPassword || passwordData.newPassword !== passwordData.confirmPassword}
+                            className="bg-blue-500 hover:bg-blue-600 text-white"
+                          >
+                            {loading ? (
+                              <div className="flex items-center gap-2">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                Actualizando...
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <Save className="h-4 w-4" />
+                                Actualizar contraseña
+                              </div>
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setIsChangingPassword(false)}
+                            className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </CardContent>
+                </CardContent>
+              )}
             </Card>
-
-            {/* Indicadores de Seguridad */}
-            <SecurityIndicators
-              has2FA={has2FA}
-              hasStrongPassword={hasStrongPassword}
-              isSecureConnection={isSecureConnection}
-              lastLogin={user.last_sign_in_at}
-              loginLocation="Buenos Aires, Argentina"
-            />
-
-            {/* Autenticación de Dos Factores */}
-            <TwoFactorAuth
-              isEnabled={has2FA}
-              onToggle={setHas2FA}
-            />
           </div>
 
           {/* Columna derecha - Foto de perfil y cuenta */}
