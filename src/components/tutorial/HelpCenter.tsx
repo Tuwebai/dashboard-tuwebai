@@ -176,10 +176,16 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={cn(
-        "h-[80vh] sm:h-[85vh] p-0 overflow-hidden",
-        isMobile ? "max-w-[95vw] w-[95vw]" : isTablet ? "max-w-[90vw] w-[90vw]" : "max-w-6xl"
-      )}>
+              <DialogContent 
+          className={cn(
+            "h-[80vh] sm:h-[85vh] p-0 overflow-hidden",
+            isMobile ? "!max-w-[95vw] !w-[95vw]" : isTablet ? "!max-w-[90vw] !w-[90vw]" : "!max-w-[95vw] !w-[95vw]"
+          )}
+          style={{
+            width: isMobile ? '95vw' : isTablet ? '90vw' : '95vw',
+            maxWidth: isMobile ? '95vw' : isTablet ? '90vw' : '95vw'
+          }}
+        >
         <DialogHeader className="sr-only">
           <DialogTitle>Centro de Ayuda</DialogTitle>
           <DialogDescription>
@@ -199,7 +205,7 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
                 exit={isMobile ? { x: -320, opacity: 0 } : { opacity: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className={cn(
-                  "bg-slate-50 border-b border-slate-200 flex flex-col",
+                  "bg-slate-100 border-b-2 border-slate-300 flex flex-col shadow-lg",
                   isMobile ? "w-full h-[50vh] border-b" : "w-80 border-r",
                   isTablet ? "w-72" : ""
                 )}
@@ -220,12 +226,12 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
                     </div>
                     <div>
                       <h2 className={cn(
-                        "font-semibold text-slate-800",
-                        isMobile ? "text-base" : "text-lg"
+                        "font-bold text-slate-900",
+                        isMobile ? "text-lg" : "text-xl"
                       )}>Centro de Ayuda</h2>
                       <p className={cn(
-                        "text-slate-500",
-                        isMobile ? "text-xs" : "text-sm"
+                        "text-slate-600 font-medium",
+                        isMobile ? "text-sm" : "text-base"
                       )}>Encuentra respuestas rápidas</p>
                     </div>
                   </div>
@@ -296,8 +302,8 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
                       {/* Categories */}
                       <div>
                         <h3 className={cn(
-                          "font-medium text-slate-700 mb-2",
-                          isMobile ? "text-xs" : "text-sm"
+                          "font-bold text-slate-800 mb-3",
+                          isMobile ? "text-sm" : "text-base"
                         )}>Categorías</h3>
                         <div className="space-y-1">
                           {['all', 'onboarding', 'project-management', 'troubleshooting', 'advanced'].map((category) => (
@@ -350,7 +356,10 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
                               "w-full justify-start",
                               isMobile ? "text-xs h-8" : "text-sm h-9"
                             )}
-                            onClick={() => startTutorial('welcome-tour')}
+                            onClick={() => {
+                              startTutorial('welcome-tour');
+                              onClose(); // Cerrar el modal del centro de ayuda
+                            }}
                           >
                             <Target className={cn(
                               "mr-1.5",
@@ -365,7 +374,10 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
                               "w-full justify-start",
                               isMobile ? "text-xs h-8" : "text-sm h-9"
                             )}
-                            onClick={() => setActiveTab('tutorials')}
+                            onClick={() => {
+                              setActiveTab('tutorials');
+                              // No cerrar el modal aquí ya que solo cambia de pestaña
+                            }}
                           >
                             <PlayCircle className={cn(
                               "mr-1.5",
@@ -484,7 +496,10 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
                           <Button
                             size="sm"
                             className="w-full mt-3"
-                            onClick={() => startTutorial(flow.id)}
+                            onClick={() => {
+                              startTutorial(flow.id);
+                              onClose(); // Cerrar el modal del centro de ayuda
+                            }}
                             disabled={completedFlows.includes(flow.id)}
                           >
                             {completedFlows.includes(flow.id) ? (
@@ -728,7 +743,10 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
 
                           <Button
                             className="w-full text-xs sm:text-sm h-8 sm:h-9"
-                            onClick={() => startTutorial(flow.id)}
+                            onClick={() => {
+                              startTutorial(flow.id);
+                              onClose(); // Cerrar el modal del centro de ayuda
+                            }}
                             disabled={completedFlows.includes(flow.id)}
                           >
                             {completedFlows.includes(flow.id) ? (

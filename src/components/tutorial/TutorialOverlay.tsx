@@ -336,17 +336,19 @@ export default function TutorialOverlay() {
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.8, opacity: 0, y: 20 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className={cn(
-            "absolute pointer-events-auto",
-            "bg-white rounded-2xl shadow-2xl border border-slate-200",
-            // Responsive classes mejoradas
-            isMobile ? "w-[90vw] max-w-[90vw]" : isTablet ? "w-[80vw] max-w-[80vw]" : "w-auto",
-            isMobile ? "text-sm" : isTablet ? "text-sm" : "text-base",
-            isMobile ? "mx-4" : "mx-0",
-            // Mejoras para touch
-            "touch-manipulation",
-            "select-none"
-          )}
+                          className={cn(
+                  "absolute pointer-events-auto",
+                  "bg-white rounded-2xl shadow-2xl border-2 border-slate-300",
+                  // Mejoras de contraste
+                  "ring-2 ring-blue-100 ring-opacity-50",
+                  // Responsive classes mejoradas
+                  isMobile ? "w-[90vw] max-w-[90vw]" : isTablet ? "w-[80vw] max-w-[80vw]" : "w-auto",
+                  isMobile ? "text-sm" : isTablet ? "text-sm" : "text-base",
+                  isMobile ? "mx-4" : "mx-0",
+                  // Mejoras para touch
+                  "touch-manipulation",
+                  "select-none"
+                )}
           style={{
             ...getTooltipPosition(),
             zIndex: 10001
@@ -372,23 +374,24 @@ export default function TutorialOverlay() {
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <div className={cn(
-                    "flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl text-white flex-shrink-0",
+                    "flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700 rounded-xl text-white flex-shrink-0 shadow-lg",
+                    "ring-2 ring-blue-200 ring-opacity-50",
                     isMobile ? "w-8 h-8 text-sm" : isTablet ? "w-9 h-9 text-base" : "w-10 h-10 text-lg"
                   )}>
                     {currentFlow.icon}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <CardTitle className={cn(
-                      "text-slate-800 leading-tight",
-                      isMobile ? "text-sm" : isTablet ? "text-base" : "text-lg"
-                    )}>
-                      {currentStep.title}
-                    </CardTitle>
+                                            <CardTitle className={cn(
+                          "text-slate-900 leading-tight font-bold",
+                          isMobile ? "text-base" : isTablet ? "text-lg" : "text-xl"
+                        )}>
+                          {currentStep.title}
+                        </CardTitle>
                     <div className={cn(
                       "flex items-center gap-2 mt-1",
                       isMobile ? "flex-col" : "flex-row"
                     )}>
-                      <Badge variant="secondary" className="text-xs w-fit">
+                      <Badge variant="secondary" className="text-xs w-fit bg-blue-100 text-blue-800 border border-blue-200">
                         Paso {stepIndex + 1} de {currentFlow.steps.length}
                       </Badge>
                       <div className="flex items-center gap-1 text-xs text-slate-500">
@@ -445,12 +448,12 @@ export default function TutorialOverlay() {
               isMobile ? "px-4" : "px-6"
             )}>
               {/* Descripción */}
-              <p className={cn(
-                "text-slate-600 leading-relaxed",
-                isMobile ? "text-sm" : isTablet ? "text-sm" : "text-base"
-              )}>
-                {currentStep.description}
-              </p>
+                                <p className={cn(
+                    "text-slate-700 leading-relaxed font-medium",
+                    isMobile ? "text-sm" : isTablet ? "text-base" : "text-lg"
+                  )}>
+                    {currentStep.description}
+                  </p>
 
               {/* Tips */}
               {currentStep.tips && currentStep.tips.length > 0 && (
@@ -544,16 +547,18 @@ export default function TutorialOverlay() {
                   "flex items-center gap-2",
                   isMobile ? "order-2" : "order-1"
                 )}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={prevStep}
-                    disabled={stepIndex === 0}
-                    className={cn(
-                      "text-sm",
-                      isMobile ? "h-10 flex-1" : "h-9 flex-none"
-                    )}
-                  >
+                                      <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={prevStep}
+                      disabled={stepIndex === 0}
+                      className={cn(
+                        "text-sm border-2 border-slate-300 hover:border-slate-400",
+                        "focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
+                        "transition-all duration-200",
+                        isMobile ? "h-10 flex-1" : "h-9 flex-none"
+                      )}
+                    >
                     <ChevronLeft className={cn(
                       "mr-1",
                       isMobile ? "w-4 h-4" : "w-4 h-4"
@@ -599,31 +604,33 @@ export default function TutorialOverlay() {
                       <span className={isMobile ? "inline" : "inline"}>Completar</span>
                     </Button>
                   ) : (
-                    <Button
-                      onClick={async () => {
-                        // Manejar navegación si es necesario
-                        if (currentStep?.action === 'navigate' && currentStep.navigateTo) {
-                          try {
-                            // Navegar inmediatamente
-                            navigate(currentStep.navigateTo);
-                            // Avanzar al siguiente paso inmediatamente
-                            nextStep();
-                            return;
-                          } catch (error) {
-                            console.error('Error during navigation:', error);
-                            // Si hay error, avanzar de todas formas
+                                          <Button
+                        onClick={async () => {
+                          // Manejar navegación si es necesario
+                          if (currentStep?.action === 'navigate' && currentStep.navigateTo) {
+                            try {
+                              // Navegar inmediatamente
+                              navigate(currentStep.navigateTo);
+                              // Avanzar al siguiente paso inmediatamente
+                              nextStep();
+                              return;
+                            } catch (error) {
+                              console.error('Error during navigation:', error);
+                              // Si hay error, avanzar de todas formas
+                              nextStep();
+                            }
+                          } else {
+                            // Si no es navegación, avanzar normalmente
                             nextStep();
                           }
-                        } else {
-                          // Si no es navegación, avanzar normalmente
-                          nextStep();
-                        }
-                      }}
-                      className={cn(
-                        "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white text-sm",
-                        isMobile ? "h-10 flex-1" : "h-9 flex-none"
-                      )}
-                    >
+                        }}
+                        className={cn(
+                          "bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white text-sm",
+                          "shadow-lg hover:shadow-xl transition-all duration-200",
+                          "ring-2 ring-blue-200 ring-opacity-50 hover:ring-opacity-75",
+                          isMobile ? "h-10 flex-1" : "h-9 flex-none"
+                        )}
+                      >
                       <span className={isMobile ? "inline" : "inline"}>Siguiente</span>
                       <ChevronRight className={cn(
                         "ml-1",

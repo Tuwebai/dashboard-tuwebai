@@ -92,7 +92,10 @@ export default function HelpButton({
       label: 'Tour de Bienvenida',
       icon: Target,
       description: 'Conoce las funcionalidades principales',
-      action: () => startTutorial('welcome-tour'),
+      action: () => {
+        startTutorial('welcome-tour');
+        setShowQuickMenu(false); // Cerrar el menú flotante
+      },
       available: !completedFlows.includes('welcome-tour')
     },
     {
@@ -100,7 +103,10 @@ export default function HelpButton({
       label: 'Gestión de Proyectos',
       icon: BookOpen,
       description: 'Aprende a gestionar proyectos',
-      action: () => startTutorial('project-management'),
+      action: () => {
+        startTutorial('project-management');
+        setShowQuickMenu(false); // Cerrar el menú flotante
+      },
       available: !completedFlows.includes('project-management')
     },
     {
@@ -172,7 +178,9 @@ export default function HelpButton({
             <Button
               onClick={() => setShowQuickMenu(!showQuickMenu)}
               className={cn(
-                "rounded-full bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-2xl",
+                "rounded-full bg-gradient-to-br from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white shadow-2xl",
+                "ring-2 ring-blue-200 ring-opacity-50 hover:ring-opacity-75",
+                "transition-all duration-200 hover:scale-105",
                 isMobile ? "h-12 w-12" : "h-14 w-14"
               )}
             >
@@ -200,7 +208,9 @@ export default function HelpButton({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.8, y: 20 }}
                 className={cn(
-                  "absolute bg-white rounded-2xl shadow-2xl border border-slate-200",
+                  "absolute bg-white rounded-2xl shadow-2xl border-2 border-slate-300",
+                  "ring-2 ring-blue-100 ring-opacity-50",
+                  "backdrop-blur-sm bg-white/95",
                   isMobile ? "bottom-14 right-0 w-[90vw] max-w-[320px] p-3" : "bottom-16 right-0 w-80 p-4"
                 )}
               >
