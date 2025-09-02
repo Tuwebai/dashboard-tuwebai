@@ -357,6 +357,53 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     syncUser();
   }, [syncUser]);
 
+  // Suscripción en tiempo real para cambios en el usuario actual
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`user-updates-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'users',
+          filter: `id=eq.${user.id}`
+        },
+        async (payload) => {
+          const updatedUserData = payload.new as any;
+          
+          // Actualizar el usuario en el contexto si hay cambios en avatar_url
+          if (updatedUserData.avatar_url && updatedUserData.avatar_url !== user.avatar_url) {
+            setUser(prev => prev ? {
+              ...prev,
+              avatar_url: updatedUserData.avatar_url,
+              avatar: updatedUserData.avatar_url, // Para compatibilidad
+              updated_at: updatedUserData.updated_at
+            } : prev);
+            
+            // Actualizar cache
+            const cacheKey = `user_${user.id}`;
+            const cachedUser = getCachedData(cacheKey);
+            if (cachedUser) {
+              setCachedData(cacheKey, {
+                ...cachedUser,
+                avatar_url: updatedUserData.avatar_url,
+                avatar: updatedUserData.avatar_url,
+                updated_at: updatedUserData.updated_at
+              }, 10 * 60 * 1000);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   // Persistir estado de autenticación en localStorage
   useEffect(() => {
     if (isAuthenticated && user) {

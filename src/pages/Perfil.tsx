@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 
 export default function Perfil() {
-  const { user, getUserProjects } = useApp();
+  const { user, getUserProjects, updateUserSettings } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -301,11 +301,11 @@ export default function Perfil() {
         throw updateError;
       }
 
-      // Actualizar el usuario en el contexto local
-      const updatedUser = {
-        ...user,
-        avatar_url: publicUrl
-      };
+      // Actualizar el usuario en el contexto global para sincronización en tiempo real
+      await updateUserSettings({
+        avatar_url: publicUrl,
+        avatar: publicUrl // Para compatibilidad con el campo avatar
+      });
 
       toast({
         title: 'Foto actualizada',
