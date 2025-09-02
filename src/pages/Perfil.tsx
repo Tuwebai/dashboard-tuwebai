@@ -257,10 +257,10 @@ export default function Perfil() {
       // Generar nombre único para el archivo
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
 
-      // Intentar subir al bucket avatars, si no existe usar project-files
+      // Intentar subir al bucket avatars primero
       let bucketName = 'avatars';
+      let filePath = fileName; // Sin prefijo de carpeta
       let uploadError = null;
       
       const { error: avatarsError } = await supabase.storage
@@ -268,8 +268,9 @@ export default function Perfil() {
         .upload(filePath, file);
 
       if (avatarsError && avatarsError.message.includes('Bucket not found')) {
-        // Si el bucket avatars no existe, usar project-files
+        // Si el bucket avatars no existe, usar project-files con carpeta avatars
         bucketName = 'project-files';
+        filePath = `avatars/${fileName}`;
         const { error: projectError } = await supabase.storage
           .from('project-files')
           .upload(filePath, file);

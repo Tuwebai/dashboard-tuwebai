@@ -77,25 +77,27 @@ export class StorageService {
   static async uploadAvatar(file: File, userId: string): Promise<string> {
     try {
       const timestamp = Date.now();
-      const fileName = `${userId}/avatar_${timestamp}.${file.name.split('.').pop()}`;
+      const fileName = `avatar_${timestamp}.${file.name.split('.').pop()}`;
       
-      // Intentar subir al bucket avatars, si no existe usar project-files
+      // Intentar subir al bucket avatars primero
       let bucketName = this.AVATARS_BUCKET;
+      let filePath = `${userId}/${fileName}`;
       let uploadError = null;
       
       const { error: avatarsError } = await supabase.storage
         .from(this.AVATARS_BUCKET)
-        .upload(fileName, file, {
+        .upload(filePath, file, {
           cacheControl: '3600',
           upsert: true
         });
 
       if (avatarsError && avatarsError.message.includes('Bucket not found')) {
-        // Si el bucket avatars no existe, usar project-files
+        // Si el bucket avatars no existe, usar project-files con carpeta avatars
         bucketName = this.DEFAULT_BUCKET;
+        filePath = `avatars/${userId}/${fileName}`;
         const { error: projectError } = await supabase.storage
           .from(this.DEFAULT_BUCKET)
-          .upload(fileName, file, {
+          .upload(filePath, file, {
             cacheControl: '3600',
             upsert: true
           });
@@ -108,7 +110,7 @@ export class StorageService {
 
       const { data: urlData } = supabase.storage
         .from(bucketName)
-        .getPublicUrl(fileName);
+        .getPublicUrl(filePath);
 
       return urlData.publicUrl;
     } catch (error) {
