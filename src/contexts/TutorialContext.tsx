@@ -1121,17 +1121,40 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Auto-iniciar tutorial para nuevos usuarios
   useEffect(() => {
+    console.log('🔍 Verificando auto-inicio del tutorial:', {
+      isAuthenticated,
+      user: user?.email,
+      userRole: user?.role,
+      autoStart,
+      hasUser: !!user
+    });
+
     if (isAuthenticated && user && autoStart) {
       // Determinar qué tutorial iniciar según el rol
       const tutorialId = user.role === 'admin' ? 'welcome-tour' : 'client-welcome-tour';
       const storageKey = `tutorial-${tutorialId}-completed`;
       
+      console.log('🎯 Tutorial seleccionado:', tutorialId);
+      console.log('🔑 Storage key:', storageKey);
+      
       const hasCompletedWelcome = localStorage.getItem(storageKey);
+      console.log('✅ Tutorial completado anteriormente:', !!hasCompletedWelcome);
+      
       if (!hasCompletedWelcome) {
+        console.log('🚀 Iniciando tutorial en 2 segundos...');
         setTimeout(() => {
+          console.log('🎬 Ejecutando startTutorial:', tutorialId);
           startTutorial(tutorialId);
         }, 2000); // Esperar 2 segundos después del login
+      } else {
+        console.log('⏭️ Tutorial ya completado, saltando auto-inicio');
       }
+    } else {
+      console.log('❌ Condiciones no cumplidas para auto-inicio:', {
+        isAuthenticated,
+        hasUser: !!user,
+        autoStart
+      });
     }
   }, [isAuthenticated, user, autoStart]);
 

@@ -50,15 +50,6 @@ export class UserPreferencesService {
     preferenceValue: any
   ): Promise<UserPreferences | null> {
     try {
-      // Verificar si ya existe
-      const { data: existing } = await supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('preference_type', preferenceType)
-        .eq('preference_key', preferenceKey)
-        .single();
-
       const preferenceData = {
         user_id: userId,
         preference_type: preferenceType as any,
@@ -67,33 +58,57 @@ export class UserPreferencesService {
         updated_at: new Date().toISOString()
       };
 
-      let result;
-      if (existing) {
-        // Actualizar existente
-        const { data, error } = await supabase
-          .from('user_preferences')
-          .update(preferenceData)
-          .eq('id', existing.id)
-          .select()
-          .single();
+      // Usar upsert para evitar errores de constraint único
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .upsert(preferenceData, {
+          onConflict: 'user_id,preference_type,preference_key',
+          ignoreDuplicates: false
+        })
+        .select()
+        .single();
 
-        if (error) throw error;
-        result = data;
-      } else {
-        // Crear nuevo
-        const { data, error } = await supabase
-          .from('user_preferences')
-          .insert([preferenceData])
-          .select()
-          .single();
+      if (error) {
+        console.warn('Error al guardar preferencia, usando fallback:', error);
+        // Fallback: intentar actualizar primero, luego insertar
+        try {
+          const { data: existing } = await supabase
+            .from('user_preferences')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('preference_type', preferenceType)
+            .eq('preference_key', preferenceKey)
+            .single();
 
-        if (error) throw error;
-        result = data;
+          if (existing) {
+            const { data: updateData, error: updateError } = await supabase
+              .from('user_preferences')
+              .update(preferenceData)
+              .eq('id', existing.id)
+              .select()
+              .single();
+            
+            if (updateError) throw updateError;
+            return updateData;
+          } else {
+            const { data: insertData, error: insertError } = await supabase
+              .from('user_preferences')
+              .insert([preferenceData])
+              .select()
+              .single();
+            
+            if (insertError) throw insertError;
+            return insertData;
+          }
+        } catch (fallbackError) {
+          console.warn('Fallback también falló, continuando sin guardar preferencia:', fallbackError);
+          return null;
+        }
       }
 
-      return result;
+      return data;
     } catch (error) {
-      handleSupabaseError(error, 'Guardar preferencia del usuario');
+      console.warn('Error en saveUserPreference, continuando:', error);
       return null;
     }
   }
