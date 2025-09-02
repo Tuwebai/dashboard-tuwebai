@@ -719,11 +719,8 @@ const TUTORIAL_FLOWS: TutorialFlow[] = [
         description: 'Desde aquí puedes ver el estado de todos tus proyectos y comunicarte con tu equipo.',
         target: '.dashboard-stats',
         position: 'bottom',
-        action: 'navigate',
-        actionText: 'Navegar a tu dashboard',
-        navigateTo: '/dashboard',
-        waitForNavigation: true,
-        navigationDelay: 1000,
+        action: 'wait',
+        actionText: 'Explora tu dashboard',
         skipable: true,
         tips: [
           'Ve el progreso general de tus proyectos',

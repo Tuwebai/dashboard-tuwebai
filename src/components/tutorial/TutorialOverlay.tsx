@@ -211,6 +211,10 @@ export default function TutorialOverlay() {
     isActive,
     currentFlow: currentFlow?.id,
     currentStep: currentStep?.id,
+    currentStepTitle: currentStep?.title,
+    currentStepAction: currentStep?.action,
+    currentStepNavigateTo: currentStep?.navigateTo,
+    stepIndex,
     targetElement: !!targetElement,
     overlayPosition
   });
