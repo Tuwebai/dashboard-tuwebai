@@ -17,6 +17,28 @@ export default {
 				'2xl': '1400px'
 			}
 		},
+		fontFamily: {
+			sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+		},
+		fontSize: {
+			'xs': ['12px', '1.4'],
+			'sm': ['14px', '1.4'],
+			'base': ['16px', '1.4'],
+			'lg': ['18px', '1.4'],
+			'xl': ['24px', '1.2'],
+			'2xl': ['32px', '1.2'],
+			'3xl': ['48px', '1.2'],
+		},
+		fontWeight: {
+			normal: '400',
+			medium: '500',
+			semibold: '600',
+			bold: '700',
+		},
+		lineHeight: {
+			'text': '1.4',
+			'title': '1.2',
+		},
 		extend: {
 			colors: {
 				border: 'hsl(var(--border))',

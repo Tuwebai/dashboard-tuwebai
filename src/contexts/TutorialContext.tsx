@@ -1023,7 +1023,7 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   // Flujos y progreso - Filtrar por rol del usuario
   const getAvailableFlows = useCallback(() => {
-    if (!user) return [];
+    if (!user) return TUTORIAL_FLOWS; // Mostrar todos si no hay usuario
     
     // Filtrar flujos según el rol del usuario
     return TUTORIAL_FLOWS.filter(flow => {
@@ -1040,7 +1040,7 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   }, [user]);
   
-  const [availableFlows] = useState<TutorialFlow[]>(getAvailableFlows());
+  const [availableFlows, setAvailableFlows] = useState<TutorialFlow[]>(TUTORIAL_FLOWS);
   const [completedFlows, setCompletedFlows] = useState<string[]>([]);
   
   // Artículos de ayuda
@@ -1056,6 +1056,13 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // =====================================================
   // EFECTOS
   // =====================================================
+
+  // Actualizar flujos disponibles cuando cambie el usuario
+  useEffect(() => {
+    const flows = getAvailableFlows();
+    setAvailableFlows(flows);
+    console.log('Flujos disponibles actualizados:', flows.map(f => f.id));
+  }, [user, getAvailableFlows]);
 
   // Auto-iniciar tutorial para nuevos usuarios
   useEffect(() => {
@@ -1093,9 +1100,12 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const startTutorial = useCallback((flowId: string) => {
     console.log('Iniciando tutorial:', flowId);
+    console.log('Flujos disponibles:', availableFlows.map(f => f.id));
+    
     const flow = availableFlows.find(f => f.id === flowId);
     if (!flow) {
       console.log('Flujo no encontrado:', flowId);
+      console.log('Flujos disponibles:', availableFlows.map(f => f.id));
       return;
     }
 
