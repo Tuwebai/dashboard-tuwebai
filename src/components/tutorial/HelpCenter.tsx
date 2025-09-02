@@ -504,7 +504,6 @@ export default function HelpCenter({ isOpen, onClose }: HelpCenterProps) {
                     ))}
                   </div>
                 </TabsContent>
-                    </TabsContent>
                   </Tabs>
                 </div>
               </motion.div>
