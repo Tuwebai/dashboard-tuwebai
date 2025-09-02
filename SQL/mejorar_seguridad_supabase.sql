@@ -134,25 +134,16 @@ FOR SELECT USING (true);
 -- Mejorar política de proyectos
 DROP POLICY IF EXISTS "Users can only see their own projects" ON public.projects;
 CREATE POLICY "Users can only see their own projects" ON public.projects
-FOR ALL USING (
-  auth.uid() = user_id OR 
-  auth.uid() IN (
-    SELECT user_id FROM public.project_collaborators 
-    WHERE project_id = projects.id
-  )
-);
+FOR ALL USING (auth.uid() = created_by);
 
 -- Mejorar política de archivos
 DROP POLICY IF EXISTS "Users can only access their own files" ON public.project_files;
 CREATE POLICY "Users can only access their own files" ON public.project_files
 FOR ALL USING (
+  auth.uid() = uploaded_by OR
   auth.uid() = (
-    SELECT user_id FROM public.projects 
+    SELECT created_by FROM public.projects 
     WHERE projects.id = project_files.project_id
-  ) OR
-  auth.uid() IN (
-    SELECT user_id FROM public.project_collaborators 
-    WHERE project_id = project_files.project_id
   )
 );
 
