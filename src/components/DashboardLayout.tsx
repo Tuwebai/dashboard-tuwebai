@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { Navigate, useLocation, Outlet } from 'react-router-dom';

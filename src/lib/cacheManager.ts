@@ -2,6 +2,7 @@
 // SISTEMA DE CACHE OPTIMIZADO CON INDEXEDDB
 // =====================================================
 
+import React from 'react';
 import { useState, useEffect } from 'react';
 
 interface CacheItem<T = any> {

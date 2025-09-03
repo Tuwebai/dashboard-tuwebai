@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { TutorialFlow, TutorialStep, TutorialProgress } from '@/contexts/TutorialContext';
 

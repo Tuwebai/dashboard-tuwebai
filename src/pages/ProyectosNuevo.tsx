@@ -1,3 +1,4 @@
+import React from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';

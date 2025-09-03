@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useCallback, useEffect } from 'react';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { versionService } from '@/lib/versionService';
