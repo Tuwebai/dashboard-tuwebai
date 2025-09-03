@@ -1,0 +1,10 @@
+[33m1210111[m[33m ([m[1;36mHEAD[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: Corrección definitiva del error useState - imports React y configuración global
+[33me85ba97[m fix: Corregir imports de React en archivos que usan useState - resolver error de producción
+[33md9a0970[m fix: Corregir error de useState en producción - optimizar configuración de Vite y React
+[33m265c100[m fix: Corregir manejo de errores de conexión en servicios de notificaciones y Supabase
+[33m4c748b5[m fix: Corregir errores en PasswordValidator y acordeón de seguridad
+[33m4662622[m feat: Convertir sección de seguridad en acordeón profesional
+[33m29e675c[m fix: Corregir referencias de columnas en script de seguridad
+[33m740e19d[m feat: Implementar sistema de seguridad gratuito completo
+[33mab70ea5[m fix: Corregir import de framer-motion para deploy en Netlify
+[33ma941de0[m feat: Transformación completa del sistema de tutoriales UX/UI

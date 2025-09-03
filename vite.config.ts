@@ -15,16 +15,9 @@ export default defineConfig({
     target: 'esnext',
     minify: 'terser',
     sourcemap: false,
-    commonjsOptions: {
-      include: [/node_modules/]
-    },
     
     // Configuración de rollup para code splitting
     rollupOptions: {
-      external: (id) => {
-        // No externalizar React, mantenerlo en el bundle
-        return false;
-      },
       output: {
         // Optimizar nombres de archivos
         chunkFileNames: 'assets/js/[name]-[hash].js',
@@ -194,8 +187,7 @@ export default defineConfig({
       'react-hook-form',
       '@hookform/resolvers'
     ],
-    exclude: ['@vite/client', '@vite/env', 'monaco-editor'],
-    force: true
+    exclude: ['@vite/client', '@vite/env', 'monaco-editor']
   },
   
   // Configuración de assets
