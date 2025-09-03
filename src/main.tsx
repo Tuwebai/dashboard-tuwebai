@@ -8,6 +8,11 @@ import i18n from './lib/i18n';
 import { setupErrorHandler } from './lib/errorHandler';
 import { setupAutoCacheCleanup } from './lib/cacheManager';
 
+// Asegurar que React esté disponible globalmente
+if (typeof window !== 'undefined') {
+  (window as any).React = React;
+  (window as any).__REACT_LOADED__ = true;
+}
 
 // Configurar manejador de errores personalizado
 setupErrorHandler();

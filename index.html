@@ -49,6 +49,10 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      // Asegurar que React esté disponible globalmente antes de cargar la app
+      window.__REACT_LOADED__ = false;
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

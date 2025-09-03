@@ -44,7 +44,7 @@ export default defineConfig({
         // Code splitting manual para optimizar carga
         manualChunks: (id) => {
           // React core - asegurar que React esté en un chunk separado
-          if (id.includes('react/') || id.includes('react-dom/')) {
+          if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-dom/client')) {
             return 'react-vendor';
           }
           
@@ -172,6 +172,7 @@ export default defineConfig({
     include: [
       'react',
       'react-dom',
+      'react-dom/client',
       'react-router-dom',
       '@tanstack/react-query',
       'lucide-react',

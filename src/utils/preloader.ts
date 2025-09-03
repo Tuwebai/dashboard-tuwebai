@@ -2,6 +2,8 @@
 // SISTEMA DE PRELOADING ESTRATÉGICO
 // =====================================================
 
+import React from 'react';
+
 interface PreloadResource {
   href: string;
   as: 'script' | 'style' | 'image' | 'font' | 'fetch' | 'document';

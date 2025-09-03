@@ -1,4 +1,6 @@
 // Sistema de breakpoints consistente para toda la aplicación
+
+import React from 'react';
 export const BREAKPOINTS = {
   xs: '320px',    // Móviles pequeños
   sm: '640px',    // Móviles

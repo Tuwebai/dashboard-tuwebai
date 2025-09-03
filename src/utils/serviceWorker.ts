@@ -2,6 +2,8 @@
 // UTILIDADES PARA SERVICE WORKER
 // =====================================================
 
+import React from 'react';
+
 interface ServiceWorkerMessage {
   type: string;
   payload?: any;
