@@ -32,7 +32,8 @@ import {
   Building,
   Globe,
   FileText,
-  Trash2
+  Trash2,
+  Lock
 } from 'lucide-react';
 
 // Importar componentes de seguridad

@@ -55,55 +55,65 @@ export class AppErrorHandler {
 
   // Manejar errores de CORS
   private handleCORSError(context: string): void {
-    toast({
-      title: "Error de Conexión",
-      description: `No se pudo conectar con el servidor. Verifica tu conexión a internet y las variables de entorno.`,
-      variant: "destructive",
-    });
+    setTimeout(() => {
+      toast({
+        title: "Error de Conexión",
+        description: `No se pudo conectar con el servidor. Verifica tu conexión a internet y las variables de entorno.`,
+        variant: "destructive",
+      });
+    }, 0);
     
     console.error(`🚫 [${context}] Error de CORS - Verificar configuración de Supabase`);
   }
 
   // Manejar errores de autenticación
   private handleAuthError(context: string): void {
-    toast({
-      title: "Error de Autenticación",
-      description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
-      variant: "destructive",
-    });
+    setTimeout(() => {
+      toast({
+        title: "Error de Autenticación",
+        description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+        variant: "destructive",
+      });
+    }, 0);
     
     console.error(`🔐 [${context}] Error de autenticación`);
   }
 
   // Manejar errores de duplicado
   private handleDuplicateError(context: string): void {
-    toast({
-      title: "Elemento Duplicado",
-      description: "Ya existe un elemento con estos datos. Intenta con información diferente.",
-      variant: "destructive",
-    });
+    setTimeout(() => {
+      toast({
+        title: "Elemento Duplicado",
+        description: "Ya existe un elemento con estos datos. Intenta con información diferente.",
+        variant: "destructive",
+      });
+    }, 0);
     
     console.error(`🔄 [${context}] Error de duplicado`);
   }
 
   // Manejar errores de RLS (Row Level Security)
   private handleRLSError(context: string): void {
-    toast({
-      title: "Error de Permisos",
-      description: "No tienes permisos para realizar esta acción. Contacta al administrador si necesitas acceso.",
-      variant: "destructive",
-    });
+    setTimeout(() => {
+      toast({
+        title: "Error de Permisos",
+        description: "No tienes permisos para realizar esta acción. Contacta al administrador si necesitas acceso.",
+        variant: "destructive",
+      });
+    }, 0);
     
     console.error(`🔒 [${context}] Error de Row Level Security - Verificar políticas RLS`);
   }
 
   // Manejar errores de clave foránea
   private handleForeignKeyError(context: string): void {
-    toast({
-      title: "Error de Referencia",
-      description: "No se puede realizar esta acción porque hay datos relacionados.",
-      variant: "destructive",
-    });
+    setTimeout(() => {
+      toast({
+        title: "Error de Referencia",
+        description: "No se puede realizar esta acción porque hay datos relacionados.",
+        variant: "destructive",
+      });
+    }, 0);
     
     console.error(`🔗 [${context}] Error de clave foránea`);
   }
@@ -112,22 +122,32 @@ export class AppErrorHandler {
   public handleGenericError(error: any, context: string): void {
     const message = error?.message || error?.details || 'Error desconocido';
     
-    toast({
-      title: "Error",
-      description: `${context}: ${message}`,
-      variant: "destructive",
-    });
+    // No mostrar toast para errores de conexión
+    if (message?.includes('Failed to fetch') || message?.includes('ERR_CONNECTION_CLOSED')) {
+      return;
+    }
+    
+    // Usar setTimeout para evitar ejecutar toast durante el render
+    setTimeout(() => {
+      toast({
+        title: "Error",
+        description: `${context}: ${message}`,
+        variant: "destructive",
+      });
+    }, 0);
     
     console.error(`⚠️ [${context}] Error genérico:`, message);
   }
 
   // Manejar errores de red
   handleNetworkError(context: string = 'Operación'): void {
-    toast({
-      title: "Error de Red",
-      description: "No se pudo conectar con el servidor. Verifica tu conexión a internet.",
-      variant: "destructive",
-    });
+    setTimeout(() => {
+      toast({
+        title: "Error de Red",
+        description: "No se pudo conectar con el servidor. Verifica tu conexión a internet.",
+        variant: "destructive",
+      });
+    }, 0);
     
     console.error(`🌐 [${context}] Error de red`);
   }
@@ -136,22 +156,26 @@ export class AppErrorHandler {
   handleValidationError(errors: string[], context: string = 'Validación'): void {
     const message = errors.length > 0 ? errors.join(', ') : 'Datos inválidos';
     
-    toast({
-      title: "Error de Validación",
-      description: message,
-      variant: "destructive",
-    });
+    setTimeout(() => {
+      toast({
+        title: "Error de Validación",
+        description: message,
+        variant: "destructive",
+      });
+    }, 0);
     
     console.error(`✅ [${context}] Error de validación:`, errors);
   }
 
   // Manejar errores de permisos
   handlePermissionError(context: string = 'Operación'): void {
-    toast({
-      title: "Sin Permisos",
-      description: "No tienes permisos para realizar esta acción.",
-      variant: "destructive",
-    });
+    setTimeout(() => {
+      toast({
+        title: "Sin Permisos",
+        description: "No tienes permisos para realizar esta acción.",
+        variant: "destructive",
+      });
+    }, 0);
     
     console.error(`🚫 [${context}] Error de permisos`);
   }

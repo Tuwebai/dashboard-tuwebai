@@ -100,7 +100,7 @@ class NotificationService {
       const { data, error } = await query;
 
       if (error) {
-        console.error('❌ [NotificationService] Error fetching notifications:', error);
+        // No loggear el error aquí, se manejará en el catch
         throw error;
       }
 
@@ -117,7 +117,11 @@ class NotificationService {
 
       return filteredData;
     } catch (error) {
-      console.error('Error in getUserNotifications:', error);
+      // Solo manejar errores de conexión, no loggear errores de red
+      if (error?.message?.includes('Failed to fetch') || error?.message?.includes('ERR_CONNECTION_CLOSED')) {
+        // Error de conexión - no loggear, solo retornar array vacío
+        return [];
+      }
       handleSupabaseError(error, 'Obtener notificaciones');
       return [];
     }

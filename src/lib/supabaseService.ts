@@ -219,6 +219,10 @@ export class SupabaseService {
         .maybeSingle(); // Usar maybeSingle en lugar de single para evitar errores
 
       if (error) {
+        // Solo manejar errores de conexión, no loggear errores de red
+        if (error?.message?.includes('Failed to fetch') || error?.message?.includes('ERR_CONNECTION_CLOSED')) {
+          return null;
+        }
         console.error('Error en getUserById:', error);
         return null;
       }
