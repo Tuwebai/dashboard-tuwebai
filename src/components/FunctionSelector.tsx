@@ -33,7 +33,7 @@ import SliderBlock from '@/components/blocks/SliderBlock';
 import MultiStepFormBlock from '@/components/blocks/MultiStepFormBlock';
 import TestimonialsBlock from '@/components/blocks/TestimonialsBlock';
 import FAQBlock from '@/components/blocks/FAQBlock';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 

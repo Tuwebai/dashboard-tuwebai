@@ -4,7 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  NPM_FLAGS = "--legacy-peer-deps"
+  NPM_FLAGS = "--legacy-peer-deps --omit=dev"
   NPM_CONFIG_PRODUCTION = "false"
   NODE_OPTIONS = "--max-old-space-size=4096"
 

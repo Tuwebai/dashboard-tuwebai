@@ -93,7 +93,7 @@ export const lazyComponents = {
   pdfViewer: () => import('../components/FilePreview'),
   
   // Drag and drop
-  dragDrop: () => import('react-beautiful-dnd'),
+  dragDrop: () => import('@hello-pangea/dnd'),
   
   // File processing
   fileProcessing: () => import('html2canvas'),

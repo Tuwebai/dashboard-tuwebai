@@ -1,5 +1,4 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { performanceMonitor } from '@/utils/performanceMonitor';
 
 // =====================================================
 // INTERFACES
@@ -72,7 +71,10 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
     });
 
     // Registrar error en performance monitor
-    performanceMonitor.recordError(error, 'ErrorBoundary');
+    // Registrar error de forma segura
+    if (typeof window !== 'undefined' && (window as any).performanceMonitor) {
+      (window as any).performanceMonitor.recordError(error, 'ErrorBoundary');
+    }
 
     // Llamar callback personalizado si existe
     if (onError) {
@@ -298,7 +300,10 @@ export const useErrorHandler = () => {
 
   const captureError = React.useCallback((error: Error, context?: string) => {
     setError(error);
-    performanceMonitor.recordError(error, context);
+    // Registrar error de forma segura
+    if (typeof window !== 'undefined' && (window as any).performanceMonitor) {
+      (window as any).performanceMonitor.recordError(error, context);
+    }
   }, []);
 
   // Si hay un error, lanzarlo para que sea capturado por el Error Boundary
@@ -377,7 +382,10 @@ export const withErrorBoundary = <P extends object>(
 
 export const createErrorHandler = (context: string) => {
   return (error: Error) => {
-    performanceMonitor.recordError(error, context);
+    // Registrar error de forma segura
+    if (typeof window !== 'undefined' && (window as any).performanceMonitor) {
+      (window as any).performanceMonitor.recordError(error, context);
+    }
     console.error(`Error in ${context}:`, error);
   };
 };

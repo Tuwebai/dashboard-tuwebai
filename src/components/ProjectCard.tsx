@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from '@/components/OptimizedMotion';
-import { Draggable } from 'react-beautiful-dnd';
+import { Draggable } from '@hello-pangea/dnd';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
