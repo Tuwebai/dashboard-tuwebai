@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
